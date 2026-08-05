@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resolver – Studley AI</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; background: #FAFAFA; color: #111827; height: 100vh; overflow: hidden; display: flex; }
+    .sidebar { width: 220px; min-width: 220px; background: #FFE1D9; height: 100vh; display: flex; flex-direction: column; padding: 16px 12px; flex-shrink: 0; }
+    .sidebar-logo { display: flex; align-items: center; gap: 8px; padding: 6px 8px; margin-bottom: 20px; text-decoration: none; margin-top: 4px; }
+    .sidebar-logo-text { font-weight: 800; font-size: 1.3rem; letter-spacing: -0.03em; background: linear-gradient(to right, #FF8040, #FF4D00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.9rem; font-weight: 500; color: #6B2D00; text-decoration: none; transition: background 0.15s; margin-bottom: 2px; }
+    .nav-item:hover { background: rgba(255,255,255,0.5); }
+    .nav-item.active { background: #fff; color: #FF4D00; font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .sign-in-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.875rem; font-weight: 500; color: #6B2D00; background: rgba(255,255,255,0.4); border: none; width: 100%; text-align: left; transition: background 0.15s; }
+    .sign-in-btn:hover { background: rgba(255,255,255,0.6); }
+    .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+    /* Chat area */
+    .chat-header { padding: 20px 32px; border-bottom: 1px solid #F0F0F0; background: #fff; display: flex; align-items: center; justify-content: space-between; }
+    .chat-header h1 { font-size: 1.1rem; font-weight: 700; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 24px 32px; display: flex; flex-direction: column; gap: 20px; }
+    .msg { display: flex; gap: 12px; align-items: flex-start; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+    .msg.user { flex-direction: row-reverse; }
+    .avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.85rem; font-weight: 700; }
+    .avatar.ai { background: linear-gradient(135deg, #FF8040, #FF4D00); color: #fff; }
+    .avatar.user { background: #374151; color: #fff; }
+    .bubble { max-width: 75%; padding: 14px 18px; border-radius: 16px; font-size: 0.9rem; line-height: 1.6; }
+    .bubble.ai { background: #fff; border: 1.5px solid #E5E5E5; color: #111827; border-radius: 16px 16px 16px 4px; }
+    .bubble.user { background: linear-gradient(135deg, #FF8040, #FF4D00); color: #fff; border-radius: 16px 16px 4px 16px; }
+    .typing { display: flex; gap: 5px; padding: 4px 0; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #9CA3AF; animation: bounce 1.2s infinite; }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+
+    /* Input area */
+    .chat-input { padding: 16px 32px 24px; background: #fff; border-top: 1px solid #F0F0F0; }
+    .input-wrap { display: flex; gap: 12px; background: #F9FAFB; border: 1.5px solid #E5E5E5; border-radius: 16px; padding: 12px 16px; align-items: flex-end; transition: border-color 0.15s; }
+    .input-wrap:focus-within { border-color: #FF8040; background: #fff; }
+    .input-wrap textarea { flex: 1; border: none; background: transparent; font-family: inherit; font-size: 0.95rem; color: #111827; resize: none; max-height: 120px; min-height: 24px; outline: none; line-height: 1.5; }
+    .send-btn { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(to bottom, #FF8040, #FF4D00); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; transition: filter 0.15s; }
+    .send-btn:hover { filter: brightness(1.1); }
+    .input-hint { font-size: 0.75rem; color: #9CA3AF; margin-top: 8px; text-align: center; }
+
+    /* Quick prompts */
+    .quick-prompts { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .quick-btn { padding: 7px 14px; border-radius: 10px; border: 1.5px solid #E5E5E5; background: #fff; font-size: 0.8rem; font-weight: 500; color: #374151; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+    .quick-btn:hover { border-color: #FF8040; color: #FF4D00; background: #FFF8F6; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #E0E0E0; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <a href="study-sets.html" class="sidebar-logo">
+    <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="#FF4D00"/><path d="M16 8C16 8 11 14 11 18C11 20.8 13.2 23 16 23C18.8 23 21 20.8 21 18C21 14 16 8 16 8Z" fill="#FF8040"/><circle cx="16" cy="19" r="3" fill="#FFF0E8"/></svg>
+    <span class="sidebar-logo-text">Studley</span>
+  </a>
+  <nav style="flex:1;display:flex;flex-direction:column;gap:2px;">
+    <a href="study-sets.html" class="nav-item">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>
+      <span>Disciplinas</span>
+    </a>
+    <a href="solve.html" class="nav-item active">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <span>Resolver</span>
+    </a>
+    <a href="paper-grader.html" class="nav-item">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg>
+      <span>Corretor</span>
+    </a>
+    <a href="app.html" class="nav-item">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18" stroke-width="2.5" stroke-linecap="round"/></svg>
+      <span>App</span>
+    </a>
+  </nav>
+  <div style="border-top:1px solid rgba(255,77,0,0.15);padding-top:12px;">
+    <button class="sign-in-btn" onclick="alert('Login em breve!')">
+      <div style="width:30px;height:30px;border-radius:50%;background:rgba(255,77,0,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="15" height="15" fill="none" stroke="#FF4D00" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <span>Entrar</span>
+    </button>
+  </div>
+</aside>
+
+<main class="main" style="display:flex;flex-direction:column;">
+  <div class="chat-header">
+    <div>
+      <h1>🔍 Resolver com IA</h1>
+      <p style="font-size:0.8rem;color:#9CA3AF;margin-top:2px;">Faça qualquer pergunta e resolva exercícios com ajuda da IA</p>
+    </div>
+    <button onclick="clearChat()" style="padding:8px 16px;border-radius:10px;border:1.5px solid #E5E5E5;background:#fff;font-size:0.8rem;font-weight:500;color:#374151;cursor:pointer;font-family:inherit;">Nova conversa</button>
+  </div>
+
+  <div class="chat-messages" id="messages">
+    <div class="msg">
+      <div class="avatar ai">S</div>
+      <div class="bubble ai">
+        <strong>Olá! 👋 Sou o Studley AI</strong><br><br>
+        Pode me fazer qualquer pergunta sobre seus estudos, me dar um exercício para resolver ou pedir ajuda com algum conceito difícil.<br><br>
+        Estou aqui para ajudar! O que você quer resolver hoje?
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-input">
+    <div class="quick-prompts">
+      <button class="quick-btn" onclick="quickSend('Explique o conceito de derivada em cálculo')">📐 Derivadas em cálculo</button>
+      <button class="quick-btn" onclick="quickSend('Resolva a equação: 2x² + 5x - 3 = 0')">🔢 Equação quadrática</button>
+      <button class="quick-btn" onclick="quickSend('O que é mitose e como se diferencia da meiose?')">🔬 Mitose vs Meiose</button>
+      <button class="quick-btn" onclick="quickSend('Me explique a Lei de Ohm com exemplos práticos')">⚡ Lei de Ohm</button>
+    </div>
+    <div class="input-wrap">
+      <textarea id="user-input" placeholder="Digite sua pergunta ou cole um exercício aqui..." rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}"
+        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+      <button class="send-btn" onclick="sendMsg()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>
+      </button>
+    </div>
+    <div class="input-hint">Enter para enviar · Shift+Enter para nova linha</div>
+  </div>
+</main>
+
+<script>
+  const RESPONSES = {
+    'derivada': 'A **derivada** mede a taxa de variação de uma função.\n\n**Definição:** f\'(x) = lim[h→0] (f(x+h) - f(x)) / h\n\n**Regras principais:**\n• Potência: d/dx[xⁿ] = nxⁿ⁻¹\n• Constante: d/dx[c] = 0\n• Soma: d/dx[f+g] = f\'+g\'\n• Produto: d/dx[fg] = f\'g + fg\'\n\n**Exemplo:** Se f(x) = x³ + 2x², então f\'(x) = 3x² + 4x',
+    '2x² + 5x - 3': 'Vou resolver 2x² + 5x - 3 = 0 usando a fórmula de Bhaskara:\n\n**Identifique:** a=2, b=5, c=-3\n\n**Discriminante:** Δ = b² - 4ac = 25 - 4(2)(-3) = 25 + 24 = **49**\n\n**Fórmula:** x = (-b ± √Δ) / 2a\n\nx₁ = (-5 + √49) / 4 = (-5 + 7) / 4 = **2/4 = 0,5**\nx₂ = (-5 - 7) / 4 = **-12/4 = -3**\n\n✅ **Soluções: x = 0,5 e x = -3**',
+    'mitose': 'Ótima pergunta!\n\n**MITOSE** 🔬\n• Produz 2 células-filhas **idênticas**\n• Mantém o número de cromossomos (2n → 2n)\n• Ocorre em células somáticas (crescimento, reparo)\n• 4 fases: Prófase, Metáfase, Anáfase, Telófase\n\n**MEIOSE** 🧬\n• Produz 4 células-filhas **diferentes**\n• Reduz cromossomos à metade (2n → n)\n• Ocorre nas células germinativas (gametas)\n• 8 fases (Meiose I e II)\n• Permite a variabilidade genética\n\n**Dica:** Meiose = Metade dos cromossomos!',
+    'ohm': 'A Lei de Ohm é fundamental em elétrica! ⚡\n\n**Fórmula:** V = R × I\n\nOnde:\n• V = Tensão/Voltagem (Volts, V)\n• R = Resistência (Ohms, Ω)\n• I = Corrente (Ampères, A)\n\n**Exemplo prático:**\nUm resistor de 100Ω está ligado a uma bateria de 9V. Qual a corrente?\n\nI = V/R = 9V / 100Ω = **0,09 A = 90 mA**\n\n**Triângulo mágico:**\n    [V]\n  [I]×[R]\n\nCubra o que quer calcular e multiplique/divida o resto!',
+  };
+
+  function findResponse(text) {
+    text = text.toLowerCase();
+    if (text.includes('derivada') || text.includes('cálculo')) return RESPONSES['derivada'];
+    if (text.includes('2x²') || text.includes('equação quadrática') || text.includes('bhaskara')) return RESPONSES['2x² + 5x - 3'];
+    if (text.includes('mitose') || text.includes('meiose')) return RESPONSES['mitose'];
+    if (text.includes('ohm') || text.includes('lei de ohm')) return RESPONSES['ohm'];
+    return 'Ótima pergunta! 🤔\n\nEstou analisando sua dúvida sobre **"' + text.slice(0,60) + '"**...\n\nPara resolver isso melhor, vou precisar que você:\n1. Forneça mais contexto ou a pergunta completa\n2. Indique em qual matéria/disciplina se encaixa\n3. Se for um exercício, inclua todos os dados\n\nAssim posso dar uma explicação mais precisa e detalhada! 📚';
+  }
+
+  function sendMsg() {
+    const input = document.getElementById('user-input');
+    const text = input.value.trim();
+    if (!text) return;
+    addMsg(text, 'user');
+    input.value = '';
+    input.style.height = 'auto';
+
+    // Show typing
+    addTyping();
+    setTimeout(() => {
+      removeTyping();
+      addMsg(findResponse(text), 'ai');
+    }, 1200 + Math.random() * 600);
+  }
+
+  function quickSend(text) {
+    document.getElementById('user-input').value = text;
+    sendMsg();
+  }
+
+  function addMsg(text, role) {
+    const msgs = document.getElementById('messages');
+    const initial = role === 'ai' ? 'S' : 'V';
+    const div = document.createElement('div');
+    div.className = 'msg ' + role;
+    div.innerHTML = `
+      <div class="avatar ${role}">${initial}</div>
+      <div class="bubble ${role}">${text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>')}</div>
+    `;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function addTyping() {
+    const msgs = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = 'msg';
+    div.id = 'typing-indicator';
+    div.innerHTML = `<div class="avatar ai">S</div><div class="bubble ai"><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function removeTyping() {
+    const el = document.getElementById('typing-indicator');
+    if (el) el.remove();
+  }
+
+  function clearChat() {
+    document.getElementById('messages').innerHTML = `
+      <div class="msg">
+        <div class="avatar ai">S</div>
+        <div class="bubble ai"><strong>Nova conversa iniciada! 🚀</strong><br><br>Como posso ajudar nos seus estudos hoje?</div>
+      </div>`;
+  }
+</script>
+</body>
+</html>

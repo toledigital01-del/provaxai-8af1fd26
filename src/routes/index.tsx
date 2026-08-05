@@ -1,24 +1,32 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  beforeLoad: () => {
+    throw redirect({ href: "/index.html", reloadDocument: true });
+  },
+  head: () => ({
+    meta: [
+      {
+        title:
+          "Studley AI – A Ferramenta de Estudo com IA #1 | Mande nas Provas",
+      },
+      {
+        name: "description",
+        content:
+          "Studley AI: resolva questões, crie flashcards, corrija redações e estude com tutor de IA para mandar bem nas provas.",
+      },
+      {
+        property: "og:title",
+        content: "Studley AI – Ferramenta de Estudo com IA",
+      },
+      {
+        property: "og:description",
+        content:
+          "Resolva questões, crie flashcards e estude com um tutor de IA. Mande nas provas com o Studley AI.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: () => null,
 });
-
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
-}

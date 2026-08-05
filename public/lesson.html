@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Disciplina – Studley AI</title>
+<style>
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; background:#fff; color:#111827; height:100vh; overflow:hidden; display:flex; }
+
+  .sidebar { width:220px; min-width:220px; background:#FFE1D9; height:100vh; display:flex; flex-direction:column; padding:16px 12px; flex-shrink:0; }
+  .sidebar-logo { display:flex; align-items:center; gap:8px; padding:6px 8px; margin-bottom:20px; text-decoration:none; margin-top:4px; }
+  .sidebar-logo-text { font-weight:800; font-size:1.4rem; letter-spacing:-0.03em; background:linear-gradient(to right,#FF8040,#FF4D00); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; cursor:pointer; font-size:0.88rem; font-weight:500; color:#6B2D00; text-decoration:none; transition:background .15s; margin-bottom:2px; border:none; background:transparent; width:100%; text-align:left; }
+  .nav-item:hover { background:rgba(255,255,255,.5); }
+  .nav-item.active { background:#fff; color:#FF4D00; font-weight:600; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+  .upgrade-btn { display:block; width:100%; padding:11px 12px; border:none; border-radius:999px; background:linear-gradient(to right,#FF8040,#FF4D00); color:#fff; font-weight:700; font-size:0.85rem; cursor:pointer; margin-bottom:12px; box-shadow:0 4px 14px rgba(255,77,0,.3); }
+  .user-chip { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:14px; background:#fff; border:1px solid rgba(255,77,0,.15); cursor:pointer; width:100%; }
+  .avatar { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#FF8040,#FF4D00); color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:700; }
+
+  .wrap { flex:1; display:flex; flex-direction:column; min-width:0; }
+  .topbar { display:flex; align-items:center; gap:14px; padding:14px 22px; border-bottom:1px solid #F0F0F0; }
+  .topbar h1 { font-size:1.05rem; font-weight:600; flex:1; }
+  .back { color:#6B7280; text-decoration:none; font-size:1.1rem; }
+
+  .body { flex:1; display:flex; min-height:0; }
+  .content { flex:1; overflow-y:auto; padding:26px 44px 60px; min-width:0; }
+  .content h1 { font-size:1.9rem; font-weight:700; letter-spacing:-0.02em; margin-bottom:18px; line-height:1.25; }
+  .content h2 { font-size:1.28rem; font-weight:700; margin:30px 0 12px; }
+  .content h3 { font-size:1.05rem; font-weight:700; margin:22px 0 10px; }
+  .content p { color:#374151; line-height:1.75; margin-bottom:14px; font-size:0.95rem; }
+  .content ul { margin:0 0 14px 22px; color:#374151; line-height:1.8; font-size:0.95rem; }
+  .content li { margin-bottom:8px; }
+  .hl { color:#2563EB; font-weight:500; }
+  .toolbar { display:flex; gap:8px; padding-top:10px; }
+  .toolbar button { width:30px; height:30px; border:1px solid #E9E9E9; border-radius:8px; background:#fff; color:#6B7280; cursor:pointer; }
+
+  .right { width:400px; min-width:340px; border-left:1px solid #F0F0F0; display:flex; flex-direction:column; }
+  .tabs { display:flex; border-bottom:1px solid #F0F0F0; }
+  .tab { flex:1; padding:13px 6px; border:none; background:#FAFAFA; font-size:0.85rem; color:#6B7280; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; }
+  .tab.active { background:#fff; color:#111827; font-weight:600; border-bottom:2px solid #FF4D00; }
+  .panel { flex:1; overflow-y:auto; padding:18px; }
+  .empty { height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#9CA3AF; font-size:0.88rem; gap:12px; }
+  .composer { border-top:1px solid #F0F0F0; padding:14px; }
+  .composer textarea { width:100%; border:1px solid #E9E9E9; border-radius:12px; padding:12px; font-family:inherit; font-size:0.9rem; resize:none; min-height:66px; background:#FAFAFA; }
+  .composer-row { display:flex; align-items:center; justify-content:space-between; margin-top:8px; }
+  .reset { border:none; background:transparent; color:#9CA3AF; font-size:0.78rem; cursor:pointer; }
+  .send { width:34px; height:34px; border-radius:50%; border:none; background:linear-gradient(to right,#FF8040,#FF4D00); color:#fff; cursor:pointer; }
+  .msg { margin-bottom:14px; font-size:0.9rem; line-height:1.6; }
+  .msg.user { background:#FF4D00; color:#fff; padding:10px 14px; border-radius:14px; margin-left:auto; max-width:85%; width:fit-content; }
+  ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-thumb { background:#E5E5E5; border-radius:3px; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <a href="study-sets.html" class="sidebar-logo">
+    <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="#FF4D00"/><path d="M16 8C16 8 11 14 11 18C11 20.8 13.2 23 16 23C18.8 23 21 20.8 21 18C21 14 16 8 16 8Z" fill="#FF8040"/><circle cx="16" cy="19" r="3" fill="#FFF0E8"/></svg>
+    <span class="sidebar-logo-text">Studley</span>
+  </a>
+  <nav style="flex:1;display:flex;flex-direction:column;gap:2px;">
+    <button class="nav-item active" onclick="setMode('tutor',this)">🎓 <span>Lição com Tutor</span></button>
+    <button class="nav-item" onclick="setMode('multipla',this)">📝 <span>Múltipla Escolha</span></button>
+    <button class="nav-item" onclick="setMode('flashcards',this)">📚 <span>Flashcards</span></button>
+    <button class="nav-item" onclick="setMode('podcast',this)">🎧 <span>Podcast</span></button>
+    <button class="nav-item" onclick="setMode('espacos',this)">✏️ <span>Preencher os Espaços</span></button>
+    <button class="nav-item" onclick="setMode('teste',this)">📋 <span>Teste Escrito</span></button>
+    <button class="nav-item" onclick="setMode('anotacoes',this)">🗒️ <span>Anotações</span></button>
+    <button class="nav-item" onclick="setMode('conteudo',this)">📄 <span>Conteúdo</span></button>
+  </nav>
+  <button class="upgrade-btn" onclick="location.href='pricing.html'">Atualizar para Ilimitado</button>
+  <button class="user-chip" onclick="alert('Perfil em breve!')">
+    <div class="avatar">F</div>
+    <span style="flex:1;text-align:left;font-size:0.88rem;font-weight:500;">Fernando</span>
+    <svg width="14" height="14" fill="none" stroke="#9CA3AF" stroke-width="2.2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+  </button>
+</aside>
+
+<div class="wrap">
+  <div class="topbar">
+    <a class="back" href="study-sets.html">‹</a>
+    <h1 id="set-title">Concurso PRF 2021</h1>
+    <span style="color:#9CA3AF;">···</span>
+  </div>
+
+  <div class="body">
+    <div class="content" id="content">
+      <h1>Guia Completo do Concurso da Polícia Rodoviária Federal (PRF) – Edital 2021</h1>
+      <h2>Introdução: O Que é Este Concurso?</h2>
+      <p>Imagine que você está diante de uma grande oportunidade: tornar-se Policial Rodoviário Federal, um dos cargos mais respeitados da segurança pública brasileira. Este concurso, regido por um edital extenso e detalhado, é o caminho para ingressar nessa carreira. Vamos explorar juntos cada aspecto desse processo seletivo, desde os requisitos básicos até os detalhes mais técnicos das avaliações.</p>
+      <p>A Polícia Rodoviária Federal (PRF) é um órgão vinculado ao Ministério da Justiça e Segurança Pública, e este concurso foi organizado para preencher 1.500 vagas para o cargo de Policial Rodoviário Federal, Padrão I da Terceira Classe. O concurso tem abrangência nacional, ou seja, as vagas são distribuídas por todo o Brasil, e a lotação inicial dos aprovados será definida conforme a necessidade do serviço e o interesse público.</p>
+      <h2>O Cargo de Policial Rodoviário Federal</h2>
+      <h3>Requisitos e Atribuições</h3>
+      <p>Para se tornar um PRF, você precisa atender a alguns requisitos fundamentais. O principal deles é possuir diploma de curso superior em <span class="hl">qualquer área de formação</span>, reconhecido pelo Ministério da Educação (MEC). Isso significa que profissionais de diversas formações podem concorrer – não é necessário ser formado em Direito ou áreas específicas.</p>
+      <p>As atribuições do cargo variam conforme a classe, mas todas envolvem atividades de natureza policial:</p>
+      <ul>
+        <li><span class="hl">Terceira Classe</span> (ingresso): fiscalização, patrulhamento e policiamento ostensivo, atendimento e socorro a vítimas de acidentes rodoviários</li>
+        <li><span class="hl">Segunda Classe</span>: além das atividades anteriores, inclui execução e controle administrativo e operacional</li>
+        <li><span class="hl">Primeira Classe</span>: planejamento, coordenação, capacitação e articulação com outras organizações policiais</li>
+        <li><span class="hl">Classe Especial</span>: direção, supervisão, corregedoria, inteligência e ensino</li>
+      </ul>
+      <h3>Subsídio e Jornada</h3>
+      <p>O subsídio inicial é de R$ 9.899,88 para uma jornada de 40 horas semanais. Vale destacar que o regime de trabalho pode incluir plantões de 6, 12 ou 24 horas, e durante o Curso de Formação Policial (CFP) o regime é de dedicação integral e exclusiva.</p>
+      <h2>Requisitos Específicos para Posse</h2>
+      <p>Além do diploma, o candidato deve ter idade mínima de 18 anos, Carteira Nacional de Habilitação categoria "B" ou superior, estar quite com as obrigações eleitorais e militares e possuir aptidão física e mental para o exercício do cargo.</p>
+      <div class="toolbar">
+        <button title="Copiar">⧉</button>
+        <button title="Exportar">⤓</button>
+        <button title="Regenerar">↻</button>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="tabs">
+        <button class="tab active" onclick="setTab('chat',this)">💬 Chat</button>
+        <button class="tab" onclick="setTab('conteudo',this)">📄 Conteúdo</button>
+        <button class="tab" onclick="setTab('anotacao',this)">📖 Anotação</button>
+      </div>
+      <div class="panel" id="panel">
+        <div class="empty" id="chat-empty">
+          <svg width="30" height="30" fill="none" stroke="#C4C4C4" stroke-width="1.8" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+          <span>Aqui para te ajudar a aprender</span>
+        </div>
+      </div>
+      <div class="composer" id="composer">
+        <textarea id="chat-input" placeholder="Pergunte-me qualquer coisa sobre o material..."></textarea>
+        <div class="composer-row">
+          <button class="reset" onclick="resetChat()">↺ Resetar chat</button>
+          <button class="send" onclick="send()">↑</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const p = new URLSearchParams(location.search);
+const title = p.get('title') ? decodeURIComponent(p.get('title')) : 'Concurso PRF 2021';
+document.getElementById('set-title').textContent = title;
+document.title = title + ' – Studley AI';
+
+function setMode(mode, el){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  if (mode === 'flashcards') { location.href = 'flashcard.html?set=' + (p.get('set')||'prf-2021') + '&title=' + encodeURIComponent(title); return; }
+  if (mode !== 'tutor') alert('Modo "' + el.innerText.trim() + '" em breve!');
+}
+function setTab(tab, el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const panel = document.getElementById('panel');
+  document.getElementById('composer').style.display = tab === 'chat' ? 'block' : 'none';
+  if (tab === 'chat') panel.innerHTML = '<div class="empty"><span>Aqui para te ajudar a aprender</span></div>';
+  if (tab === 'conteudo') panel.innerHTML = '<div style="font-size:0.88rem;color:#374151;line-height:1.7;">Material original: edital do Concurso PRF 2021 (PDF, 218 páginas).</div>';
+  if (tab === 'anotacao') panel.innerHTML = '<div style="font-size:0.88rem;color:#9CA3AF;">Suas anotações aparecerão aqui.</div>';
+}
+function send(){
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  const panel = document.getElementById('panel');
+  if (document.getElementById('chat-empty')) panel.innerHTML = '';
+  panel.insertAdjacentHTML('beforeend', '<div class="msg user"></div>');
+  panel.lastElementChild.textContent = text;
+  input.value = '';
+  setTimeout(()=>{
+    panel.insertAdjacentHTML('beforeend', '<div class="msg">Ótima pergunta! Com base no material desta disciplina, vou te explicar passo a passo.</div>');
+    panel.scrollTop = panel.scrollHeight;
+  }, 500);
+  panel.scrollTop = panel.scrollHeight;
+}
+function resetChat(){ document.getElementById('panel').innerHTML = '<div class="empty" id="chat-empty"><span>Aqui para te ajudar a aprender</span></div>'; }
+</script>
+</body>
+</html>
