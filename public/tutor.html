@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tutor IA – Studley AI</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+      background: #fff;
+      color: #111827;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 220px;
+      min-width: 220px;
+      background: #FFE1D9;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 16px 12px;
+      flex-shrink: 0;
+      z-index: 10;
+    }
+    .sidebar-logo { display: flex; align-items: center; gap: 8px; padding: 6px 8px; margin-bottom: 20px; text-decoration: none; margin-top: 4px; }
+    .sidebar-logo-text { font-weight: 800; font-size: 1.3rem; letter-spacing: -0.03em; background: linear-gradient(to right, #FF8040, #FF4D00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.9rem; font-weight: 500; color: #6B2D00; text-decoration: none; transition: background 0.15s; margin-bottom: 2px; }
+    .nav-item:hover { background: rgba(255,255,255,0.5); }
+    .nav-item.active { background: #fff; color: #FF4D00; font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .sign-in-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.875rem; font-weight: 500; color: #6B2D00; background: rgba(255,255,255,0.4); border: none; width: 100%; text-align: left; transition: background 0.15s; }
+    .sign-in-btn:hover { background: rgba(255,255,255,0.6); }
+
+    /* ── Main wrapper ── */
+    .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+    /* ── Topbar ── */
+    .topbar {
+      height: 52px;
+      flex-shrink: 0;
+      background: rgba(250,250,250,0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(229,231,235,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px 0 12px;
+      z-index: 20;
+    }
+    .topbar-back {
+      display: flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px; border-radius: 8px;
+      border: none; background: transparent; cursor: pointer;
+      color: #374151; font-size: 1.1rem; transition: background 0.15s;
+      text-decoration: none; line-height: 1;
+    }
+    .topbar-back:hover { background: #F3F4F6; }
+    .topbar-panel-toggle {
+      display: flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px; border-radius: 8px;
+      border: none; background: transparent; cursor: pointer;
+      color: #374151; transition: background 0.15s;
+    }
+    .topbar-panel-toggle:hover { background: #F3F4F6; }
+
+    /* ── Split area ── */
+    .split-container { flex: 1; display: flex; overflow: hidden; }
+
+    /* ── Left panel (notes) ── */
+    .left-panel {
+      flex: 1;
+      overflow-y: auto;
+      background: #FAFAFA;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .left-panel.loaded { align-items: flex-start; justify-content: flex-start; }
+
+    /* Spinner */
+    .spinner {
+      width: 32px; height: 32px;
+      border: 2.5px solid #E5E7EB;
+      border-top-color: #9CA3AF;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Notes content */
+    .notes-content {
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 40px 48px 80px;
+    }
+    .notes-content h1 { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 6px; color: #111827; line-height: 1.2; }
+    .notes-content .meta { font-size: 0.78rem; color: #9CA3AF; margin-bottom: 28px; display: flex; gap: 14px; }
+    .notes-content h2 { font-size: 1.05rem; font-weight: 700; margin: 32px 0 12px; color: #111827; padding-bottom: 8px; border-bottom: 1.5px solid #F3F4F6; }
+    .notes-content h3 { font-size: 0.9rem; font-weight: 700; margin: 16px 0 7px; color: #374151; }
+    .notes-content p { font-size: 0.875rem; line-height: 1.8; color: #4B5563; margin-bottom: 10px; }
+    .notes-content ul, .notes-content ol { padding-left: 20px; margin-bottom: 12px; }
+    .notes-content li { font-size: 0.86rem; line-height: 1.75; color: #4B5563; margin-bottom: 3px; }
+    .notes-content strong { color: #111827; font-weight: 600; }
+    .notes-content code { font-family: 'Courier New', monospace; font-size: 0.82rem; background: #F3F4F6; padding: 1px 5px; border-radius: 4px; color: #374151; }
+    .callout {
+      background: #FFF8F6;
+      border-left: 3px solid #FF4D00;
+      border-radius: 0 8px 8px 0;
+      padding: 12px 16px;
+      margin: 14px 0;
+      font-size: 0.86rem;
+      line-height: 1.65;
+      color: #374151;
+    }
+    .callout strong { color: #FF4D00; }
+    .formula {
+      background: #F9FAFB;
+      border: 1px solid #E5E7EB;
+      border-radius: 8px;
+      padding: 12px 18px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.88rem;
+      color: #1E293B;
+      margin: 12px 0;
+      text-align: center;
+    }
+    .notes-table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.83rem; }
+    .notes-table th { background: #F9FAFB; padding: 9px 13px; text-align: left; font-weight: 600; color: #374151; border-bottom: 1.5px solid #E5E7EB; }
+    .notes-table td { padding: 9px 13px; border-bottom: 1px solid #F9FAFB; color: #4B5563; }
+    .notes-table tr:last-child td { border-bottom: none; }
+    .toc { background: #fff; border: 1px solid #E5E7EB; border-radius: 10px; padding: 14px 18px; margin-bottom: 24px; }
+    .toc .toc-label { font-size: 0.72rem; font-weight: 700; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+    .toc a { display: block; font-size: 0.82rem; color: #6B7280; text-decoration: none; padding: 3px 0; transition: color 0.1s; }
+    .toc a:hover { color: #FF4D00; }
+
+    /* ── Resizer ── */
+    .resizer {
+      width: 0;
+      position: relative;
+      flex-shrink: 0;
+      cursor: col-resize;
+    }
+    .resizer-handle {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px;
+      height: 32px;
+      background: #fff;
+      border: 1px solid #E5E7EB;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: col-resize;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      z-index: 5;
+    }
+    .resizer-handle:hover { background: #F9FAFB; border-color: #D1D5DB; }
+    .dots-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+    .dots-grid span { width: 3px; height: 3px; border-radius: 50%; background: #D1D5DB; display: block; }
+
+    /* ── Right panel (chat) ── */
+    .right-panel {
+      width: 480px;
+      min-width: 300px;
+      max-width: 560px;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      border-left: 1px solid #E5E7EB;
+      overflow: hidden;
+      transition: width 0.25s ease, min-width 0.25s ease;
+    }
+    .right-panel.hidden { width: 0; min-width: 0; border: none; }
+
+    /* Chat messages area */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Empty state */
+    .chat-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 40px 24px;
+    }
+    .chat-empty-icon { color: #D1D5DB; }
+    .chat-empty-text { font-size: 0.9375rem; color: #6B7280; text-align: center; }
+
+    /* Messages */
+    .msgs-list { flex: 1; overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column; gap: 14px; }
+    .msg-row { display: flex; gap: 8px; align-items: flex-start; animation: fadeUp 0.2s ease; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+    .msg-row.user { flex-direction: row-reverse; }
+    .msg-avatar { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; }
+    .msg-avatar.ai { background: linear-gradient(135deg, #FF8040, #FF4D00); color: #fff; }
+    .msg-avatar.user { background: #374151; color: #fff; }
+    .msg-bubble { max-width: 80%; padding: 10px 14px; font-size: 0.875rem; line-height: 1.6; border-radius: 14px; }
+    .msg-bubble.ai { background: #F9FAFB; border: 1px solid #F3F4F6; border-radius: 14px 14px 14px 4px; color: #374151; }
+    .msg-bubble.user { background: linear-gradient(135deg, #FF8040, #FF4D00); color: #fff; border-radius: 14px 14px 4px 14px; }
+    .msg-bubble strong { font-weight: 600; }
+    .msg-bubble.ai strong { color: #111827; }
+    .typing-dots { display: flex; gap: 4px; padding: 2px 0; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: #9CA3AF; animation: bounce 1.2s infinite; }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+
+    /* Suggestion chips */
+    .chips-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 12px; }
+    .chip {
+      padding: 6px 12px; border-radius: 999px;
+      border: 1px solid #E5E7EB; background: #fff;
+      font-size: 0.78rem; color: #374151;
+      cursor: pointer; transition: all 0.15s; font-family: inherit;
+    }
+    .chip:hover { border-color: #9CA3AF; color: #111827; }
+
+    /* ── Input area ── */
+    .input-area { padding: 8px 16px 12px 0; flex-shrink: 0; }
+    .input-box {
+      position: relative;
+      border-radius: 24px;
+      border: 1px solid #E5E7EB;
+      background: #FAFAFA;
+      overflow: hidden;
+    }
+    .input-box:focus-within { border-color: #D1D5DB; background: #fff; }
+    .input-textarea {
+      width: 100%;
+      background: transparent;
+      color: #111827;
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: inherit;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      padding: 16px 20px 8px;
+      min-height: 60px;
+      max-height: 192px;
+      cursor: text;
+    }
+    .input-textarea::placeholder { color: #9CA3AF; }
+    .input-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px 10px;
+    }
+    .reset-btn {
+      display: flex; align-items: center; gap: 5px;
+      background: none; border: none; cursor: pointer;
+      font-size: 0.78rem; color: #9CA3AF; opacity: 0.7;
+      font-family: inherit; transition: opacity 0.15s;
+    }
+    .reset-btn:hover { opacity: 1; }
+    .send-btn {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: #111827;
+      color: #fff;
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .send-btn:hover { background: #374151; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+  <a href="study-sets.html" class="sidebar-logo">
+    <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
+      <path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="#FF4D00"/>
+      <path d="M16 8C16 8 11 14 11 18C11 20.8 13.2 23 16 23C18.8 23 21 20.8 21 18C21 14 16 8 16 8Z" fill="#FF8040"/>
+      <circle cx="16" cy="19" r="3" fill="#FFF0E8"/>
+    </svg>
+    <span class="sidebar-logo-text">Studley</span>
+  </a>
+  <nav style="flex:1;display:flex;flex-direction:column;gap:2px;">
+    <a href="study-sets.html" class="nav-item active">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>
+      <span>Disciplinas</span>
+    </a>
+    <a href="solve.html" class="nav-item">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v3M11 14h.01" stroke-linecap="round"/></svg>
+      <span>Solve</span>
+    </a>
+    <a href="paper-grader.html" class="nav-item">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg>
+      <span>Paper Grader</span>
+    </a>
+    <a href="app.html" class="nav-item">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18" stroke-width="2.5" stroke-linecap="round"/></svg>
+      <span>App</span>
+    </a>
+  </nav>
+  <div style="border-top:1px solid rgba(255,77,0,0.15);padding-top:12px;">
+    <button class="sign-in-btn" onclick="alert('Sign in coming soon!')">
+      <div style="width:30px;height:30px;border-radius:50%;background:rgba(255,77,0,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="15" height="15" fill="none" stroke="#FF4D00" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <span>Sign in</span>
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-left:auto;opacity:0.5;"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+  </div>
+</aside>
+
+<!-- ── Main ── -->
+<div class="main-wrapper">
+
+  <!-- Topbar: just back ‹ and panel toggle ⊡ -->
+  <div class="topbar">
+    <a href="flashcard.html" class="topbar-back" id="back-link">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
+    </a>
+    <button class="topbar-panel-toggle" onclick="togglePanel()" id="toggle-btn" title="Toggle chat panel">
+      <!-- PanelRight icon -->
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <line x1="15" y1="3" x2="15" y2="21"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Split container -->
+  <div class="split-container" id="split-container">
+
+    <!-- ── Left panel ── -->
+    <div class="left-panel" id="left-panel">
+      <!-- Loading spinner shown first -->
+      <div class="spinner" id="spinner"></div>
+      <!-- Notes hidden until loaded -->
+      <div class="notes-content" id="notes-content" style="display:none;"></div>
+    </div>
+
+    <!-- ── Resizer ── -->
+    <div class="resizer" id="resizer" style="width:8px;">
+      <div class="resizer-handle" id="resizer-handle">
+        <div class="dots-grid">
+          <span></span><span></span>
+          <span></span><span></span>
+          <span></span><span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Right panel (chat) ── -->
+    <div class="right-panel" id="right-panel">
+
+      <div class="chat-messages" id="chat-messages">
+        <!-- Empty state -->
+        <div class="chat-empty" id="chat-empty">
+          <svg class="chat-empty-icon" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/>
+            <path d="M22 10v6"/>
+            <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>
+          </svg>
+          <p class="chat-empty-text">Here to help you learn</p>
+        </div>
+      </div>
+
+      <!-- Suggestion chips (shown before first message) -->
+      <div class="chips-row" id="chips-row"></div>
+
+      <!-- Input -->
+      <div class="input-area">
+        <div class="input-box">
+          <textarea
+            id="chat-input"
+            class="input-textarea"
+            placeholder="Ask me anything about the material..."
+            rows="1"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send();}"
+            oninput="onInput(this)"></textarea>
+          <div class="input-bottom">
+            <button class="reset-btn" onclick="resetChat()" id="reset-btn">
+              <!-- rotate-ccw icon -->
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+              </svg>
+              Reset chat
+            </button>
+            <button class="send-btn" id="send-btn" onclick="send()" disabled>
+              <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path d="m22 2-7 20-4-9-9-4 20-7z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- end right-panel -->
+
+  </div>
+</div>
+
+<script>
+// ── Params ──
+const p = new URLSearchParams(location.search);
+const setKey = p.get('set') || 'organic-chemistry';
+const customTitle = p.get('title') ? decodeURIComponent(p.get('title')) : null;
+
+// Update back link
+const flashcardHref = 'flashcard.html?set=' + setKey + (customTitle ? '&title=' + encodeURIComponent(customTitle) : '');
+document.getElementById('back-link').href = flashcardHref;
+
+// ── Notes datasets ──
+const NOTES = {
+  'organic-chemistry': `
+    <h1>Organic Chemistry Basics</h1>
+    <div class="meta"><span>⚗️ Chemistry</span><span>⏱ 12 min read</span><span>🃏 35 terms</span></div>
+    <div class="toc"><div class="toc-label">Contents</div>
+      <a href="#hydro">1. Hydrocarbons</a>
+      <a href="#bonds">2. Types of Bonds</a>
+      <a href="#func">3. Functional Groups</a>
+      <a href="#react">4. Key Reactions</a>
+      <a href="#iso">5. Isomerism</a>
+    </div>
+    <h2 id="hydro">1. Hydrocarbons</h2>
+    <p>Hydrocarbons are organic compounds consisting <strong>only of carbon (C) and hydrogen (H)</strong>. They form the foundation of organic chemistry.</p>
+    <ul>
+      <li><strong>Alkanes (CₙH₂ₙ₊₂):</strong> single bonds only — methane, ethane</li>
+      <li><strong>Alkenes (CₙH₂ₙ):</strong> at least one C=C double bond — ethylene</li>
+      <li><strong>Alkynes (CₙH₂ₙ₋₂):</strong> at least one C≡C triple bond — acetylene</li>
+      <li><strong>Aromatic:</strong> contain a benzene ring — benzene, toluene</li>
+    </ul>
+    <div class="callout"><strong>📌 IUPAC Rule:</strong> prefix (# of carbons) + infix (bond type) + suffix (-ane, -ene, -yne)</div>
+    <h2 id="bonds">2. Types of Bonds</h2>
+    <h3>Sigma Bond (σ)</h3>
+    <p>Formed by <strong>frontal (axial) overlap</strong> of atomic orbitals. Present in all single bonds. Allows free rotation around the bond axis.</p>
+    <h3>Pi Bond (π)</h3>
+    <p>Formed by <strong>lateral overlap</strong> of p orbitals. Found in double and triple bonds, <strong>always alongside a sigma bond</strong>. Prevents free rotation — causes geometric isomerism.</p>
+    <div class="formula">Double bond = 1σ + 1π &nbsp;|&nbsp; Triple bond = 1σ + 2π</div>
+    <h2 id="func">3. Functional Groups</h2>
+    <table class="notes-table">
+      <tr><th>Group</th><th>Structure</th><th>Suffix</th><th>Example</th></tr>
+      <tr><td>Alcohol</td><td>–OH</td><td>-ol</td><td>ethanol</td></tr>
+      <tr><td>Aldehyde</td><td>–CHO</td><td>-al</td><td>methanal</td></tr>
+      <tr><td>Ketone</td><td>–C=O–</td><td>-one</td><td>acetone</td></tr>
+      <tr><td>Carboxylic acid</td><td>–COOH</td><td>-oic acid</td><td>acetic acid</td></tr>
+      <tr><td>Ester</td><td>–COO–</td><td>-oate</td><td>ethyl acetate</td></tr>
+      <tr><td>Amine</td><td>–NH₂</td><td>-amine</td><td>methylamine</td></tr>
+    </table>
+    <h2 id="react">4. Key Reactions</h2>
+    <h3>Nucleophilic Substitution (SN)</h3>
+    <p>A <strong>nucleophile</strong> (electron-pair donor) attacks a carbon bearing a leaving group, displacing it.</p>
+    <ul>
+      <li><strong>SN1:</strong> forms carbocation; favored at 3° carbon; polar protic solvent</li>
+      <li><strong>SN2:</strong> backside attack; favored at 1° carbon; Walden inversion</li>
+    </ul>
+    <div class="callout"><strong>Rule:</strong> Primary carbon → SN2. Tertiary carbon → SN1. Secondary → depends on conditions.</div>
+    <h3>Electrophilic Addition</h3>
+    <p>Occurs in alkenes/alkynes. <strong>Markovnikov's rule:</strong> H adds to the carbon with more hydrogens.</p>
+    <h3>Elimination</h3>
+    <p>Removes two substituents from adjacent carbons, forming a double bond. <strong>Zaitsev's rule:</strong> most substituted alkene is preferred.</p>
+    <h2 id="iso">5. Isomerism</h2>
+    <p>Compounds with the same molecular formula but different structures:</p>
+    <ul>
+      <li><strong>Constitutional isomers:</strong> different connectivity</li>
+      <li><strong>Geometric (cis-trans):</strong> restricted rotation in double bonds</li>
+      <li><strong>Optical (enantiomers):</strong> chiral centers; rotate polarized light</li>
+      <li><strong>Diastereomers:</strong> stereoisomers that aren't mirror images</li>
+    </ul>
+    <div class="callout"><strong>🔑 Key concept:</strong> A carbon is chiral (stereogenic) when bonded to 4 different groups. Chiral molecules rotate plane-polarized light.</div>
+  `,
+  'pandas-library-fundamentals': `
+    <h1>Pandas Library Fundamentals</h1>
+    <div class="meta"><span>💻 Computer Science</span><span>⏱ 10 min read</span><span>🃏 20 terms</span></div>
+    <div class="toc"><div class="toc-label">Contents</div>
+      <a href="#intro">1. What is Pandas?</a>
+      <a href="#structs">2. Data Structures</a>
+      <a href="#ops">3. Core Operations</a>
+      <a href="#group">4. GroupBy & Aggregation</a>
+      <a href="#clean">5. Data Cleaning</a>
+    </div>
+    <h2 id="intro">1. What is Pandas?</h2>
+    <p>Pandas is an open-source Python library for <strong>data analysis and manipulation</strong>. Created by Wes McKinney in 2008, it's the de-facto standard for data science in Python.</p>
+    <div class="formula">import pandas as pd</div>
+    <h2 id="structs">2. Data Structures</h2>
+    <h3>Series</h3>
+    <p>A <strong>one-dimensional</strong> labeled array — like a dictionary or a single column of a spreadsheet.</p>
+    <div class="formula">s = pd.Series([10, 20, 30], index=['a','b','c'])</div>
+    <h3>DataFrame</h3>
+    <p>A <strong>two-dimensional</strong> table of rows and columns. Equivalent to a SQL table or Excel sheet.</p>
+    <div class="formula">df = pd.DataFrame({'name':['Ana','Bob'], 'score':[9.5, 8.0]})</div>
+    <h2 id="ops">3. Core Operations</h2>
+    <table class="notes-table">
+      <tr><th>Operation</th><th>Code</th><th>Description</th></tr>
+      <tr><td>Preview</td><td><code>df.head(5)</code></td><td>First 5 rows</td></tr>
+      <tr><td>Info</td><td><code>df.info()</code></td><td>Types, nulls</td></tr>
+      <tr><td>Stats</td><td><code>df.describe()</code></td><td>Mean, std, etc.</td></tr>
+      <tr><td>Select column</td><td><code>df['col']</code></td><td>Returns Series</td></tr>
+      <tr><td>Filter</td><td><code>df[df['score'] > 7]</code></td><td>Rows by condition</td></tr>
+      <tr><td>Sort</td><td><code>df.sort_values('score')</code></td><td>Sort by value</td></tr>
+    </table>
+    <h2 id="group">4. GroupBy & Aggregation</h2>
+    <p>The <strong>groupby</strong> method splits data by one or more columns and applies aggregate functions.</p>
+    <div class="formula">df.groupby('class')['score'].mean()</div>
+    <ul>
+      <li><code>.sum()</code> — total of values</li>
+      <li><code>.mean()</code> — average</li>
+      <li><code>.count()</code> — count of non-null</li>
+      <li><code>.agg(['mean','std'])</code> — multiple functions</li>
+    </ul>
+    <h2 id="clean">5. Data Cleaning</h2>
+    <div class="callout"><strong>Dirty data = wrong results.</strong> Data cleaning typically takes 80% of time in real projects.</div>
+    <ul>
+      <li><code>df.isna().sum()</code> — count nulls per column</li>
+      <li><code>df.dropna()</code> — drop rows with NaN</li>
+      <li><code>df.fillna(0)</code> — replace NaN with 0</li>
+      <li><code>df.drop_duplicates()</code> — remove duplicates</li>
+      <li><code>df['col'].astype(int)</code> — cast data type</li>
+    </ul>
+  `,
+  default: `
+    <h1 id="top">Study Set</h1>
+    <div class="meta"><span>📚 General</span><span>⏱ 8 min read</span></div>
+    <div class="toc"><div class="toc-label">Contents</div>
+      <a href="#concepts">1. Key Concepts</a>
+      <a href="#apply">2. Applications</a>
+      <a href="#summary">3. Summary</a>
+    </div>
+    <h2 id="concepts">1. Key Concepts</h2>
+    <p>This study set was <strong>automatically generated by AI</strong> from your uploaded material. Key concepts have been identified and organized for efficient learning.</p>
+    <div class="callout"><strong>💡 Tip:</strong> Use the chat on the right to ask specific questions about any part of the content!</div>
+    <h2 id="apply">2. Applications</h2>
+    <p>The AI has identified the main applications and connections between topics in your material. Continue with flashcards to reinforce the content.</p>
+    <h2 id="summary">3. Summary</h2>
+    <p>Use this material as a reference during your studies. The AI Tutor can explain any concept in more depth, give examples, or test your knowledge.</p>
+  `
+};
+
+// ── AI responses ──
+const RESPONSES = {
+  hydro: `**Hydrocarbons** are organic compounds made exclusively of carbon (C) and hydrogen (H). They're classified by their bond types:\n\n• **Alkanes** — single bonds only (CₙH₂ₙ₊₂), e.g. methane CH₄\n• **Alkenes** — contain C=C double bond (CₙH₂ₙ), e.g. ethylene\n• **Alkynes** — contain C≡C triple bond, e.g. acetylene\n• **Aromatics** — contain a benzene ring, e.g. benzene\n\nWant me to go deeper on any of these?`,
+  iso: `**Isomerism** occurs when compounds share the same molecular formula but have different structures.\n\nTwo main types:\n\n**1. Constitutional isomers** — same atoms, different connectivity\n• Chain, position, functional group, tautomers\n\n**2. Stereoisomers** — same connectivity, different spatial arrangement\n• Geometric (cis-trans): restricted rotation at double bonds\n• Optical (enantiomers): chiral centers rotate polarized light\n\nClassic example: glucose and fructose both have C₆H₁₂O₆ but very different structures!`,
+  sn: `Great question! **Nucleophilic substitution** reactions have two main mechanisms:\n\n**SN1 (Unimolecular)**\n• Forms a carbocation intermediate\n• Favored at **3° (tertiary) carbons**\n• Polar protic solvent (water, alcohols)\n• Racemization occurs\n\n**SN2 (Bimolecular)**\n• Concerted — backside attack\n• Favored at **1° (primary) carbons**\n• Polar aprotic solvent\n• **Walden inversion** of configuration\n\n**Quick rule:** 1° → SN2, 3° → SN1, 2° → depends!`,
+  pandas: `**Pandas** is Python's most popular data analysis library! The two key structures are:\n\n• \`Series\` — 1D labeled array (like a column)\n• \`DataFrame\` — 2D table (rows + columns)\n\nEssential getting-started code:\n\`\`\`python\nimport pandas as pd\ndf = pd.read_csv("data.csv")\ndf.head()      # first 5 rows\ndf.info()      # data types\ndf.describe()  # statistics\n\`\`\`\n\nWhat aspect of Pandas do you want to explore?`,
+  groupby: `**groupby** is one of Pandas' most powerful features! It works in 3 steps:\n\n1. **Split** — divide data into groups\n2. **Apply** — run a function on each group\n3. **Combine** — merge the results\n\nExample:\n\`\`\`python\ndf.groupby("class")["score"].mean()\n\`\`\`\nThis calculates the **average score per class**.\n\nCommon aggregation functions:\n• \`.sum()\` \`.mean()\` \`.count()\` \`.max()\` \`.min()\` \`.std()\`\n\nYou can also use \`.agg({'col1': 'mean', 'col2': 'sum'})\` for different functions per column!`,
+  default: `That's a great question! Based on the material in this study set, here's what I can tell you:\n\nThis topic is important and commonly tested. Let me break it down:\n\n1. **Core concept** — the fundamental idea here is...\n2. **Why it matters** — understanding this helps you solve...\n3. **How to apply it** — in practice, you'd use this when...\n\nWant me to give specific examples or create a quiz question to test your understanding? 🎯`
+};
+
+function getResponse(msg) {
+  const m = msg.toLowerCase();
+  if (m.includes('hydrocarbon') || m.includes('alkane') || m.includes('alkene') || m.includes('alkyne')) return RESPONSES.hydro;
+  if (m.includes('isomer') || m.includes('enantiomer') || m.includes('chiral') || m.includes('cis') || m.includes('trans')) return RESPONSES.iso;
+  if (m.includes('sn1') || m.includes('sn2') || m.includes('nucleoph') || m.includes('substitut') || m.includes('reaction')) return RESPONSES.sn;
+  if (m.includes('pandas') || m.includes('dataframe') || m.includes('series')) return RESPONSES.pandas;
+  if (m.includes('groupby') || m.includes('group by') || m.includes('aggregate') || m.includes('grouping')) return RESPONSES.groupby;
+  return RESPONSES.default;
+}
+
+// ── Initialize ──
+const noteData = NOTES[setKey] || NOTES.default;
+let hasChat = false;
+
+// Set title
+document.title = (customTitle || 'Study Set') + ' · Tutor — Studley AI';
+
+// Show content after 1.2s
+setTimeout(() => {
+  const spinner = document.getElementById('spinner');
+  const notes = document.getElementById('notes-content');
+  const leftPanel = document.getElementById('left-panel');
+  if (spinner) spinner.style.display = 'none';
+  notes.innerHTML = noteData;
+  notes.style.display = 'block';
+  leftPanel.classList.add('loaded');
+  renderChips();
+}, 1200);
+
+// ── Chips ──
+const CHIPS = {
+  'organic-chemistry': ['What are hydrocarbons?', 'Explain isomerism', 'SN1 vs SN2?', 'What is aromaticity?'],
+  'pandas-library-fundamentals': ['What is a DataFrame?', 'How does groupby work?', 'How to handle NaN values?', 'Difference between loc and iloc?'],
+  default: ['Explain the main concept', 'What are the key points?', 'Give me a practical example', 'Create a quiz question']
+};
+
+function renderChips() {
+  const chips = CHIPS[setKey] || CHIPS.default;
+  const row = document.getElementById('chips-row');
+  row.innerHTML = chips.map(c =>
+    `<button class="chip" onclick="quickSend('${c}')">${c}</button>`
+  ).join('');
+}
+
+// ── Chat ──
+function send() {
+  const inp = document.getElementById('chat-input');
+  const text = inp.value.trim();
+  if (!text) return;
+
+  // Hide chips + empty state
+  document.getElementById('chips-row').innerHTML = '';
+  const emptyEl = document.getElementById('chat-empty');
+  if (emptyEl) emptyEl.remove();
+
+  // Ensure msgs list exists
+  let msgsList = document.getElementById('msgs-list');
+  if (!msgsList) {
+    msgsList = document.createElement('div');
+    msgsList.id = 'msgs-list';
+    msgsList.className = 'msgs-list';
+    document.getElementById('chat-messages').appendChild(msgsList);
+  }
+
+  addBubble(text, 'user', msgsList);
+  inp.value = '';
+  inp.style.height = 'auto';
+  document.getElementById('send-btn').disabled = true;
+  hasChat = true;
+
+  // Typing
+  const typingRow = document.createElement('div');
+  typingRow.className = 'msg-row';
+  typingRow.id = 'typing';
+  typingRow.innerHTML = `<div class="msg-avatar ai">S</div><div class="msg-bubble ai"><div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+  msgsList.appendChild(typingRow);
+  msgsList.scrollTop = msgsList.scrollHeight;
+
+  const delay = 800 + Math.random() * 600;
+  setTimeout(() => {
+    document.getElementById('typing')?.remove();
+    addBubble(getResponse(text), 'ai', msgsList);
+  }, delay);
+}
+
+function quickSend(text) {
+  document.getElementById('chat-input').value = text;
+  document.getElementById('send-btn').disabled = false;
+  send();
+}
+
+function addBubble(text, role, container) {
+  const row = document.createElement('div');
+  row.className = 'msg-row ' + role;
+  const formatted = text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code style="font-family:monospace;font-size:0.82rem;background:#F3F4F6;padding:1px 5px;border-radius:4px;color:#374151;">$1</code>')
+    .replace(/\n/g, '<br>');
+  row.innerHTML = `<div class="msg-avatar ${role}">${role === 'ai' ? 'S' : 'V'}</div><div class="msg-bubble ${role}">${formatted}</div>`;
+  container.appendChild(row);
+  container.scrollTop = container.scrollHeight;
+}
+
+function resetChat() {
+  const msgs = document.getElementById('chat-messages');
+  msgs.innerHTML = `<div class="chat-empty" id="chat-empty"><svg class="chat-empty-icon" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg><p class="chat-empty-text">Here to help you learn</p></div>`;
+  hasChat = false;
+  renderChips();
+}
+
+function onInput(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 192) + 'px';
+  document.getElementById('send-btn').disabled = !el.value.trim();
+}
+
+// ── Panel toggle ──
+let panelHidden = false;
+function togglePanel() {
+  panelHidden = !panelHidden;
+  document.getElementById('right-panel').classList.toggle('hidden', panelHidden);
+  document.getElementById('resizer').style.display = panelHidden ? 'none' : '';
+}
+
+// ── Resizer ──
+let dragging = false;
+const handle = document.getElementById('resizer-handle');
+const leftPanel = document.getElementById('left-panel');
+const rightPanel = document.getElementById('right-panel');
+const container = document.getElementById('split-container');
+
+handle.addEventListener('mousedown', e => {
+  dragging = true;
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+  e.preventDefault();
+});
+document.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  const rect = container.getBoundingClientRect();
+  const pct = Math.max(30, Math.min(75, ((e.clientX - rect.left) / rect.width) * 100));
+  leftPanel.style.flex = 'none';
+  leftPanel.style.width = pct + '%';
+  rightPanel.style.width = (100 - pct - 1) + '%';
+});
+document.addEventListener('mouseup', () => {
+  if (!dragging) return;
+  dragging = false;
+  document.body.style.cursor = '';
+  document.body.style.userSelect = '';
+});
+</script>
+</body>
+</html>

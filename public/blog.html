@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog — Studley AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; background: #fff; color: #111827; }
+    .btn-orange {
+      background: linear-gradient(to bottom, #FF8040, #FF4D00);
+      box-shadow: 0 4px 14px 0 rgba(255,77,0,0.39);
+      border-top: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      font-weight: 600;
+      border-radius: 12px;
+      transition: all 0.2s;
+      display: inline-block;
+      text-decoration: none;
+    }
+    .btn-orange:hover { filter: brightness(1.1); box-shadow: 0 6px 20px rgba(255,77,0,0.23); }
+    .grad-text {
+      background: linear-gradient(to right, #FF8040, #FF4D00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .logo-text { font-weight: 800; font-size: 1.5rem; letter-spacing: -0.03em; }
+    .section-max { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+    .tag {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .card-hover { transition: transform 0.2s, box-shadow 0.2s; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.1); }
+    .featured-img {
+      width: 100%;
+      height: 240px;
+      object-fit: cover;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #FF8040 0%, #FF4D00 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+    }
+    .post-thumb {
+      width: 100%;
+      height: 180px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header style="position:fixed;top:0;left:0;right:0;z-index:50;background:#fff;border-bottom:1px solid #E5E5E5;height:64px;display:flex;align-items:center;">
+  <div class="section-max" style="width:100%;display:flex;align-items:center;justify-content:space-between;">
+    <a href="index.html" style="text-decoration:none;display:flex;align-items:center;gap:8px;">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <rect width="28" height="28" rx="8" fill="url(#logoGrad)"/>
+        <path d="M8 10h12M8 14h8M8 18h10" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+        <defs><linearGradient id="logoGrad" x1="0" y1="0" x2="28" y2="28"><stop stop-color="#FF8040"/><stop offset="1" stop-color="#FF4D00"/></linearGradient></defs>
+      </svg>
+      <span class="logo-text" style="color:#111827;">Studley</span>
+    </a>
+    <nav style="display:flex;align-items:center;gap:24px;">
+      <a href="#" style="color:#374151;text-decoration:none;font-weight:500;font-size:0.95rem;display:flex;align-items:center;gap:6px;">
+        Vagas
+        <span style="background:#22c55e;color:#fff;font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:999px;">Contratando</span>
+      </a>
+      <a href="blog.html" style="color:#FF4D00;text-decoration:none;font-weight:600;font-size:0.95rem;">Blog</a>
+      <a href="study-sets.html" style="color:#374151;text-decoration:none;font-weight:500;font-size:0.95rem;">Explorar</a>
+      <a href="pricing.html" style="color:#374151;text-decoration:none;font-weight:500;font-size:0.95rem;">Preços</a>
+    </nav>
+    <a href="study-sets.html" class="btn-orange" style="padding:10px 20px;font-size:0.95rem;">Dashboard</a>
+  </div>
+</header>
+
+<!-- HERO -->
+<section style="padding-top:100px;padding-bottom:60px;background:linear-gradient(to bottom,#fff,#FFF0E8,#FFDBCC);">
+  <div class="section-max" style="text-align:center;">
+    <span class="tag" style="background:#FFF0E8;color:#FF4D00;border:1px solid rgba(255,77,0,0.2);margin-bottom:16px;">Blog do Studley</span>
+    <h1 style="font-size:clamp(2.5rem,5vw,4rem);font-weight:800;letter-spacing:-0.03em;line-height:1.1;margin:16px 0 20px;">
+      Dicas para Estudar<br><span class="grad-text">Mais Rápido e Melhor</span>
+    </h1>
+    <p style="font-size:1.1rem;color:#4B5563;max-width:560px;margin:0 auto 32px;">
+      Artigos, guias e estratégias de aprendizado criados por especialistas para te ajudar a dominar qualquer matéria.
+    </p>
+    <!-- Search Bar -->
+    <div style="max-width:480px;margin:0 auto;position:relative;">
+      <input type="text" placeholder="Buscar artigos..." style="width:100%;padding:14px 50px 14px 20px;border:1.5px solid #E5E5E5;border-radius:12px;font-size:1rem;outline:none;font-family:inherit;transition:border-color 0.2s;" onfocus="this.style.borderColor='#FF8040'" onblur="this.style.borderColor='#E5E5E5'">
+      <svg style="position:absolute;right:16px;top:50%;transform:translateY(-50%);color:#9CA3AF;" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- CATEGORY TABS -->
+<section style="padding:20px 0;border-bottom:1px solid #E5E5E5;background:#fff;position:sticky;top:64px;z-index:40;">
+  <div class="section-max">
+    <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;">
+      <button onclick="filterCategory(this,'todos')" class="cat-btn active-cat" style="padding:8px 18px;border-radius:999px;border:1.5px solid #FF4D00;background:#FFF0E8;color:#FF4D00;font-weight:600;font-size:0.875rem;cursor:pointer;white-space:nowrap;">Todos</button>
+      <button onclick="filterCategory(this,'tecnicas')" class="cat-btn" style="padding:8px 18px;border-radius:999px;border:1.5px solid #E5E5E5;background:#fff;color:#374151;font-weight:500;font-size:0.875rem;cursor:pointer;white-space:nowrap;">Técnicas de Estudo</button>
+      <button onclick="filterCategory(this,'ia')" class="cat-btn" style="padding:8px 18px;border-radius:999px;border:1.5px solid #E5E5E5;background:#fff;color:#374151;font-weight:500;font-size:0.875rem;cursor:pointer;white-space:nowrap;">IA & Tecnologia</button>
+      <button onclick="filterCategory(this,'exames')" class="cat-btn" style="padding:8px 18px;border-radius:999px;border:1.5px solid #E5E5E5;background:#fff;color:#374151;font-weight:500;font-size:0.875rem;cursor:pointer;white-space:nowrap;">Provas & Exames</button>
+      <button onclick="filterCategory(this,'produtividade')" class="cat-btn" style="padding:8px 18px;border-radius:999px;border:1.5px solid #E5E5E5;background:#fff;color:#374151;font-weight:500;font-size:0.875rem;cursor:pointer;white-space:nowrap;">Produtividade</button>
+      <button onclick="filterCategory(this,'noticias')" class="cat-btn" style="padding:8px 18px;border-radius:999px;border:1.5px solid #E5E5E5;background:#fff;color:#374151;font-weight:500;font-size:0.875rem;cursor:pointer;white-space:nowrap;">Notícias</button>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURED POST -->
+<section style="padding:60px 0 40px;" id="posts-container">
+  <div class="section-max">
+    <h2 style="font-size:1.1rem;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:24px;">Em Destaque</h2>
+    <article class="card-hover" style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;background:#fff;border:1.5px solid #E5E5E5;border-radius:20px;padding:40px;margin-bottom:60px;" data-category="noticias">
+      <div class="featured-img" style="background:linear-gradient(135deg,#FF8040,#FF4D00);">
+        <span>🎉</span>
+      </div>
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+          <span class="tag" style="background:#FEF3C7;color:#D97706;">Notícias</span>
+          <span style="font-size:0.85rem;color:#9CA3AF;">18 Jul 2025 · 3 min</span>
+        </div>
+        <h2 style="font-size:2rem;font-weight:800;letter-spacing:-0.02em;line-height:1.2;margin-bottom:16px;">
+          Studley AI Atinge 2 Milhões de Usuários — O Que Vem a Seguir
+        </h2>
+        <p style="color:#4B5563;line-height:1.7;margin-bottom:24px;">
+          Atingimos um marco incrível: 2 milhões de estudantes ao redor do mundo usam o Studley AI para aprender mais rápido. Compartilhamos nossa história, os números e o que estamos construindo para o futuro.
+        </p>
+        <div style="display:flex;align-items:center;gap:16px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#FF8040,#FF4D00);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.85rem;">E</div>
+          <div>
+            <p style="font-weight:600;font-size:0.9rem;">Equipe Studley</p>
+            <p style="font-size:0.8rem;color:#9CA3AF;">Team oficial</p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- POSTS GRID -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:28px;" id="posts-grid">
+
+      <!-- Post 1 -->
+      <article class="card-hover" style="border:1.5px solid #E5E5E5;border-radius:16px;overflow:hidden;background:#fff;" data-category="tecnicas">
+        <div class="post-thumb" style="background:linear-gradient(135deg,#667eea,#764ba2);">🧠</div>
+        <div style="padding:24px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <span class="tag" style="background:#EDE9FE;color:#7C3AED;">Técnicas de Estudo</span>
+            <span style="font-size:0.8rem;color:#9CA3AF;">15 Jul 2025 · 7 min</span>
+          </div>
+          <h3 style="font-size:1.2rem;font-weight:700;line-height:1.3;margin-bottom:10px;">A Técnica Pomodoro Turbinada: Como Estudar 3x Mais em Menos Tempo</h3>
+          <p style="font-size:0.9rem;color:#6B7280;line-height:1.6;margin-bottom:16px;">Descubra como combinar a técnica Pomodoro com o Studley AI para maximizar sua retenção e eliminar a procrastinação de vez.</p>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:30px;height:30px;border-radius:50%;background:#EDE9FE;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;color:#7C3AED;">A</div>
+            <span style="font-size:0.85rem;font-weight:500;">Ana Lima</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Post 2 -->
+      <article class="card-hover" style="border:1.5px solid #E5E5E5;border-radius:16px;overflow:hidden;background:#fff;" data-category="ia">
+        <div class="post-thumb" style="background:linear-gradient(135deg,#11998e,#38ef7d);">🤖</div>
+        <div style="padding:24px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <span class="tag" style="background:#D1FAE5;color:#059669;">IA & Tecnologia</span>
+            <span style="font-size:0.8rem;color:#9CA3AF;">12 Jul 2025 · 5 min</span>
+          </div>
+          <h3 style="font-size:1.2rem;font-weight:700;line-height:1.3;margin-bottom:10px;">Como a IA Está Transformando a Forma Como Estudamos em 2025</h3>
+          <p style="font-size:0.9rem;color:#6B7280;line-height:1.6;margin-bottom:16px;">A inteligência artificial mudou completamente o jogo dos estudos. Veja as ferramentas e métodos que estão redefinindo o aprendizado.</p>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:30px;height:30px;border-radius:50%;background:#D1FAE5;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;color:#059669;">M</div>
+            <span style="font-size:0.85rem;font-weight:500;">Marcos Oliveira</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Post 3 -->
+      <article class="card-hover" style="border:1.5px solid #E5E5E5;border-radius:16px;overflow:hidden;background:#fff;" data-category="exames">
+        <div class="post-thumb" style="background:linear-gradient(135deg,#f7971e,#ffd200);">📝</div>
+        <div style="padding:24px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <span class="tag" style="background:#FEF9C3;color:#A16207;">Provas & Exames</span>
+            <span style="font-size:0.8rem;color:#9CA3AF;">8 Jul 2025 · 9 min</span>
+          </div>
+          <h3 style="font-size:1.2rem;font-weight:700;line-height:1.3;margin-bottom:10px;">Guia Definitivo: Como Passar no ENEM com Ajuda da IA</h3>
+          <p style="font-size:0.9rem;color:#6B7280;line-height:1.6;margin-bottom:16px;">Estratégia completa de preparação para o ENEM usando ferramentas de IA: do cronograma de estudos às revisões de véspera.</p>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:30px;height:30px;border-radius:50%;background:#FEF9C3;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;color:#A16207;">P</div>
+            <span style="font-size:0.85rem;font-weight:500;">Pedro Santos</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Post 4 -->
+      <article class="card-hover" style="border:1.5px solid #E5E5E5;border-radius:16px;overflow:hidden;background:#fff;" data-category="produtividade">
+        <div class="post-thumb" style="background:linear-gradient(135deg,#4facfe,#00f2fe);">⚡</div>
+        <div style="padding:24px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <span class="tag" style="background:#DBEAFE;color:#1D4ED8;">Produtividade</span>
+            <span style="font-size:0.8rem;color:#9CA3AF;">5 Jul 2025 · 6 min</span>
+          </div>
+          <h3 style="font-size:1.2rem;font-weight:700;line-height:1.3;margin-bottom:10px;">10 Hábitos de Estudantes que Tiram Nota Máxima Consistentemente</h3>
+          <p style="font-size:0.9rem;color:#6B7280;line-height:1.6;margin-bottom:16px;">Analisamos os padrões de comportamento dos melhores alunos do Brasil. Aqui estão os 10 hábitos que fazem a diferença.</p>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:30px;height:30px;border-radius:50%;background:#DBEAFE;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;color:#1D4ED8;">C</div>
+            <span style="font-size:0.85rem;font-weight:500;">Carla Mendes</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Post 5 -->
+      <article class="card-hover" style="border:1.5px solid #E5E5E5;border-radius:16px;overflow:hidden;background:#fff;" data-category="tecnicas">
+        <div class="post-thumb" style="background:linear-gradient(135deg,#f953c6,#b91d73);">🃏</div>
+        <div style="padding:24px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <span class="tag" style="background:#EDE9FE;color:#7C3AED;">Técnicas de Estudo</span>
+            <span style="font-size:0.8rem;color:#9CA3AF;">2 Jul 2025 · 8 min</span>
+          </div>
+          <h3 style="font-size:1.2rem;font-weight:700;line-height:1.3;margin-bottom:10px;">Flashcards com Spaced Repetition: A Ciência Por Trás da Memorização</h3>
+          <p style="font-size:0.9rem;color:#6B7280;line-height:1.6;margin-bottom:16px;">A repetição espaçada é o método cientificamente comprovado mais eficaz para memorização de longo prazo. Entenda como funciona.</p>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:30px;height:30px;border-radius:50%;background:#EDE9FE;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;color:#7C3AED;">R</div>
+            <span style="font-size:0.85rem;font-weight:500;">Renata Costa</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Post 6 -->
+      <article class="card-hover" style="border:1.5px solid #E5E5E5;border-radius:16px;overflow:hidden;background:#fff;" data-category="ia">
+        <div class="post-thumb" style="background:linear-gradient(135deg,#FF8040,#FF4D00);">📚</div>
+        <div style="padding:24px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <span class="tag" style="background:#D1FAE5;color:#059669;">IA & Tecnologia</span>
+            <span style="font-size:0.8rem;color:#9CA3AF;">28 Jun 2025 · 4 min</span>
+          </div>
+          <h3 style="font-size:1.2rem;font-weight:700;line-height:1.3;margin-bottom:10px;">Como Criar Notas Perfeitas com o AI Note Taker do Studley</h3>
+          <p style="font-size:0.9rem;color:#6B7280;line-height:1.6;margin-bottom:16px;">Tutorial passo a passo para usar o recurso de notas com IA do Studley e transformar qualquer aula em um material de estudo completo.</p>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:30px;height:30px;border-radius:50%;background:#FFF0E8;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;color:#FF4D00;">E</div>
+            <span style="font-size:0.85rem;font-weight:500;">Equipe Studley</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Post 7 -->
+      <article class="card-hover" style="border:1.5px solid #E5E5E5;border-radius:16px;overflow:hidden;background:#fff;" data-category="produtividade">
+        <div class="post-thumb" style="background:linear-gradient(135deg,#a8edea,#fed6e3);">😴</div>
+        <div style="padding:24px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <span class="tag" style="background:#DBEAFE;color:#1D4ED8;">Produtividade</span>
+            <span style="font-size:0.8rem;color:#9CA3AF;">22 Jun 2025 · 5 min</span>
+          </div>
+          <h3 style="font-size:1.2rem;font-weight:700;line-height:1.3;margin-bottom:10px;">Sono e Aprendizado: Por Que Dormir Bem Aumenta sua Nota em 40%</h3>
+          <p style="font-size:0.9rem;color:#6B7280;line-height:1.6;margin-bottom:16px;">A ciência do sono e seu impacto direto na consolidação da memória. Guia prático para estudantes que querem aprender mais dormindo melhor.</p>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:30px;height:30px;border-radius:50%;background:#DBEAFE;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;color:#1D4ED8;">F</div>
+            <span style="font-size:0.85rem;font-weight:500;">Felipe Rocha</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Post 8 -->
+      <article class="card-hover" style="border:1.5px solid #E5E5E5;border-radius:16px;overflow:hidden;background:#fff;" data-category="exames">
+        <div class="post-thumb" style="background:linear-gradient(135deg,#30cfd0,#330867);">🎓</div>
+        <div style="padding:24px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <span class="tag" style="background:#FEF9C3;color:#A16207;">Provas & Exames</span>
+            <span style="font-size:0.8rem;color:#9CA3AF;">18 Jun 2025 · 10 min</span>
+          </div>
+          <h3 style="font-size:1.2rem;font-weight:700;line-height:1.3;margin-bottom:10px;">Preparação para Vestibulares: Cronograma de 6 Meses com IA</h3>
+          <p style="font-size:0.9rem;color:#6B7280;line-height:1.6;margin-bottom:16px;">Plano completo de estudos para os principais vestibulares do Brasil usando Studley AI como seu tutor personalizado.</p>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:30px;height:30px;border-radius:50%;background:#EDE9FE;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;color:#7C3AED;">L</div>
+            <span style="font-size:0.85rem;font-weight:500;">Larissa Vieira</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Post 9 -->
+      <article class="card-hover" style="border:1.5px solid #E5E5E5;border-radius:16px;overflow:hidden;background:#fff;" data-category="tecnicas">
+        <div class="post-thumb" style="background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);">🗺️</div>
+        <div style="padding:24px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <span class="tag" style="background:#EDE9FE;color:#7C3AED;">Técnicas de Estudo</span>
+            <span style="font-size:0.8rem;color:#9CA3AF;">14 Jun 2025 · 6 min</span>
+          </div>
+          <h3 style="font-size:1.2rem;font-weight:700;line-height:1.3;margin-bottom:10px;">Mapas Mentais com IA: Organize Qualquer Conteúdo em Minutos</h3>
+          <p style="font-size:0.9rem;color:#6B7280;line-height:1.6;margin-bottom:16px;">Como usar o Studley para gerar mapas mentais automáticos de qualquer conteúdo e potencializar sua compreensão visual.</p>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:30px;height:30px;border-radius:50%;background:#F0FDF4;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;color:#15803D;">J</div>
+            <span style="font-size:0.85rem;font-weight:500;">João Paulo</span>
+          </div>
+        </div>
+      </article>
+
+    </div>
+
+    <!-- LOAD MORE -->
+    <div style="text-align:center;margin-top:48px;">
+      <button style="padding:14px 32px;border:1.5px solid #E5E5E5;background:#fff;border-radius:12px;font-size:1rem;font-weight:600;color:#374151;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='#FF8040';this.style.color='#FF4D00'" onmouseout="this.style.borderColor='#E5E5E5';this.style.color='#374151'">
+        Carregar mais artigos
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- NEWSLETTER -->
+<section style="padding:80px 0;background:linear-gradient(135deg,#FFF0E8,#FFDBCC);">
+  <div class="section-max" style="text-align:center;max-width:600px;">
+    <span style="font-size:2.5rem;display:block;margin-bottom:16px;">📬</span>
+    <h2 style="font-size:2rem;font-weight:800;letter-spacing:-0.02em;margin-bottom:12px;">Receba dicas toda semana</h2>
+    <p style="color:#6B7280;font-size:1.05rem;margin-bottom:32px;line-height:1.6;">
+      Junte-se a mais de 50.000 estudantes que recebem nossas melhores dicas de estudo e novidades do Studley AI diretamente no e-mail.
+    </p>
+    <div style="display:flex;gap:12px;max-width:440px;margin:0 auto;">
+      <input type="email" placeholder="seu@email.com" style="flex:1;padding:14px 18px;border:1.5px solid #E5E5E5;border-radius:12px;font-size:1rem;outline:none;font-family:inherit;background:#fff;" onfocus="this.style.borderColor='#FF8040'" onblur="this.style.borderColor='#E5E5E5'">
+      <a href="#" class="btn-orange" style="padding:14px 24px;font-size:0.95rem;white-space:nowrap;">Inscrever-se</a>
+    </div>
+    <p style="font-size:0.8rem;color:#9CA3AF;margin-top:12px;">Sem spam. Cancele quando quiser.</p>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section style="padding:80px 0;background:linear-gradient(135deg,#FF8040,#FF4D00);">
+  <div class="section-max" style="text-align:center;">
+    <h2 style="font-size:2.2rem;font-weight:800;color:#fff;margin-bottom:16px;letter-spacing:-0.02em;">
+      Pronto para estudar mais rápido?
+    </h2>
+    <p style="color:rgba(255,255,255,0.85);font-size:1.1rem;margin-bottom:32px;">
+      Mais de 2 milhões de estudantes já usam o Studley AI. Comece grátis hoje.
+    </p>
+    <a href="study-sets.html" style="display:inline-block;padding:16px 40px;background:#fff;color:#FF4D00;font-weight:700;font-size:1.1rem;border-radius:12px;text-decoration:none;box-shadow:0 4px 20px rgba(0,0,0,0.15);transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+      Comece Grátis →
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer style="background:#fff;border-top:1px solid #E5E5E5;padding:48px 0 24px;">
+  <div class="section-max">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px;">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+          <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
+            <rect width="28" height="28" rx="8" fill="url(#footerGrad)"/>
+            <path d="M8 10h12M8 14h8M8 18h10" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+            <defs><linearGradient id="footerGrad" x1="0" y1="0" x2="28" y2="28"><stop stop-color="#FF8040"/><stop offset="1" stop-color="#FF4D00"/></linearGradient></defs>
+          </svg>
+          <span style="font-weight:800;font-size:1.2rem;letter-spacing:-0.03em;">Studley</span>
+        </div>
+        <p style="color:#6B7280;font-size:0.9rem;line-height:1.6;max-width:240px;">A ferramenta de estudo com IA líder para estudantes do mundo todo.</p>
+      </div>
+      <div>
+        <h4 style="font-weight:700;margin-bottom:16px;font-size:0.9rem;">Produto</h4>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <a href="study-sets.html" style="color:#6B7280;text-decoration:none;font-size:0.875rem;">Conjuntos de Estudo</a>
+          <a href="pricing.html" style="color:#6B7280;text-decoration:none;font-size:0.875rem;">Preços</a>
+          <a href="#" style="color:#6B7280;text-decoration:none;font-size:0.875rem;">Extensão Chrome</a>
+          <a href="#" style="color:#6B7280;text-decoration:none;font-size:0.875rem;">App Mobile</a>
+        </div>
+      </div>
+      <div>
+        <h4 style="font-weight:700;margin-bottom:16px;font-size:0.9rem;">Empresa</h4>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <a href="blog.html" style="color:#FF4D00;text-decoration:none;font-size:0.875rem;font-weight:500;">Blog</a>
+          <a href="#" style="color:#6B7280;text-decoration:none;font-size:0.875rem;">Vagas</a>
+          <a href="#" style="color:#6B7280;text-decoration:none;font-size:0.875rem;">Sobre nós</a>
+        </div>
+      </div>
+      <div>
+        <h4 style="font-weight:700;margin-bottom:16px;font-size:0.9rem;">Jurídico</h4>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <a href="#" style="color:#6B7280;text-decoration:none;font-size:0.875rem;">Termos de Uso</a>
+          <a href="#" style="color:#6B7280;text-decoration:none;font-size:0.875rem;">Privacidade</a>
+          <a href="#" style="color:#6B7280;text-decoration:none;font-size:0.875rem;">Cookies</a>
+        </div>
+      </div>
+    </div>
+    <div style="border-top:1px solid #E5E5E5;padding-top:24px;display:flex;align-items:center;justify-content:space-between;">
+      <p style="color:#9CA3AF;font-size:0.85rem;">© 2025 Studley AI. Todos os direitos reservados.</p>
+      <p style="color:#9CA3AF;font-size:0.85rem;">Feito com ❤️ para estudantes do Brasil</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  function filterCategory(btn, category) {
+    // Update active button style
+    document.querySelectorAll('.cat-btn').forEach(b => {
+      b.style.borderColor = '#E5E5E5';
+      b.style.background = '#fff';
+      b.style.color = '#374151';
+      b.style.fontWeight = '500';
+    });
+    btn.style.borderColor = '#FF4D00';
+    btn.style.background = '#FFF0E8';
+    btn.style.color = '#FF4D00';
+    btn.style.fontWeight = '600';
+
+    // Filter posts
+    document.querySelectorAll('#posts-grid article').forEach(article => {
+      if (category === 'todos' || article.dataset.category === category) {
+        article.style.display = 'block';
+      } else {
+        article.style.display = 'none';
+      }
+    });
+
+    // Show/hide featured based on category
+    const featured = document.querySelector('[data-category="noticias"]');
+    if (featured && featured !== document.querySelector('#posts-grid article')) {
+      featured.style.display = (category === 'todos' || category === 'noticias') ? 'grid' : 'none';
+    }
+  }
+</script>
+</body>
+</html>

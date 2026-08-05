@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="pt-BR" style="background:#fff;color:initial;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Studley AI – A Ferramenta de Estudo com IA #1 | Mande nas Provas</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['-apple-system','BlinkMacSystemFont','"SF Pro Display"','"Segoe UI"','Roboto','sans-serif'],
+          },
+          colors: {
+            orange: { primary: '#FF4D00', light: '#FF8040' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap');
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; }
+    .font-satoshi { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; }
+    .btn-orange {
+      background: linear-gradient(to bottom, #FF8040, #FF4D00);
+      box-shadow: 0 4px 14px 0 rgba(255,77,0,0.39);
+      border-top: 1px solid rgba(255,255,255,0.2);
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-orange:hover {
+      box-shadow: 0 6px 20px rgba(255,77,0,0.23);
+      filter: brightness(1.1);
+    }
+    .btn-orange::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.3);
+      pointer-events: none;
+    }
+    .btn-orange-inner-glow {
+      position: absolute;
+      inset-x: 0;
+      top: 0;
+      height: 50%;
+      border-radius: inherit;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.2), transparent);
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .grad-text {
+      background: linear-gradient(to right, #FF8040, #FF4D00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .underline-hover:hover { text-decoration: underline; }
+    @keyframes shimmer-badge {
+      0%,100% { transform: translateX(-200%); }
+      50% { transform: translateX(300%); }
+    }
+    .animate-shimmer-badge { animation: shimmer-badge 3s ease-in-out infinite; }
+    @keyframes subtle-flow {
+      0% { left: -100%; opacity: 0; }
+      50% { opacity: 0.5; }
+      100% { left: 200%; opacity: 0; }
+    }
+    .animate-flow { animation: subtle-flow 3s ease-in-out infinite; }
+    .accordion-content { display: none; }
+    .accordion-item.open .accordion-content { display: block; }
+    .accordion-item.open .accordion-arrow { transform: rotate(180deg); }
+    .accordion-arrow { transition: transform 0.2s; }
+    .faq-content { display: none; }
+    .faq-item.open .faq-content { display: block; }
+    .faq-item.open .faq-arrow { transform: rotate(180deg); }
+    .faq-arrow { transition: transform 0.2s; }
+    .card-hover { transition: transform 0.2s, box-shadow 0.2s; }
+    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
+    .logo-text { font-weight: 800; font-size: 1.5rem; letter-spacing: -0.03em; }
+    .progress-bar-fill { height: 100%; border-radius: 9999px; background-color: #1754D8; transition: width 0.3s; }
+    .section-max { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+  </style>
+</head>
+<body class="bg-white text-gray-900">
+
+<!-- FIXED HEADER -->
+<header class="fixed left-0 top-0 h-16 w-full bg-white z-50 border-b border-gray-100">
+  <div class="mx-auto h-full w-full max-w-[1500px] px-5 md:w-[85%] lg:w-[75%]">
+    <div class="flex h-full w-full items-center justify-between gap-4">
+      <!-- Logo -->
+      <a href="index.html" class="flex items-center gap-1.5">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="28" height="28" rx="8" fill="url(#logo-grad)"/>
+          <path d="M8 10h12M8 14h8M8 18h10" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+          <defs>
+            <linearGradient id="logo-grad" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#FF8040"/>
+              <stop offset="1" stop-color="#FF4D00"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <span class="logo-text" style="background:linear-gradient(to right,#FF8040,#FF4D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Studley</span>
+      </a>
+
+      <!-- Nav -->
+      <nav class="hidden md:flex items-center gap-8">
+        <a class="underline-hover flex items-center gap-1.5 text-base font-medium text-gray-900" href="#">
+          Vagas
+          <span class="rounded-md px-2 py-[3px] text-[10px] font-semibold leading-none border border-green-200 bg-green-50 text-green-600">Contratando</span>
+        </a>
+        <a class="underline-hover text-base font-medium text-gray-900" href="blog.html">Blog</a>
+        <a class="underline-hover text-base font-medium text-gray-900" href="study-sets.html">Explorar</a>
+        <a class="underline-hover text-base font-medium text-gray-900" href="pricing.html">Preços</a>
+      </nav>
+
+      <!-- Dashboard button -->
+      <div class="hidden md:block">
+        <a href="study-sets.html" class="btn-orange text-white font-medium px-5 py-2 text-sm rounded-xl transition-all duration-200 active:scale-[0.98] inline-block">
+          <div class="btn-orange-inner-glow"></div>
+          <span class="relative z-10">Dashboard</span>
+        </a>
+      </div>
+
+      <!-- Mobile hamburger -->
+      <button class="md:hidden flex flex-col gap-1.5 p-1" aria-label="Menu">
+        <span class="block h-0.5 w-6 bg-black"></span>
+        <span class="block h-0.5 w-6 bg-black"></span>
+        <span class="block h-0.5 w-6 bg-black"></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section class="relative flex min-h-screen flex-col lg:h-screen" style="background: linear-gradient(to bottom, #ffffff, #FFF0E8, #FFDBCC);">
+    <div class="relative z-10 mx-auto flex h-full w-full max-w-[1500px] flex-col justify-end px-5 pb-16 pt-20 md:w-[85%] lg:w-[75%] lg:justify-center lg:pb-0 lg:pt-0">
+
+      <!-- Mobile hero -->
+      <div class="py-8 lg:hidden">
+        <div class="text-center">
+          <!-- Badge -->
+          <div class="mb-4 flex items-center justify-center gap-2">
+            <a class="relative flex items-center gap-2.5 overflow-hidden rounded-full px-5 py-2 shadow-sm transition-all duration-300 hover:scale-[1.02] border border-orange-300/60 bg-orange-50 hover:bg-orange-100/80" href="#">
+              <span class="animate-shimmer-badge absolute inset-0 pointer-events-none" style="background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.7) 50%,transparent 100%);width:40%;"></span>
+              <span class="relative z-10 text-lg">🎉</span>
+              <span class="relative z-10 text-[15px] font-semibold text-orange-800">Acabamos de atingir 2 milhões de usuários!</span>
+              <svg class="relative z-10 h-4 w-4 text-orange-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+          <h1 class="font-satoshi mb-6 text-[10vw] font-bold leading-[1.1] tracking-[-0.03em] text-gray-900 mx-auto w-[100%] text-center">
+            Aprenda Mais Rápido...<br>
+            <span class="grad-text">Muito Mais Rápido</span>
+          </h1>
+          <p class="text-base text-gray-900 mb-6 font-medium">Studley AI é a ferramenta de estudo com IA #1 e Anotador com IA — Mande nas provas e elimine as tarefas 10x mais rápido.</p>
+          <div class="flex flex-col items-center gap-4">
+            <a href="study-sets.html" class="btn-orange text-white font-medium px-8 py-3.5 text-lg rounded-xl transition-all duration-200 active:scale-[0.98] inline-block">
+              <div class="btn-orange-inner-glow"></div>
+              <span class="relative z-10">Comece a aprender mais rápido →</span>
+            </a>
+            <div class="flex flex-col items-center">
+              <div class="flex -space-x-1.5">
+                <div class="w-8 h-8 rounded-full bg-orange-300 border-2 border-white flex items-center justify-center text-xs font-bold text-white">J</div>
+                <div class="w-8 h-8 rounded-full bg-blue-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white">Y</div>
+                <div class="w-8 h-8 rounded-full bg-green-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white">K</div>
+                <div class="w-8 h-8 rounded-full bg-purple-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white">R</div>
+                <div class="w-8 h-8 rounded-full bg-pink-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white">S</div>
+                <div class="w-8 h-8 rounded-full bg-yellow-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white">E</div>
+              </div>
+              <p class="mt-2 font-medium text-gray-900">Amado por mais de 2.000.000 de estudantes</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Desktop hero: 2 columns -->
+      <div class="hidden h-full items-center justify-center lg:flex">
+        <div class="grid w-full items-center lg:grid-cols-2 gap-12">
+          <!-- Left col -->
+          <div>
+            <!-- Badge -->
+            <div class="flex items-center mb-5">
+              <a class="relative flex items-center gap-2.5 overflow-hidden rounded-full px-5 py-2 shadow-sm transition-all duration-300 hover:scale-[1.02] border border-orange-300/60 bg-orange-50 hover:bg-orange-100/80" href="#">
+                <span class="animate-shimmer-badge absolute inset-0 pointer-events-none" style="background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.7) 50%,transparent 100%);width:40%;"></span>
+                <span class="relative z-10 text-lg">🎉</span>
+                <span class="relative z-10 font-semibold text-orange-800">Acabamos de atingir 2 milhões de usuários!</span>
+                <svg class="relative z-10 h-4 w-4 text-orange-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+              </a>
+            </div>
+
+            <h1 class="font-satoshi text-[clamp(40px,4.5vw,76px)] font-bold text-gray-900 leading-[0.9] tracking-[-0.03em] mb-6">
+              Learn Faster...<br>
+              <span class="grad-text">Like, a Lot Faster</span>
+            </h1>
+
+            <p class="text-[clamp(16px,1.4vw,20px)] text-gray-700 mb-8">
+              Studley AI é a ferramenta de estudo com IA #1 e Anotador com IA — Mande nas provas e elimine as tarefas 10x mais rápido.
+            </p>
+
+            <div class="flex items-center gap-4 mb-8">
+              <a href="study-sets.html" class="btn-orange text-white font-medium px-8 py-4 text-xl rounded-xl transition-all duration-200 active:scale-[0.98] inline-block">
+                <div class="btn-orange-inner-glow"></div>
+                <span class="relative z-10">Comece a aprender mais rápido →</span>
+              </a>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="flex -space-x-1.5">
+                <div class="w-8 h-8 rounded-full bg-orange-300 border-2 border-white flex items-center justify-center text-xs font-bold text-white">J</div>
+                <div class="w-8 h-8 rounded-full bg-blue-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white">Y</div>
+                <div class="w-8 h-8 rounded-full bg-green-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white">K</div>
+                <div class="w-8 h-8 rounded-full bg-purple-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white">R</div>
+                <div class="w-8 h-8 rounded-full bg-pink-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white">S</div>
+                <div class="w-8 h-8 rounded-full bg-yellow-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white">E</div>
+              </div>
+              <p class="font-medium text-gray-900">Amado por mais de 2.000.000 de estudantes</p>
+            </div>
+          </div>
+
+          <!-- Right col: App mockup -->
+          <div class="flex justify-center">
+            <div class="w-full max-w-[460px] border border-[#E5E5E5] bg-white rounded-2xl shadow-xl overflow-hidden">
+              <!-- Card header -->
+              <div class="border-b border-[#E5E5E5] bg-white px-4 py-3">
+                <h3 class="text-lg font-semibold text-gray-900">Fundamentos de Química Orgânica</h3>
+              </div>
+              <!-- Card body -->
+              <div class="bg-white px-4 py-4">
+                <div class="mb-6 grid gap-3">
+                  <div class="flex items-center gap-3">
+                    <div class="border border-[#E5E5E5] bg-gray-50/50 text-gray-900 flex h-8 w-9 items-center justify-center rounded-lg font-medium text-sm">33</div>
+                    <div class="border-red-100 bg-red-50 text-red-600 flex h-8 items-center rounded-lg border px-3 text-sm font-medium" style="flex-basis:50%">Desconhecido</div>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <div class="border border-[#E5E5E5] bg-gray-50/50 text-gray-900 flex h-8 w-9 items-center justify-center rounded-lg font-medium text-sm">2</div>
+                    <div class="border-orange-100 bg-orange-50 text-orange-600 flex h-8 items-center rounded-lg border px-3 text-sm font-medium" style="flex-basis:15%">Aprendendo</div>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <div class="border border-[#E5E5E5] bg-gray-50/50 text-gray-900 flex h-8 w-9 items-center justify-center rounded-lg font-medium text-sm">2</div>
+                    <div class="border-blue-100 bg-blue-50 text-blue-600 flex h-8 items-center rounded-lg border px-3 text-sm font-medium" style="flex-basis:15%">Familiar</div>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <div class="border border-[#E5E5E5] bg-gray-50/50 text-gray-900 flex h-8 w-9 items-center justify-center rounded-lg font-medium text-sm">29</div>
+                    <div class="border-green-100 bg-green-50 text-green-600 flex h-8 items-center rounded-lg border px-3 text-sm font-medium" style="flex-basis:45%">Dominado</div>
+                  </div>
+                </div>
+              </div>
+              <!-- Card footer -->
+              <div class="border-t border-[#E5E5E5] bg-white px-4 py-3">
+                <div class="text-sm text-gray-600 mb-2 font-medium">Seu caminho para o domínio</div>
+                <div class="mb-3 flex items-center gap-3">
+                  <div class="h-2.5 w-full rounded-full bg-gray-200 overflow-hidden">
+                    <div class="progress-bar-fill" style="width:44%"></div>
+                  </div>
+                  <div class="text-sm font-semibold text-gray-900 whitespace-nowrap">44%</div>
+                </div>
+                <div class="flex items-center justify-center gap-2.5">
+                  <!-- Icon buttons -->
+                  <button class="bg-[#FA4616]/20 text-[#FA4616] rounded-lg p-3" title="Tutor Lesson">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>
+                  </button>
+                  <button class="bg-[#FA4616]/20 text-[#FA4616] rounded-lg p-3" title="Flashcards">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>
+                  </button>
+                  <button class="bg-[#FA4616]/20 text-[#FA4616] rounded-lg p-3" title="Quiz">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg>
+                  </button>
+                  <button class="bg-[#FA4616]/20 text-[#FA4616] rounded-lg p-3" title="Written Test">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
+                  </button>
+                  <button class="bg-[#FA4616]/20 text-[#FA4616] rounded-lg p-3" title="Notes">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 12h-5"/><path d="M15 8h-5"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- UNIVERSITY LOGOS -->
+  <section class="py-12 bg-white border-t border-gray-100">
+    <div class="section-max">
+      <p class="text-center text-gray-500 font-medium mb-8 text-sm uppercase tracking-wide">Estudantes das principais universidades confiam na nossa poderosa ferramenta de estudo com IA</p>
+      <div class="flex flex-wrap items-center justify-center gap-8 opacity-60 grayscale">
+        <!-- MIT -->
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 bg-gray-800 rounded flex items-center justify-center">
+            <span class="text-white text-[10px] font-black">MIT</span>
+          </div>
+        </div>
+        <!-- Yale -->
+        <div class="flex items-center">
+          <span class="text-2xl font-bold text-gray-800 tracking-tight">Yale</span>
+        </div>
+        <!-- UT Austin -->
+        <div class="flex items-center gap-1">
+          <div class="w-7 h-7 bg-gray-700 rounded-full flex items-center justify-center">
+            <span class="text-white text-[9px] font-bold">UT</span>
+          </div>
+          <span class="text-sm font-bold text-gray-700">AUSTIN</span>
+        </div>
+        <!-- Cornell -->
+        <div class="flex items-center">
+          <span class="text-xl font-bold text-gray-800">Cornell</span>
+        </div>
+        <!-- Stanford -->
+        <div class="flex items-center">
+          <span class="text-xl font-bold text-gray-800">Stanford</span>
+        </div>
+        <!-- Harvard -->
+        <div class="flex items-center">
+          <span class="text-xl font-bold text-gray-800">Harvard</span>
+        </div>
+        <!-- Princeton -->
+        <div class="flex items-center">
+          <span class="text-xl font-bold text-gray-800">Princeton</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="py-20 bg-white">
+    <div class="section-max">
+      <h2 class="text-center text-3xl font-bold text-gray-900 mb-4">Como funciona</h2>
+      <p class="text-center text-gray-500 mb-12">Faça upload de qualquer material de estudo e o Studley transforma em poderosas ferramentas de aprendizagem</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Card 1: Notes -->
+        <div class="card-hover border border-[#E5E5E5] rounded-2xl overflow-hidden bg-white p-6">
+          <div class="mb-4 w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
+            <svg width="20" height="20" fill="none" stroke="#FF4D00" stroke-width="2.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <h3 class="font-bold text-lg text-gray-900 mb-2">Notas Interativas com IA</h3>
+          <p class="text-gray-500 text-sm mb-4">Faça upload de qualquer PDF, vídeo ou áudio e obtenha notas interativas e bem estruturadas em segundos.</p>
+          <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <div class="space-y-2">
+              <div class="h-3 bg-gray-200 rounded-full w-full"></div>
+              <div class="h-3 bg-gray-200 rounded-full w-4/5"></div>
+              <div class="h-3 bg-orange-100 rounded-full w-3/5"></div>
+              <div class="h-3 bg-gray-200 rounded-full w-full"></div>
+              <div class="h-3 bg-gray-200 rounded-full w-2/3"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Card 2: Flashcards -->
+        <div class="card-hover border border-[#E5E5E5] rounded-2xl overflow-hidden bg-white p-6">
+          <div class="mb-4 w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+            <svg width="20" height="20" fill="none" stroke="#3B82F6" stroke-width="2.5" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+          </div>
+          <h3 class="font-bold text-lg text-gray-900 mb-2">Flashcards Inteligentes</h3>
+          <p class="text-gray-500 text-sm mb-4">Flashcards gerados por IA com repetição espaçada para maximizar a retenção e o desempenho nas provas.</p>
+          <div class="bg-blue-50 rounded-xl p-4 border border-blue-100 text-center">
+            <div class="text-sm font-medium text-blue-700 mb-2">Qual é a usina de energia da célula?</div>
+            <div class="bg-white rounded-lg p-2 text-sm text-gray-700 font-medium shadow-sm">Mitocôndria</div>
+          </div>
+        </div>
+        <!-- Card 3: Quiz -->
+        <div class="card-hover border border-[#E5E5E5] rounded-2xl overflow-hidden bg-white p-6">
+          <div class="mb-4 w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
+            <svg width="20" height="20" fill="none" stroke="#22C55E" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+          </div>
+          <h3 class="font-bold text-lg text-gray-900 mb-2">Gerador de Quiz com IA</h3>
+          <p class="text-gray-500 text-sm mb-4">Pratique com questões de múltipla escolha, lacunas e testes escritos adaptados ao seu nível.</p>
+          <div class="bg-green-50 rounded-xl p-4 border border-green-100 space-y-2">
+            <div class="bg-white rounded-lg px-3 py-2 text-sm text-gray-700 border border-green-200">A) Mitocôndria ✓</div>
+            <div class="bg-white rounded-lg px-3 py-2 text-sm text-gray-400 border border-gray-100">B) Núcleo</div>
+          </div>
+        </div>
+        <!-- Card 4: Podcast -->
+        <div class="card-hover border border-[#E5E5E5] rounded-2xl overflow-hidden bg-white p-6">
+          <div class="mb-4 w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
+            <svg width="20" height="20" fill="none" stroke="#A855F7" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          </div>
+          <h3 class="font-bold text-lg text-gray-900 mb-2">Podcasts de Estudo</h3>
+          <p class="text-gray-500 text-sm mb-4">Transforme suas notas em podcasts de áudio envolventes — estude em movimento, em qualquer lugar, a qualquer hora.</p>
+          <div class="bg-purple-50 rounded-xl p-4 border border-purple-100">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-purple-200 flex items-center justify-center">
+                <svg width="16" height="16" fill="#A855F7" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </div>
+              <div class="flex-1">
+                <div class="h-2 bg-purple-200 rounded-full w-full mb-1"><div class="h-full w-1/3 bg-purple-500 rounded-full"></div></div>
+                <div class="flex justify-between text-xs text-purple-400"><span>1:24</span><span>4:30</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUSTED BY -->
+  <section class="py-20 bg-gray-50">
+    <div class="section-max text-center">
+      <div class="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-full px-4 py-2 mb-6">
+        <svg width="16" height="16" fill="#FF4D00" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <span class="text-sm font-semibold text-orange-800">Confiado por estudantes no mundo todo</span>
+      </div>
+      <h2 class="text-5xl font-bold text-gray-900 mb-4">1.000.000+</h2>
+      <p class="text-xl text-gray-500 mb-12">estudantes confiam no Studley AI para mandar nas provas</p>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="card-hover bg-white border border-[#E5E5E5] rounded-2xl p-6 text-left">
+          <div class="flex items-center gap-1 mb-3">
+            <span class="text-yellow-400">★★★★★</span>
+          </div>
+          <p class="text-gray-700 text-sm mb-4">"O Studley salvou meu semestre. Passei de reprovada para tirar nota máxima na prova de bioquímica em apenas duas semanas!"</p>
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-orange-300 flex items-center justify-center text-white text-xs font-bold">S</div>
+            <div><p class="text-sm font-semibold text-gray-900">Sarah M.</p><p class="text-xs text-gray-500">Estudante de Medicina, Stanford</p></div>
+          </div>
+        </div>
+        <div class="card-hover bg-white border border-[#E5E5E5] rounded-2xl p-6 text-left">
+          <div class="flex items-center gap-1 mb-3">
+            <span class="text-yellow-400">★★★★★</span>
+          </div>
+          <p class="text-gray-700 text-sm mb-4">"Os flashcards gerados por IA são incríveis. Estudo em metade do tempo e lembro o dobro do conteúdo."</p>
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-blue-400 flex items-center justify-center text-white text-xs font-bold">J</div>
+            <div><p class="text-sm font-semibold text-gray-900">James K.</p><p class="text-xs text-gray-500">Estudante de TI, MIT</p></div>
+          </div>
+        </div>
+        <div class="card-hover bg-white border border-[#E5E5E5] rounded-2xl p-6 text-left">
+          <div class="flex items-center gap-1 mb-3">
+            <span class="text-yellow-400">★★★★★</span>
+          </div>
+          <p class="text-gray-700 text-sm mb-4">"Ouço meus podcasts de estudo no trajeto do trabalho. Tirei nota máxima em todas as provas de direito este semestre!"</p>
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-green-400 flex items-center justify-center text-white text-xs font-bold">A</div>
+            <div><p class="text-sm font-semibold text-gray-900">Amara T.</p><p class="text-xs text-gray-500">Estudante de Direito, Yale</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHAT YOU CAN DO -->
+  <section class="py-20 bg-white">
+    <div class="section-max">
+      <div class="max-w-3xl mx-auto">
+        <h2 class="text-3xl font-bold text-gray-900 mb-4 text-center">O que você pode fazer com o Studley</h2>
+        <p class="text-gray-500 text-center mb-12">Tudo o que você precisa para dominar qualquer matéria, em um só lugar</p>
+        <div class="space-y-3" id="accordion">
+          <!-- Item 1 -->
+          <div class="accordion-item open border border-[#E5E5E5] rounded-2xl overflow-hidden">
+            <button class="accordion-toggle w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleAccordion(this)">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
+                  <svg width="18" height="18" fill="none" stroke="#FF4D00" stroke-width="2.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </div>
+                <span class="font-semibold text-gray-900">Anotador com IA</span>
+              </div>
+              <svg class="accordion-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="accordion-content px-6 pb-4">
+              <p class="text-gray-500 text-sm">Faça upload de qualquer PDF, gravação de aula, vídeo do YouTube ou site e obtenha notas com IA bem estruturadas na hora. Inclui conceitos-chave, resumos e termos importantes em destaque.</p>
+            </div>
+          </div>
+          <!-- Item 2 -->
+          <div class="accordion-item border border-[#E5E5E5] rounded-2xl overflow-hidden">
+            <button class="accordion-toggle w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleAccordion(this)">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                  <svg width="18" height="18" fill="none" stroke="#3B82F6" stroke-width="2.5" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+                </div>
+                <span class="font-semibold text-gray-900">Flashcards &amp; Estudo Inteligente</span>
+              </div>
+              <svg class="accordion-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="accordion-content px-6 pb-4">
+              <p class="text-gray-500 text-sm">Flashcards gerados por IA com tecnologia de repetição espaçada. Acompanhe seu progresso com os estados Desconhecido, Aprendendo, Familiar e Dominado. Estude com mais inteligência, não com mais esforço.</p>
+            </div>
+          </div>
+          <!-- Item 3 -->
+          <div class="accordion-item border border-[#E5E5E5] rounded-2xl overflow-hidden">
+            <button class="accordion-toggle w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleAccordion(this)">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
+                  <svg width="18" height="18" fill="none" stroke="#22C55E" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                </div>
+                <span class="font-semibold text-gray-900">Quiz com IA &amp; Simulados</span>
+              </div>
+              <svg class="accordion-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="accordion-content px-6 pb-4">
+              <p class="text-gray-500 text-sm">Gere simulados ilimitados: múltipla escolha, lacunas e testes escritos. Obtenha explicações detalhadas para cada resposta e aprofunde seu entendimento.</p>
+            </div>
+          </div>
+          <!-- Item 4 -->
+          <div class="accordion-item border border-[#E5E5E5] rounded-2xl overflow-hidden">
+            <button class="accordion-toggle w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleAccordion(this)">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
+                  <svg width="18" height="18" fill="none" stroke="#A855F7" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+                </div>
+                <span class="font-semibold text-gray-900">Criador de Podcast de Estudo</span>
+              </div>
+              <svg class="accordion-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="accordion-content px-6 pb-4">
+              <p class="text-gray-500 text-sm">Transforme seus materiais de estudo em podcasts de áudio envolventes. Ouça no trajeto, durante exercícios ou relaxando — transforme qualquer tempo livre em tempo de estudo.</p>
+            </div>
+          </div>
+          <!-- Item 5 -->
+          <div class="accordion-item border border-[#E5E5E5] rounded-2xl overflow-hidden">
+            <button class="accordion-toggle w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleAccordion(this)">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-yellow-50 flex items-center justify-center flex-shrink-0">
+                  <svg width="18" height="18" fill="none" stroke="#EAB308" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                </div>
+                <span class="font-semibold text-gray-900">Apoio a Pesquisas &amp; Tarefas</span>
+              </div>
+              <svg class="accordion-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="accordion-content px-6 pb-4">
+              <p class="text-gray-500 text-sm">Obtenha ajuda instantânea com tarefas, trabalhos de pesquisa e resolução de problemas complexos. O tutor com IA do Studley explica conceitos passo a passo de um jeito que faz sentido para você.</p>
+            </div>
+          </div>
+          <!-- Item 6 -->
+          <div class="accordion-item border border-[#E5E5E5] rounded-2xl overflow-hidden">
+            <button class="accordion-toggle w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleAccordion(this)">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
+                  <svg width="18" height="18" fill="none" stroke="#EF4444" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                </div>
+                <span class="font-semibold text-gray-900">Acompanhamento de Progresso &amp; Análises</span>
+              </div>
+              <svg class="accordion-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="accordion-content px-6 pb-4">
+              <p class="text-gray-500 text-sm">Acompanhe seu progresso de aprendizagem com análises detalhadas. Veja quais tópicos precisam de mais atenção e receba recomendações personalizadas para otimizar suas sessões de estudo.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACCESS ANYWHERE -->
+  <section class="py-20 bg-gray-50">
+    <div class="section-max">
+      <div class="text-center mb-12">
+        <div class="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-full px-4 py-2 mb-4">
+          <span class="text-sm font-bold text-orange-700">24/7</span>
+          <span class="text-sm text-orange-600">Disponível sempre</span>
+        </div>
+        <h2 class="text-3xl font-bold text-gray-900 mb-4">Acesse o Studley AI<br>Em Qualquer Lugar, A Qualquer Hora</h2>
+        <p class="text-gray-500">Web, iOS, Android — seu companheiro de estudo com IA está sempre com você</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="card-hover bg-white border border-[#E5E5E5] rounded-2xl p-6 text-center">
+          <div class="w-16 h-16 bg-gray-100 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+            <svg width="32" height="32" fill="none" stroke="#6B7280" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <h3 class="font-bold text-gray-900 mb-2">App Web</h3>
+          <p class="text-sm text-gray-500">Acesse por qualquer navegador, sem precisar baixar</p>
+        </div>
+        <div class="card-hover bg-white border border-[#E5E5E5] rounded-2xl p-6 text-center">
+          <div class="w-16 h-16 bg-gray-100 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+            <svg width="32" height="32" fill="none" stroke="#6B7280" stroke-width="1.5" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18" stroke-width="2"/></svg>
+          </div>
+          <h3 class="font-bold text-gray-900 mb-2">App iOS</h3>
+          <p class="text-sm text-gray-500">Disponível para iPhone e iPad — estude em movimento</p>
+        </div>
+        <div class="card-hover bg-white border border-[#E5E5E5] rounded-2xl p-6 text-center">
+          <div class="w-16 h-16 bg-gray-100 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+            <svg width="32" height="32" fill="none" stroke="#6B7280" stroke-width="1.5" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6"/></svg>
+          </div>
+          <h3 class="font-bold text-gray-900 mb-2">App Android</h3>
+          <p class="text-sm text-gray-500">Disponível no Google Play para dispositivos Android</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARISON TABLE -->
+  <section class="py-20 bg-white">
+    <div class="section-max">
+      <h2 class="text-3xl font-bold text-gray-900 mb-4 text-center">Por que o Studley AI Supera os Métodos Tradicionais</h2>
+      <p class="text-gray-500 text-center mb-12">Veja por que milhões de estudantes migraram para o Studley AI</p>
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse">
+          <thead>
+            <tr class="border-b-2 border-gray-200">
+              <th class="text-left py-4 px-6 text-gray-500 font-medium w-1/3">Recurso</th>
+              <th class="text-center py-4 px-6">
+                <div class="inline-flex items-center gap-2 bg-orange-50 rounded-xl px-4 py-2">
+                  <span class="font-bold text-orange-700">Studley AI</span>
+                </div>
+              </th>
+              <th class="text-center py-4 px-6 text-gray-400 font-medium">Métodos Tradicionais</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr>
+              <td class="py-4 px-6 text-gray-700 font-medium">Notas instantâneas de qualquer conteúdo</td>
+              <td class="py-4 px-6 text-center"><span class="text-green-500 font-bold text-xl">✓</span></td>
+              <td class="py-4 px-6 text-center"><span class="text-red-400 text-xl">✗</span></td>
+            </tr>
+            <tr>
+              <td class="py-4 px-6 text-gray-700 font-medium">Flashcards gerados por IA</td>
+              <td class="py-4 px-6 text-center"><span class="text-green-500 font-bold text-xl">✓</span></td>
+              <td class="py-4 px-6 text-center"><span class="text-red-400 text-xl">✗</span></td>
+            </tr>
+            <tr>
+              <td class="py-4 px-6 text-gray-700 font-medium">Simulados personalizados</td>
+              <td class="py-4 px-6 text-center"><span class="text-green-500 font-bold text-xl">✓</span></td>
+              <td class="py-4 px-6 text-center"><span class="text-red-400 text-xl">✗</span></td>
+            </tr>
+            <tr>
+              <td class="py-4 px-6 text-gray-700 font-medium">Suporte de tutor com IA 24/7</td>
+              <td class="py-4 px-6 text-center"><span class="text-green-500 font-bold text-xl">✓</span></td>
+              <td class="py-4 px-6 text-center"><span class="text-red-400 text-xl">✗</span></td>
+            </tr>
+            <tr>
+              <td class="py-4 px-6 text-gray-700 font-medium">Podcasts de áudio a partir das notas</td>
+              <td class="py-4 px-6 text-center"><span class="text-green-500 font-bold text-xl">✓</span></td>
+              <td class="py-4 px-6 text-center"><span class="text-red-400 text-xl">✗</span></td>
+            </tr>
+            <tr>
+              <td class="py-4 px-6 text-gray-700 font-medium">Acompanhamento de progresso</td>
+              <td class="py-4 px-6 text-center"><span class="text-green-500 font-bold text-xl">✓</span></td>
+              <td class="py-4 px-6 text-center"><span class="text-orange-400 font-bold">~</span></td>
+            </tr>
+            <tr>
+              <td class="py-4 px-6 text-gray-700 font-medium">Funciona com qualquer formato (PDF, vídeo, áudio)</td>
+              <td class="py-4 px-6 text-center"><span class="text-green-500 font-bold text-xl">✓</span></td>
+              <td class="py-4 px-6 text-center"><span class="text-red-400 text-xl">✗</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="py-20 bg-gray-50">
+    <div class="section-max">
+      <div class="max-w-3xl mx-auto">
+        <h2 class="text-3xl font-bold text-gray-900 mb-12 text-center">Perguntas Frequentes</h2>
+        <div class="space-y-3" id="faq">
+          <div class="faq-item bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
+            <button class="w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleFaq(this)">
+              <span class="font-semibold text-gray-900">O que é o Studley AI?</span>
+              <svg class="faq-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="faq-content px-6 pb-4"><p class="text-gray-500 text-sm">O Studley AI é a ferramenta de estudo com IA #1 que ajuda estudantes a aprender mais rápido e com mais eficiência. Faça upload de qualquer material de estudo e obtenha notas interativas, flashcards, quizzes e podcasts instantaneamente.</p></div>
+          </div>
+          <div class="faq-item bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
+            <button class="w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleFaq(this)">
+              <span class="font-semibold text-gray-900">Quais formatos de arquivo o Studley suporta?</span>
+              <svg class="faq-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="faq-content px-6 pb-4"><p class="text-gray-500 text-sm">O Studley suporta PDFs, documentos Word, apresentações PowerPoint, imagens, arquivos de áudio, arquivos de vídeo, links do YouTube, sites e até gravações de aulas ao vivo.</p></div>
+          </div>
+          <div class="faq-item bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
+            <button class="w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleFaq(this)">
+              <span class="font-semibold text-gray-900">O Studley AI é gratuito?</span>
+              <svg class="faq-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="faq-content px-6 pb-4"><p class="text-gray-500 text-sm">Sim! O Studley AI oferece um plano gratuito com acesso aos recursos principais. Para uso ilimitado e recursos premium, oferecemos planos pagos com preços acessíveis para estudantes.</p></div>
+          </div>
+          <div class="faq-item bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
+            <button class="w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleFaq(this)">
+              <span class="font-semibold text-gray-900">Como o Studley gera notas com IA?</span>
+              <svg class="faq-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="faq-content px-6 pb-4"><p class="text-gray-500 text-sm">O Studley usa modelos de linguagem avançados para analisar seu conteúdo e extrair conceitos-chave, definições e resumos. A IA estrutura as informações de forma otimizada para aprendizagem e retenção.</p></div>
+          </div>
+          <div class="faq-item bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
+            <button class="w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleFaq(this)">
+              <span class="font-semibold text-gray-900">O Studley AI está disponível no celular?</span>
+              <svg class="faq-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="faq-content px-6 pb-4"><p class="text-gray-500 text-sm">Sim! O Studley está disponível no iOS (iPhone e iPad), Android e como app web acessível por qualquer navegador. Seu progresso sincroniza perfeitamente em todos os dispositivos.</p></div>
+          </div>
+          <div class="faq-item bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
+            <button class="w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleFaq(this)">
+              <span class="font-semibold text-gray-900">Posso usar o Studley para qualquer matéria?</span>
+              <svg class="faq-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="faq-content px-6 pb-4"><p class="text-gray-500 text-sm">Com certeza! O Studley funciona para qualquer matéria — de medicina, direito e engenharia a humanidades, idiomas e negócios. Nossa IA se adapta a qualquer conteúdo que você enviar.</p></div>
+          </div>
+          <div class="faq-item bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
+            <button class="w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleFaq(this)">
+              <span class="font-semibold text-gray-900">Qual é a diferença entre o Studley e o ChatGPT?</span>
+              <svg class="faq-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="faq-content px-6 pb-4"><p class="text-gray-500 text-sm">Enquanto o ChatGPT é uma IA de uso geral, o Studley foi desenvolvido especificamente para estudo. Oferecemos ferramentas especializadas como flashcards com repetição espaçada, acompanhamento de progresso, quizzes com IA e geração de podcasts — tudo baseado em ciência do aprendizado comprovada.</p></div>
+          </div>
+          <div class="faq-item bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
+            <button class="w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleFaq(this)">
+              <span class="font-semibold text-gray-900">Meus dados estão seguros com o Studley?</span>
+              <svg class="faq-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="faq-content px-6 pb-4"><p class="text-gray-500 text-sm">Sim. Levamos a privacidade de dados a sério. Seus arquivos e materiais de estudo são criptografados, e nunca vendemos seus dados. Você pode excluir seus dados a qualquer momento.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="py-20" style="background: linear-gradient(135deg, #FF8040 0%, #FF4D00 100%);">
+    <div class="section-max text-center">
+      <h2 class="text-4xl font-bold text-white mb-4">Aprenda Melhor com o Studley</h2>
+      <p class="text-xl text-orange-100 mb-8">A Ferramenta de Estudo com IA Definitiva</p>
+      <a href="study-sets.html" class="bg-white text-[#FF4D00] font-bold px-8 py-4 rounded-xl text-lg hover:bg-orange-50 transition-colors active:scale-[0.98] inline-block">
+        Comece Grátis →
+      </a>
+      <p class="text-orange-200 text-sm mt-4">Sem cartão de crédito · Junte-se a mais de 2.000.000 de estudantes</p>
+    </div>
+  </section>
+</main>
+
+<!-- FOOTER -->
+<footer class="bg-white border-t border-gray-100 py-12">
+  <div class="section-max">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-8 mb-8">
+      <div class="col-span-2">
+        <a href="index.html" class="flex items-center gap-1.5 mb-4">
+          <svg width="24" height="24" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="8" fill="url(#ft-logo-grad)"/><path d="M8 10h12M8 14h8M8 18h10" stroke="white" stroke-width="2.5" stroke-linecap="round"/><defs><linearGradient id="ft-logo-grad" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse"><stop stop-color="#FF8040"/><stop offset="1" stop-color="#FF4D00"/></linearGradient></defs></svg>
+          <span class="font-black text-xl" style="background:linear-gradient(to right,#FF8040,#FF4D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Studley</span>
+        </a>
+        <p class="text-sm text-gray-500 max-w-xs">A ferramenta de estudo com IA #1, confiada por mais de 2.000.000 de estudantes no mundo todo.</p>
+      </div>
+      <div>
+        <h4 class="font-semibold text-gray-900 mb-3 text-sm">Produto</h4>
+        <ul class="space-y-2 text-sm text-gray-500">
+          <li><a href="#" class="hover:text-gray-900">Recursos</a></li>
+          <li><a href="pricing.html" class="hover:text-gray-900">Preços</a></li>
+          <li><a href="#" class="hover:text-gray-900">App iOS</a></li>
+          <li><a href="#" class="hover:text-gray-900">App Android</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-semibold text-gray-900 mb-3 text-sm">Empresa</h4>
+        <ul class="space-y-2 text-sm text-gray-500">
+          <li><a href="blog.html" class="hover:text-gray-900">Blog</a></li>
+          <li><a href="#" class="hover:text-gray-900">Vagas</a></li>
+          <li><a href="#" class="hover:text-gray-900">Explorar</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-semibold text-gray-900 mb-3 text-sm">Jurídico</h4>
+        <ul class="space-y-2 text-sm text-gray-500">
+          <li><a href="#" class="hover:text-gray-900">Política de Privacidade</a></li>
+          <li><a href="#" class="hover:text-gray-900">Termos de Uso</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="border-t border-gray-100 pt-6 text-center">
+      <p class="text-sm text-gray-400">© 2024 Studley AI. Todos os direitos reservados.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  function toggleAccordion(btn) {
+    const item = btn.closest('.accordion-item');
+    item.classList.toggle('open');
+  }
+  function toggleFaq(btn) {
+    const item = btn.closest('.faq-item');
+    item.classList.toggle('open');
+  }
+</script>
+</body>
+</html>

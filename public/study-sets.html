@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Disciplinas – Studley AI</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; background: #FFF; color: #111827; height: 100vh; overflow: hidden; display: flex; }
+
+  /* Sidebar */
+  .sidebar { width: 220px; min-width: 220px; background: #FFE1D9; height: 100vh; display: flex; flex-direction: column; padding: 16px 12px; flex-shrink: 0; }
+  .sidebar-logo { display: flex; align-items: center; gap: 8px; padding: 6px 8px; margin-bottom: 20px; text-decoration: none; margin-top: 4px; }
+  .sidebar-logo-text { font-weight: 800; font-size: 1.4rem; letter-spacing: -0.03em; background: linear-gradient(to right, #FF8040, #FF4D00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.9rem; font-weight: 500; color: #6B2D00; text-decoration: none; transition: background 0.15s; margin-bottom: 2px; }
+  .nav-item:hover { background: rgba(255,255,255,0.5); }
+  .nav-item.active { background: #fff; color: #FF4D00; font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .upgrade-btn { display:block; width:100%; text-align:center; padding:11px 12px; border:none; border-radius:999px; background:linear-gradient(to right,#FF8040,#FF4D00); color:#fff; font-weight:700; font-size:0.85rem; cursor:pointer; margin-bottom:12px; box-shadow:0 4px 14px rgba(255,77,0,0.3); }
+  .user-chip { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:14px; background:#fff; border:1px solid rgba(255,77,0,0.15); cursor:pointer; width:100%; }
+  .avatar { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#FF8040,#FF4D00); color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:700; }
+
+  /* Main */
+  .main { flex: 1; overflow-y: auto; padding: 0 28px 48px; }
+  .hero { text-align:center; padding: 56px 20px 12px; }
+  .hero h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; }
+  .hero p { color:#6B7280; font-size: 0.95rem; margin-top: 10px; }
+
+  .action-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; max-width:700px; margin:28px auto 0; }
+  .action-box { background:#fff; border:1px solid #E9E9E9; border-radius:14px; padding:18px; text-align:left; cursor:pointer; transition:all .18s; }
+  .action-box:hover { border-color:#FF8040; box-shadow:0 6px 20px rgba(255,77,0,.10); transform:translateY(-1px); }
+  .action-box h3 { font-size:0.95rem; font-weight:600; margin:12px 0 6px; }
+  .action-box p { font-size:0.8rem; color:#9CA3AF; line-height:1.4; }
+
+  .section-title { display:flex; align-items:center; gap:10px; font-size:1.05rem; font-weight:600; margin:44px 0 16px; }
+  .section-title::before { content:''; width:3px; height:20px; background:#FF4D00; border-radius:2px; }
+  .section-head { display:flex; align-items:center; justify-content:space-between; }
+  .view-toggle { display:flex; gap:2px; border:1px solid #E9E9E9; border-radius:10px; padding:3px; background:#fff; }
+  .view-toggle button { border:none; background:transparent; padding:5px 8px; border-radius:7px; cursor:pointer; color:#9CA3AF; display:flex; }
+  .view-toggle button.active { background:#F3F4F6; color:#111827; }
+
+  .sets-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:18px; }
+  .set-card { background:#fff; border:1px solid #E9E9E9; border-radius:12px; overflow:hidden; cursor:pointer; transition:all .18s; text-decoration:none; color:inherit; display:block; }
+  .set-card:hover { border-color:#FF8040; box-shadow:0 8px 26px rgba(0,0,0,.06); }
+  .set-card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 16px; border-bottom:1px solid #EFEFEF; }
+  .set-card-head h3 { font-size:1.02rem; font-weight:600; }
+  .type-badge { font-size:0.68rem; font-weight:700; padding:3px 9px; border-radius:999px; background:#FFF0E8; color:#FF4D00; white-space:nowrap; }
+  .meta-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 12px; padding:14px 16px 6px; }
+  .meta-item { font-size:0.76rem; color:#9CA3AF; }
+  .meta-item b { display:block; font-size:0.88rem; font-weight:600; color:#374151; margin-top:2px; }
+  .set-card-foot { padding:10px 16px 14px; }
+  .set-card-foot .lbl { font-size:0.78rem; color:#6B7280; margin-bottom:8px; }
+  .progress-line { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .track { flex:1; height:6px; border-radius:999px; background:#EFEFEF; overflow:hidden; }
+  .fill { height:100%; background:linear-gradient(to right,#FF8040,#FF4D00); border-radius:999px; }
+  .pct { font-size:0.75rem; color:#6B7280; min-width:32px; }
+  .shortcuts { display:flex; flex-wrap:wrap; gap:5px; }
+  .shortcut { border:1px solid #EFEFEF; background:#FAFAFA; border-radius:7px; padding:4px 9px; font-size:0.71rem; color:#6B7280; }
+
+
+  /* Folders panel */
+  .folders { width:280px; min-width:280px; border-left:1px solid #EFEFEF; padding:20px 18px; overflow-y:auto; background:#fff; }
+  .folders-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+  .folders-head h2 { font-size:1.05rem; font-weight:600; }
+  .new-folder { width:100%; display:flex; align-items:center; justify-content:center; gap:8px; padding:11px; border:none; border-radius:10px; background:#2563EB; color:#fff; font-size:0.88rem; font-weight:600; cursor:pointer; margin-bottom:16px; }
+  .folder-item { display:flex; gap:12px; align-items:flex-start; padding:14px 14px; border-radius:10px; cursor:pointer; margin-bottom:10px; border:1px solid #EFEFEF; }
+  .folder-item.active { background:#F5F5F5; border-left:4px solid #111827; }
+  .folder-item.purple { border-left:4px solid #7C3AED; }
+  .folder-item.green { border-left:4px solid #16A34A; }
+  .folder-item .fname { font-size:0.85rem; font-weight:600; }
+  .folder-item .fsub { font-size:0.72rem; color:#9CA3AF; margin-top:2px; }
+
+  /* Modals */
+  .overlay { position:fixed; inset:0; background:rgba(17,24,39,.45); display:none; align-items:center; justify-content:center; z-index:100; padding:20px; }
+  .overlay.open { display:flex; }
+  .modal { background:#fff; border-radius:18px; width:100%; max-width:560px; box-shadow:0 30px 80px rgba(0,0,0,.25); overflow:hidden; }
+  .modal-head { padding:22px 24px 16px; border-bottom:1px solid #EFEFEF; position:relative; }
+  .modal-head h3 { font-size:1.25rem; font-weight:700; }
+  .modal-head p { font-size:0.83rem; color:#6B7280; margin-top:4px; }
+  .modal-close { position:absolute; top:18px; right:20px; border:none; background:transparent; font-size:1.3rem; color:#9CA3AF; cursor:pointer; line-height:1; }
+  .modal-body { padding:22px 24px; }
+  .modal-foot { padding:16px 24px 20px; display:flex; justify-content:flex-end; }
+  .primary-btn { border:none; border-radius:10px; padding:11px 26px; background:linear-gradient(to right,#FF8040,#FF4D00); color:#fff; font-weight:700; font-size:0.92rem; cursor:pointer; box-shadow:0 6px 18px rgba(255,77,0,.3); }
+  .primary-btn.disabled { background:#FBBFA0; box-shadow:none; cursor:not-allowed; }
+  .file-row { display:flex; align-items:center; gap:12px; background:#FAFAFA; border-radius:10px; padding:14px; }
+  .dashed { width:100%; margin-top:14px; border:1.5px dashed #FF8040; border-radius:10px; background:#fff; color:#FF4D00; padding:12px; font-size:0.86rem; cursor:pointer; }
+  .field-label { font-size:0.82rem; color:#374151; margin-bottom:8px; display:block; }
+  .input, .textarea { width:100%; border:1px solid #E9E9E9; border-radius:10px; padding:13px 14px; font-size:0.9rem; font-family:inherit; background:#FAFAFA; }
+  .textarea { min-height:110px; resize:vertical; }
+  .or-div { display:flex; align-items:center; gap:12px; color:#9CA3AF; font-size:0.8rem; margin:18px 0; }
+  .or-div::before, .or-div::after { content:''; flex:1; height:1px; background:#EFEFEF; }
+  .rec-area { background:#FAFAFA; border-radius:12px; padding:28px; text-align:center; }
+  .mic-btn { width:64px; height:64px; border-radius:50%; border:none; background:#FF4D00; color:#fff; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; cursor:pointer; box-shadow:0 8px 20px rgba(255,77,0,.35); }
+  .wave { display:flex; align-items:flex-end; justify-content:center; gap:3px; height:44px; margin-bottom:16px; }
+  .wave span { width:4px; border-radius:2px; background:#FF7043; animation:pulse 1s infinite ease-in-out; }
+  @keyframes pulse { 0%,100%{ transform:scaleY(.4);} 50%{ transform:scaleY(1);} }
+  .ctrl-btn { border:none; border-radius:8px; padding:9px 18px; font-size:0.85rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:8px; }
+  .ctrl-gray { background:#F3F4F6; color:#374151; }
+  .ctrl-red { background:#EF4444; color:#fff; }
+  ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-thumb { background:#E5E5E5; border-radius:3px; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <a href="study-sets.html" class="sidebar-logo">
+    <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="#FF4D00"/><path d="M16 8C16 8 11 14 11 18C11 20.8 13.2 23 16 23C18.8 23 21 20.8 21 18C21 14 16 8 16 8Z" fill="#FF8040"/><circle cx="16" cy="19" r="3" fill="#FFF0E8"/></svg>
+    <span class="sidebar-logo-text">Studley</span>
+  </a>
+  <nav style="flex:1;display:flex;flex-direction:column;gap:2px;">
+    <a href="study-sets.html" class="nav-item active"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Meus Materiais</span></a>
+    <a href="solve.html" class="nav-item"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><span>Resolver</span></a>
+    <a href="paper-grader.html" class="nav-item"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg><span>Corretor de Trabalhos</span></a>
+    <a href="app.html" class="nav-item"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18" stroke-width="2.5" stroke-linecap="round"/></svg><span>App</span></a>
+  </nav>
+  <button class="upgrade-btn" onclick="location.href='pricing.html'">Atualizar para Ilimitado</button>
+  <button class="user-chip" onclick="alert('Perfil em breve!')">
+    <div class="avatar">F</div>
+    <span style="flex:1;text-align:left;font-size:0.88rem;font-weight:500;">Fernando</span>
+    <svg width="14" height="14" fill="none" stroke="#9CA3AF" stroke-width="2.2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+  </button>
+</aside>
+
+<main class="main">
+  <div class="hero">
+    <h1>Ei Fernando, o que você quer dominar?</h1>
+    <p>Envie qualquer coisa e obtenha notas interativas, cartões de memória, questionários e mais</p>
+  </div>
+
+  <div class="action-grid">
+    <button class="action-box" onclick="openModal('upload-modal')">
+      <svg width="22" height="22" fill="none" stroke="#374151" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <h3>Enviar</h3>
+      <p>Imagem, arquivo, áudio, vídeo</p>
+    </button>
+    <button class="action-box" onclick="openModal('paste-modal')">
+      <svg width="22" height="22" fill="none" stroke="#374151" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      <h3>Colar</h3>
+      <p>YouTube, site, texto</p>
+    </button>
+    <button class="action-box" onclick="openModal('record-modal')">
+      <svg width="22" height="22" fill="none" stroke="#374151" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+      <h3>Gravar</h3>
+      <p>Gravar aula ao vivo</p>
+    </button>
+  </div>
+
+  <div class="section-head">
+    <div class="section-title">Meus Materiais</div>
+    <div class="view-toggle">
+      <button class="active"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
+      <button><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></button>
+    </div>
+  </div>
+
+  <div class="sets-grid" id="sets-grid"></div>
+</main>
+
+<aside class="folders">
+  <div class="folders-head">
+    <h2>Pastas</h2>
+    <button style="border:none;background:transparent;cursor:pointer;color:#9CA3AF;">»</button>
+  </div>
+  <button class="new-folder" onclick="alert('Criar nova pasta em breve!')">+ Criar Nova Pasta</button>
+  <div id="folders-list"></div>
+
+</aside>
+
+<!-- Upload modal -->
+<div class="overlay" id="upload-modal" onclick="bgClose(event,'upload-modal')">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Por favor, envie seu arquivo</h3>
+      <p>Transformaremos seu arquivo em material de estudo incrível</p>
+      <button class="modal-close" onclick="closeModal('upload-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="file-row">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="#EF4444"><path d="M6 2h9l5 5v15H6z" opacity=".15"/><path d="M14 2v6h6" fill="none" stroke="#EF4444" stroke-width="2"/><text x="7" y="18" font-size="7" fill="#EF4444" font-weight="bold">PDF</text></svg>
+        <div style="flex:1;">
+          <div style="font-size:0.88rem;font-weight:600;">NuvemCommerce 2026.pdf</div>
+          <div style="font-size:0.75rem;color:#9CA3AF;">13.74 MB</div>
+        </div>
+        <span style="color:#22C55E;">✓</span>
+        <button style="border:none;background:transparent;cursor:pointer;color:#EF4444;">🗑</button>
+      </div>
+      <button class="dashed" onclick="alert('Selecionar arquivo')">+ Adicionar outro arquivo</button>
+    </div>
+    <div class="modal-foot"><button class="primary-btn" onclick="goLesson()">Próximo</button></div>
+  </div>
+</div>
+
+<!-- Paste modal -->
+<div class="overlay" id="paste-modal" onclick="bgClose(event,'paste-modal')">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Adicionar Conteúdo</h3>
+      <p>Digite uma URL ou cole texto para criar seu conjunto de estudo</p>
+      <button class="modal-close" onclick="closeModal('paste-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <label class="field-label">Digite uma URL do YouTube/Site</label>
+      <input class="input" id="paste-url" placeholder="https://youtu.be/dQw4w9WgXcQ" oninput="checkPaste()">
+      <div class="or-div">ou</div>
+      <label class="field-label">Copie e cole texto para adicionar como conteúdo</label>
+      <textarea class="textarea" id="paste-text" placeholder="Cole suas anotações aqui" maxlength="50000" oninput="checkPaste()"></textarea>
+      <div style="text-align:right;font-size:0.75rem;color:#9CA3AF;margin-top:6px;"><span id="paste-count">0</span>/50000</div>
+    </div>
+    <div class="modal-foot"><button class="primary-btn disabled" id="paste-next" onclick="goLesson()">Próximo</button></div>
+  </div>
+</div>
+
+<!-- Record modal -->
+<div class="overlay" id="record-modal" onclick="bgClose(event,'record-modal')">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-head">
+      <h3>Gravar Áudio</h3>
+      <p>Grave sua aula, anotações ou material de estudo</p>
+      <button class="modal-close" onclick="closeModal('record-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="rec-area" id="rec-idle">
+        <button class="mic-btn" onclick="startRec()"><svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg></button>
+        <div style="font-weight:600;font-size:0.95rem;">Pronto para Gravar</div>
+        <div style="color:#6B7280;font-size:0.85rem;margin-top:6px;">Clique no microfone para começar a gravar</div>
+      </div>
+      <div class="rec-area" id="rec-active" style="display:none;">
+        <div class="wave" id="wave"></div>
+        <div style="display:flex;gap:12px;justify-content:center;">
+          <button class="ctrl-btn ctrl-gray" onclick="pauseRec()">❚❚ Pausar</button>
+          <button class="ctrl-btn ctrl-red" onclick="stopRec()">■ Parar</button>
+        </div>
+        <div style="margin-top:14px;font-size:0.82rem;color:#6B7280;"><span style="color:#EF4444;">●</span> <span id="rec-time">0:00</span></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="primary-btn disabled" id="rec-next" onclick="goLesson()">Próximo</button></div>
+  </div>
+</div>
+
+<script>
+const MATERIALS = [
+  { id:'prf-2021', title:'Concurso PRF 2021', type:'Edital', folder:'Concursos', disc:15, top:96, pag:214, envio:'12/03/2026', acesso:'hoje', tempo:'14h32', pct:18 },
+  { id:'ctb', title:'Código de Trânsito Brasileiro', type:'Legislação', folder:'Direito', disc:6, top:42, pag:138, envio:'02/03/2026', acesso:'ontem', tempo:'6h10', pct:34 },
+  { id:'dconst', title:'Apostila de Direito Constitucional', type:'Apostila', folder:'Direito', disc:1, top:9, pag:96, envio:'21/02/2026', acesso:'há 3 dias', tempo:'9h45', pct:52 },
+  { id:'portugues', title:'Curso Completo de Português', type:'Curso', folder:'Concursos', disc:4, top:38, pag:180, envio:'15/02/2026', acesso:'há 5 dias', tempo:'11h20', pct:41 },
+  { id:'info', title:'Manual de Informática', type:'PDF', folder:'Trabalho', disc:2, top:18, pag:74, envio:'10/02/2026', acesso:'há 1 semana', tempo:'3h05', pct:22 },
+  { id:'biologia', title:'Biologia', type:'Livro', folder:'Faculdade', disc:5, top:47, pag:320, envio:'28/01/2026', acesso:'há 2 semanas', tempo:'8h50', pct:12 },
+  { id:'dadm', title:'Apostila de Direito Administrativo', type:'Apostila', folder:'Direito', disc:1, top:7, pag:88, envio:'20/01/2026', acesso:'há 2 semanas', tempo:'5h15', pct:29 },
+  { id:'cf88', title:'Constituição Federal', type:'Legislação', folder:'Concursos', disc:9, top:64, pag:250, envio:'12/01/2026', acesso:'há 3 semanas', tempo:'12h40', pct:37 },
+  { id:'lei9503', title:'Lei 9.503/97', type:'Legislação', folder:'Direito', disc:3, top:21, pag:110, envio:'05/01/2026', acesso:'há 1 mês', tempo:'2h30', pct:15 },
+  { id:'lei8112', title:'Lei 8.112/90', type:'Legislação', folder:'Concursos', disc:2, top:16, pag:64, envio:'02/01/2026', acesso:'há 1 mês', tempo:'1h55', pct:8 },
+];
+const SHORTCUTS = ['Resumos','Flashcards','Questões','Questões Comentadas','Mapas Mentais','Anotações','Revisões','IA','Cronograma'];
+document.getElementById('sets-grid').innerHTML = MATERIALS.map(m => `
+  <a class="set-card" href="material.html?id=${m.id}&type=${encodeURIComponent(m.type)}&title=${encodeURIComponent(m.title)}">
+    <div class="set-card-head"><h3>${m.title}</h3><span class="type-badge">${m.type}</span></div>
+    <div class="meta-grid">
+      <div class="meta-item">Disciplinas<b>${m.disc}</b></div>
+      <div class="meta-item">Tópicos<b>${m.top}</b></div>
+      <div class="meta-item">Páginas<b>${m.pag}</b></div>
+      <div class="meta-item">Enviado em<b>${m.envio}</b></div>
+      <div class="meta-item">Último acesso<b>${m.acesso}</b></div>
+      <div class="meta-item">Tempo estudado<b>${m.tempo}</b></div>
+    </div>
+    <div class="set-card-foot">
+      <div class="lbl">Índice de domínio</div>
+      <div class="progress-line">
+        <div class="track"><div class="fill" style="width:${m.pct}%"></div></div>
+        <div class="pct">${m.pct}%</div>
+      </div>
+      <div class="shortcuts">${SHORTCUTS.map(s=>`<span class="shortcut">${s}</span>`).join('')}</div>
+    </div>
+  </a>`).join('');
+
+const FOLDERS = [
+  { name:'Todos os Materiais', color:'#111827', all:true },
+  { name:'Concursos', color:'#7C3AED' },
+  { name:'Faculdade', color:'#2563EB' },
+  { name:'Direito', color:'#16A34A' },
+  { name:'Medicina', color:'#DC2626' },
+  { name:'Idiomas', color:'#0EA5E9' },
+  { name:'Trabalho', color:'#F59E0B' },
+  { name:'Pessoais', color:'#EC4899' },
+];
+document.getElementById('folders-list').innerHTML = FOLDERS.map(f => {
+  const n = f.all ? MATERIALS.length : MATERIALS.filter(m=>m.folder===f.name).length;
+  return `<div class="folder-item${f.all?' active':''}" style="border-left:4px solid ${f.color};">
+    <svg width="18" height="18" fill="none" stroke="${f.color}" stroke-width="2" viewBox="0 0 24 24"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
+    <div><div class="fname">${f.name}</div><div class="fsub">${n} ${n===1?'material':'materiais'}</div></div>
+  </div>`;
+}).join('');
+
+
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function bgClose(e,id){ if(e.target.id===id) closeModal(id); }
+function goLesson(){ location.href = 'material.html?id=novo&type=' + encodeURIComponent('PDF') + '&title=' + encodeURIComponent('Novo Material'); }
+function checkPaste(){
+  const url = document.getElementById('paste-url').value.trim();
+  const txt = document.getElementById('paste-text').value;
+  document.getElementById('paste-count').textContent = txt.length;
+  document.getElementById('paste-next').classList.toggle('disabled', !(url || txt.trim()));
+}
+// wave bars
+const wave = document.getElementById('wave');
+for (let i=0;i<44;i++){ const b=document.createElement('span'); b.style.height=(10+Math.random()*32)+'px'; b.style.animationDelay=(i*0.05)+'s'; wave.appendChild(b); }
+let recTimer=null, recSec=0;
+function startRec(){
+  document.getElementById('rec-idle').style.display='none';
+  document.getElementById('rec-active').style.display='block';
+  document.getElementById('rec-next').classList.remove('disabled');
+  recTimer = setInterval(()=>{ recSec++; document.getElementById('rec-time').textContent = Math.floor(recSec/60)+':'+String(recSec%60).padStart(2,'0'); },1000);
+}
+function pauseRec(){ if(recTimer){ clearInterval(recTimer); recTimer=null; } else { startRecTimer(); } }
+function startRecTimer(){ recTimer = setInterval(()=>{ recSec++; document.getElementById('rec-time').textContent = Math.floor(recSec/60)+':'+String(recSec%60).padStart(2,'0'); },1000); }
+function stopRec(){ if(recTimer) clearInterval(recTimer); recTimer=null; document.getElementById('rec-next').classList.remove('disabled'); }
+</script>
+</body>
+</html>

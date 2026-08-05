@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conjunto de Estudo – Studley AI</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; background: #FAFAFA; color: #111827; height: 100vh; overflow: hidden; display: flex; }
+    .sidebar { width: 220px; min-width: 220px; background: #FFE1D9; height: 100vh; display: flex; flex-direction: column; padding: 16px 12px; flex-shrink: 0; }
+    .sidebar-logo { display: flex; align-items: center; gap: 8px; padding: 6px 8px; margin-bottom: 20px; text-decoration: none; margin-top: 4px; }
+    .sidebar-logo-text { font-weight: 800; font-size: 1.3rem; letter-spacing: -0.03em; background: linear-gradient(to right, #FF8040, #FF4D00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.9rem; font-weight: 500; color: #6B2D00; text-decoration: none; transition: background 0.15s; margin-bottom: 2px; }
+    .nav-item:hover { background: rgba(255,255,255,0.5); }
+    .nav-item.active { background: #fff; color: #FF4D00; font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+    /* Breadcrumb */
+    .topbar { padding: 16px 32px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #F0F0F0; background: #fff; }
+    .topbar a { color: #9CA3AF; text-decoration: none; font-size: 0.875rem; }
+    .topbar a:hover { color: #374151; }
+    .topbar span { color: #D1D5DB; font-size: 0.875rem; }
+    .topbar strong { font-size: 0.875rem; color: #374151; }
+
+    /* Content */
+    .content { flex: 1; padding: 40px 48px; max-width: 1100px; margin: 0 auto; width: 100%; }
+
+    /* Set header */
+    .set-header { margin-bottom: 32px; }
+    .set-title { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
+    .set-meta { display: flex; align-items: center; gap: 16px; color: #9CA3AF; font-size: 0.875rem; }
+    .set-meta strong { color: #374151; }
+
+    /* Progress bar */
+    .progress-section { background: #fff; border: 1.5px solid #E5E5E5; border-radius: 16px; padding: 20px 24px; margin-bottom: 24px; }
+    .progress-title { font-size: 0.85rem; color: #6B7280; font-weight: 500; margin-bottom: 12px; }
+    .progress-bar { height: 10px; background: #F3F4F6; border-radius: 999px; overflow: hidden; margin-bottom: 8px; }
+    .progress-fill { height: 100%; background: linear-gradient(to right, #3b82f6, #1d4ed8); border-radius: 999px; transition: width 0.5s ease; }
+    .progress-stats { display: flex; gap: 16px; }
+    .stat-item { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; font-weight: 500; }
+    .stat-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    /* Study modes */
+    .modes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 28px; }
+    .mode-card { background: #fff; border: 1.5px solid #E5E5E5; border-radius: 14px; padding: 18px 16px; cursor: pointer; transition: all 0.2s; text-align: center; }
+    .mode-card:hover { border-color: #FF8040; background: #FFF8F6; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,77,0,0.08); }
+    .mode-card.active { border-color: #FF4D00; background: #FFF0E8; }
+    .mode-icon { font-size: 1.5rem; margin-bottom: 8px; }
+    .mode-name { font-size: 0.85rem; font-weight: 600; color: #374151; margin-bottom: 2px; }
+    .mode-desc { font-size: 0.75rem; color: #9CA3AF; }
+
+    /* Flashcard area */
+    .flashcard-area { display: flex; flex-direction: column; align-items: center; padding: 20px 0; }
+    .card-counter { font-size: 0.875rem; color: #9CA3AF; margin-bottom: 20px; }
+    .flashcard-3d { width: 100%; max-width: 580px; height: 300px; perspective: 1200px; cursor: pointer; margin-bottom: 24px; }
+    .flashcard-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); }
+    .flashcard-3d.flipped .flashcard-inner { transform: rotateY(180deg); }
+    .card-face { position: absolute; inset: 0; backface-visibility: hidden; background: #fff; border: 1.5px solid #E5E5E5; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+    .card-face.back { transform: rotateY(180deg); background: linear-gradient(135deg, #FFF8F6, #FFF0E8); border-color: #FFD0B0; }
+    .card-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #9CA3AF; margin-bottom: 16px; }
+    .card-face.back .card-label { color: #FF8040; }
+    .card-text { font-size: 1.2rem; font-weight: 600; text-align: center; line-height: 1.5; color: #111827; }
+    .flip-hint { font-size: 0.78rem; color: #C4C4C4; margin-top: 16px; }
+
+    /* Nav buttons */
+    .card-nav { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
+    .nav-arrow { width: 48px; height: 48px; border-radius: 50%; border: 1.5px solid #E5E5E5; background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #374151; transition: all 0.2s; font-size: 1.2rem; }
+    .nav-arrow:hover { border-color: #FF8040; color: #FF4D00; background: #FFF0E8; }
+    .nav-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* Rating buttons */
+    .rating-row { display: flex; gap: 10px; }
+    .rating-btn { padding: 10px 20px; border-radius: 10px; border: 1.5px solid; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.15s; font-family: inherit; }
+    .btn-unknown { background: #FEF2F2; border-color: #FECACA; color: #DC2626; }
+    .btn-unknown:hover { background: #FEE2E2; }
+    .btn-learning { background: #FFF7ED; border-color: #FED7AA; color: #EA580C; }
+    .btn-learning:hover { background: #FFEDD5; }
+    .btn-familiar { background: #EFF6FF; border-color: #BFDBFE; color: #2563EB; }
+    .btn-familiar:hover { background: #DBEAFE; }
+    .btn-mastered { background: #F0FDF4; border-color: #BBF7D0; color: #16A34A; }
+    .btn-mastered:hover { background: #DCFCE7; }
+
+    /* Terms list */
+    .terms-list { background: #fff; border: 1.5px solid #E5E5E5; border-radius: 16px; overflow: hidden; }
+    .term-row { padding: 18px 24px; border-bottom: 1px solid #F3F4F6; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; transition: background 0.1s; }
+    .term-row:last-child { border-bottom: none; }
+    .term-row:hover { background: #FAFAFA; }
+    .term-word { font-weight: 600; font-size: 0.9rem; }
+    .term-def { font-size: 0.875rem; color: #6B7280; line-height: 1.5; }
+
+    /* Sign in btn */
+    .sign-in-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.875rem; font-weight: 500; color: #6B2D00; background: rgba(255,255,255,0.4); border: none; width: 100%; text-align: left; transition: background 0.15s; }
+    .sign-in-btn:hover { background: rgba(255,255,255,0.6); }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #E0E0E0; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <a href="study-sets.html" class="sidebar-logo">
+    <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+      <path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="#FF4D00"/>
+      <path d="M16 8C16 8 11 14 11 18C11 20.8 13.2 23 16 23C18.8 23 21 20.8 21 18C21 14 16 8 16 8Z" fill="#FF8040"/>
+      <circle cx="16" cy="19" r="3" fill="#FFF0E8"/>
+    </svg>
+    <span class="sidebar-logo-text">Studley</span>
+  </a>
+  <nav style="flex:1;display:flex;flex-direction:column;gap:2px;">
+    <a href="study-sets.html" class="nav-item active">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>
+      <span>Disciplinas</span>
+    </a>
+    <a href="solve.html" class="nav-item">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <span>Resolver</span>
+    </a>
+    <a href="paper-grader.html" class="nav-item">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg>
+      <span>Corretor</span>
+    </a>
+    <a href="app.html" class="nav-item">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18" stroke-width="2.5" stroke-linecap="round"/></svg>
+      <span>App</span>
+    </a>
+  </nav>
+  <div style="border-top:1px solid rgba(255,77,0,0.15);padding-top:12px;">
+    <button class="sign-in-btn" onclick="alert('Login em breve!')">
+      <div style="width:30px;height:30px;border-radius:50%;background:rgba(255,77,0,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="15" height="15" fill="none" stroke="#FF4D00" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <span>Entrar</span>
+    </button>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+  <!-- Breadcrumb -->
+  <div class="topbar">
+    <a href="study-sets.html">Conjuntos de Estudo</a>
+    <span>/</span>
+    <strong id="page-title">Carregando...</strong>
+  </div>
+
+  <div class="content">
+    <!-- Set header -->
+    <div class="set-header">
+      <h1 class="set-title" id="set-title">Carregando conjunto...</h1>
+      <div class="set-meta">
+        <span id="set-category" style="background:#FFF0E8;color:#FF4D00;padding:4px 12px;border-radius:999px;font-size:0.8rem;font-weight:600;"></span>
+        <span id="set-cards-count"></span>
+        <span>·</span>
+        <span id="set-date"></span>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-section">
+      <div class="progress-title">Seu caminho para o domínio</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <div class="progress-bar" style="flex:1;"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+        <span style="font-weight:700;font-size:0.9rem;" id="prog-pct">0%</span>
+      </div>
+      <div class="progress-stats" id="prog-stats"></div>
+    </div>
+
+    <!-- Study modes -->
+    <div style="margin-bottom:8px;">
+      <h2 style="font-size:1rem;font-weight:700;margin-bottom:14px;color:#374151;">Modo de estudo</h2>
+      <div class="modes-grid">
+        <div class="mode-card active" onclick="setMode('flashcards',this)">
+          <div class="mode-icon">🃏</div>
+          <div class="mode-name">Flashcards</div>
+          <div class="mode-desc">Revise com cartões</div>
+        </div>
+        <div class="mode-card" onclick="goTutor()">
+          <div class="mode-icon">🎓</div>
+          <div class="mode-name">Tutor IA</div>
+          <div class="mode-desc">Aula personalizada</div>
+        </div>
+        <div class="mode-card" onclick="setMode('quiz',this)">
+          <div class="mode-icon">✅</div>
+          <div class="mode-name">Quiz</div>
+          <div class="mode-desc">Múltipla escolha</div>
+        </div>
+        <div class="mode-card" onclick="setMode('written',this)">
+          <div class="mode-icon">📝</div>
+          <div class="mode-name">Escrito</div>
+          <div class="mode-desc">Teste dissertativo</div>
+        </div>
+        <div class="mode-card" onclick="setMode('fill',this)">
+          <div class="mode-icon">✏️</div>
+          <div class="mode-name">Lacunas</div>
+          <div class="mode-desc">Preencha os espaços</div>
+        </div>
+        <div class="mode-card" onclick="setMode('notes',this)">
+          <div class="mode-icon">📄</div>
+          <div class="mode-name">Notas</div>
+          <div class="mode-desc">Leia as anotações</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flashcard section (default mode) -->
+    <div id="flashcard-section">
+      <div class="flashcard-area">
+        <div class="card-counter" id="card-counter"></div>
+        <div class="flashcard-3d" id="flashcard" onclick="flipCard()">
+          <div class="flashcard-inner" id="card-inner">
+            <div class="card-face front">
+              <div class="card-label">Pergunta</div>
+              <div class="card-text" id="card-front"></div>
+              <div class="flip-hint">Clique para ver a resposta</div>
+            </div>
+            <div class="card-face back">
+              <div class="card-label">Resposta</div>
+              <div class="card-text" id="card-back"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Navigation -->
+        <div class="card-nav">
+          <button class="nav-arrow" id="prev-btn" onclick="prevCard()">‹</button>
+          <div class="rating-row" id="rating-row" style="display:none;">
+            <button class="rating-btn btn-unknown" onclick="rateCard('unknown')">Desconhecido</button>
+            <button class="rating-btn btn-learning" onclick="rateCard('learning')">Aprendendo</button>
+            <button class="rating-btn btn-familiar" onclick="rateCard('familiar')">Familiar</button>
+            <button class="rating-btn btn-mastered" onclick="rateCard('mastered')">Dominado</button>
+          </div>
+          <button class="nav-arrow" id="next-btn" onclick="nextCard()">›</button>
+        </div>
+      </div>
+
+      <!-- Terms list -->
+      <div style="margin-top:16px;">
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:14px;color:#374151;">Todos os termos</h3>
+        <div class="terms-list" id="terms-list"></div>
+      </div>
+    </div>
+
+    <!-- Other modes placeholder -->
+    <div id="other-mode-section" style="display:none;">
+      <div style="text-align:center;padding:60px 0;background:#fff;border-radius:20px;border:1.5px solid #E5E5E5;">
+        <div style="font-size:3rem;margin-bottom:16px;" id="mode-icon-big">🎓</div>
+        <h2 style="font-size:1.3rem;font-weight:700;margin-bottom:8px;" id="mode-title-big">Modo em Breve</h2>
+        <p style="color:#9CA3AF;font-size:0.9rem;margin-bottom:24px;max-width:320px;margin-left:auto;margin-right:auto;" id="mode-desc-big">Este modo estará disponível em breve. Por enquanto, use os Flashcards!</p>
+        <button onclick="setMode('flashcards',null)" style="padding:12px 28px;border-radius:12px;background:linear-gradient(to bottom,#FF8040,#FF4D00);color:#fff;border:none;cursor:pointer;font-weight:600;font-size:0.95rem;font-family:inherit;">
+          Usar Flashcards
+        </button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  // Parse URL params
+  const params = new URLSearchParams(location.search);
+  const setKey = params.get('set') || 'organic-chemistry';
+  const customTitle = params.get('title');
+
+  // Card datasets
+  const DATASETS = {
+    'organic-chemistry': {
+      title: 'Fundamentos de Química Orgânica',
+      category: 'Química',
+      cards: [
+        { q: 'O que é um hidrocarboneto?', a: 'Composto orgânico formado apenas por carbono (C) e hidrogênio (H). Exemplos: metano, etano, benzeno.' },
+        { q: 'Qual é a diferença entre ligação sigma (σ) e pi (π)?', a: 'Sigma: sobreposição frontal de orbitais, mais estável. Pi: sobreposição lateral, encontrada em duplas e triplas ligações.' },
+        { q: 'O que é isomeria?', a: 'Fenômeno em que compostos têm a mesma fórmula molecular mas estruturas ou arranjos espaciais diferentes.' },
+        { q: 'Defina ácidos carboxílicos', a: 'Compostos orgânicos com grupo funcional –COOH (carboxila). São ácidos fracos. Ex: ácido acético (CH₃COOH).' },
+        { q: 'O que é uma reação de substituição nucleofílica?', a: 'Reação onde um nucleófilo substitui um grupo de saída numa molécula orgânica. Tipos: SN1 (unimolecular) e SN2 (bimolecular).' },
+        { q: 'Diferença entre álcool primário, secundário e terciário?', a: 'Primário: OH em carbono com 1 substituinte. Secundário: 2 substituintes. Terciário: 3 substituintes no carbono com OH.' },
+        { q: 'O que são cetonas?', a: 'Compostos com grupo carbonila (C=O) entre dois carbonos. Fórmula geral: R-CO-R\'. Exemplo: acetona (CH₃-CO-CH₃).' },
+        { q: 'O que é aromaticidade?', a: 'Propriedade de moléculas cíclicas com elétrons pi deslocalizados. Regra de Hückel: 4n+2 elétrons π. Benzeno é o exemplo clássico.' },
+      ]
+    },
+    'pandas-library-fundamentals': {
+      title: 'Fundamentos da Biblioteca Pandas',
+      category: 'Ciência da Computação',
+      cards: [
+        { q: 'O que é o Pandas?', a: 'Biblioteca Python de código aberto para análise e manipulação de dados. Fornece estruturas de dados como DataFrame e Series.' },
+        { q: 'Qual a diferença entre Series e DataFrame?', a: 'Series: array 1D com índice. DataFrame: estrutura 2D com linhas e colunas, similar a uma planilha ou tabela SQL.' },
+        { q: 'Como criar um DataFrame?', a: 'pd.DataFrame(data) onde data pode ser dict, lista de listas, NumPy array ou outro DataFrame.' },
+        { q: 'O que faz df.head(n)?', a: 'Retorna as primeiras n linhas do DataFrame (padrão n=5). Útil para inspecionar os dados rapidamente.' },
+        { q: 'Como filtrar linhas por condição?', a: 'df[df[\"coluna\"] > valor] ou df.query("coluna > valor"). Retorna um subconjunto das linhas que satisfazem a condição.' },
+        { q: 'O que é groupby?', a: 'Agrupa dados por uma ou mais colunas e permite aplicar funções de agregação (sum, mean, count, etc.) a cada grupo.' },
+        { q: 'Como tratar valores NaN?', a: 'df.dropna() remove linhas com NaN. df.fillna(valor) substitui NaN por um valor. df.isna() identifica os NaN.' },
+      ]
+    },
+    'linear-algebra': {
+      title: 'Fundamentos de Álgebra Linear',
+      category: 'Matemática',
+      cards: [
+        { q: 'O que é um vetor?', a: 'Objeto matemático com magnitude e direção. Em Rⁿ, é uma lista ordenada de n números reais.' },
+        { q: 'O que é uma matriz?', a: 'Array retangular de números organizado em linhas e colunas. Uma matriz m×n tem m linhas e n colunas.' },
+        { q: 'O que é o determinante de uma matriz?', a: 'Escalar que representa o fator de escala da transformação linear. det(A) ≠ 0 implica que A é invertível.' },
+        { q: 'O que são autovalores e autovetores?', a: 'Se Av = λv, então λ é autovalor e v é autovetor de A. Av é paralelo a v (apenas escalado por λ).' },
+        { q: 'O que é uma transformação linear?', a: 'Função T: V→W que preserva adição e multiplicação escalar: T(u+v)=T(u)+T(v) e T(cu)=cT(u).' },
+        { q: 'O que é espaço nulo de uma matriz?', a: 'Conjunto de todos os vetores x tais que Ax = 0. Também chamado de kernel da transformação linear.' },
+        { q: 'O que é produto escalar (dot product)?', a: 'u·v = Σuᵢvᵢ. Relacionado ao ângulo θ entre vetores: u·v = |u||v|cos(θ).' },
+      ]
+    },
+    'default': {
+      title: 'Conjunto de Estudo',
+      category: 'Geral',
+      cards: [
+        { q: 'O que é aprendizado ativo?', a: 'Estratégia educacional onde o aluno participa ativamente do processo de aprendizagem através de discussão, resolução de problemas e criação de material.' },
+        { q: 'O que é repetição espaçada?', a: 'Técnica de memorização que utiliza intervalos crescentes entre as revisões para otimizar a retenção de longo prazo.' },
+        { q: 'O que é técnica Feynman?', a: 'Método de aprender explicando o conceito em linguagem simples. Se você não consegue explicar simplesmente, não entendeu ainda.' },
+        { q: 'O que é recuperação ativa (retrieval practice)?', a: 'Técnica de testar a memória regularmente em vez de apenas reler. Muito mais eficaz que reler passivamente.' },
+        { q: 'O que é interleaving?', a: 'Prática de alternar entre diferentes tipos de problemas ou tópicos durante o estudo, em vez de blocos de um único tópico.' },
+        { q: 'O que é elaboração?', a: 'Estratégia de estudo que conecta novo material a conhecimento prévio, criando uma rede de significados mais rica.' },
+      ]
+    }
+  };
+
+  let currentData = DATASETS[setKey] || DATASETS['default'];
+  if (customTitle) currentData = { ...currentData, title: decodeURIComponent(customTitle) };
+
+  let currentIndex = 0;
+  let isFlipped = false;
+  const ratings = {};
+
+  function init() {
+    document.getElementById('page-title').textContent = currentData.title;
+    document.getElementById('set-title').textContent = currentData.title;
+    const catEl = document.getElementById('set-category');
+    catEl.textContent = currentData.category;
+    document.getElementById('set-cards-count').textContent = currentData.cards.length + ' termos';
+    document.getElementById('set-date').textContent = 'Atualizado hoje';
+    document.title = currentData.title + ' – Studley AI';
+
+    updateProgress();
+    renderCard();
+    renderTermsList();
+  }
+
+  function updateProgress() {
+    const total = currentData.cards.length;
+    const mastered = Object.values(ratings).filter(r => r === 'mastered').length;
+    const familiar = Object.values(ratings).filter(r => r === 'familiar').length;
+    const learning = Object.values(ratings).filter(r => r === 'learning').length;
+    const unknown = total - mastered - familiar - learning;
+    const pct = Math.round(((mastered * 1 + familiar * 0.7) / total) * 100);
+
+    document.getElementById('prog-fill').style.width = pct + '%';
+    document.getElementById('prog-pct').textContent = pct + '%';
+    document.getElementById('prog-stats').innerHTML = `
+      <div class="stat-item"><div class="stat-dot" style="background:#EF4444;"></div> ${unknown} Desconhecido</div>
+      <div class="stat-item"><div class="stat-dot" style="background:#F97316;"></div> ${learning} Aprendendo</div>
+      <div class="stat-item"><div class="stat-dot" style="background:#3B82F6;"></div> ${familiar} Familiar</div>
+      <div class="stat-item"><div class="stat-dot" style="background:#22C55E;"></div> ${mastered} Dominado</div>
+    `;
+  }
+
+  function renderCard() {
+    const card = currentData.cards[currentIndex];
+    document.getElementById('card-front').textContent = card.q;
+    document.getElementById('card-back').textContent = card.a;
+    document.getElementById('card-counter').textContent = (currentIndex + 1) + ' / ' + currentData.cards.length;
+
+    // Reset flip state
+    isFlipped = false;
+    document.getElementById('flashcard').classList.remove('flipped');
+    document.getElementById('rating-row').style.display = 'none';
+
+    // Update nav buttons
+    document.getElementById('prev-btn').disabled = currentIndex === 0;
+    document.getElementById('next-btn').disabled = currentIndex === currentData.cards.length - 1;
+  }
+
+  function flipCard() {
+    isFlipped = !isFlipped;
+    document.getElementById('flashcard').classList.toggle('flipped', isFlipped);
+    document.getElementById('rating-row').style.display = isFlipped ? 'flex' : 'none';
+  }
+
+  function prevCard() {
+    if (currentIndex > 0) { currentIndex--; renderCard(); }
+  }
+
+  function nextCard() {
+    if (currentIndex < currentData.cards.length - 1) { currentIndex++; renderCard(); }
+  }
+
+  function rateCard(rating) {
+    ratings[currentIndex] = rating;
+    updateProgress();
+    updateTermRating(currentIndex, rating);
+    if (currentIndex < currentData.cards.length - 1) {
+      setTimeout(() => nextCard(), 300);
+    } else {
+      showCompletionState();
+    }
+  }
+
+  function updateTermRating(idx, rating) {
+    const colors = { unknown: '#EF4444', learning: '#F97316', familiar: '#3B82F6', mastered: '#22C55E' };
+    const labels = { unknown: 'Desconhecido', learning: 'Aprendendo', familiar: 'Familiar', mastered: 'Dominado' };
+    const el = document.getElementById('term-rating-' + idx);
+    if (el) {
+      el.textContent = labels[rating];
+      el.style.color = colors[rating];
+      el.style.background = colors[rating] + '15';
+    }
+  }
+
+  function showCompletionState() {
+    const total = currentData.cards.length;
+    const mastered = Object.values(ratings).filter(r => r === 'mastered').length;
+    alert('🎉 Parabéns! Você completou o conjunto!\n\nTotal: ' + total + ' termos\nDominados: ' + mastered + '\n\nContinue praticando para dominar todos!');
+  }
+
+  function renderTermsList() {
+    const list = document.getElementById('terms-list');
+    list.innerHTML = currentData.cards.map((c, i) => `
+      <div class="term-row" onclick="currentIndex=${i};renderCard();window.scrollTo(0,0);">
+        <div>
+          <div class="term-word">${c.q}</div>
+          <span id="term-rating-${i}" style="font-size:0.72rem;font-weight:500;padding:2px 8px;border-radius:4px;background:#F3F4F6;color:#9CA3AF;"></span>
+        </div>
+        <div class="term-def">${c.a}</div>
+      </div>
+    `).join('');
+  }
+
+  function goTutor() {
+    window.location.href = 'tutor.html?set=' + setKey + (customTitle ? '&title=' + encodeURIComponent(customTitle) : '');
+  }
+
+  function setMode(mode, el) {
+    if (el) {
+      document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    const modesInfo = {
+      tutor: { icon: '🎓', title: 'Tutor IA', desc: 'O tutor IA analisa seu desempenho e cria uma aula personalizada. Disponível em breve!' },
+      quiz: { icon: '✅', title: 'Quiz de Múltipla Escolha', desc: 'Responda perguntas de múltipla escolha geradas pela IA. Disponível em breve!' },
+      written: { icon: '📝', title: 'Teste Dissertativo', desc: 'Responda perguntas abertas e a IA avalia suas respostas. Disponível em breve!' },
+      fill: { icon: '✏️', title: 'Preencha as Lacunas', desc: 'Complete frases com os termos corretos. Disponível em breve!' },
+      notes: { icon: '📄', title: 'Notas Interativas', desc: 'Leia as notas detalhadas geradas pela IA. Disponível em breve!' },
+    };
+
+    if (mode === 'flashcards') {
+      document.getElementById('flashcard-section').style.display = 'block';
+      document.getElementById('other-mode-section').style.display = 'none';
+    } else {
+      const info = modesInfo[mode];
+      document.getElementById('flashcard-section').style.display = 'none';
+      document.getElementById('other-mode-section').style.display = 'block';
+      document.getElementById('mode-icon-big').textContent = info.icon;
+      document.getElementById('mode-title-big').textContent = info.title;
+      document.getElementById('mode-desc-big').textContent = info.desc;
+    }
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft') prevCard();
+    if (e.key === 'ArrowRight') nextCard();
+    if (e.key === ' ') { e.preventDefault(); flipCard(); }
+  });
+
+  init();
+</script>
+</body>
+</html>
