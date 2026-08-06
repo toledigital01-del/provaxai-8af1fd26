@@ -232,3 +232,5 @@ h1.title { font-size: 1.9rem; font-weight: 700; letter-spacing: -0.03em; }
 .set-card.soon { opacity:.72; cursor:default; }
 .set-card.soon:hover { border-color:#E2E8F0; box-shadow:none; }
 .soon-badge { font-size:0.66rem; font-weight:800; letter-spacing:.06em; padding:3px 9px; border-radius:999px; background:#EFF6FF; color:#1D4ED8; white-space:nowrap; }
+
+.shell-nav .ws-group { margin-top:14px; }
