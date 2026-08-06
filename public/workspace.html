@@ -111,6 +111,48 @@
   .reco .rlbl { font-size:0.68rem; text-transform:uppercase; letter-spacing:.08em; color:#A6ACBB; font-weight:600; margin-bottom:10px; }
   .reco a { display:block; padding:8px 10px; background:rgba(255,251,235,.6); border:1px solid rgba(253,230,138,.6); border-radius:8px; font-size:0.84rem; text-decoration:none; color:var(--text); margin-bottom:7px; }
   .reco a:hover { border-color:#F59E0B; }
+
+  /* ---------- Podcast ---------- */
+  .pod { margin-top:20px; border:1px solid #E2E8F0; border-radius:16px; padding:18px 20px 16px; background:linear-gradient(120deg,#EFF6FF 0%,#F1F5F9 45%,#EEF2FF 100%); }
+  .pod-top { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .pod-hosts { display:flex; }
+  .pod-av { width:34px; height:34px; border-radius:50%; display:grid; place-items:center; font-size:0.8rem; font-weight:700; color:#fff; border:2px solid #fff; flex-shrink:0; }
+  .pod-av.a { background:#4F46E5; }
+  .pod-av.s { background:#2563EB; }
+  .pod-hosts .pod-av + .pod-av { margin-left:-10px; }
+  .pod-id { flex:1; min-width:150px; }
+  .pod-id b { display:block; font-size:1rem; font-weight:700; letter-spacing:-0.01em; }
+  .pod-id span { display:flex; align-items:center; gap:5px; font-size:0.78rem; color:var(--muted); margin-top:3px; }
+  .pod-id svg { width:13px; height:13px; }
+  .pod-hand { display:inline-flex; align-items:center; gap:7px; border:1px solid #C7D2FE; background:#fff; color:#1D4ED8; border-radius:999px; padding:8px 16px; font-size:0.83rem; font-weight:600; cursor:pointer; font-family:inherit; }
+  .pod-hand:hover { background:#EEF2FF; }
+  .pod-range { -webkit-appearance:none; appearance:none; width:100%; height:5px; border-radius:999px; margin-top:18px; outline:none;
+    background:linear-gradient(90deg,#2563EB var(--p,0%), #D7DEE9 var(--p,0%)); cursor:pointer; }
+  .pod-range::-webkit-slider-thumb { -webkit-appearance:none; width:13px; height:13px; border-radius:50%; background:#1D4ED8; border:2px solid #fff; box-shadow:0 1px 4px rgba(15,23,42,.25); }
+  .pod-range.sm { width:100px; margin-top:0; --p:70%; }
+  .pod-times { display:flex; justify-content:space-between; font-size:0.72rem; color:var(--muted); margin-top:6px; font-variant-numeric:tabular-nums; }
+  .pod-ctrl { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:8px; }
+  .pod-vol { display:flex; align-items:center; gap:8px; color:#64748B; }
+  .pod-vol svg { width:17px; height:17px; }
+  .pod-mid { display:flex; align-items:center; gap:14px; }
+  .pod-skip { border:none; background:transparent; color:#334155; cursor:pointer; padding:4px; }
+  .pod-skip svg { width:19px; height:19px; }
+  .pod-play { width:46px; height:46px; border-radius:50%; border:none; background:#1E293B; color:#fff; font-size:0.95rem; cursor:pointer; display:grid; place-items:center; box-shadow:0 6px 16px rgba(30,41,59,.28); }
+  .pod-play:hover { background:#0F172A; }
+  .pod-rate { border:none; background:transparent; color:#64748B; font-size:0.8rem; font-weight:600; cursor:pointer; font-family:inherit; }
+  .pod-script { margin-top:18px; border:1px solid var(--line); border-radius:16px; background:#fff; padding:18px; display:flex; flex-direction:column; gap:16px; }
+  .pod-line { display:flex; gap:10px; align-items:flex-start; }
+  .pod-line.me { flex-direction:row-reverse; }
+  .pod-b { max-width:82%; }
+  .pod-who { font-size:0.74rem; color:var(--muted); display:block; margin-bottom:4px; }
+  .pod-line.me .pod-who { text-align:right; }
+  .pod-msg { font-size:0.88rem; line-height:1.65; padding:11px 14px; border-radius:12px; background:#F1F5F9; color:#31363F; }
+  .pod-line.me .pod-msg { background:#EFF6FF; }
+  .pod-foot { display:flex; gap:8px; margin-top:14px; }
+  .pod-foot button { width:38px; height:38px; border-radius:999px; border:1px solid var(--line-strong); background:#fff; color:#475569; cursor:pointer; display:grid; place-items:center; }
+  .pod-foot button:hover { border-color:#2563EB; color:#1D4ED8; }
+  .pod-foot svg { width:17px; height:17px; }
+
 </style>
 </head>
 <body>
@@ -446,12 +488,70 @@ function renderPane() {
       <div class="mini"><button onclick="alert('Verificação em breve!')">Verificar</button></div>
     </div>`;
   } else if (tab === 'podcast') {
+    const dur = 5 * 60 + 29;
+    const fmt = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+    const roteiro = [
+      { who:'Anna', me:false, txt:`Você viu que o edital cobra <b>${topic}</b> dentro de ${disc}? É um dos pontos que mais aparecem nas últimas provas da banca.` },
+      { who:'Simon', me:true, txt:`Sim. Vale começar pela regra geral: o que a lei determina de forma expressa, e só depois olhar as exceções — é assim que a Cebraspe costuma montar o item.` },
+      { who:'Anna', me:false, txt:`Exato. E repare que a banca adora trocar uma palavra da regra — “sempre”, “nunca”, “somente” — para transformar um item certo em errado.` },
+      { who:'Simon', me:true, txt:`Boa. Então o roteiro de estudo é: entender o conceito, decorar as exceções e treinar com itens Certo/Errado de ${topic.toLowerCase()}.` },
+      { who:'Anna', me:false, txt:`Fechado. No fim do episódio, abra os flashcards e a revisão espaçada para fixar o que ouvimos aqui.` },
+    ];
     p.innerHTML = `<div class="pane">
-      <div class="qbox" style="display:flex;align-items:center;gap:16px;">
-        <div style="width:46px;height:46px;border-radius:12px;background:var(--text);color:#fff;display:grid;place-items:center;font-size:1.1rem;">▶</div>
-        <div><div style="font-size:0.92rem;font-weight:600;">${topic} — episódio em áudio</div><div class="subtitle" style="margin-top:2px;">12 min · gerado por IA</div></div>
+      <div class="pod">
+        <div class="pod-top">
+          <div class="pod-hosts"><span class="pod-av a">A</span><span class="pod-av s">S</span></div>
+          <div class="pod-id">
+            <b>${topic}</b>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> ${fmt(dur)} · ${disc}</span>
+          </div>
+          <button class="pod-hand" id="pod-hand">✋ Levantar a mão</button>
+        </div>
+        <input class="pod-range" id="pod-seek" type="range" min="0" max="${dur}" value="0" step="1">
+        <div class="pod-times"><span id="pod-cur">0:00</span><span id="pod-left">-${fmt(dur)}</span></div>
+        <div class="pod-ctrl">
+          <div class="pod-vol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9v6h4l5 4V5L8 9H4z"/></svg><input class="pod-range sm" type="range" min="0" max="100" value="70"></div>
+          <div class="pod-mid">
+            <button class="pod-skip" id="pod-prev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 5v14L9 12l10-7z"/><path d="M5 5v14"/></svg></button>
+            <button class="pod-play" id="pod-play">▶</button>
+            <button class="pod-skip" id="pod-next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 5v14l10-7L5 5z"/><path d="M19 5v14"/></svg></button>
+          </div>
+          <button class="pod-rate" id="pod-rate">1x</button>
+        </div>
+      </div>
+
+      <div class="pod-script">
+        ${roteiro.map(l => `
+          <div class="pod-line ${l.me ? 'me' : ''}">
+            <span class="pod-av ${l.me ? 's' : 'a'}">${l.who[0]}</span>
+            <div class="pod-b"><span class="pod-who">${l.who}</span><div class="pod-msg">${l.txt}</div></div>
+          </div>`).join('')}
+      </div>
+
+      <div class="pod-foot">
+        <button title="Baixar episódio" onclick="alert('Download do episódio em breve!')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg></button>
+        <button title="Gerar novo episódio" onclick="alert('Novo episódio sendo gerado pela Athena IA!')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></button>
       </div>
     </div>`;
+
+    let t = 0, timer = null, rate = 1;
+    const seek = document.getElementById('pod-seek');
+    const cur = document.getElementById('pod-cur'), left = document.getElementById('pod-left');
+    const play = document.getElementById('pod-play');
+    const paint = () => { seek.value = t; cur.textContent = fmt(t); left.textContent = '-' + fmt(dur - t); seek.style.setProperty('--p', (t/dur*100) + '%'); };
+    const stop = () => { clearInterval(timer); timer = null; play.textContent = '▶'; };
+    play.onclick = () => {
+      if (timer) return stop();
+      play.textContent = '❚❚';
+      timer = setInterval(() => { t = Math.min(dur, t + rate); paint(); if (t >= dur) stop(); }, 1000);
+    };
+    seek.oninput = () => { t = +seek.value; paint(); };
+    document.getElementById('pod-prev').onclick = () => { t = Math.max(0, t - 15); paint(); };
+    document.getElementById('pod-next').onclick = () => { t = Math.min(dur, t + 15); paint(); };
+    document.getElementById('pod-rate').onclick = e => { rate = rate === 1 ? 1.5 : rate === 1.5 ? 2 : 1; e.target.textContent = rate + 'x'; };
+    document.getElementById('pod-hand').onclick = () => { stop(); document.getElementById('side-msg') && document.getElementById('side-msg').focus(); };
+    paint();
+
   } else if (tab === 'evolucao') {
     p.innerHTML = `<div class="pane">
       <div class="cesp-head"><b>Evolução em ${topic}</b><span>Acompanhe seu índice de domínio e suas estatísticas de estudo.</span></div>
