@@ -85,7 +85,7 @@
 <script>
 renderShell({ active: 'resolver' });
 
-const MATERIAS = ['Geral','Língua Portuguesa','Raciocínio Lógico-Matemático','Informática','Legislação de Trânsito','Direito Administrativo','Direito Constitucional','Direito Penal','Ética no Serviço Público','Direitos Humanos e Cidadania'];
+const MATERIAS = ['Geral', ...disciplinasDe('prf-2021')];
 let materia = 'Geral';
 
 document.getElementById('chips').innerHTML = MATERIAS.map(m =>
