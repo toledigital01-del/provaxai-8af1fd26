@@ -200,11 +200,40 @@ document.getElementById('shell-sidebar').addEventListener('click', e => {
 
 /* ---------- Coluna central ---------- */
 let fcIdx = 0, fcOpen = false;
-const cards = [1,2,3,4].map(i => ({ q: `${topic} — conceito-chave ${i}`, a: `Resposta objetiva sobre ${topic.toLowerCase()} (ponto ${i}).` }));
+function buildCards() {
+  const pool = poolTopics();
+  return Array.from({ length: Math.min(8, pool.length * 2) || 4 }).map((_, i) => {
+    const item = pool[i % pool.length];
+    const name = typeof item === 'string' ? item : item.t;
+    return { q: `${name} — conceito-chave ${Math.floor(i / pool.length) + 1}`, a: `Resposta objetiva sobre ${name.toLowerCase()}.` };
+  });
+}
+
+function goTab(t) {
+  tab = t;
+  document.querySelectorAll('.ws-item').forEach(x => x.classList.toggle('active', x.dataset.t === t));
+  const u = new URL(location.href); u.searchParams.set('tab', t);
+  history.replaceState(null, '', u);
+  fcIdx = 0; fcOpen = false;
+  renderPane();
+  document.querySelector('.ws-center').scrollTop = 0;
+}
 
 function renderPane() {
   const p = document.getElementById('pane');
   if (tab === 'tutor') {
+    if (scope !== 'topico') {
+      const pool = poolTopics();
+      p.innerHTML = `<div class="pane">
+        <div class="cesp-head"><b>Aulas com Athena IA</b><span>${ctxLabel()} — escolha um tópico para abrir a aula completa.</span></div>
+        ${scopePickerHTML()}
+        <div class="qbox" style="padding:0;overflow:hidden;margin-top:16px;">
+          ${pool.slice(0, 24).map(o => `<a class="rev-row" style="text-decoration:none;color:inherit;" href="workspace.html?${base}&disc=${encodeURIComponent(o.d)}&topic=${encodeURIComponent(o.t)}&tab=tutor"><span>${dotHTML(statusOf(o.t))} ${o.t}</span><span class="rev-when">${o.d}</span></a>`).join('')}
+        </div>
+      </div>`;
+      mountScopePicker();
+      return;
+    }
     p.innerHTML = `<div class="pane prose">
       <h3>Aula com Athena IA — ${topic}</h3>
       <p>Esta aula apresenta <b>${topic}</b> dentro de ${disc}, com foco no que costuma ser cobrado em prova.</p>
@@ -219,27 +248,48 @@ function renderPane() {
       <h3>3. Como estudar este tópico</h3>
       <p>Leia a aula, ouça o podcast, resolva a bateria de questões no padrão Cebraspe e feche o ciclo com flashcards e revisão espaçada.</p>
       <p style="margin-top:16px;color:var(--muted);font-size:0.85rem;">Dúvidas? Use o chat da Athena no painel à direita.</p>
+      <div class="fixa">
+        <div class="lbl">Fixação Imediata</div>
+        <div class="btns">
+          <button class="btn-primary" id="fx-q">Praticar Questões deste Tópico</button>
+          <button class="btn-secondary" id="fx-f">Ver Flashcards desta Aula</button>
+        </div>
+      </div>
     </div>`;
+    document.getElementById('fx-q').onclick = () => goTab('questoes');
+    document.getElementById('fx-f').onclick = () => goTab('flashcards');
   } else if (tab === 'flashcards') {
+    const cards = buildCards();
+    if (fcIdx >= cards.length) fcIdx = 0;
     const c = cards[fcIdx];
     p.innerHTML = `<div class="pane">
+      <div class="cesp-head"><b>Flashcards</b><span>${ctxLabel()}</span></div>
+      ${scopePickerHTML()}
       <div class="fc" id="fc"><div><div class="q">${c.q}</div>${fcOpen ? `<div class="a">${c.a}</div>` : '<div class="a">Clique para revelar</div>'}</div></div>
       <div class="mini"><button id="prev">← Anterior</button><button id="next">Próximo →</button><span style="align-self:center;font-size:0.8rem;color:var(--muted);">${fcIdx+1} de ${cards.length}</span></div>
     </div>`;
+    mountScopePicker();
     document.getElementById('fc').onclick = () => { fcOpen = !fcOpen; renderPane(); };
     document.getElementById('prev').onclick = () => { fcIdx = (fcIdx - 1 + cards.length) % cards.length; fcOpen = false; renderPane(); };
     document.getElementById('next').onclick = () => { fcIdx = (fcIdx + 1) % cards.length; fcOpen = false; renderPane(); };
   } else if (tab === 'questoes' || tab === 'simulados') {
+    const pool = poolTopics();
     const n = tab === 'simulados' ? 10 : 5;
-    const items = Array.from({length:n}).map((_,i) => ({
-      txt: `Julgue o item a seguir, relativo a ${topic.toLowerCase()}: a regra geral aplicável ao caso ${i % 2 === 0 ? 'admite' : 'não admite'} exceção expressa em lei, conforme entendimento cobrado pela banca.`,
-      gab: i % 2 === 0 ? 'C' : 'E',
-    }));
+    const items = Array.from({length:n}).map((_,i) => {
+      const item = pool[i % pool.length];
+      const name = typeof item === 'string' ? item : item.t;
+      return {
+        txt: `Julgue o item a seguir, relativo a ${name.toLowerCase()}: a regra geral aplicável ao caso ${i % 2 === 0 ? 'admite' : 'não admite'} exceção expressa em lei, conforme entendimento cobrado pela banca.`,
+        gab: i % 2 === 0 ? 'C' : 'E',
+      };
+    });
     p.innerHTML = `<div class="pane">
       <div class="cesp-head">
         <b>${tab === 'simulados' ? 'Simulado' : 'Bateria de questões'} — estilo Cebraspe/Cespe</b>
-        <span>Julgue os itens em CERTO ou ERRADO. Item errado anula um item certo.</span>
+        <span>${ctxLabel()} · Julgue os itens em CERTO ou ERRADO. Item errado anula um item certo.</span>
       </div>
+      ${scopePickerHTML()}
+
       ${items.map((q,i) => `
       <div class="qbox" data-gab="${q.gab}">
         <div class="qtxt"><b>${i+1}.</b> ${q.txt}</div>
