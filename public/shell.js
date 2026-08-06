@@ -20,7 +20,7 @@
           <div class="shell-sec">Workspace</div>
           ${NAV.map(n => `<a href="${n.href}" class="nav-item${n.id === active ? ' active' : ''}">${icon(n.icon)}<span>${n.label}</span></a>`).join('')}
           <div class="shell-sec">Recentes</div>
-          ${MATERIALS.slice(0, 4).map(m => `<a href="${materialHref(m)}" class="nav-item">${icon('<path d="M4 4h10l6 6v10H4z"/>')}<span>${m.title}</span></a>`).join('')}
+          ${MATERIALS.filter(m => !m.soon).slice(0, 4).map(m => `<a href="${materialHref(m)}" class="nav-item">${icon('<path d="M4 4h10l6 6v10H4z"/>')}<span>${m.title}</span></a>`).join('')}
         </nav>`;
     return `
       <a href="dashboard.html" class="shell-logo">
