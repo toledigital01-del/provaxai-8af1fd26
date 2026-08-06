@@ -34,7 +34,7 @@ const DISCIPLINAS_POR_CONCURSO = {
 };
 
 const MATERIALS = [
-  { id:'prf-2021', title:'Concurso PRF 2021', type:'Edital', folder:'Concursos', disc:15, top:96, pag:214, envio:'12/03/2026', acesso:'hoje', tempo:'14h32', pct:18 },
+  { id:'prf-2021', title:'Concurso PRF', type:'Edital', folder:'Concursos', disc:15, top:96, pag:214, envio:'12/03/2026', acesso:'hoje', tempo:'14h32', pct:18 },
   { id:'pf-2026', title:'Concurso PF', type:'Edital', folder:'Concursos', disc:0, top:0, pag:0, envio:'—', acesso:'—', tempo:'—', pct:0, soon:true },
 ];
 

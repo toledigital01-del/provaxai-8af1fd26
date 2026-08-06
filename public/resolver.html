@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resolver – Prova X</title>
+<link rel="stylesheet" href="shell.css">
+<style>
+  .solve-wrap { max-width: 860px; margin: 0 auto; padding: 48px 20px 60px; }
+  .solve-title { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; text-align: center; }
+  .chips-row { display:flex; align-items:center; gap:8px; margin-top:28px; }
+  .chips-scroll { flex:1; display:flex; gap:8px; overflow-x:auto; scroll-behavior:smooth; padding:4px; }
+  .chips-scroll::-webkit-scrollbar { display:none; }
+  .chip { display:inline-flex; align-items:center; gap:7px; padding:9px 15px; border-radius:12px; border:1.5px solid var(--line-strong);
+          background:#fff; font-size:0.87rem; font-weight:500; color:#374151; cursor:pointer; white-space:nowrap; font-family:inherit; transition:.15s; }
+  .chip:hover { border-color:#CBD5E1; }
+  .chip.active { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); font-weight:600; }
+  .arrow-btn { width:30px; height:30px; border-radius:50%; border:none; background:transparent; cursor:pointer; color:#64748B; display:grid; place-items:center; }
+  .arrow-btn:hover { background:#F1F5F9; }
+  .drop { margin-top:26px; border:1.5px dashed var(--line-strong); border-radius:16px; padding:32px; text-align:center; color:var(--muted);
+          font-size:0.9rem; cursor:pointer; transition:.15s; background:var(--bg-soft); }
+  .drop:hover, .drop.over { border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }
+  .drop svg { display:block; margin:0 auto 10px; opacity:.7; }
+  .thumbs { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+  .thumbs img { width:74px; height:74px; object-fit:cover; border-radius:10px; border:1px solid var(--line); }
+  .ask { margin-top:-6px; position:relative; border:1.5px solid var(--line-strong); border-radius:20px; background:#fff; padding:16px 18px 12px; }
+  .ask:focus-within { border-color:var(--accent); }
+  .ask textarea { width:100%; border:none; outline:none; resize:none; font-family:inherit; font-size:0.98rem; color:var(--text); background:transparent; min-height:26px; max-height:180px; }
+  .ask-foot { display:flex; align-items:center; gap:10px; margin-top:14px; }
+  .switch { width:38px; height:21px; border-radius:999px; background:#CBD5E1; position:relative; border:none; cursor:pointer; flex-shrink:0; transition:.15s; }
+  .switch::after { content:''; position:absolute; top:2.5px; left:2.5px; width:16px; height:16px; border-radius:50%; background:#fff; transition:.15s; }
+  .switch.on { background:#16181D; }
+  .switch.on::after { transform:translateX(17px); }
+  .switch-lbl { font-size:0.82rem; color:#4A5162; }
+  .send { margin-left:auto; width:38px; height:38px; border-radius:50%; border:none; cursor:pointer; background:#94A3B8; color:#fff; display:grid; place-items:center; transition:.15s; }
+  .send.ready { background:var(--accent); }
+  .answer { margin-top:26px; border:1px solid var(--line); border-radius:16px; padding:20px 22px; font-size:0.92rem; line-height:1.7; color:#374151; background:#fff; }
+  .answer strong { color:var(--text); }
+  .typing span { display:inline-block; width:7px; height:7px; margin-right:4px; border-radius:50%; background:#9CA3AF; animation:bb 1.2s infinite; }
+  .typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+  @keyframes bb { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+</style>
+</head>
+<body>
+<aside id="shell-sidebar"></aside>
+<div class="shell-main">
+  <header id="shell-topbar"></header>
+  <div class="shell-body">
+    <div class="solve-wrap">
+      <h1 class="solve-title">O que você quer resolver?</h1>
+
+      <div class="chips-row">
+        <button class="arrow-btn" onclick="scrollChips(-1)">‹</button>
+        <div class="chips-scroll" id="chips"></div>
+        <button class="arrow-btn" onclick="scrollChips(1)">›</button>
+      </div>
+
+      <div class="drop" id="drop" onclick="document.getElementById('file').click()">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="1.6"/><path d="m21 15-5-5L5 21"/></svg>
+        Arraste e solte ou clique para adicionar uma imagem
+      </div>
+      <input type="file" id="file" accept="image/*" multiple hidden>
+      <div class="thumbs" id="thumbs"></div>
+
+      <div class="ask" style="margin-top:14px;">
+        <textarea id="q" rows="1" placeholder="Digite sua pergunta aqui..."
+          oninput="grow(this)"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviar();}"></textarea>
+        <div class="ask-foot">
+          <button class="switch on" id="deep" onclick="this.classList.toggle('on')"></button>
+          <span class="switch-lbl">Raciocínio profundo</span>
+          <button class="send" id="send" onclick="enviar()">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div id="answer"></div>
+    </div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="shell.js"></script>
+<script>
+renderShell({ active: 'resolver' });
+
+const MATERIAS = ['Geral','Língua Portuguesa','Raciocínio Lógico-Matemático','Informática','Legislação de Trânsito','Direito Administrativo','Direito Constitucional','Direito Penal','Ética no Serviço Público','Direitos Humanos e Cidadania'];
+let materia = 'Geral';
+
+document.getElementById('chips').innerHTML = MATERIAS.map(m =>
+  `<button class="chip${m === materia ? ' active' : ''}" onclick="selMateria('${m.replace(/'/g,"\\'")}',this)">${m}</button>`).join('');
+
+function selMateria(m, el) {
+  materia = m;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+function scrollChips(dir) { document.getElementById('chips').scrollBy({ left: dir * 240, behavior: 'smooth' }); }
+function grow(t) { t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight, 180) + 'px'; document.getElementById('send').classList.toggle('ready', !!t.value.trim()); }
+
+const drop = document.getElementById('drop'), fileEl = document.getElementById('file'), thumbs = document.getElementById('thumbs');
+['dragenter','dragover'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', ev => addFiles(ev.dataTransfer.files));
+fileEl.addEventListener('change', () => addFiles(fileEl.files));
+function addFiles(list) {
+  [...list].filter(f => f.type.startsWith('image/')).forEach(f => {
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(f);
+    thumbs.appendChild(img);
+  });
+}
+
+function enviar() {
+  const q = document.getElementById('q');
+  const txt = q.value.trim();
+  if (!txt) return;
+  const deep = document.getElementById('deep').classList.contains('on');
+  const box = document.getElementById('answer');
+  box.innerHTML = `<div class="answer"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  q.value = ''; grow(q);
+  setTimeout(() => {
+    box.innerHTML = `<div class="answer">
+      <strong>Resolução — ${materia}</strong><br><br>
+      Pergunta: “${txt.replace(/</g,'&lt;')}”<br><br>
+      ${deep ? '<strong>Raciocínio profundo ativado.</strong><br>1. Interpretação do enunciado<br>2. Base legal / conceito aplicável<br>3. Aplicação ao caso<br>4. Conclusão<br><br>' : ''}
+      A Athena IA está sendo conectada a esta tela. Enquanto isso, use a aula do tópico correspondente para revisar o conteúdo.
+    </div>`;
+  }, 1100);
+}
+</script>
+</body>
+</html>
