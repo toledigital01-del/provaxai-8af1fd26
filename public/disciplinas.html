@@ -99,8 +99,7 @@ if (firstTopic) {
   renderShell({
     active: 'materiais',
     topicNav: {
-      label: 'Tópico',
-      items: WS_TABS.map(t => `<a class="ws-item" href="${wsFirst}&tab=${t.id}"><span class="ic">${t.ic}</span><span>${t.label}</span></a>`).join(''),
+      items: wsMenuHTML(t => `<a class="ws-item" href="${wsFirst}&tab=${t.id}"><span class="ic">${t.ic}</span><span>${t.label}</span></a>`),
     },
   });
 } else {
