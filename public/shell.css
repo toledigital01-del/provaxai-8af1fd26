@@ -331,3 +331,9 @@ body.dark .day:hover, body.dark .task:hover, body.dark .mcard:hover, body.dark .
 body.dark h1, body.dark h2, body.dark h3, body.dark h4, body.dark .title, body.dark .cn, body.dark .tn { color:#F1F5F9; }
 body.dark .subtitle, body.dark .cmeta, body.dark .muted { color:#94A3B8; }
 body.dark .seg button.on, body.dark .tabs button.on, body.dark .nav-item.active { background:#1D283A !important; color:#60A5FA !important; }
+
+body.dark .fold b, body.dark .fmenu button, body.dark .fold.active b { color:#F1F5F9 !important; }
+body.dark .fold.active { background:#1D283A !important; border-color:#2B3648 !important; border-left-color:#60A5FA !important; }
+body.dark .fold.active svg { color:#60A5FA !important; }
+body.dark .fold .sub { color:#94A3B8 !important; }
+body.dark .fmenu button:hover, body.dark .fold .fdots:hover { background:#1E293B !important; color:#F1F5F9 !important; }
