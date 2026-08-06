@@ -114,7 +114,7 @@ function searchIndex() {
         items.push({ kind: 'Tópico', label: t, sub: `${m.title} · ${d}`, href: `workspace.html?${base}` });
         items.push({ kind: 'Flashcards', label: `Flashcards de ${t}`, sub: d, href: `workspace.html?${base}&tab=flashcards` });
         items.push({ kind: 'Questões', label: `Questões de ${t}`, sub: d, href: `workspace.html?${base}&tab=questoes` });
-        items.push({ kind: 'Resumo', label: `Resumo de ${t}`, sub: d, href: `workspace.html?${base}&tab=conteudo` });
+        items.push({ kind: 'Lição', label: `Lição de ${t}`, sub: d, href: `workspace.html?${base}&tab=tutor` });
         items.push({ kind: 'Anotação', label: `Anotações de ${t}`, sub: d, href: `workspace.html?${base}&tab=anotacoes` });
       });
     });
