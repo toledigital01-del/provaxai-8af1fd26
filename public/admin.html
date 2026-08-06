@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Administrativo – Prova X</title>
+<meta name="description" content="Gestão de alunos, cursos, assinaturas, IA e suporte da plataforma Prova X.">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#F8FAFC;color:#0F172A;}
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 18px 60px;}
+  header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
+  header h1{font-size:1.25rem;font-weight:800;letter-spacing:-0.02em;}
+  .badge{background:#EFF6FF;color:#1D4ED8;border-radius:999px;padding:4px 10px;font-size:0.72rem;font-weight:700;}
+  .spacer{flex:1;}
+  a.back{font-size:0.83rem;color:#2563EB;text-decoration:none;font-weight:600;}
+  .tabs{display:flex;gap:6px;overflow-x:auto;background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:5px;margin-bottom:18px;}
+  .tabs button{white-space:nowrap;border:none;background:transparent;padding:9px 14px;border-radius:10px;font-size:0.84rem;font-weight:600;color:#64748B;cursor:pointer;font-family:inherit;}
+  .tabs button.on{background:#2563EB;color:#fff;}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px;}
+  .kpi{background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:14px 16px;}
+  .kpi b{display:block;font-size:1.5rem;font-weight:800;letter-spacing:-0.03em;}
+  .kpi span{font-size:0.78rem;color:#64748B;}
+  .card{background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:16px;margin-bottom:16px;}
+  .card h2{font-size:0.95rem;font-weight:700;margin-bottom:12px;}
+  table{width:100%;border-collapse:collapse;font-size:0.83rem;}
+  th{text-align:left;color:#64748B;font-weight:600;font-size:0.75rem;text-transform:uppercase;letter-spacing:.03em;padding:8px 10px;border-bottom:1px solid #E2E8F0;}
+  td{padding:9px 10px;border-bottom:1px solid #F1F5F9;vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  .pill{border-radius:999px;padding:3px 9px;font-size:0.72rem;font-weight:700;}
+  .pill.ok{background:#ECFDF5;color:#047857;}
+  .pill.warn{background:#FFFBEB;color:#B45309;}
+  .pill.off{background:#FEF2F2;color:#B91C1C;}
+  .pill.n{background:#F1F5F9;color:#475569;}
+  button.act{border:1px solid #E2E8F0;background:#fff;border-radius:9px;padding:5px 10px;font-size:0.76rem;font-weight:600;cursor:pointer;font-family:inherit;color:#0F172A;}
+  button.act.primary{background:#2563EB;border-color:#2563EB;color:#fff;}
+  button.act.danger{color:#B91C1C;}
+  input,select,textarea{border:1px solid #E2E8F0;border-radius:9px;padding:8px 10px;font-size:0.84rem;font-family:inherit;background:#FBFBFC;width:100%;}
+  .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-items:end;margin-bottom:12px;}
+  .muted{color:#64748B;font-size:0.82rem;}
+  .hide{display:none;}
+  @media(max-width:640px){ table{font-size:0.78rem;} th,td{padding:7px 6px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Painel Administrativo</h1>
+    <span class="badge">Prova X</span>
+    <div class="spacer"></div>
+    <span class="muted" id="who"></span>
+    <a class="back" href="home.html">← Voltar ao app</a>
+  </header>
+
+  <div class="tabs" id="tabs"></div>
+  <div id="view"><p class="muted">Carregando…</p></div>
+</div>
+
+<script src="px-auth.js"></script>
+<script>
+const TABS = [
+  ['geral','Visão geral'],['alunos','Alunos'],['cursos','Cursos'],['conteudo','Conteúdo'],
+  ['financeiro','Financeiro'],['planos','Planos e cupons'],['ia','Athena IA'],
+  ['suporte','Suporte'],['logs','Logs'],['config','Configurações']
+];
+let tab = location.hash.replace('#','') || 'geral';
+const view = document.getElementById('view');
+const money = c => 'R$ ' + ((c || 0) / 100).toFixed(2).replace('.', ',');
+const dt = s => s ? new Date(s).toLocaleDateString('pt-BR') : '—';
+const esc = s => String(s == null ? '' : s).replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+
+function renderTabs(){
+  document.getElementById('tabs').innerHTML = TABS.map(([id,l]) =>
+    `<button class="${id===tab?'on':''}" onclick="go('${id}')">${l}</button>`).join('');
+}
+function go(id){ tab = id; location.hash = id; renderTabs(); render(); }
+
+async function logAdmin(acao, alvo_tipo, alvo_id, detalhes){
+  await PX.sb.from('admin_logs').insert({ admin_id: PX.user.id, acao, alvo_tipo, alvo_id: alvo_id || null, detalhes: detalhes || {} });
+}
+
+/* ---------- Views ---------- */
+async function viewGeral(){
+  const cnt = async (t, f) => { let q = PX.sb.from(t).select('*', {count:'exact', head:true}); if(f) q = f(q); const {count} = await q; return count || 0; };
+  const hoje = new Date(Date.now()-86400000).toISOString();
+  const [alunos, ativos, subs, cursos, tickets, sessoes] = await Promise.all([
+    cnt('profiles'), cnt('login_events', q=>q.gte('created_at', hoje)),
+    cnt('subscriptions', q=>q.eq('status','ativa')), cnt('courses'),
+    cnt('support_tickets', q=>q.eq('status','aberto')), cnt('study_sessions', q=>q.gte('created_at', hoje)),
+  ]);
+  const { data: comp } = await PX.sb.from('purchases').select('valor_cents').eq('status','pago');
+  const receita = (comp||[]).reduce((a,p)=>a+(p.valor_cents||0),0);
+  const { data: ia } = await PX.sb.from('ai_logs').select('custo_cents,tokens_entrada,tokens_saida');
+  const custoIA = (ia||[]).reduce((a,l)=>a+(l.custo_cents||0),0);
+
+  view.innerHTML = `
+    <div class="kpis">
+      <div class="kpi"><b>${alunos}</b><span>Alunos cadastrados</span></div>
+      <div class="kpi"><b>${ativos}</b><span>Logins nas últimas 24h</span></div>
+      <div class="kpi"><b>${subs}</b><span>Assinaturas ativas</span></div>
+      <div class="kpi"><b>${money(receita)}</b><span>Receita confirmada</span></div>
+      <div class="kpi"><b>${sessoes}</b><span>Sessões de estudo (24h)</span></div>
+      <div class="kpi"><b>${cursos}</b><span>Cursos publicados</span></div>
+      <div class="kpi"><b>${tickets}</b><span>Chamados abertos</span></div>
+      <div class="kpi"><b>${money(custoIA)}</b><span>Custo de IA acumulado</span></div>
+    </div>
+    <div class="card"><h2>Últimos cadastros</h2><div id="recent" class="muted">Carregando…</div></div>`;
+  const { data: recent } = await PX.sb.from('profiles').select('full_name,email,created_at').order('created_at',{ascending:false}).limit(8);
+  document.getElementById('recent').innerHTML = tabela(['Nome','E-mail','Cadastro'],
+    (recent||[]).map(p=>[esc(p.full_name||'—'), esc(p.email), dt(p.created_at)]));
+}
+
+function tabela(head, rows){
+  if(!rows.length) return '<p class="muted">Nenhum registro.</p>';
+  return `<table><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+
+async function viewAlunos(){
+  view.innerHTML = `<div class="card">
+    <h2>Alunos</h2>
+    <div class="row"><input id="busca" placeholder="Buscar por nome ou e-mail"><button class="act primary" onclick="viewAlunos()">Atualizar</button></div>
+    <div id="lista" class="muted">Carregando…</div></div>`;
+  const termo = '';
+  const { data: ps } = await PX.sb.from('profiles').select('*').order('created_at',{ascending:false}).limit(200);
+  const { data: rs } = await PX.sb.from('user_roles').select('user_id,role');
+  const roleMap = {}; (rs||[]).forEach(r=>{ (roleMap[r.user_id]=roleMap[r.user_id]||[]).push(r.role); });
+  const paint = (filtro) => {
+    const list = (ps||[]).filter(p => !filtro ||
+      (p.email||'').toLowerCase().includes(filtro) || (p.full_name||'').toLowerCase().includes(filtro));
+    document.getElementById('lista').innerHTML = tabela(['Nome','E-mail','Papéis','Último acesso','Status','Ações'],
+      list.map(p=>[
+        esc(p.full_name||'—'), esc(p.email),
+        (roleMap[p.id]||['student']).map(r=>`<span class="pill n">${r}</span>`).join(' '),
+        dt(p.last_login_at),
+        p.suspended?'<span class="pill off">Suspenso</span>':'<span class="pill ok">Ativo</span>',
+        `<button class="act" onclick="toggleAdmin('${p.id}',${(roleMap[p.id]||[]).includes('admin')})">${(roleMap[p.id]||[]).includes('admin')?'Remover admin':'Tornar admin'}</button>
+         <button class="act ${p.suspended?'':'danger'}" onclick="suspender('${p.id}',${!p.suspended})">${p.suspended?'Reativar':'Suspender'}</button>`
+      ]));
+  };
+  paint('');
+  document.getElementById('busca').oninput = e => paint(e.target.value.toLowerCase().trim());
+}
+async function toggleAdmin(id, isAdm){
+  if(isAdm) await PX.sb.from('user_roles').delete().eq('user_id',id).eq('role','admin');
+  else await PX.sb.from('user_roles').insert({user_id:id, role:'admin'});
+  await logAdmin(isAdm?'remover_admin':'conceder_admin','profile',id);
+  viewAlunos();
+}
+async function suspender(id, val){
+  await PX.sb.from('profiles').update({suspended: val}).eq('id',id);
+  await logAdmin(val?'suspender_aluno':'reativar_aluno','profile',id);
+  viewAlunos();
+}
+
+async function viewCursos(){
+  const { data: cs } = await PX.sb.from('courses').select('*').order('ordem');
+  view.innerHTML = `<div class="card"><h2>Novo curso</h2>
+      <div class="row">
+        <div><label class="muted">Slug</label><input id="c-slug" placeholder="pf-2026"></div>
+        <div><label class="muted">Nome</label><input id="c-nome" placeholder="Concurso PF"></div>
+        <div><label class="muted">Preço (R$)</label><input id="c-preco" type="number" step="0.01" value="0"></div>
+        <div><button class="act primary" onclick="criarCurso()">Criar curso</button></div>
+      </div></div>
+    <div class="card"><h2>Cursos</h2>${tabela(['Nome','Slug','Preço','Status','Ações'],
+      (cs||[]).map(c=>[esc(c.nome), esc(c.slug), money(c.preco_cents),
+        `<span class="pill ${c.status==='publicado'?'ok':'warn'}">${c.status}</span>`,
+        `<button class="act" onclick="statusCurso('${c.id}','${c.status==='publicado'?'rascunho':'publicado'}')">${c.status==='publicado'?'Despublicar':'Publicar'}</button>`]))}</div>`;
+}
+async function criarCurso(){
+  const slug = document.getElementById('c-slug').value.trim();
+  const nome = document.getElementById('c-nome').value.trim();
+  const preco = Math.round(parseFloat(document.getElementById('c-preco').value||'0')*100);
+  if(!slug||!nome) return alert('Informe slug e nome.');
+  const { error } = await PX.sb.from('courses').insert({slug,nome,preco_cents:preco,status:'rascunho'});
+  if(error) return alert(error.message);
+  await logAdmin('criar_curso','course',null,{slug});
+  viewCursos();
+}
+async function statusCurso(id,status){
+  await PX.sb.from('courses').update({status}).eq('id',id);
+  await logAdmin('status_curso','course',id,{status});
+  viewCursos();
+}
+
+async function viewConteudo(){
+  const { data: cs } = await PX.sb.from('courses').select('id,nome,slug').order('ordem');
+  const { data: ds } = await PX.sb.from('disciplines').select('id,nome,course_id,peso,incidencia').order('ordem');
+  const { data: ts } = await PX.sb.from('topics').select('id,discipline_id');
+  const { data: qs } = await PX.sb.from('questions').select('id,discipline_nome');
+  const topCount = {}; (ts||[]).forEach(t=>topCount[t.discipline_id]=(topCount[t.discipline_id]||0)+1);
+  const qCount = {}; (qs||[]).forEach(q=>qCount[q.discipline_nome]=(qCount[q.discipline_nome]||0)+1);
+  const cname = {}; (cs||[]).forEach(c=>cname[c.id]=c.nome);
+  view.innerHTML = `<div class="card"><h2>Disciplinas e tópicos</h2>${tabela(
+    ['Curso','Disciplina','Tópicos','Peso','Incidência','Questões'],
+    (ds||[]).map(d=>[esc(cname[d.course_id]||'—'), esc(d.nome), topCount[d.id]||0, d.peso, d.incidencia+'%', qCount[d.nome]||0]))}</div>`;
+}
+
+async function viewFinanceiro(){
+  const { data: ps } = await PX.sb.from('purchases').select('*').order('created_at',{ascending:false}).limit(100);
+  const { data: ss } = await PX.sb.from('subscriptions').select('*, plans(nome,preco_cents)').order('created_at',{ascending:false}).limit(100);
+  const pago = (ps||[]).filter(p=>p.status==='pago').reduce((a,p)=>a+p.valor_cents,0);
+  const mrr = (ss||[]).filter(s=>s.status==='ativa').reduce((a,s)=>a+((s.plans&&s.plans.preco_cents)||0),0);
+  view.innerHTML = `
+    <div class="kpis">
+      <div class="kpi"><b>${money(pago)}</b><span>Total recebido</span></div>
+      <div class="kpi"><b>${money(mrr)}</b><span>Receita recorrente</span></div>
+      <div class="kpi"><b>${(ss||[]).filter(s=>s.status==='ativa').length}</b><span>Assinaturas ativas</span></div>
+    </div>
+    <div class="card"><h2>Compras</h2>${tabela(['Data','Valor','Status','Provedor','Cupom'],
+      (ps||[]).map(p=>[dt(p.created_at), money(p.valor_cents),
+        `<span class="pill ${p.status==='pago'?'ok':p.status==='reembolsado'?'off':'warn'}">${p.status}</span>`,
+        esc(p.provider||'—'), esc(p.cupom||'—')]))}</div>
+    <div class="card"><h2>Assinaturas</h2>${tabela(['Plano','Status','Renova em','Provedor'],
+      (ss||[]).map(s=>[esc((s.plans&&s.plans.nome)||'—'),
+        `<span class="pill ${s.status==='ativa'?'ok':'off'}">${s.status}</span>`,
+        dt(s.current_period_end), esc(s.provider||'—')]))}</div>`;
+}
+
+async function viewPlanos(){
+  const { data: pl } = await PX.sb.from('plans').select('*').order('ordem');
+  const { data: cp } = await PX.sb.from('coupons').select('*').order('created_at',{ascending:false});
+  view.innerHTML = `
+    <div class="card"><h2>Planos</h2>${tabela(['Nome','Preço','Intervalo','Ativo','Ações'],
+      (pl||[]).map(p=>[esc(p.nome), money(p.preco_cents), esc(p.intervalo),
+        p.ativo?'<span class="pill ok">Sim</span>':'<span class="pill off">Não</span>',
+        `<button class="act" onclick="togglePlano('${p.id}',${!p.ativo})">${p.ativo?'Desativar':'Ativar'}</button>`]))}</div>
+    <div class="card"><h2>Novo cupom</h2>
+      <div class="row">
+        <div><label class="muted">Código</label><input id="cp-cod" placeholder="PRF20"></div>
+        <div><label class="muted">Desconto (%)</label><input id="cp-pct" type="number" value="20"></div>
+        <div><label class="muted">Usos máximos</label><input id="cp-max" type="number" placeholder="ilimitado"></div>
+        <div><button class="act primary" onclick="criarCupom()">Criar cupom</button></div>
+      </div>
+      ${tabela(['Código','Desconto','Usos','Ativo'],
+        (cp||[]).map(c=>[esc(c.codigo), (c.desconto_percent?c.desconto_percent+'%':money(c.desconto_cents)),
+          (c.usos||0)+'/'+(c.usos_maximos||'∞'),
+          c.ativo?'<span class="pill ok">Sim</span>':'<span class="pill off">Não</span>']))}</div>`;
+}
+async function togglePlano(id, ativo){ await PX.sb.from('plans').update({ativo}).eq('id',id); await logAdmin('plano','plan',id,{ativo}); viewPlanos(); }
+async function criarCupom(){
+  const codigo = document.getElementById('cp-cod').value.trim().toUpperCase();
+  if(!codigo) return alert('Informe o código.');
+  const pct = parseInt(document.getElementById('cp-pct').value||'0',10);
+  const max = document.getElementById('cp-max').value;
+  const { error } = await PX.sb.from('coupons').insert({codigo, desconto_percent:pct, usos_maximos:max?parseInt(max,10):null});
+  if(error) return alert(error.message);
+  await logAdmin('criar_cupom','coupon',null,{codigo});
+  viewPlanos();
+}
+
+async function viewIA(){
+  const { data: st } = await PX.sb.from('ai_settings').select('*').order('chave');
+  const { data: lg } = await PX.sb.from('ai_logs').select('*').order('created_at',{ascending:false}).limit(50);
+  const custo = (lg||[]).reduce((a,l)=>a+(l.custo_cents||0),0);
+  view.innerHTML = `
+    <div class="kpis">
+      <div class="kpi"><b>${(lg||[]).length}</b><span>Chamadas recentes</span></div>
+      <div class="kpi"><b>${money(custo)}</b><span>Custo (últimas 50)</span></div>
+    </div>
+    <div class="card"><h2>Prompts da Athena</h2>
+      ${(st||[]).map(s=>`<div style="margin-bottom:14px">
+        <label class="muted">${esc(s.chave)} · modelo ${esc(s.modelo)}</label>
+        <textarea rows="4" id="ai-${s.id}">${esc(s.prompt)}</textarea>
+        <button class="act primary" style="margin-top:6px" onclick="salvarPrompt('${s.id}')">Salvar</button>
+      </div>`).join('') || '<p class="muted">Nenhum prompt configurado.</p>'}
+    </div>
+    <div class="card"><h2>Uso recente</h2>${tabela(['Data','Ferramenta','Modelo','Tópico','Custo'],
+      (lg||[]).map(l=>[dt(l.created_at), esc(l.ferramenta), esc(l.modelo), esc(l.topic_nome||'—'), money(l.custo_cents)]))}</div>`;
+}
+async function salvarPrompt(id){
+  const prompt = document.getElementById('ai-'+id).value;
+  const { error } = await PX.sb.from('ai_settings').update({prompt}).eq('id',id);
+  if(error) return alert(error.message);
+  await logAdmin('editar_prompt','ai_settings',id);
+  alert('Prompt atualizado.');
+}
+
+async function viewSuporte(){
+  const { data: ts } = await PX.sb.from('support_tickets').select('*').order('created_at',{ascending:false}).limit(100);
+  view.innerHTML = `<div class="card"><h2>Chamados</h2>${tabela(['Data','Tipo','Assunto','Prioridade','Status','Ações'],
+    (ts||[]).map(t=>[dt(t.created_at), esc(t.tipo), esc(t.assunto),
+      `<span class="pill n">${esc(t.prioridade)}</span>`,
+      `<span class="pill ${t.status==='aberto'?'warn':t.status==='resolvido'?'ok':'n'}">${esc(t.status)}</span>`,
+      `<button class="act" onclick="statusTicket('${t.id}','${t.status==='resolvido'?'aberto':'resolvido'}')">${t.status==='resolvido'?'Reabrir':'Resolver'}</button>`]))}</div>`;
+}
+async function statusTicket(id,status){ await PX.sb.from('support_tickets').update({status}).eq('id',id); await logAdmin('ticket','support_ticket',id,{status}); viewSuporte(); }
+
+async function viewLogs(){
+  const { data: al } = await PX.sb.from('admin_logs').select('*').order('created_at',{ascending:false}).limit(80);
+  const { data: le } = await PX.sb.from('login_events').select('*').order('created_at',{ascending:false}).limit(40);
+  view.innerHTML = `
+    <div class="card"><h2>Ações administrativas</h2>${tabela(['Data','Ação','Alvo','Detalhes'],
+      (al||[]).map(l=>[dt(l.created_at), esc(l.acao), esc(l.alvo_tipo||'—'), esc(JSON.stringify(l.detalhes||{}))]))}</div>
+    <div class="card"><h2>Acessos</h2>${tabela(['Data','Dispositivo'],
+      (le||[]).map(l=>[dt(l.created_at), esc((l.user_agent||'').slice(0,70))]))}</div>`;
+}
+
+async function viewConfig(){
+  const { data: ps } = await PX.sb.from('platform_settings').select('*').order('chave');
+  view.innerHTML = `<div class="card"><h2>Configurações da plataforma</h2>
+    ${(ps||[]).map(s=>`<div class="row">
+      <div><label class="muted">${esc(s.chave)}</label><input id="ps-${s.id}" value='${esc(JSON.stringify(s.valor))}'></div>
+      <div><button class="act primary" onclick="salvarConfig('${s.id}')">Salvar</button></div>
+    </div>`).join('') || '<p class="muted">Nenhuma configuração cadastrada.</p>'}</div>`;
+}
+async function salvarConfig(id){
+  let valor;
+  try { valor = JSON.parse(document.getElementById('ps-'+id).value); }
+  catch(e){ return alert('Valor precisa ser um JSON válido.'); }
+  const { error } = await PX.sb.from('platform_settings').update({valor}).eq('id',id);
+  if(error) return alert(error.message);
+  await logAdmin('config','platform_settings',id);
+  alert('Configuração salva.');
+}
+
+const VIEWS = { geral:viewGeral, alunos:viewAlunos, cursos:viewCursos, conteudo:viewConteudo,
+  financeiro:viewFinanceiro, planos:viewPlanos, ia:viewIA, suporte:viewSuporte, logs:viewLogs, config:viewConfig };
+
+async function render(){
+  view.innerHTML = '<p class="muted">Carregando…</p>';
+  try { await (VIEWS[tab] || viewGeral)(); }
+  catch(e){ view.innerHTML = '<div class="card"><p class="muted">Erro ao carregar: '+esc(e.message||e)+'</p></div>'; }
+}
+
+(async function(){
+  const u = await PX.requireAdmin();
+  if(!u) return;
+  document.getElementById('who').textContent = PX.displayName();
+  renderTabs();
+  render();
+})();
+</script>
+</body>
+</html>

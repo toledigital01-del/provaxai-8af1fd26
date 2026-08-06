@@ -4,52 +4,144 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Entrar – Prova X</title>
+<meta name="description" content="Acesse sua conta Prova X e continue seus estudos para concursos com a Athena IA.">
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#F8FAFC;color:#111827;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
-  .box{width:100%;max-width:400px;background:#fff;border:1px solid #E5E7EB;border-radius:18px;padding:28px 26px;box-shadow:0 20px 50px rgba(15,23,42,.07);}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#F8FAFC;color:#0F172A;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+  .box{width:100%;max-width:410px;background:#fff;border:1px solid #E2E8F0;border-radius:18px;padding:28px 26px;box-shadow:0 20px 50px rgba(15,23,42,.07);}
   .logo{display:flex;align-items:center;gap:8px;justify-content:center;text-decoration:none;margin-bottom:18px;}
-  .logo span{font-weight:800;font-size:1.35rem;letter-spacing:-0.03em;background:linear-gradient(to right,#FF8040,#FF4D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-  h1{font-size:1.25rem;font-weight:700;letter-spacing:-0.02em;text-align:center;}
-  p.sub{font-size:0.85rem;color:#6B7280;text-align:center;margin-top:6px;}
-  .ctx{margin:18px 0 4px;border:1px solid #E5E7EB;border-radius:12px;padding:11px 13px;background:#FFF7ED;font-size:0.82rem;color:#9A3412;}
-  label{display:block;font-size:0.8rem;font-weight:500;color:#374151;margin:14px 0 6px;}
-  input{width:100%;border:1px solid #E5E7EB;border-radius:10px;padding:11px 12px;font-size:0.9rem;font-family:inherit;background:#FBFBFC;}
-  input:focus{outline:none;border-color:#FF8040;}
-  button{width:100%;margin-top:18px;border:none;border-radius:12px;padding:12px;font-size:0.92rem;font-weight:700;color:#fff;background:linear-gradient(to right,#FF8040,#FF4D00);cursor:pointer;font-family:inherit;}
-  .alt{margin-top:14px;text-align:center;font-size:0.8rem;color:#6B7280;}
-  .alt a{color:#FF4D00;text-decoration:none;font-weight:600;}
+  .logo span{font-weight:800;font-size:1.35rem;letter-spacing:-0.03em;color:#2563EB;}
+  h1{font-size:1.22rem;font-weight:700;letter-spacing:-0.02em;text-align:center;}
+  p.sub{font-size:0.85rem;color:#64748B;text-align:center;margin-top:6px;}
+  .ctx{margin:16px 0 2px;border:1px solid #DBEAFE;border-radius:12px;padding:11px 13px;background:#EFF6FF;font-size:0.82rem;color:#1D4ED8;}
+  .tabs{display:flex;gap:6px;background:#F1F5F9;border-radius:12px;padding:4px;margin:18px 0 4px;}
+  .tabs button{flex:1;border:none;background:transparent;padding:8px;border-radius:9px;font-size:0.84rem;font-weight:600;color:#64748B;cursor:pointer;font-family:inherit;}
+  .tabs button.on{background:#fff;color:#0F172A;box-shadow:0 1px 3px rgba(15,23,42,.09);}
+  label{display:block;font-size:0.8rem;font-weight:500;color:#334155;margin:14px 0 6px;}
+  input{width:100%;border:1px solid #E2E8F0;border-radius:10px;padding:11px 12px;font-size:0.9rem;font-family:inherit;background:#FBFBFC;}
+  input:focus{outline:none;border-color:#2563EB;}
+  .btn{width:100%;margin-top:18px;border:none;border-radius:12px;padding:12px;font-size:0.92rem;font-weight:700;color:#fff;background:#2563EB;cursor:pointer;font-family:inherit;}
+  .btn:disabled{opacity:.6;cursor:default;}
+  .gbtn{width:100%;margin-top:12px;border:1px solid #E2E8F0;border-radius:12px;padding:11px;font-size:0.9rem;font-weight:600;color:#0F172A;background:#fff;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:9px;}
+  .sep{display:flex;align-items:center;gap:10px;margin:16px 0 2px;color:#94A3B8;font-size:0.74rem;}
+  .sep::before,.sep::after{content:"";flex:1;height:1px;background:#E2E8F0;}
+  .msg{margin-top:14px;font-size:0.82rem;border-radius:10px;padding:10px 12px;display:none;}
+  .msg.err{display:block;background:#FEF2F2;color:#B91C1C;}
+  .msg.ok{display:block;background:#ECFDF5;color:#047857;}
+  .alt{margin-top:14px;text-align:center;font-size:0.8rem;color:#64748B;}
+  .alt a{color:#2563EB;text-decoration:none;font-weight:600;}
 </style>
 </head>
 <body>
-  <form class="box" id="f">
+  <form class="box" id="f" autocomplete="on">
     <a class="logo" href="index.html">
-      <svg width="26" height="26" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="8" fill="#FF4D00"/><path d="M8 10h12M8 14h8M8 18h10" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>
+      <svg width="26" height="26" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="8" fill="#2563EB"/><path d="M8 10h12M8 14h8M8 18h10" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>
       <span>Prova X</span>
     </a>
-    <h1>Entre para acessar o curso</h1>
-    <p class="sub">Use seu e-mail para continuar de onde parou.</p>
-    <div class="ctx" id="ctx" style="display:none;"></div>
+    <h1 id="ttl">Entrar na sua conta</h1>
+    <p class="sub" id="sub">Continue seus estudos de onde parou.</p>
+
+    <div class="ctx" id="ctx" style="display:none"></div>
+
+    <div class="tabs">
+      <button type="button" id="t-in" class="on">Entrar</button>
+      <button type="button" id="t-up">Criar conta</button>
+    </div>
+
+    <div id="namewrap" style="display:none">
+      <label for="nome">Nome completo</label>
+      <input id="nome" type="text" autocomplete="name" placeholder="Seu nome">
+    </div>
+
     <label for="email">E-mail</label>
-    <input id="email" type="email" placeholder="voce@email.com" required>
+    <input id="email" type="email" required autocomplete="email" placeholder="voce@email.com">
+
     <label for="senha">Senha</label>
-    <input id="senha" type="password" placeholder="••••••••" required>
-    <button type="submit">Entrar e acessar →</button>
-    <div class="alt">Ainda não tem conta? <a href="pricing.html">Criar conta</a></div>
+    <input id="senha" type="password" required minlength="6" autocomplete="current-password" placeholder="••••••••">
+
+    <button class="btn" id="submit" type="submit">Entrar</button>
+
+    <div class="sep">ou</div>
+    <button class="gbtn" type="button" id="google">
+      <svg width="17" height="17" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.8 6.1C12.3 13.2 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.9 7.2l7.6 5.9c4.4-4.1 7.1-10.2 7.1-17.6z"/><path fill="#FBBC05" d="M10.4 28.7a14.6 14.6 0 0 1 0-9.4l-7.8-6.1a24 24 0 0 0 0 21.6l7.8-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.8 2.3-8.3 2.3-6.3 0-11.7-3.7-13.6-9.1l-7.8 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+      Continuar com Google
+    </button>
+
+    <div class="msg" id="msg"></div>
+    <p class="alt" id="alt">Ainda não tem conta? <a href="#" id="switch">Criar conta gratuita</a></p>
   </form>
+
+<script src="px-auth.js"></script>
 <script>
-  const params = new URLSearchParams(location.search);
-  const next = params.get('next') || 'home.html';
-  const curso = params.get('curso');
-  if (curso) {
-    const c = document.getElementById('ctx');
-    c.textContent = 'Você está acessando: ' + decodeURIComponent(curso);
-    c.style.display = '';
+  const qs = new URLSearchParams(location.search);
+  const nextUrl = qs.get('next') || 'home.html';
+  const curso = qs.get('curso');
+  if (curso) { const c = document.getElementById('ctx'); c.style.display = 'block'; c.textContent = 'Você está acessando: ' + curso; }
+
+  let mode = 'in';
+  const el = id => document.getElementById(id);
+  function setMode(m) {
+    mode = m;
+    el('t-in').classList.toggle('on', m === 'in');
+    el('t-up').classList.toggle('on', m === 'up');
+    el('namewrap').style.display = m === 'up' ? 'block' : 'none';
+    el('ttl').textContent = m === 'up' ? 'Criar sua conta' : 'Entrar na sua conta';
+    el('sub').textContent = m === 'up' ? 'Leva menos de um minuto.' : 'Continue seus estudos de onde parou.';
+    el('submit').textContent = m === 'up' ? 'Criar conta' : 'Entrar';
+    el('senha').setAttribute('autocomplete', m === 'up' ? 'new-password' : 'current-password');
+    el('alt').innerHTML = m === 'up'
+      ? 'Já tem conta? <a href="#" id="switch">Entrar</a>'
+      : 'Ainda não tem conta? <a href="#" id="switch">Criar conta gratuita</a>';
+    el('switch').onclick = e => { e.preventDefault(); setMode(mode === 'up' ? 'in' : 'up'); };
+    show('', '');
   }
-  document.getElementById('f').addEventListener('submit', e => {
+  function show(text, kind) {
+    const m = el('msg');
+    m.className = 'msg' + (kind ? ' ' + kind : '');
+    m.textContent = text;
+  }
+  el('t-in').onclick = () => setMode('in');
+  el('t-up').onclick = () => setMode('up');
+  setMode('in');
+
+  function go() { location.href = sessionStorage.getItem('px_next') || nextUrl; }
+
+  PX.ready.then(() => { if (PX.user) go(); });
+
+  el('f').addEventListener('submit', async e => {
     e.preventDefault();
-    location.href = decodeURIComponent(next);
+    const btn = el('submit');
+    btn.disabled = true;
+    show('Aguarde…', '');
+    const email = el('email').value.trim();
+    const senha = el('senha').value;
+    try {
+      if (mode === 'up') {
+        const { data, error } = await PX.signUp(email, senha, el('nome').value.trim());
+        if (error) throw error;
+        if (data.session) { go(); return; }
+        show('Conta criada! Confirme o e-mail enviado para ' + email + ' para entrar.', 'ok');
+      } else {
+        const { error } = await PX.signIn(email, senha);
+        if (error) throw error;
+        go(); return;
+      }
+    } catch (err) {
+      const m = String(err.message || err);
+      show(m.includes('Invalid login') ? 'E-mail ou senha incorretos.'
+        : m.includes('already registered') ? 'Este e-mail já possui conta. Faça login.'
+        : m, 'err');
+    }
+    btn.disabled = false;
   });
+
+  el('google').onclick = async () => {
+    show('Abrindo o Google…', '');
+    sessionStorage.setItem('px_next', nextUrl);
+    const r = await PX.signInWithGoogle(nextUrl);
+    if (r && r.error) show(String(r.error.message || r.error), 'err');
+    else if (r && r.ok) go();
+  };
 </script>
 </body>
 </html>
