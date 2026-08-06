@@ -81,6 +81,7 @@
         <div class="gresults" id="gres"></div>
       </div>
       <div style="flex:1"></div>
+      <button class="theme-toggle" id="px-theme-btn" aria-label="Alternar tema" title="Alternar modo escuro" onclick="pxToggleTheme()"></button>
       ${right || ''}`;
   }
 
@@ -153,6 +154,7 @@
     const top = document.getElementById('shell-topbar');
     if (side) { side.className = 'shell-sidebar'; side.innerHTML = sidebarHTML(opts.active, opts.topicNav); }
     if (top) { top.className = 'shell-topbar'; top.innerHTML = topbarHTML(opts.right); mountSearch(); }
+    if (window.__pxApplyTheme) window.__pxApplyTheme();
     if (!document.getElementById('shell-scrim')) {
       const sc = document.createElement('div');
       sc.id = 'shell-scrim';
