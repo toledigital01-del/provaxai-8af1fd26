@@ -96,15 +96,16 @@ if (firstTopic) {
   document.getElementById('cont-pct').textContent = firstTopic.prog + '%';
   document.getElementById('continue-link').href = wsFirst;
 
-  renderShell({
-    active: 'materiais',
-    topicNav: {
-      items: wsMenuHTML(t => `<a class="ws-item" href="${wsFirst}&tab=${t.id}"><span class="ic">${t.ic}</span><span>${t.label}</span></a>`),
-    },
-  });
-} else {
-  renderShell({ active: 'materiais' });
 }
+
+const wsGeral = `workspace.html?${base}&scope=geral`;
+renderShell({
+  active: 'materiais',
+  topicNav: {
+    items: wsMenuHTML(t => `<a class="ws-item" href="${wsGeral}&tab=${t.id}"><span class="ic">${t.ic}</span><span>${t.label}</span></a>`),
+  },
+});
+
 
 document.getElementById('disc-grid').innerHTML = DISCIPLINAS.map(d => `
   <a class="card ${areaClass(d.name)}" href="disciplina.html?${base}&disc=${encodeURIComponent(d.name)}">

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cronograma – Prova X</title>
+<link rel="stylesheet" href="shell.css">
+<style>
+  .cr-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+  .btn-primary { background:#2563EB; color:#fff; border:1px solid #2563EB; border-radius:10px; padding:9px 14px; font-size:0.85rem; font-weight:600; cursor:pointer; font-family:inherit; }
+  .btn-secondary { background:#fff; color:var(--text); border:1px solid var(--line-strong); border-radius:10px; padding:9px 14px; font-size:0.85rem; font-weight:600; cursor:pointer; font-family:inherit; }
+  .box { border:1px solid var(--line); border-radius:12px; background:#fff; padding:18px; margin-top:18px; }
+  .blk { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:13px 0; border-bottom:1px solid var(--line); }
+  .blk:last-child { border-bottom:none; }
+  .blk .l { min-width:0; }
+  .blk .t { font-size:0.9rem; font-weight:600; }
+  .blk .s { font-size:0.78rem; color:var(--muted); margin-top:2px; }
+  .blk .r { font-size:0.8rem; color:var(--muted); white-space:nowrap; }
+  .modal { position:fixed; inset:0; background:rgba(15,23,42,.35); display:none; align-items:center; justify-content:center; padding:20px; z-index:60; }
+  .modal.open { display:flex; }
+  .modal .card2 { background:#fff; border-radius:14px; padding:22px; width:100%; max-width:400px; }
+  .modal label { display:block; font-size:0.8rem; color:var(--muted); margin:12px 0 5px; }
+  .modal input { width:100%; border:1px solid var(--line-strong); border-radius:9px; padding:9px 11px; font-family:inherit; font-size:0.88rem; outline:none; }
+  .m-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:18px; }
+</style>
+</head>
+<body>
+<aside id="shell-sidebar"></aside>
+<div class="shell-main">
+  <header id="shell-topbar"></header>
+  <div class="shell-body">
+    <div class="page">
+      <div class="cr-head">
+        <div>
+          <h1 class="title">Cronograma Inteligente</h1>
+          <p class="subtitle" id="meta-sub"></p>
+        </div>
+        <button class="btn-secondary" id="open-plan">⚙️ Ajustar Plano</button>
+      </div>
+
+      <div class="box">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;">
+          <b id="meta-hoje" style="font-size:0.95rem;"></b>
+          <span class="pct" id="meta-pct"></span>
+        </div>
+        <div class="track" style="margin-top:10px;"><div class="fill" id="meta-fill"></div></div>
+      </div>
+
+      <div class="sec-lbl" style="margin-top:26px;">Blocos de estudo de hoje</div>
+      <div class="box" style="padding:4px 18px;" id="blocos"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="card2">
+    <b style="font-size:1rem;">Ajustar plano</b>
+    <label for="f-data">Data da Prova</label>
+    <input type="date" id="f-data">
+    <label for="f-horas">Horas disponíveis por dia</label>
+    <input type="number" id="f-horas" min="1" max="16" step="0.5">
+    <div class="m-actions">
+      <button class="btn-secondary" id="m-cancel">Cancelar</button>
+      <button class="btn-primary" id="m-save">Salvar plano</button>
+    </div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="shell.js"></script>
+<script>
+renderShell({ active: 'cronograma' });
+
+const KEY = 'plano:estudos';
+const plano = Object.assign({ data: '', horas: 3 }, JSON.parse(localStorage.getItem(KEY) || '{}'));
+
+const mat = MATERIALS.find(m => !m.soon) || MATERIALS[0];
+const discs = disciplinasDe(mat.id);
+
+/* tópicos mais fracos primeiro: peso do edital (nº de tópicos) + índice de domínio baixo */
+function blocos() {
+  const all = [];
+  discs.forEach(d => {
+    const peso = (TOPICS[d] || []).length;
+    (TOPICS[d] || []).forEach(t => all.push({ d, t, prog: progressOf(t), peso }));
+  });
+  all.sort((a, b) => (a.prog - b.prog) || (b.peso - a.peso));
+  const horas = Number(plano.horas) || 3;
+  const n = Math.max(2, Math.min(6, Math.round(horas / 0.75)));
+  const min = Math.max(25, Math.round((horas * 60) / n / 5) * 5);
+  return all.slice(0, n).map((b, i) => ({ ...b, i: i + 1, min }));
+}
+
+function diasRestantes() {
+  if (!plano.data) return null;
+  const diff = Math.ceil((new Date(plano.data + 'T00:00:00') - new Date()) / 86400000);
+  return isNaN(diff) ? null : diff;
+}
+
+function render() {
+  const horas = Number(plano.horas) || 3;
+  const dias = diasRestantes();
+  document.getElementById('meta-sub').textContent =
+    `${mat.title}${dias !== null ? ` · prova em ${dias} dia${dias === 1 ? '' : 's'}` : ' · defina a data da prova em Ajustar Plano'}`;
+  document.getElementById('meta-hoje').textContent = `Meta de Hoje: ${horas}h líquidas`;
+
+  const feito = Math.min(horas, Math.round(horas * 0.45 * 10) / 10);
+  const pct = Math.round((feito / horas) * 100);
+  document.getElementById('meta-pct').textContent = `${feito}h / ${horas}h`;
+  const fill = document.getElementById('meta-fill');
+  fill.className = 'fill ' + fillClass(pct);
+  fill.style.width = pct + '%';
+
+  const base = `id=${encodeURIComponent(mat.id)}&type=${encodeURIComponent(mat.type)}&title=${encodeURIComponent(mat.title)}`;
+  document.getElementById('blocos').innerHTML = blocos().map(b => `
+    <a class="blk" style="text-decoration:none;color:inherit;" href="workspace.html?${base}&disc=${encodeURIComponent(b.d)}&topic=${encodeURIComponent(b.t)}&tab=tutor">
+      <span class="l">
+        <span class="t">Bloco ${b.i}: ${b.d}</span>
+        <span class="s">${dotHTML(statusOf(b.t))} ${b.t} · domínio ${b.prog}%</span>
+      </span>
+      <span class="r">${b.min} min</span>
+    </a>`).join('');
+}
+render();
+
+const modal = document.getElementById('modal');
+document.getElementById('open-plan').onclick = () => {
+  document.getElementById('f-data').value = plano.data || '';
+  document.getElementById('f-horas').value = plano.horas || 3;
+  modal.classList.add('open');
+};
+document.getElementById('m-cancel').onclick = () => modal.classList.remove('open');
+modal.onclick = e => { if (e.target === modal) modal.classList.remove('open'); };
+document.getElementById('m-save').onclick = () => {
+  plano.data = document.getElementById('f-data').value;
+  plano.horas = Number(document.getElementById('f-horas').value) || 3;
+  localStorage.setItem(KEY, JSON.stringify(plano));
+  modal.classList.remove('open');
+  render();
+};
+</script>
+</body>
+</html>

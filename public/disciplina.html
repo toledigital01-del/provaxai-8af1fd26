@@ -59,8 +59,7 @@ document.getElementById('crumb').innerHTML =
     : `<span>${title}</span>`) +
   `<span class="sep">/</span><span>${disc}</span>`;
 
-const firstTopic = (info.topics[0] || { name: disc }).name;
-const wsBase = `workspace.html?${base}&disc=${encodeURIComponent(disc)}&topic=${encodeURIComponent(firstTopic)}`;
+const wsBase = `workspace.html?${base}&disc=${encodeURIComponent(disc)}&scope=disc`;
 
 renderShell({
   active: 'materiais',
@@ -68,6 +67,7 @@ renderShell({
     items: wsMenuHTML(t => `<a class="ws-item" href="${wsBase}&tab=${t.id}"><span class="ic">${t.ic}</span><span>${t.label}</span></a>`),
   },
 });
+
 
 document.getElementById('page-back').href = allDiscs.length > 1 ? `disciplinas.html?${base}` : 'study-sets.html';
 document.getElementById('page-back-label').textContent = allDiscs.length > 1 ? title : 'Meus Concursos';

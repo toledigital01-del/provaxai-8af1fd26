@@ -6,8 +6,17 @@
 <title>Workspace – Prova X</title>
 <link rel="stylesheet" href="shell.css">
 <style>
-  .ws { display:grid; grid-template-columns: minmax(0,1fr) 268px; height:100%; }
-  @media (max-width: 1100px) { .ws { grid-template-columns: minmax(0,1fr); } .ws-right { display:none; } }
+  .ws { display:grid; grid-template-columns: minmax(0,1fr) 340px; height:100%; }
+  @media (max-width: 1200px) { .ws { grid-template-columns: minmax(0,1fr); } .ws-right { display:none; } }
+  .fixa { margin-top:26px; padding-top:18px; border-top:1px solid var(--line); }
+  .fixa .lbl { font-size:0.95rem; font-weight:600; }
+  .fixa .btns { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+  .fixa .btns button { flex:1 1 220px; border-radius:10px; padding:11px 14px; font-size:0.86rem; font-weight:600; cursor:pointer; font-family:inherit; }
+  .btn-primary { background:#2563EB; color:#fff; border:1px solid #2563EB; }
+  .btn-secondary { background:#fff; color:var(--text); border:1px solid var(--line-strong); }
+  .scope-pick { display:flex; align-items:center; gap:8px; margin-top:16px; flex-wrap:wrap; }
+  .scope-pick select { border:1px solid var(--line-strong); border-radius:9px; padding:8px 10px; font-family:inherit; font-size:0.85rem; background:#fff; }
+
 
 
   .ws-item { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; font-size:0.86rem; color:#4A5162; cursor:pointer; transition:background .14s, color .14s; }
@@ -55,7 +64,10 @@
 
   .ws-chat { margin-top:20px; border-top:1px solid var(--line); padding-top:16px; }
   .ws-chat .rlbl { font-size:0.68rem; text-transform:uppercase; letter-spacing:.08em; color:#A6ACBB; font-weight:600; margin-bottom:10px; }
-  .ws-chat .log { display:flex; flex-direction:column; gap:8px; max-height:220px; overflow-y:auto; }
+  .ws-chat .log { display:flex; flex-direction:column; gap:8px; max-height:46vh; overflow-y:auto; }
+  .ctxchip { font-size:0.72rem; color:#1D4ED8; background:#EEF2FF; border:1px solid #DBEAFE; border-radius:999px; padding:4px 9px; display:inline-block; margin-bottom:10px; }
+  .ctxsep { font-size:0.66rem; text-transform:uppercase; letter-spacing:.06em; color:#A6ACBB; text-align:center; margin:4px 0; }
+
   .ws-chat .b { font-size:0.82rem; line-height:1.55; padding:8px 10px; border-radius:10px; background:#fff; border:1px solid var(--line); }
   .ws-chat .b.me { background:var(--text); color:#fff; border-color:var(--text); align-self:flex-end; max-width:90%; }
   .ws-chat form { display:flex; gap:6px; margin-top:10px; }
@@ -121,27 +133,56 @@ const mat = materialById(id);
 const title = params.get('title') || (mat ? mat.title : 'Material');
 const type = params.get('type') || (mat ? mat.type : 'Material');
 const allDiscs = disciplinasDe(id);
+const scope = params.get('scope') === 'geral' ? 'geral' : (params.get('scope') === 'disc' ? 'disc' : 'topico');
 const disc = params.get('disc') || allDiscs[0];
 const topic = params.get('topic') || (TOPICS[disc] || ['Tópico'])[0];
 const base = `id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}&title=${encodeURIComponent(title)}`;
 const discHref = `disciplina.html?${base}&disc=${encodeURIComponent(disc)}`;
 
-document.getElementById('page-back').href = discHref;
-document.getElementById('page-back-label').textContent = disc;
+/* escopo geral: o aluno escolhe a disciplina dentro da própria ferramenta */
+let selDisc = scope === 'geral' ? (params.get('disc') || 'all') : disc;
+function poolTopics() {
+  if (scope === 'topico') return [topic];
+  const ds = scope === 'disc' ? [disc] : (selDisc === 'all' ? allDiscs : [selDisc]);
+  return ds.flatMap(d => (TOPICS[d] || []).map(t => ({ t, d })));
+}
+function ctxLabel() {
+  if (scope === 'topico') return `${topic} · ${disc}`;
+  if (scope === 'disc') return `${disc} · todos os tópicos`;
+  return selDisc === 'all' ? `${title} · todo o edital` : `${title} · ${selDisc}`;
+}
+function scopePickerHTML() {
+  if (scope !== 'geral') return '';
+  return `<div class="scope-pick"><span style="font-size:0.82rem;color:var(--muted);">Disciplina:</span>
+    <select id="scope-sel"><option value="all"${selDisc==='all'?' selected':''}>Todas as disciplinas</option>
+    ${allDiscs.map(d => `<option value="${d}"${selDisc===d?' selected':''}>${d}</option>`).join('')}</select></div>`;
+}
+function mountScopePicker() {
+  const s = document.getElementById('scope-sel');
+  if (s) s.onchange = () => { selDisc = s.value; fcIdx = 0; fcOpen = false; renderPane(); };
+}
+
+document.getElementById('page-back').href = scope === 'geral' ? `disciplinas.html?${base}` : discHref;
+document.getElementById('page-back-label').textContent = scope === 'geral' ? title : disc;
 
 document.getElementById('crumb').innerHTML =
   `<a href="study-sets.html">Meus Concursos</a><span class="sep">/</span>` +
   (allDiscs.length > 1 ? `<a href="disciplinas.html?${base}">${title}</a>` : `<span>${title}</span>`) +
-  `<span class="sep">/</span><a href="${discHref}">${disc}</a><span class="sep">/</span><span>${topic}</span>`;
+  (scope === 'geral' ? '' :
+    `<span class="sep">/</span><a href="${discHref}">${disc}</a>` +
+    (scope === 'topico' ? `<span class="sep">/</span><span>${topic}</span>` : ''));
 
-const stats = topicStats(topic);
+const stats = topicStats(scope === 'topico' ? topic : disc);
 const sm = STATUS_META[stats.status];
-document.getElementById('t-title').textContent = topic;
-document.getElementById('t-sub').innerHTML = `${dotHTML(stats.status)} ${sm.label} · ${disc}`;
+document.getElementById('t-title').textContent = scope === 'topico' ? topic : (scope === 'disc' ? disc : title);
+document.getElementById('t-sub').innerHTML = scope === 'topico'
+  ? `${dotHTML(stats.status)} ${sm.label} · ${disc}`
+  : ctxLabel();
 
 /* ---------- Coluna esquerda ---------- */
 const TABS = WS_TABS;
 let tab = params.get('tab') || 'tutor';
+
 
 renderShell({
   active: 'materiais',
@@ -153,20 +194,46 @@ renderShell({
 document.getElementById('shell-sidebar').addEventListener('click', e => {
   const el = e.target.closest('.ws-item');
   if (!el) return;
-  tab = el.dataset.t;
-  document.querySelectorAll('.ws-item').forEach(x => x.classList.toggle('active', x === el));
-  const u = new URL(location.href); u.searchParams.set('tab', tab);
-  history.replaceState(null, '', u);
-  renderPane();
+  goTab(el.dataset.t);
 });
+
 
 /* ---------- Coluna central ---------- */
 let fcIdx = 0, fcOpen = false;
-const cards = [1,2,3,4].map(i => ({ q: `${topic} — conceito-chave ${i}`, a: `Resposta objetiva sobre ${topic.toLowerCase()} (ponto ${i}).` }));
+function buildCards() {
+  const pool = poolTopics();
+  return Array.from({ length: Math.min(8, pool.length * 2) || 4 }).map((_, i) => {
+    const item = pool[i % pool.length];
+    const name = typeof item === 'string' ? item : item.t;
+    return { q: `${name} — conceito-chave ${Math.floor(i / pool.length) + 1}`, a: `Resposta objetiva sobre ${name.toLowerCase()}.` };
+  });
+}
+
+function goTab(t) {
+  tab = t;
+  document.querySelectorAll('.ws-item').forEach(x => x.classList.toggle('active', x.dataset.t === t));
+  const u = new URL(location.href); u.searchParams.set('tab', t);
+  history.replaceState(null, '', u);
+  fcIdx = 0; fcOpen = false;
+  renderPane();
+  document.querySelector('.ws-center').scrollTop = 0;
+}
 
 function renderPane() {
   const p = document.getElementById('pane');
   if (tab === 'tutor') {
+    if (scope !== 'topico') {
+      const pool = poolTopics();
+      p.innerHTML = `<div class="pane">
+        <div class="cesp-head"><b>Aulas com Athena IA</b><span>${ctxLabel()} — escolha um tópico para abrir a aula completa.</span></div>
+        ${scopePickerHTML()}
+        <div class="qbox" style="padding:0;overflow:hidden;margin-top:16px;">
+          ${pool.slice(0, 24).map(o => `<a class="rev-row" style="text-decoration:none;color:inherit;" href="workspace.html?${base}&disc=${encodeURIComponent(o.d)}&topic=${encodeURIComponent(o.t)}&tab=tutor"><span>${dotHTML(statusOf(o.t))} ${o.t}</span><span class="rev-when">${o.d}</span></a>`).join('')}
+        </div>
+      </div>`;
+      mountScopePicker();
+      return;
+    }
     p.innerHTML = `<div class="pane prose">
       <h3>Aula com Athena IA — ${topic}</h3>
       <p>Esta aula apresenta <b>${topic}</b> dentro de ${disc}, com foco no que costuma ser cobrado em prova.</p>
@@ -181,27 +248,48 @@ function renderPane() {
       <h3>3. Como estudar este tópico</h3>
       <p>Leia a aula, ouça o podcast, resolva a bateria de questões no padrão Cebraspe e feche o ciclo com flashcards e revisão espaçada.</p>
       <p style="margin-top:16px;color:var(--muted);font-size:0.85rem;">Dúvidas? Use o chat da Athena no painel à direita.</p>
+      <div class="fixa">
+        <div class="lbl">Fixação Imediata</div>
+        <div class="btns">
+          <button class="btn-primary" id="fx-q">Praticar Questões deste Tópico</button>
+          <button class="btn-secondary" id="fx-f">Ver Flashcards desta Aula</button>
+        </div>
+      </div>
     </div>`;
+    document.getElementById('fx-q').onclick = () => goTab('questoes');
+    document.getElementById('fx-f').onclick = () => goTab('flashcards');
   } else if (tab === 'flashcards') {
+    const cards = buildCards();
+    if (fcIdx >= cards.length) fcIdx = 0;
     const c = cards[fcIdx];
     p.innerHTML = `<div class="pane">
+      <div class="cesp-head"><b>Flashcards</b><span>${ctxLabel()}</span></div>
+      ${scopePickerHTML()}
       <div class="fc" id="fc"><div><div class="q">${c.q}</div>${fcOpen ? `<div class="a">${c.a}</div>` : '<div class="a">Clique para revelar</div>'}</div></div>
       <div class="mini"><button id="prev">← Anterior</button><button id="next">Próximo →</button><span style="align-self:center;font-size:0.8rem;color:var(--muted);">${fcIdx+1} de ${cards.length}</span></div>
     </div>`;
+    mountScopePicker();
     document.getElementById('fc').onclick = () => { fcOpen = !fcOpen; renderPane(); };
     document.getElementById('prev').onclick = () => { fcIdx = (fcIdx - 1 + cards.length) % cards.length; fcOpen = false; renderPane(); };
     document.getElementById('next').onclick = () => { fcIdx = (fcIdx + 1) % cards.length; fcOpen = false; renderPane(); };
   } else if (tab === 'questoes' || tab === 'simulados') {
+    const pool = poolTopics();
     const n = tab === 'simulados' ? 10 : 5;
-    const items = Array.from({length:n}).map((_,i) => ({
-      txt: `Julgue o item a seguir, relativo a ${topic.toLowerCase()}: a regra geral aplicável ao caso ${i % 2 === 0 ? 'admite' : 'não admite'} exceção expressa em lei, conforme entendimento cobrado pela banca.`,
-      gab: i % 2 === 0 ? 'C' : 'E',
-    }));
+    const items = Array.from({length:n}).map((_,i) => {
+      const item = pool[i % pool.length];
+      const name = typeof item === 'string' ? item : item.t;
+      return {
+        txt: `Julgue o item a seguir, relativo a ${name.toLowerCase()}: a regra geral aplicável ao caso ${i % 2 === 0 ? 'admite' : 'não admite'} exceção expressa em lei, conforme entendimento cobrado pela banca.`,
+        gab: i % 2 === 0 ? 'C' : 'E',
+      };
+    });
     p.innerHTML = `<div class="pane">
       <div class="cesp-head">
         <b>${tab === 'simulados' ? 'Simulado' : 'Bateria de questões'} — estilo Cebraspe/Cespe</b>
-        <span>Julgue os itens em CERTO ou ERRADO. Item errado anula um item certo.</span>
+        <span>${ctxLabel()} · Julgue os itens em CERTO ou ERRADO. Item errado anula um item certo.</span>
       </div>
+      ${scopePickerHTML()}
+
       ${items.map((q,i) => `
       <div class="qbox" data-gab="${q.gab}">
         <div class="qtxt"><b>${i+1}.</b> ${q.txt}</div>
@@ -213,6 +301,7 @@ function renderPane() {
       </div>`).join('')}
       <div class="mini"><button id="gab">Ver desempenho</button></div>
     </div>`;
+    mountScopePicker();
     p.querySelectorAll('.qbox').forEach(box => {
       box.querySelectorAll('.ce-btn').forEach(b => b.onclick = () => {
         box.querySelectorAll('.ce-btn').forEach(x => x.classList.remove('sel'));
@@ -290,9 +379,12 @@ document.getElementById('ws-right').innerHTML = `
   <div id="r-chat">
     <div class="ws-chat" style="margin-top:14px;border-top:none;padding-top:0;">
       <div class="rlbl">Chat com Athena IA</div>
-      <div class="log" id="side-log"><div class="b">Aqui para te ajudar a aprender ${topic}. Pergunte o que quiser sobre a aula.</div></div>
+      <div class="ctxchip" id="chat-ctx"></div>
+      <div class="log" id="side-log"></div>
       <form id="side-form"><input id="side-msg" placeholder="Pergunte-me qualquer coisa sobre o material..." autocomplete="off"><button type="submit">↑</button></form>
+      <button id="chat-clear" type="button" style="margin-top:8px;background:none;border:none;color:var(--muted);font-size:0.74rem;cursor:pointer;font-family:inherit;padding:0;">Limpar histórico</button>
     </div>
+
   </div>
   <div id="r-stats" hidden>
     <h2>${topic}</h2>
@@ -321,22 +413,67 @@ document.querySelectorAll('.rtab').forEach(b => b.onclick = () => {
   document.getElementById('r-stats').hidden = b.dataset.r !== 'stats';
 });
 
+/* Histórico persistente por concurso, com contexto do tópico/ferramenta atual */
+const CHAT_KEY = 'athena:chat:' + id;
+function loadChat() {
+  try { return JSON.parse(localStorage.getItem(CHAT_KEY)) || []; } catch { return []; }
+}
+function saveChat(h) { localStorage.setItem(CHAT_KEY, JSON.stringify(h.slice(-60))); }
+let history_ = loadChat();
+
+function currentCtx() {
+  const tabLabel = (WS_TABS.find(t => t.id === tab) || { label: 'Aula' }).label;
+  return `${ctxLabel()} · ${tabLabel}`;
+}
+document.getElementById('chat-ctx').textContent = 'Contexto: ' + currentCtx();
+
+function renderChat() {
+  const log = document.getElementById('side-log');
+  log.innerHTML = '';
+  if (!history_.length) {
+    const d = document.createElement('div');
+    d.className = 'b';
+    d.textContent = `Aqui para te ajudar em ${ctxLabel()}. Pergunte o que quiser.`;
+    log.appendChild(d);
+  }
+  let lastCtx = null;
+  history_.forEach(m => {
+    if (m.ctx && m.ctx !== lastCtx) {
+      const c = document.createElement('div');
+      c.className = 'ctxsep';
+      c.textContent = m.ctx;
+      log.appendChild(c);
+      lastCtx = m.ctx;
+    }
+    const d = document.createElement('div');
+    d.className = 'b' + (m.role === 'me' ? ' me' : '');
+    d.textContent = m.text;
+    log.appendChild(d);
+  });
+  log.scrollTop = log.scrollHeight;
+}
+renderChat();
+
+const _renderPane = renderPane;
+renderPane = function () { _renderPane(); const c = document.getElementById('chat-ctx'); if (c) c.textContent = 'Contexto: ' + currentCtx(); };
+
+document.getElementById('chat-clear').onclick = () => { history_ = []; saveChat(history_); renderChat(); };
+
 document.getElementById('side-form').onsubmit = e => {
   e.preventDefault();
   const i = document.getElementById('side-msg');
   const v = i.value.trim();
   if (!v) return;
-  const log = document.getElementById('side-log');
-  log.insertAdjacentHTML('beforeend', `<div class="b me"></div>`);
-  log.lastElementChild.textContent = v;
+  const ctx = currentCtx();
+  history_.push({ role: 'me', text: v, ctx });
+  saveChat(history_); renderChat();
   i.value = '';
   setTimeout(() => {
-    log.insertAdjacentHTML('beforeend', `<div class="b"></div>`);
-    log.lastElementChild.textContent = `Sobre "${v}" em ${topic}: comece pela regra geral e depois treine com itens certo/errado.`;
-    log.scrollTop = log.scrollHeight;
+    history_.push({ role: 'ai', ctx, text: `Sobre "${v}" em ${ctx}: comece pela regra geral, observe as exceções e depois treine com itens certo/errado.` });
+    saveChat(history_); renderChat();
   }, 300);
-  log.scrollTop = log.scrollHeight;
 };
 </script>
+
 </body>
 </html>
