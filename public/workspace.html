@@ -410,22 +410,67 @@ document.querySelectorAll('.rtab').forEach(b => b.onclick = () => {
   document.getElementById('r-stats').hidden = b.dataset.r !== 'stats';
 });
 
+/* Histórico persistente por concurso, com contexto do tópico/ferramenta atual */
+const CHAT_KEY = 'athena:chat:' + id;
+function loadChat() {
+  try { return JSON.parse(localStorage.getItem(CHAT_KEY)) || []; } catch { return []; }
+}
+function saveChat(h) { localStorage.setItem(CHAT_KEY, JSON.stringify(h.slice(-60))); }
+let history_ = loadChat();
+
+function currentCtx() {
+  const tabLabel = (WS_TABS.find(t => t.id === tab) || { label: 'Aula' }).label;
+  return `${ctxLabel()} · ${tabLabel}`;
+}
+document.getElementById('chat-ctx').textContent = 'Contexto: ' + currentCtx();
+
+function renderChat() {
+  const log = document.getElementById('side-log');
+  log.innerHTML = '';
+  if (!history_.length) {
+    const d = document.createElement('div');
+    d.className = 'b';
+    d.textContent = `Aqui para te ajudar em ${ctxLabel()}. Pergunte o que quiser.`;
+    log.appendChild(d);
+  }
+  let lastCtx = null;
+  history_.forEach(m => {
+    if (m.ctx && m.ctx !== lastCtx) {
+      const c = document.createElement('div');
+      c.className = 'ctxsep';
+      c.textContent = m.ctx;
+      log.appendChild(c);
+      lastCtx = m.ctx;
+    }
+    const d = document.createElement('div');
+    d.className = 'b' + (m.role === 'me' ? ' me' : '');
+    d.textContent = m.text;
+    log.appendChild(d);
+  });
+  log.scrollTop = log.scrollHeight;
+}
+renderChat();
+
+const _renderPane = renderPane;
+renderPane = function () { _renderPane(); const c = document.getElementById('chat-ctx'); if (c) c.textContent = 'Contexto: ' + currentCtx(); };
+
+document.getElementById('chat-clear').onclick = () => { history_ = []; saveChat(history_); renderChat(); };
+
 document.getElementById('side-form').onsubmit = e => {
   e.preventDefault();
   const i = document.getElementById('side-msg');
   const v = i.value.trim();
   if (!v) return;
-  const log = document.getElementById('side-log');
-  log.insertAdjacentHTML('beforeend', `<div class="b me"></div>`);
-  log.lastElementChild.textContent = v;
+  const ctx = currentCtx();
+  history_.push({ role: 'me', text: v, ctx });
+  saveChat(history_); renderChat();
   i.value = '';
   setTimeout(() => {
-    log.insertAdjacentHTML('beforeend', `<div class="b"></div>`);
-    log.lastElementChild.textContent = `Sobre "${v}" em ${topic}: comece pela regra geral e depois treine com itens certo/errado.`;
-    log.scrollTop = log.scrollHeight;
+    history_.push({ role: 'ai', ctx, text: `Sobre "${v}" em ${ctx}: comece pela regra geral, observe as exceções e depois treine com itens certo/errado.` });
+    saveChat(history_); renderChat();
   }, 300);
-  log.scrollTop = log.scrollHeight;
 };
 </script>
+
 </body>
 </html>
