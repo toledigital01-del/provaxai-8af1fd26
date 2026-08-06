@@ -12,18 +12,28 @@
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
   }
 
-  function sidebarHTML(active) {
+  function sidebarHTML(active, topicNav) {
+    const nav = topicNav
+      ? `<nav class="shell-nav">
+          <a class="shell-back" href="${topicNav.backHref}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            <span>${topicNav.backLabel || 'Voltar'}</span>
+          </a>
+          <div class="shell-sec">${topicNav.label || 'Tópico'}</div>
+          ${topicNav.items}
+        </nav>`
+      : `<nav class="shell-nav">
+          <div class="shell-sec">Workspace</div>
+          ${NAV.map(n => `<a href="${n.href}" class="nav-item${n.id === active ? ' active' : ''}">${icon(n.icon)}<span>${n.label}</span></a>`).join('')}
+          <div class="shell-sec">Recentes</div>
+          ${MATERIALS.slice(0, 4).map(m => `<a href="${materialHref(m)}" class="nav-item">${icon('<path d="M4 4h10l6 6v10H4z"/>')}<span>${m.title}</span></a>`).join('')}
+        </nav>`;
     return `
       <a href="dashboard.html" class="shell-logo">
         <svg width="22" height="22" viewBox="0 0 32 32" fill="none"><path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="#FF4D00"/><path d="M16 8C16 8 11 14 11 18C11 20.8 13.2 23 16 23C18.8 23 21 20.8 21 18C21 14 16 8 16 8Z" fill="#FF8040"/></svg>
         <span>Studley</span>
       </a>
-      <nav class="shell-nav">
-        <div class="shell-sec">Workspace</div>
-        ${NAV.map(n => `<a href="${n.href}" class="nav-item${n.id === active ? ' active' : ''}">${icon(n.icon)}<span>${n.label}</span></a>`).join('')}
-        <div class="shell-sec">Recentes</div>
-        ${MATERIALS.slice(0, 4).map(m => `<a href="${materialHref(m)}" class="nav-item">${icon('<path d="M4 4h10l6 6v10H4z"/>')}<span>${m.title}</span></a>`).join('')}
-      </nav>
+      ${nav}
       <div class="shell-foot">
         <button class="user-chip" onclick="alert('Perfil em breve!')">
           <div class="avatar">F</div>
@@ -31,6 +41,7 @@
         </button>
       </div>`;
   }
+
 
   function topbarHTML(right) {
     return `
