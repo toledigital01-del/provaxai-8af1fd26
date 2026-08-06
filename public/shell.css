@@ -313,3 +313,21 @@ body.dark hr { border-color:#1F2937; }
 .theme-toggle svg { width:17px; height:17px; }
 body.dark .theme-toggle { background:#111827 !important; border-color:#2B3648 !important; color:#E5E7EB !important; }
 body.dark .theme-toggle:hover { border-color:#60A5FA !important; color:#60A5FA !important; }
+
+/* superfícies claras das páginas no modo escuro */
+body.dark .box, body.dark .box2, body.dark .panel, body.dark .stat, body.dark .chip,
+body.dark .mcard, body.dark .fold, body.dark .fmenu, body.dark .action, body.dark .course,
+body.dark .cont, body.dark .modal, body.dark .card2, body.dark .btn-ghost, body.dark .btn-secondary,
+body.dark .day, body.dark .mday, body.dark .task, body.dark .nav-week button, body.dark .pill.rest,
+body.dark .ask, body.dark .answer, body.dark .rtabs, body.dark .fc, body.dark .gap, body.dark .gap .gbtn,
+body.dark .mini button, body.dark .ce-btn, body.dark .ws-chat .b, body.dark .pod-hand,
+body.dark .pod-script, body.dark .pod-msg, body.dark .pod-foot button, body.dark .scope-pick select,
+body.dark .action-box, body.dark .view-toggle, body.dark .shortcut, body.dark .file-row,
+body.dark .dashed, body.dark .rec-area, body.dark .type-badge, body.dark .tabs, body.dark .pill.n {
+  background:#111827 !important; border-color:#1F2937 !important; color:#E5E7EB;
+}
+body.dark .modal-scrim, body.dark .scrim, body.dark .overlay { background:rgba(0,0,0,.65) !important; }
+body.dark .day:hover, body.dark .task:hover, body.dark .mcard:hover, body.dark .fold:hover { border-color:#3B82F6 !important; }
+body.dark h1, body.dark h2, body.dark h3, body.dark h4, body.dark .title, body.dark .cn, body.dark .tn { color:#F1F5F9; }
+body.dark .subtitle, body.dark .cmeta, body.dark .muted { color:#94A3B8; }
+body.dark .seg button.on, body.dark .tabs button.on, body.dark .nav-item.active { background:#1D283A !important; color:#60A5FA !important; }
