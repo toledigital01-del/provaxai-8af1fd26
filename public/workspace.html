@@ -301,6 +301,7 @@ function renderPane() {
       </div>`).join('')}
       <div class="mini"><button id="gab">Ver desempenho</button></div>
     </div>`;
+    mountScopePicker();
     p.querySelectorAll('.qbox').forEach(box => {
       box.querySelectorAll('.ce-btn').forEach(b => b.onclick = () => {
         box.querySelectorAll('.ce-btn').forEach(x => x.classList.remove('sel'));
