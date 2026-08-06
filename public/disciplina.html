@@ -53,7 +53,7 @@ const info = disciplinaInfo(disc);
 
 const base = `id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}&title=${encodeURIComponent(title)}`;
 document.getElementById('crumb').innerHTML =
-  `<a href="study-sets.html">Meus Materiais</a><span class="sep">/</span>` +
+  `<a href="study-sets.html">Meus Concursos</a><span class="sep">/</span>` +
   (allDiscs.length > 1
     ? `<a href="disciplinas.html?${base}">${title}</a>`
     : `<span>${title}</span>`) +
@@ -71,7 +71,7 @@ renderShell({
 });
 
 document.getElementById('page-back').href = allDiscs.length > 1 ? `disciplinas.html?${base}` : 'study-sets.html';
-document.getElementById('page-back-label').textContent = allDiscs.length > 1 ? title : 'Meus Materiais';
+document.getElementById('page-back-label').textContent = allDiscs.length > 1 ? title : 'Meus Concursos';
 
 document.getElementById('d-h1').textContent = disc;
 document.getElementById('d-meta').textContent =
