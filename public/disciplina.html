@@ -13,9 +13,24 @@
   .chip:hover { background:#F6F6F7; }
   .chip.active { background:#2563EB; color:#fff; border-color:#2563EB; }
 
+  .px-row { position:relative; flex-wrap:wrap; }
+  .px-row .tlink { display:flex; align-items:center; gap:10px; min-width:0; text-decoration:none; color:inherit; }
+  .px-check { width:17px; height:17px; accent-color:#2563EB; cursor:pointer; flex-shrink:0; }
+  .note-btn { border:1px solid var(--line-strong); background:#fff; border-radius:8px; padding:4px 9px; font-size:.72rem; font-weight:600; color:var(--muted); cursor:pointer; font-family:inherit; white-space:nowrap; }
+  .note-btn:hover { border-color:#2563EB; color:#1D4ED8; }
+  .note-box { grid-column:1 / -1; width:100%; margin-top:10px; }
+  .note-box textarea { width:100%; min-height:82px; border:1px solid var(--line-strong); border-radius:10px; padding:10px 12px; font-family:inherit; font-size:.85rem; resize:vertical; background:#fff; color:inherit; }
+  .note-actions { display:flex; justify-content:flex-end; margin-top:8px; }
+  .note-save { background:#2563EB; color:#fff; border:none; border-radius:8px; padding:7px 14px; font-size:.78rem; font-weight:600; cursor:pointer; font-family:inherit; }
+
   @media (max-width: 900px) {
     .disc-layout { flex-direction:column; }
   }
+  @media (max-width: 640px) {
+    .topic-row.px-row { grid-template-columns:1fr; gap:8px; }
+    .px-row .topic-right { width:100%; }
+  }
+
 
 </style>
 </head>
@@ -126,20 +141,55 @@ function render() {
   const list = info.topics.filter(t => filter === 'all' || t.st === filter);
   document.getElementById('topics').innerHTML = list.length ? list.map(t => {
     const s = STATUS_META[t.st];
-    return `<a class="topic-row" href="${topicHref(t.name)}">
+    const mk = pxStudyGet(t.name);
+    return `<div class="topic-row px-row">
       <span class="topic-left">
-        <span class="dot">${dotHTML(t.st)}</span>
-        <span class="tname">${t.name}</span>
-        <span class="tstatus">${s.label}</span>
+        <input type="checkbox" class="px-check" data-t="${encodeURIComponent(t.name)}" ${mk.done ? 'checked' : ''} title="Marcar como estudado">
+        <a class="tlink" href="${topicHref(t.name)}">
+          <span class="dot">${dotHTML(t.st)}</span>
+          <span class="tname">${t.name}</span>
+        </a>
+        <span class="tstatus">${mk.done ? 'Estudado' : s.label}</span>
       </span>
       <span class="topic-right">
+        <button class="note-btn" data-n="${encodeURIComponent(t.name)}" title="Anotações do tópico">${mk.note ? '📝' : '＋'} Nota</button>
         <span class="track"><span class="fill ${fillClass(t.prog)}" style="display:block;width:${t.prog}%"></span></span>
         <span class="pct">${t.prog}%</span>
       </span>
-    </a>`;
+      <div class="note-box" data-box="${encodeURIComponent(t.name)}" style="display:none">
+        <textarea placeholder="Observações sobre ${t.name}…">${(mk.note || '').replace(/</g,'&lt;')}</textarea>
+        <div class="note-actions"><button class="note-save" data-s="${encodeURIComponent(t.name)}">Salvar nota</button></div>
+      </div>
+    </div>`;
   }).join('') : '<div class="empty">Nenhum tópico com esse status.</div>';
 }
 render();
+
+document.getElementById('topics').addEventListener('click', e => {
+  const chk = e.target.closest('.px-check');
+  if (chk) {
+    const name = decodeURIComponent(chk.dataset.t);
+    pxStudySet(name, { done: chk.checked });
+    const t = info.topics.find(x => x.name === name);
+    if (t) { t.st = statusOf(name); t.prog = progressOf(name); }
+    render();
+    return;
+  }
+  const nb = e.target.closest('.note-btn');
+  if (nb) {
+    const box = document.querySelector(`.note-box[data-box="${nb.dataset.n}"]`);
+    if (box) box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    return;
+  }
+  const sv = e.target.closest('.note-save');
+  if (sv) {
+    const name = decodeURIComponent(sv.dataset.s);
+    const box = document.querySelector(`.note-box[data-box="${sv.dataset.s}"]`);
+    pxStudySet(name, { note: box.querySelector('textarea').value });
+    render();
+  }
+});
+
 
 </script>
 </body>
