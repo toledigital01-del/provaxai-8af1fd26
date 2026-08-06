@@ -2,6 +2,7 @@
 (function () {
   const NAV = [
     { id: 'inicio', href: 'home.html', label: 'Início', icon: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>' },
+    { id: 'resolver', href: 'resolver.html', label: 'Resolver', icon: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/>' },
   ];
 
 
