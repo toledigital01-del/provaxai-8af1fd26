@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Início – Prova X</title>
+<link rel="stylesheet" href="shell.css">
+<style>
+  .hsec { margin-top:34px; }
+  .hsec-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .hsec-lbl { font-size:0.78rem; text-transform:uppercase; letter-spacing:.08em; color:#A6ACBB; font-weight:600; }
+
+  /* Curso em destaque */
+  .course { display:grid; grid-template-columns: 1.05fr 1fr; gap:0; border:1px solid var(--line); border-radius:16px; overflow:hidden; background:#fff; margin-top:14px; }
+  .course-cover { position:relative; min-height:230px; background:#0B1220; }
+  .course-cover img { width:100%; height:100%; object-fit:cover; display:block; }
+  .course-body { padding:24px; display:flex; flex-direction:column; }
+  .course-tag { display:inline-flex; align-self:flex-start; font-size:0.66rem; font-weight:700; letter-spacing:.08em; padding:4px 10px; border-radius:999px; background:#EFF6FF; color:#2563EB; }
+  .course-body h2 { font-size:1.5rem; font-weight:700; letter-spacing:-0.03em; margin:12px 0 8px; }
+  .course-body p { font-size:0.9rem; color:var(--muted); line-height:1.55; }
+  .blist { list-style:none; display:grid; gap:7px; margin:16px 0 20px; }
+  .blist li { display:flex; gap:9px; align-items:flex-start; font-size:0.86rem; color:#374151; }
+  .blist li::before { content:'✓'; color:#10B981; font-weight:700; }
+  .cta-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:auto; }
+  .btn { display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border-radius:10px; font-size:0.88rem; font-weight:600; text-decoration:none; cursor:pointer; border:none; font-family:inherit; }
+  .btn-primary { background:#2563EB; color:#fff; }
+  .btn-primary:hover { background:#1D4ED8; }
+  .btn-ghost { background:#fff; color:#374151; border:1px solid var(--line-strong); }
+  .btn-ghost:hover { background:#F6F6F7; }
+
+  /* Continue estudando */
+  .cont { display:flex; align-items:center; gap:14px; flex-wrap:wrap; border:1px solid var(--line); border-left:4px solid #10B981; border-radius:12px; padding:14px 18px; background:#fff; margin-top:14px; }
+  .cont .lbl { font-size:0.72rem; text-transform:uppercase; letter-spacing:.07em; color:#A6ACBB; font-weight:600; }
+  .cont .nm { font-size:0.98rem; font-weight:600; letter-spacing:-0.01em; }
+
+  /* Ações do material próprio */
+  .actions { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:14px; }
+  .action { text-align:left; background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px; cursor:pointer; font-family:inherit; transition:all .16s; }
+  .action:hover { border-color:#2563EB; transform:translateY(-1px); box-shadow:0 6px 18px rgba(37,99,235,.08); }
+  .action h4 { font-size:0.92rem; font-weight:600; margin:10px 0 4px; }
+  .action p { font-size:0.78rem; color:var(--muted); }
+
+  .grid-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; margin-top:14px; }
+  .mcard { border:1px solid var(--line); border-radius:12px; padding:16px; background:#fff; text-decoration:none; color:inherit; display:block; transition:all .16s; position:relative; }
+  .mcard:hover { border-color:#2563EB; box-shadow:0 6px 20px rgba(37,99,235,.08); }
+  .mcard h3 { font-size:0.98rem; font-weight:600; letter-spacing:-0.01em; }
+  .mcard .cmeta { font-size:0.78rem; color:var(--muted); margin-top:5px; }
+  .mcard .del { position:absolute; top:10px; right:10px; border:none; background:transparent; color:#C0C6D2; cursor:pointer; font-size:0.95rem; }
+  .mcard .del:hover { color:#EF4444; }
+  .empty-box { border:1.5px dashed var(--line-strong); border-radius:12px; padding:26px; text-align:center; color:var(--muted); font-size:0.86rem; margin-top:14px; }
+
+  .progress-line { display:flex; align-items:center; gap:8px; margin-top:12px; }
+  .track { flex:1; height:6px; border-radius:999px; background:#EFEFEF; overflow:hidden; }
+  .fill { height:100%; border-radius:999px; background:#3B82F6; }
+  .fill.lvl-low { background:#F59E0B; } .fill.lvl-mid { background:#3B82F6; } .fill.lvl-high { background:#10B981; }
+  .pct { font-size:0.75rem; color:var(--muted); min-width:34px; text-align:right; }
+
+  /* Modal */
+  .ov { position:fixed; inset:0; background:rgba(17,24,39,.45); display:none; align-items:center; justify-content:center; padding:20px; z-index:120; }
+  .ov.open { display:flex; }
+  .modal { background:#fff; border-radius:16px; width:100%; max-width:540px; box-shadow:0 30px 80px rgba(0,0,0,.25); overflow:hidden; max-height:90vh; display:flex; flex-direction:column; }
+  .modal-head { padding:20px 22px 14px; border-bottom:1px solid var(--line); }
+  .modal-head h3 { font-size:1.1rem; font-weight:700; }
+  .modal-head p { font-size:0.82rem; color:var(--muted); margin-top:4px; }
+  .modal-body { padding:18px 22px; overflow-y:auto; display:grid; gap:12px; }
+  .modal-foot { padding:14px 22px 18px; display:flex; justify-content:flex-end; gap:8px; border-top:1px solid var(--line); }
+  label.fl { font-size:0.8rem; color:#374151; font-weight:500; display:block; margin-bottom:6px; }
+  .input, .ta { width:100%; border:1px solid var(--line-strong); border-radius:10px; padding:11px 12px; font-size:0.88rem; font-family:inherit; background:#FBFBFC; }
+  .ta { min-height:110px; resize:vertical; }
+  .segs { display:flex; gap:6px; flex-wrap:wrap; }
+  .seg { border:1px solid var(--line-strong); background:#fff; border-radius:999px; padding:6px 12px; font-size:0.78rem; cursor:pointer; font-family:inherit; color:var(--muted); }
+  .seg.active { background:#2563EB; border-color:#2563EB; color:#fff; }
+
+  @media (max-width: 900px) {
+    .course { grid-template-columns:1fr; }
+    .actions { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+<aside id="shell-sidebar"></aside>
+<div class="shell-main">
+  <header id="shell-topbar"></header>
+  <div class="shell-body">
+    <div class="page">
+      <h1 class="title">Olá, Fernando</h1>
+      <p class="subtitle">Estude pelo curso pronto ou monte suas próprias disciplinas com seu material.</p>
+
+      <div class="hsec">
+        <div class="hsec-lbl">Curso em destaque</div>
+        <div class="course" id="course-box"></div>
+      </div>
+
+      <div class="hsec">
+        <div class="hsec-lbl">Continue de onde parou</div>
+        <div class="cont" id="cont-box"></div>
+      </div>
+
+      <div class="hsec">
+        <div class="hsec-head">
+          <div class="hsec-lbl">Meu material · monte suas disciplinas</div>
+        </div>
+        <div class="actions">
+          <button class="action" onclick="openNew('pdf')">
+            <svg width="20" height="20" fill="none" stroke="#374151" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <h4>Enviar arquivo</h4>
+            <p>PDF, imagem, áudio ou vídeo</p>
+          </button>
+          <button class="action" onclick="openNew('link')">
+            <svg width="20" height="20" fill="none" stroke="#374151" stroke-width="1.8" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <h4>Colar link ou texto</h4>
+            <p>YouTube, site, anotações</p>
+          </button>
+          <button class="action" onclick="openNew('manual')">
+            <svg width="20" height="20" fill="none" stroke="#374151" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            <h4>Criar disciplina</h4>
+            <p>Defina nome e tópicos</p>
+          </button>
+        </div>
+        <div id="meu-grid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Nova disciplina -->
+<div class="ov" id="ov-new" onclick="if(event.target.id==='ov-new') closeNew()">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Nova disciplina a partir do seu material</h3>
+      <p>Suas disciplinas usam exatamente as mesmas ferramentas do curso: Athena IA, questões, simulados, flashcards, revisão inteligente e podcast.</p>
+    </div>
+    <div class="modal-body">
+      <div>
+        <label class="fl">Origem do material</label>
+        <div class="segs" id="src-segs">
+          <button class="seg" data-src="pdf">Arquivo / PDF</button>
+          <button class="seg" data-src="link">Link</button>
+          <button class="seg" data-src="texto">Texto colado</button>
+          <button class="seg" data-src="manual">Só tópicos</button>
+        </div>
+      </div>
+      <div id="fld-file" style="display:none;">
+        <label class="fl">Selecione o arquivo</label>
+        <input class="input" type="file" id="in-file" accept=".pdf,.doc,.docx,.txt,.mp3,.mp4,.png,.jpg">
+      </div>
+      <div id="fld-link" style="display:none;">
+        <label class="fl">URL do YouTube ou site</label>
+        <input class="input" id="in-link" placeholder="https://...">
+      </div>
+      <div id="fld-texto" style="display:none;">
+        <label class="fl">Cole seu conteúdo</label>
+        <textarea class="ta" id="in-texto" placeholder="Cole aqui suas anotações ou o texto da apostila"></textarea>
+      </div>
+      <div>
+        <label class="fl">Nome da disciplina</label>
+        <input class="input" id="in-nome" placeholder="Ex.: Direito Tributário">
+      </div>
+      <div>
+        <label class="fl">Tópicos (um por linha)</label>
+        <textarea class="ta" id="in-topicos" placeholder="Obrigação tributária&#10;Crédito tributário&#10;Impostos federais"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeNew()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveNew()">Criar disciplina</button>
+    </div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="shell.js"></script>
+<script>
+renderShell({ active: 'inicio' });
+
+/* ---------- Curso em destaque ---------- */
+const curso = CURSOS[0];
+const cmat = materialById(curso.id);
+const cbase = `id=${encodeURIComponent(curso.id)}&type=${encodeURIComponent(cmat.type)}&title=${encodeURIComponent(cmat.title)}`;
+const cdiscs = disciplinasDe(curso.id).map(disciplinaInfo);
+const cpct = cdiscs.length ? Math.round(cdiscs.reduce((a,d)=>a+d.pct,0)/cdiscs.length) : 0;
+
+document.getElementById('course-box').innerHTML = `
+  <div class="course-cover"><img src="${curso.capa}" alt="Capa do ${curso.nome}" loading="lazy" width="1280" height="720"></div>
+  <div class="course-body">
+    <span class="course-tag">${curso.tag}</span>
+    <h2>${curso.nome}</h2>
+    <p>${curso.resumo}</p>
+    <ul class="blist">${curso.bullets.map(b => `<li>${b}</li>`).join('')}</ul>
+    <div class="progress-line"><div class="track"><div class="fill ${fillClass(cpct)}" style="width:${cpct}%"></div></div><div class="pct">${cpct}%</div></div>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="disciplinas.html?${cbase}">Acessar o curso →</a>
+      <a class="btn btn-ghost" href="cronograma.html">Ver cronograma</a>
+    </div>
+  </div>`;
+
+/* ---------- Continue de onde parou ---------- */
+const fd = cdiscs[0], ft = fd && fd.topics[0];
+document.getElementById('cont-box').innerHTML = ft ? `
+  <div style="flex:1;min-width:200px;">
+    <div class="lbl">${cmat.title} · ${fd.name}</div>
+    <div class="nm">${ft.name}</div>
+    <div class="progress-line"><div class="track"><div class="fill ${fillClass(ft.prog)}" style="width:${ft.prog}%"></div></div><div class="pct">${ft.prog}%</div></div>
+  </div>
+  <a class="btn btn-primary" href="workspace.html?${cbase}&disc=${encodeURIComponent(fd.name)}&topic=${encodeURIComponent(ft.name)}">Continuar estudando</a>`
+  : '<span class="lbl">Nada iniciado ainda</span>';
+
+/* ---------- Meu material ---------- */
+const mbase = `id=${encodeURIComponent(MEU_ID)}&type=${encodeURIComponent('Pessoal')}&title=${encodeURIComponent('Meu Material')}`;
+
+function renderMeu() {
+  const list = meuMaterialGet();
+  const box = document.getElementById('meu-grid');
+  if (!list.length) {
+    box.innerHTML = '<div class="empty-box">Você ainda não criou disciplinas próprias. Envie um PDF, cole um link ou crie manualmente — o material vira aulas, flashcards, questões e revisões automaticamente.</div>';
+    return;
+  }
+  box.innerHTML = '<div class="grid-cards">' + list.map(d => {
+    const info = disciplinaInfo(d.name);
+    return `<div class="mcard ${areaClass(d.name)}">
+      <button class="del" title="Remover" onclick="removeDisc('${d.name.replace(/'/g, "\\'")}')">✕</button>
+      <a href="disciplina.html?${mbase}&disc=${encodeURIComponent(d.name)}" style="text-decoration:none;color:inherit;display:block;">
+        <h3>${d.name}</h3>
+        <div class="cmeta">${info.topics.length} tópicos · ${d.origem || 'material próprio'}</div>
+        <div class="progress-line"><div class="track"><div class="fill ${fillClass(info.pct)}" style="width:${info.pct}%"></div></div><div class="pct">${info.pct}%</div></div>
+      </a>
+    </div>`;
+  }).join('') + '</div>';
+}
+function removeDisc(name) {
+  if (!confirm('Remover a disciplina "' + name + '"?')) return;
+  meuMaterialRemove(name);
+  renderMeu();
+}
+renderMeu();
+
+/* ---------- Modal ---------- */
+let src = 'pdf';
+function setSrc(s) {
+  src = s;
+  document.querySelectorAll('#src-segs .seg').forEach(b => b.classList.toggle('active', b.dataset.src === s));
+  document.getElementById('fld-file').style.display = s === 'pdf' ? '' : 'none';
+  document.getElementById('fld-link').style.display = s === 'link' ? '' : 'none';
+  document.getElementById('fld-texto').style.display = s === 'texto' ? '' : 'none';
+}
+document.querySelectorAll('#src-segs .seg').forEach(b => b.onclick = () => setSrc(b.dataset.src));
+function openNew(s) { setSrc(s === 'manual' ? 'manual' : s); document.getElementById('ov-new').classList.add('open'); }
+function closeNew() { document.getElementById('ov-new').classList.remove('open'); }
+
+function saveNew() {
+  let nome = document.getElementById('in-nome').value.trim();
+  const file = document.getElementById('in-file').files[0];
+  if (!nome && file) nome = file.name.replace(/\.[^.]+$/, '');
+  if (!nome) { alert('Dê um nome à disciplina.'); return; }
+  if (TOPICS[nome]) { alert('Já existe uma disciplina com esse nome.'); return; }
+  const topics = document.getElementById('in-topicos').value.split('\n').map(t => t.trim()).filter(Boolean);
+  const origem = src === 'pdf' ? (file ? file.name : 'arquivo enviado')
+    : src === 'link' ? (document.getElementById('in-link').value.trim() || 'link')
+    : src === 'texto' ? 'texto colado' : 'criada manualmente';
+  meuMaterialAdd({ name: nome, origem, topics: topics.length ? topics : ['Conteúdo geral'] });
+  closeNew();
+  location.href = `disciplina.html?${mbase}&disc=${encodeURIComponent(nome)}`;
+}
+</script>
+</body>
+</html>
