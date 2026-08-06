@@ -376,9 +376,12 @@ document.getElementById('ws-right').innerHTML = `
   <div id="r-chat">
     <div class="ws-chat" style="margin-top:14px;border-top:none;padding-top:0;">
       <div class="rlbl">Chat com Athena IA</div>
-      <div class="log" id="side-log"><div class="b">Aqui para te ajudar a aprender ${topic}. Pergunte o que quiser sobre a aula.</div></div>
+      <div class="ctxchip" id="chat-ctx"></div>
+      <div class="log" id="side-log"></div>
       <form id="side-form"><input id="side-msg" placeholder="Pergunte-me qualquer coisa sobre o material..." autocomplete="off"><button type="submit">↑</button></form>
+      <button id="chat-clear" type="button" style="margin-top:8px;background:none;border:none;color:var(--muted);font-size:0.74rem;cursor:pointer;font-family:inherit;padding:0;">Limpar histórico</button>
     </div>
+
   </div>
   <div id="r-stats" hidden>
     <h2>${topic}</h2>
