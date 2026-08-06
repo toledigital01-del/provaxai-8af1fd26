@@ -282,3 +282,13 @@ function pxLastGet(disc) {
   const all = pxLastAll();
   return (disc ? all['disc:' + disc] : all.__global) || null;
 }
+
+/* Total de tópicos do edital calculado a partir de TOPICS */
+(function () {
+  const m = MATERIALS.find(x => x.id === 'prf-2021');
+  if (m) {
+    const ds = DISCIPLINAS_POR_CONCURSO['prf-2021'];
+    m.disc = ds.length;
+    m.top = ds.reduce((a, d) => a + (TOPICS[d] || []).length, 0);
+  }
+})();
