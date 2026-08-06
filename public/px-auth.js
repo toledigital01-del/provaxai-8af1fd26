@@ -72,13 +72,16 @@
     PX.profile = null;
     PX.roles = [];
     if (!PX.user) { applyGuest(); return; }
-    const [{ data: prof }, { data: roles }] = await Promise.all([
-      PX.sb.from('profiles').select('*').eq('id', PX.user.id).maybeSingle(),
-      PX.sb.from('user_roles').select('role').eq('user_id', PX.user.id),
-    ]);
-    PX.profile = prof || null;
-    PX.roles = (roles || []).map(r => r.role);
+    try {
+      const [{ data: prof }, { data: roles }] = await Promise.all([
+        PX.sb.from('profiles').select('*').eq('id', PX.user.id).maybeSingle(),
+        PX.sb.from('user_roles').select('role').eq('user_id', PX.user.id),
+      ]);
+      PX.profile = prof || null;
+      PX.roles = (roles || []).map(r => r.role);
+    } catch (e) { console.error('[PX] perfil:', e); }
   }
+
 
   PX.ready = boot();
 
