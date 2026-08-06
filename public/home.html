@@ -6,6 +6,20 @@
 <title>Início – Prova X</title>
 <link rel="stylesheet" href="shell.css">
 <style>
+  .home { display:flex; align-items:stretch; min-height:100%; }
+  .home-main { flex:1; min-width:0; }
+  .page { max-width:1000px; }
+
+  /* Hero de envio */
+  .hero-up { text-align:center; padding:26px 0 4px; }
+  .hero-up h1 { font-size:1.85rem; font-weight:700; letter-spacing:-0.03em; }
+  .hero-up p { color:var(--muted); font-size:0.9rem; margin-top:8px; }
+  .actions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:20px auto 0; max-width:720px; }
+  .action { text-align:left; background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px; cursor:pointer; font-family:inherit; transition:all .16s; }
+  .action:hover { border-color:#2563EB; transform:translateY(-1px); box-shadow:0 6px 18px rgba(37,99,235,.08); }
+  .action h4 { font-size:0.92rem; font-weight:600; margin:10px 0 4px; }
+  .action p { font-size:0.78rem; color:var(--muted); }
+
   .hsec { margin-top:34px; }
   .hsec-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
   .hsec-lbl { font-size:0.78rem; text-transform:uppercase; letter-spacing:.08em; color:#A6ACBB; font-weight:600; }
@@ -33,17 +47,10 @@
   .cont .lbl { font-size:0.72rem; text-transform:uppercase; letter-spacing:.07em; color:#A6ACBB; font-weight:600; }
   .cont .nm { font-size:0.98rem; font-weight:600; letter-spacing:-0.01em; }
 
-  /* Ações do material próprio */
-  .actions { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:14px; }
-  .action { text-align:left; background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px; cursor:pointer; font-family:inherit; transition:all .16s; }
-  .action:hover { border-color:#2563EB; transform:translateY(-1px); box-shadow:0 6px 18px rgba(37,99,235,.08); }
-  .action h4 { font-size:0.92rem; font-weight:600; margin:10px 0 4px; }
-  .action p { font-size:0.78rem; color:var(--muted); }
-
   .grid-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; margin-top:14px; }
   .mcard { border:1px solid var(--line); border-radius:12px; padding:16px; background:#fff; text-decoration:none; color:inherit; display:block; transition:all .16s; position:relative; }
   .mcard:hover { border-color:#2563EB; box-shadow:0 6px 20px rgba(37,99,235,.08); }
-  .mcard h3 { font-size:0.98rem; font-weight:600; letter-spacing:-0.01em; }
+  .mcard h3 { font-size:0.98rem; font-weight:600; letter-spacing:-0.01em; padding-right:22px; }
   .mcard .cmeta { font-size:0.78rem; color:var(--muted); margin-top:5px; }
   .mcard .del { position:absolute; top:10px; right:10px; border:none; background:transparent; color:#C0C6D2; cursor:pointer; font-size:0.95rem; }
   .mcard .del:hover { color:#EF4444; }
@@ -55,6 +62,18 @@
   .fill.lvl-low { background:#F59E0B; } .fill.lvl-mid { background:#3B82F6; } .fill.lvl-high { background:#10B981; }
   .pct { font-size:0.75rem; color:var(--muted); min-width:34px; text-align:right; }
 
+  /* Pastas (coluna direita) */
+  .folders { width:260px; min-width:260px; border-left:1px solid var(--line); padding:22px 16px; }
+  .folders .btn-primary { width:100%; justify-content:center; margin-bottom:14px; }
+  .fold { display:flex; align-items:flex-start; gap:10px; width:100%; text-align:left; border:1px solid var(--line); background:#fff; border-radius:10px; padding:11px 12px; cursor:pointer; font-family:inherit; margin-bottom:8px; transition:all .14s; position:relative; }
+  .fold:hover { border-color:#2563EB; }
+  .fold.active { background:#EFF6FF; border-color:#2563EB; }
+  .fold svg { width:16px; height:16px; color:#2563EB; flex-shrink:0; margin-top:1px; }
+  .fold b { font-size:0.85rem; font-weight:600; display:block; }
+  .fold span { font-size:0.74rem; color:var(--muted); }
+  .fold .fdel { position:absolute; right:8px; top:8px; border:none; background:transparent; color:#C0C6D2; cursor:pointer; font-size:0.8rem; }
+  .fold .fdel:hover { color:#EF4444; }
+
   /* Modal */
   .ov { position:fixed; inset:0; background:rgba(17,24,39,.45); display:none; align-items:center; justify-content:center; padding:20px; z-index:120; }
   .ov.open { display:flex; }
@@ -65,15 +84,20 @@
   .modal-body { padding:18px 22px; overflow-y:auto; display:grid; gap:12px; }
   .modal-foot { padding:14px 22px 18px; display:flex; justify-content:flex-end; gap:8px; border-top:1px solid var(--line); }
   label.fl { font-size:0.8rem; color:#374151; font-weight:500; display:block; margin-bottom:6px; }
-  .input, .ta { width:100%; border:1px solid var(--line-strong); border-radius:10px; padding:11px 12px; font-size:0.88rem; font-family:inherit; background:#FBFBFC; }
+  .input, .ta, select.input { width:100%; border:1px solid var(--line-strong); border-radius:10px; padding:11px 12px; font-size:0.88rem; font-family:inherit; background:#FBFBFC; }
   .ta { min-height:110px; resize:vertical; }
   .segs { display:flex; gap:6px; flex-wrap:wrap; }
   .seg { border:1px solid var(--line-strong); background:#fff; border-radius:999px; padding:6px 12px; font-size:0.78rem; cursor:pointer; font-family:inherit; color:var(--muted); }
   .seg.active { background:#2563EB; border-color:#2563EB; color:#fff; }
 
+  @media (max-width: 1000px) {
+    .home { flex-direction:column; }
+    .folders { width:100%; min-width:0; border-left:none; border-top:1px solid var(--line); }
+  }
   @media (max-width: 900px) {
     .course { grid-template-columns:1fr; }
     .actions { grid-template-columns:1fr; }
+    .hero-up h1 { font-size:1.4rem; }
   }
 </style>
 </head>
@@ -82,43 +106,55 @@
 <div class="shell-main">
   <header id="shell-topbar"></header>
   <div class="shell-body">
-    <div class="page">
-      <h1 class="title">Olá, Fernando</h1>
-      <p class="subtitle">Estude pelo curso pronto ou monte suas próprias disciplinas com seu material.</p>
+    <div class="home">
+      <div class="home-main">
+        <div class="page">
+          <div class="hero-up">
+            <h1>Ei Fernando, o que você quer dominar?</h1>
+            <p>Envie qualquer material e obtenha aulas, flashcards, questões e revisões automaticamente.</p>
+            <div class="actions">
+              <button class="action" onclick="openNew('pdf')">
+                <svg width="20" height="20" fill="none" stroke="#374151" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <h4>Enviar arquivo</h4>
+                <p>PDF, imagem, áudio ou vídeo</p>
+              </button>
+              <button class="action" onclick="openNew('link')">
+                <svg width="20" height="20" fill="none" stroke="#374151" stroke-width="1.8" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                <h4>Colar link ou texto</h4>
+                <p>YouTube, site, anotações</p>
+              </button>
+              <button class="action" onclick="openNew('manual')">
+                <svg width="20" height="20" fill="none" stroke="#374151" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                <h4>Criar disciplina</h4>
+                <p>Defina nome e tópicos</p>
+              </button>
+            </div>
+          </div>
 
-      <div class="hsec">
-        <div class="hsec-lbl">Curso em destaque</div>
-        <div class="course" id="course-box"></div>
-      </div>
+          <div class="hsec">
+            <div class="hsec-lbl">Curso em destaque</div>
+            <div class="course" id="course-box"></div>
+          </div>
 
-      <div class="hsec">
-        <div class="hsec-lbl">Continue de onde parou</div>
-        <div class="cont" id="cont-box"></div>
-      </div>
+          <div class="hsec">
+            <div class="hsec-lbl">Continue de onde parou</div>
+            <div class="cont" id="cont-box"></div>
+          </div>
 
-      <div class="hsec">
-        <div class="hsec-head">
-          <div class="hsec-lbl">Meu material · monte suas disciplinas</div>
+          <div class="hsec">
+            <div class="hsec-head">
+              <div class="hsec-lbl" id="meu-lbl">Meu material · monte suas disciplinas</div>
+            </div>
+            <div id="meu-grid"></div>
+          </div>
         </div>
-        <div class="actions">
-          <button class="action" onclick="openNew('pdf')">
-            <svg width="20" height="20" fill="none" stroke="#374151" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            <h4>Enviar arquivo</h4>
-            <p>PDF, imagem, áudio ou vídeo</p>
-          </button>
-          <button class="action" onclick="openNew('link')">
-            <svg width="20" height="20" fill="none" stroke="#374151" stroke-width="1.8" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-            <h4>Colar link ou texto</h4>
-            <p>YouTube, site, anotações</p>
-          </button>
-          <button class="action" onclick="openNew('manual')">
-            <svg width="20" height="20" fill="none" stroke="#374151" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-            <h4>Criar disciplina</h4>
-            <p>Defina nome e tópicos</p>
-          </button>
-        </div>
-        <div id="meu-grid"></div>
       </div>
+
+      <aside class="folders">
+        <div class="hsec-lbl" style="margin-bottom:12px;">Pastas</div>
+        <button class="btn btn-primary" onclick="novaPasta()">+ Criar nova pasta</button>
+        <div id="fold-list"></div>
+      </aside>
     </div>
   </div>
 </div>
@@ -155,6 +191,10 @@
       <div>
         <label class="fl">Nome da disciplina</label>
         <input class="input" id="in-nome" placeholder="Ex.: Direito Tributário">
+      </div>
+      <div>
+        <label class="fl">Pasta</label>
+        <select class="input" id="in-pasta"></select>
       </div>
       <div>
         <label class="fl">Tópicos (um por linha)</label>
@@ -205,14 +245,54 @@ document.getElementById('cont-box').innerHTML = ft ? `
   <a class="btn btn-primary" href="workspace.html?${cbase}&disc=${encodeURIComponent(fd.name)}&topic=${encodeURIComponent(ft.name)}">Continuar estudando</a>`
   : '<span class="lbl">Nada iniciado ainda</span>';
 
+/* ---------- Pastas do aluno ---------- */
+const FOLD_KEY = 'px_pastas_v1';
+let pastaAtiva = 'all';
+function pastasGet() { try { return JSON.parse(localStorage.getItem(FOLD_KEY)) || []; } catch(e) { return []; } }
+function pastasSave(l) { try { localStorage.setItem(FOLD_KEY, JSON.stringify(l)); } catch(e) {} }
+function novaPasta() {
+  const n = prompt('Nome da nova pasta:');
+  if (!n || !n.trim()) return;
+  const l = pastasGet();
+  if (l.includes(n.trim())) { alert('Já existe uma pasta com esse nome.'); return; }
+  l.push(n.trim()); pastasSave(l); renderPastas(); renderMeu();
+}
+function removerPasta(n) {
+  if (!confirm('Remover a pasta "' + n + '"? As disciplinas continuam disponíveis.')) return;
+  pastasSave(pastasGet().filter(p => p !== n));
+  meuMaterialGet().forEach(d => { if (d.pasta === n) d.pasta = ''; });
+  meuMaterialSave(meuMaterialGet().map(d => d.pasta === n ? { ...d, pasta: '' } : d));
+  if (pastaAtiva === n) pastaAtiva = 'all';
+  renderPastas(); renderMeu();
+}
+function setPasta(p) { pastaAtiva = p; renderPastas(); renderMeu(); }
+function renderPastas() {
+  const list = pastasGet(), mats = meuMaterialGet();
+  const ic = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
+  document.getElementById('fold-list').innerHTML =
+    `<button class="fold ${pastaAtiva==='all'?'active':''}" onclick="setPasta('all')">${ic}<span><b>Todas as disciplinas</b><span>${mats.length} disciplina(s)</span></span></button>` +
+    list.map(p => {
+      const n = mats.filter(m => m.pasta === p).length;
+      return `<button class="fold ${pastaAtiva===p?'active':''}" onclick="setPasta('${p.replace(/'/g,"\\'")}')">${ic}<span><b>${p}</b><span>${n} disciplina(s)</span></span>
+        <span class="fdel" onclick="event.stopPropagation();removerPasta('${p.replace(/'/g,"\\'")}')">✕</span></button>`;
+    }).join('');
+  const sel = document.getElementById('in-pasta');
+  sel.innerHTML = '<option value="">Sem pasta</option>' + list.map(p => `<option value="${p}">${p}</option>`).join('');
+}
+
 /* ---------- Meu material ---------- */
 const mbase = `id=${encodeURIComponent(MEU_ID)}&type=${encodeURIComponent('Pessoal')}&title=${encodeURIComponent('Meu Material')}`;
 
 function renderMeu() {
-  const list = meuMaterialGet();
+  const all = meuMaterialGet();
+  const list = pastaAtiva === 'all' ? all : all.filter(d => d.pasta === pastaAtiva);
+  document.getElementById('meu-lbl').textContent =
+    pastaAtiva === 'all' ? 'Meu material · monte suas disciplinas' : 'Pasta · ' + pastaAtiva;
   const box = document.getElementById('meu-grid');
   if (!list.length) {
-    box.innerHTML = '<div class="empty-box">Você ainda não criou disciplinas próprias. Envie um PDF, cole um link ou crie manualmente — o material vira aulas, flashcards, questões e revisões automaticamente.</div>';
+    box.innerHTML = '<div class="empty-box">' + (pastaAtiva === 'all'
+      ? 'Você ainda não criou disciplinas próprias. Envie um PDF, cole um link ou crie manualmente — o material vira aulas, flashcards, questões e revisões automaticamente.'
+      : 'Nenhuma disciplina nesta pasta ainda.') + '</div>';
     return;
   }
   box.innerHTML = '<div class="grid-cards">' + list.map(d => {
@@ -221,7 +301,7 @@ function renderMeu() {
       <button class="del" title="Remover" onclick="removeDisc('${d.name.replace(/'/g, "\\'")}')">✕</button>
       <a href="disciplina.html?${mbase}&disc=${encodeURIComponent(d.name)}" style="text-decoration:none;color:inherit;display:block;">
         <h3>${d.name}</h3>
-        <div class="cmeta">${info.topics.length} tópicos · ${d.origem || 'material próprio'}</div>
+        <div class="cmeta">${info.topics.length} tópicos · ${d.pasta ? d.pasta + ' · ' : ''}${d.origem || 'material próprio'}</div>
         <div class="progress-line"><div class="track"><div class="fill ${fillClass(info.pct)}" style="width:${info.pct}%"></div></div><div class="pct">${info.pct}%</div></div>
       </a>
     </div>`;
@@ -230,8 +310,9 @@ function renderMeu() {
 function removeDisc(name) {
   if (!confirm('Remover a disciplina "' + name + '"?')) return;
   meuMaterialRemove(name);
-  renderMeu();
+  renderPastas(); renderMeu();
 }
+renderPastas();
 renderMeu();
 
 /* ---------- Modal ---------- */
@@ -244,7 +325,11 @@ function setSrc(s) {
   document.getElementById('fld-texto').style.display = s === 'texto' ? '' : 'none';
 }
 document.querySelectorAll('#src-segs .seg').forEach(b => b.onclick = () => setSrc(b.dataset.src));
-function openNew(s) { setSrc(s === 'manual' ? 'manual' : s); document.getElementById('ov-new').classList.add('open'); }
+function openNew(s) {
+  setSrc(s === 'manual' ? 'manual' : s);
+  if (pastaAtiva !== 'all') document.getElementById('in-pasta').value = pastaAtiva;
+  document.getElementById('ov-new').classList.add('open');
+}
 function closeNew() { document.getElementById('ov-new').classList.remove('open'); }
 
 function saveNew() {
@@ -257,7 +342,7 @@ function saveNew() {
   const origem = src === 'pdf' ? (file ? file.name : 'arquivo enviado')
     : src === 'link' ? (document.getElementById('in-link').value.trim() || 'link')
     : src === 'texto' ? 'texto colado' : 'criada manualmente';
-  meuMaterialAdd({ name: nome, origem, topics: topics.length ? topics : ['Conteúdo geral'] });
+  meuMaterialAdd({ name: nome, origem, pasta: document.getElementById('in-pasta').value, topics: topics.length ? topics : ['Conteúdo geral'] });
   closeNew();
   location.href = `disciplina.html?${mbase}&disc=${encodeURIComponent(nome)}`;
 }
