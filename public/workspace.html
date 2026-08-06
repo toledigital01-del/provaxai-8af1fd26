@@ -191,12 +191,9 @@ renderShell({
 document.getElementById('shell-sidebar').addEventListener('click', e => {
   const el = e.target.closest('.ws-item');
   if (!el) return;
-  tab = el.dataset.t;
-  document.querySelectorAll('.ws-item').forEach(x => x.classList.toggle('active', x === el));
-  const u = new URL(location.href); u.searchParams.set('tab', tab);
-  history.replaceState(null, '', u);
-  renderPane();
+  goTab(el.dataset.t);
 });
+
 
 /* ---------- Coluna central ---------- */
 let fcIdx = 0, fcOpen = false;
