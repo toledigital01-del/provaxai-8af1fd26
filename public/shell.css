@@ -83,7 +83,10 @@ body {
 /* ---------- Layout ---------- */
 .shell-main { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100vh; }
 .shell-body { flex: 1; overflow-y: auto; }
-.page { max-width: 940px; margin: 0 auto; padding: 34px 28px 80px; }
+.page { max-width: 1240px; margin: 0 auto; padding: 34px 32px 80px; }
+.page.narrow { max-width: 940px; }
+@media (max-width: 1280px) { .page { max-width: 100%; } }
+
 
 .crumb { display: flex; align-items: center; gap: 7px; font-size: 0.78rem; color: var(--muted); margin-bottom: 18px; flex-wrap: wrap; }
 .crumb a { color: var(--muted); text-decoration: none; border-radius: 5px; padding: 2px 4px; }
@@ -337,3 +340,32 @@ body.dark .fold.active { background:#1D283A !important; border-color:#2B3648 !im
 body.dark .fold.active svg { color:#60A5FA !important; }
 body.dark .fold .sub { color:#94A3B8 !important; }
 body.dark .fmenu button:hover, body.dark .fold .fdots:hover { background:#1E293B !important; color:#F1F5F9 !important; }
+
+/* superfícies novas (plano semanal, cobertura, notas) no modo escuro */
+body.dark .pcard, body.dark .note-btn, body.dark .note-save { background:#111827 !important; border-color:#1F2937 !important; color:#E5E7EB; }
+body.dark .note-save { background:#2563EB !important; color:#fff !important; }
+body.dark .badge.ok { background:#052E22 !important; color:#6EE7B7 !important; }
+body.dark .badge.miss { background:#3B0D0D !important; color:#FCA5A5 !important; }
+body.dark .badge.done { background:#172554 !important; color:#93C5FD !important; }
+
+/* ---------- Responsividade geral ---------- */
+@media (max-width: 1024px) {
+  .card-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+}
+@media (max-width: 640px) {
+  .page { padding: 18px 14px 64px; }
+  h1.title { font-size: 1.32rem; }
+  .subtitle { font-size: 0.82rem; }
+  .card-grid { grid-template-columns: 1fr; gap: 10px; }
+  .kpis { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+  .topic-row { padding: 12px 6px; }
+  .topic-right { width: 110px; }
+  .crumb { font-size: 0.74rem; }
+  .gsearch { max-width: none; }
+  img, video, canvas, iframe { max-width: 100%; height: auto; }
+  table { display: block; overflow-x: auto; }
+}
+@media (max-width: 420px) {
+  .kpis { grid-template-columns: 1fr !important; }
+  .topic-right { width: 88px; }
+}

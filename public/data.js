@@ -67,17 +67,61 @@ function _hash(s) {
   return h;
 }
 
-/* status pseudo-determinístico por tópico */
+/* ---- Marcação manual do aluno: tópico estudado + anotações ---- */
+const PX_STUDY_KEY = 'px_topicos_estudados_v1';
+function pxStudyAll() {
+  try { return JSON.parse(localStorage.getItem(PX_STUDY_KEY)) || {}; } catch (e) { return {}; }
+}
+function pxStudySaveAll(all) {
+  try { localStorage.setItem(PX_STUDY_KEY, JSON.stringify(all)); } catch (e) {}
+}
+function pxStudyGet(topic) {
+  return pxStudyAll()[topic] || { done: false, note: '' };
+}
+function pxStudySet(topic, patch) {
+  const all = pxStudyAll();
+  all[topic] = Object.assign({ done: false, note: '' }, all[topic], patch, { ts: Date.now() });
+  pxStudySaveAll(all);
+  return all[topic];
+}
+function pxStudyToggle(topic) {
+  const cur = pxStudyGet(topic);
+  return pxStudySet(topic, { done: !cur.done });
+}
+
+/* status pseudo-determinístico por tópico (com override do aluno) */
 function statusOf(name) {
+  if (pxStudyGet(name).done) return 'dom';
   const r = _hash(name) % 100;
   return r < 30 ? 'nao' : r < 58 ? 'apr' : r < 84 ? 'fam' : 'dom';
 }
 
 function progressOf(name) {
+  if (pxStudyGet(name).done) return 100;
   const st = statusOf(name);
   const base = { nao: 5, apr: 35, fam: 65, dom: 90 }[st];
   return Math.min(99, base + (_hash(name) % 10));
 }
+
+/* ---- Validação de cobertura do edital ----
+   EDITAL_REF é a referência oficial por disciplina (capítulo do edital).
+   Tudo que estiver na referência e não estiver em TOPICS aparece como "faltando". */
+const EDITAL_REF = {};
+
+function coberturaEdital(concursoId) {
+  const discs = disciplinasDe(concursoId || 'prf-2021');
+  return discs.map(d => {
+    const app = TOPICS[d] || [];
+    const ref = EDITAL_REF[d] || app;
+    const cobertos = ref.filter(t => app.includes(t));
+    const faltando = ref.filter(t => !app.includes(t));
+    const extras = app.filter(t => !ref.includes(t));
+    const estudados = app.filter(t => pxStudyGet(t).done);
+    const pct = ref.length ? Math.round((cobertos.length / ref.length) * 100) : 100;
+    return { disc: d, app, ref, cobertos, faltando, extras, estudados, pct };
+  });
+}
+
 
 function disciplinaInfo(nome) {
   const topics = (TOPICS[nome] || []).map(t => ({ name: t, st: statusOf(t), prog: progressOf(t) }));
