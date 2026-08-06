@@ -211,3 +211,13 @@ h1.title { font-size: 1.9rem; font-weight: 700; letter-spacing: -0.03em; }
   .hero { padding:28px 4px 8px !important; }
   .hero h1 { font-size:1.4rem !important; }
 }
+
+@media (max-width: 860px) {
+  body { display:block; height:auto; }
+  .shell-main { height:auto; min-height:100vh; }
+  .shell-body { overflow:visible !important; }
+  body > div[style*="height:100vh"] { height:auto !important; }
+  .ws { display:block !important; height:auto !important; }
+  .ws-center { padding:20px 16px 64px !important; overflow:visible !important; }
+  .ws-right { border-left:none !important; border-top:1px solid #E2E8F0; }
+}
