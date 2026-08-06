@@ -98,7 +98,7 @@
     opts = opts || {};
     const side = document.getElementById('shell-sidebar');
     const top = document.getElementById('shell-topbar');
-    if (side) { side.className = 'shell-sidebar'; side.innerHTML = sidebarHTML(opts.active); }
+    if (side) { side.className = 'shell-sidebar'; side.innerHTML = sidebarHTML(opts.active, opts.topicNav); }
     if (top) { top.className = 'shell-topbar'; top.innerHTML = topbarHTML(opts.right); mountSearch(); }
   };
 })();
