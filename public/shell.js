@@ -1,9 +1,11 @@
 /* Shell compartilhado: sidebar + topbar com pesquisa global */
 (function () {
   const NAV = [
+    { id: 'inicio', href: 'home.html', label: 'Início', icon: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>' },
     { id: 'cronograma', href: 'cronograma.html', label: 'Cronograma', icon: '<rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/>' },
     { id: 'materiais', href: 'study-sets.html', label: 'Disciplinas', icon: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>' },
   ];
+
 
 
 
@@ -23,7 +25,7 @@
         </nav>`;
 
     return `
-      <a href="study-sets.html" class="shell-logo">
+      <a href="home.html" class="shell-logo">
         <svg width="22" height="22" viewBox="0 0 32 32" fill="none"><path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="#FF4D00"/><path d="M16 8C16 8 11 14 11 18C11 20.8 13.2 23 16 23C18.8 23 21 20.8 21 18C21 14 16 8 16 8Z" fill="#FF8040"/></svg>
         <span>Prova X</span>
       </a>
