@@ -294,7 +294,7 @@ function pastasSave(l) { try { localStorage.setItem(FOLD_KEY, JSON.stringify(l))
 function esc(s) { return String(s).replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
 
 /* modal */
-let pmCor = FOLD_COLORS[0], pmEdit = null;
+let pmCor = FOLD_COLORS[0], pmEdit = null, pmFromNew = false;
 function pmRenderCores() {
   document.getElementById('pm-cores').innerHTML = FOLD_COLORS.map(c =>
     `<button class="sw ${c===pmCor?'sel':''}" style="background:${c}" onclick="pmSetCor('${c}')"></button>`).join('');
@@ -304,8 +304,8 @@ function pmSync() {
   const on = !!document.getElementById('pm-nome').value.trim();
   document.getElementById('pm-ok').classList.toggle('on', on);
 }
-function novaPasta() {
-  pmEdit = null; pmCor = FOLD_COLORS[0];
+function novaPasta(fromNew) {
+  pmEdit = null; pmCor = FOLD_COLORS[0]; pmFromNew = !!fromNew;
   document.getElementById('pm-title').textContent = 'Criar Nova Pasta';
   document.getElementById('pm-ok').textContent = '+ Criar Pasta';
   document.getElementById('pm-nome').value = '';
@@ -315,19 +315,23 @@ function novaPasta() {
 }
 function editarPasta(n) {
   const p = pastasGet().find(x => x.name === n); if (!p) return;
-  pmEdit = n; pmCor = p.color || FOLD_COLORS[0];
+  pmEdit = n; pmFromNew = false; pmCor = p.color || FOLD_COLORS[0];
   document.getElementById('pm-title').textContent = 'Editar Pasta';
   document.getElementById('pm-ok').textContent = 'Salvar';
   document.getElementById('pm-nome').value = p.name;
   pmRenderCores(); pmSync();
   document.getElementById('ov-pasta').classList.add('open');
 }
-function closePasta() { document.getElementById('ov-pasta').classList.remove('open'); }
+function closePasta() {
+  document.getElementById('ov-pasta').classList.remove('open');
+  if (pmFromNew) { pmFromNew = false; const s = document.getElementById('in-pasta'); if (s.value === '__new') s.value = ''; }
+}
 function salvarPasta() {
   const nome = document.getElementById('pm-nome').value.trim();
   if (!nome) return;
   const l = pastasGet();
   if (l.some(p => p.name === nome && p.name !== pmEdit)) { alert('Já existe uma pasta com esse nome.'); return; }
+  const criando = !pmEdit, veioDoNovo = pmFromNew;
   if (pmEdit) {
     const antigo = pmEdit;
     l.forEach(p => { if (p.name === antigo) { p.name = nome; p.color = pmCor; } });
@@ -336,8 +340,15 @@ function salvarPasta() {
   } else {
     l.push({ name: nome, color: pmCor });
   }
-  pastasSave(l); closePasta(); renderPastas(); renderMeu();
+  pastasSave(l);
+  pmFromNew = false;
+  document.getElementById('ov-pasta').classList.remove('open');
+  /* ao criar uma pasta nova, entra direto nela */
+  if (criando && !veioDoNovo) pastaAtiva = nome;
+  renderPastas(); renderMeu();
+  if (veioDoNovo) document.getElementById('in-pasta').value = nome;
 }
+
 function compartilharPasta(n) {
   const url = location.origin + location.pathname + '?pasta=' + encodeURIComponent(n);
   if (navigator.clipboard) navigator.clipboard.writeText(url);
