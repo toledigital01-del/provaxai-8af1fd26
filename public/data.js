@@ -161,13 +161,49 @@ const WS_TABS = [
 
 /* Monta o menu agrupado do tópico. render(tab) deve devolver o HTML do item. */
 function wsMenuHTML(render) {
-  let out = '', last = null;
+  const cronoIc = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/></svg>`;
+  let out = `<a class="ws-item" href="cronograma.html" style="text-decoration:none;"><span class="ic">${cronoIc}</span><span>Cronograma</span></a>`;
+  let last = null;
   WS_TABS.forEach(t => {
     if (t.group !== last) { out += `<div class="shell-sec ws-group">${t.group}</div>`; last = t.group; }
     out += render(t);
   });
   return out;
 }
+
+/* ===== Peso do edital x incidência em provas PRF (Cebraspe) =====
+   incidencia: 0-100 (quanto cai em prova) · peso: itens/questões típicas */
+const PESO_EDITAL = {
+  'Língua Portuguesa': { peso: 12, incidencia: 92 },
+  'Raciocínio Lógico-Matemático': { peso: 8, incidencia: 74 },
+  'Informática': { peso: 8, incidencia: 70 },
+  'Física': { peso: 6, incidencia: 55 },
+  'Ética no Serviço Público': { peso: 5, incidencia: 60 },
+  'Geopolítica Brasileira': { peso: 6, incidencia: 58 },
+  'Língua Inglesa': { peso: 5, incidencia: 45 },
+  'Língua Espanhola': { peso: 5, incidencia: 40 },
+  'Legislação de Trânsito': { peso: 14, incidencia: 96 },
+  'Direito Administrativo': { peso: 10, incidencia: 85 },
+  'Direito Constitucional': { peso: 10, incidencia: 88 },
+  'Direito Penal': { peso: 9, incidencia: 80 },
+  'Direito Processual Penal': { peso: 8, incidencia: 72 },
+  'Legislação Penal Especial': { peso: 7, incidencia: 68 },
+  'Direitos Humanos e Cidadania': { peso: 6, incidencia: 62 },
+};
+
+function pesoDe(disc) {
+  return PESO_EDITAL[disc] || { peso: 5, incidencia: 50 };
+}
+
+/* Prioridade adaptativa de um tópico: incidência + peso do edital + fraqueza do aluno */
+function prioridadeTopico(disc, topico) {
+  const p = pesoDe(disc);
+  const dominio = progressOf(topico);
+  const fraqueza = 100 - dominio;
+  const dif = { 'Fácil': 0, 'Média': 8, 'Alta': 16 }[topicStats(topico).dificuldade] || 0;
+  return Math.round(p.incidencia * 0.4 + p.peso * 2.2 + fraqueza * 0.5 + dif);
+}
+
 
 
 /* ============ Material próprio do aluno (fora do curso) ============
