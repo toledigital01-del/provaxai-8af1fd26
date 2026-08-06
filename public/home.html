@@ -137,11 +137,7 @@
           </div>
 
           <div class="hsec">
-            <div class="hsec-lbl">Continue de onde parou</div>
-            <div class="cont" id="cont-box"></div>
-          </div>
 
-          <div class="hsec">
             <div class="hsec-head">
               <div class="hsec-lbl" id="meu-lbl">Meu material · monte suas disciplinas</div>
             </div>
@@ -234,16 +230,8 @@ document.getElementById('course-box').innerHTML = `
     </div>
   </div>`;
 
-/* ---------- Continue de onde parou ---------- */
-const fd = cdiscs[0], ft = fd && fd.topics[0];
-document.getElementById('cont-box').innerHTML = ft ? `
-  <div style="flex:1;min-width:200px;">
-    <div class="lbl">${cmat.title} · ${fd.name}</div>
-    <div class="nm">${ft.name}</div>
-    <div class="progress-line"><div class="track"><div class="fill ${fillClass(ft.prog)}" style="width:${ft.prog}%"></div></div><div class="pct">${ft.prog}%</div></div>
-  </div>
-  <a class="btn btn-primary" href="workspace.html?${cbase}&disc=${encodeURIComponent(fd.name)}&topic=${encodeURIComponent(ft.name)}">Continuar estudando</a>`
-  : '<span class="lbl">Nada iniciado ainda</span>';
+
+
 
 /* ---------- Pastas do aluno ---------- */
 const FOLD_KEY = 'px_pastas_v1';
