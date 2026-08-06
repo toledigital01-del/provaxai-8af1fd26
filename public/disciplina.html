@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Disciplina – Studley AI</title>
+<link rel="stylesheet" href="shell.css">
+<style>
+  .filters { display:flex; gap:6px; flex-wrap:wrap; margin-top:22px; }
+  .chip { border:1px solid var(--line-strong); background:#fff; border-radius:999px; padding:5px 12px; font-size:0.78rem; color:var(--muted); cursor:pointer; font-family:inherit; transition:all .14s; }
+  .chip:hover { background:#F6F6F7; }
+  .chip.active { background:var(--text); color:#fff; border-color:var(--text); }
+</style>
+</head>
+<body>
+<aside id="shell-sidebar"></aside>
+<div class="shell-main">
+  <header id="shell-topbar"></header>
+  <div class="shell-body">
+    <div class="page">
+      <div class="crumb" id="crumb"></div>
+      <h1 class="title" id="d-h1"></h1>
+      <p class="subtitle" id="d-meta"></p>
+
+      <div class="filters">
+        <button class="chip active" data-f="all">Todos</button>
+        <button class="chip" data-f="nao">🔴 Não Familiar</button>
+        <button class="chip" data-f="apr">🟡 Aprendendo</button>
+        <button class="chip" data-f="fam">🟢 Familiar</button>
+        <button class="chip" data-f="dom">🔵 Dominado</button>
+      </div>
+
+      <div class="topic-list" id="topics"></div>
+    </div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="shell.js"></script>
+<script>
+renderShell({ active: 'materiais' });
+
+const params = new URLSearchParams(location.search);
+const id = params.get('id') || 'prf-2021';
+const mat = materialById(id);
+const title = params.get('title') || (mat ? mat.title : 'Material');
+const type = params.get('type') || (mat ? mat.type : 'Material');
+const allDiscs = disciplinasDe(id);
+const disc = params.get('disc') || allDiscs[0];
+const info = disciplinaInfo(disc);
+
+const base = `id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}&title=${encodeURIComponent(title)}`;
+document.getElementById('crumb').innerHTML =
+  `<a href="study-sets.html">Meus Materiais</a><span class="sep">/</span>` +
+  (allDiscs.length > 1
+    ? `<a href="disciplinas.html?${base}">${title}</a>`
+    : `<span>${title}</span>`) +
+  `<span class="sep">/</span><span>${disc}</span>`;
+
+document.getElementById('d-h1').textContent = disc;
+document.getElementById('d-meta').textContent =
+  `${info.topics.length} tópicos · Índice de domínio ${info.pct}%`;
+
+let filter = 'all';
+document.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+  filter = c.dataset.f;
+  document.querySelectorAll('.chip').forEach(x => x.classList.toggle('active', x === c));
+  render();
+});
+
+function render() {
+  const list = info.topics.filter(t => filter === 'all' || t.st === filter);
+  document.getElementById('topics').innerHTML = list.length ? list.map(t => {
+    const s = STATUS_META[t.st];
+    return `<a class="topic-row" href="workspace.html?${base}&disc=${encodeURIComponent(disc)}&topic=${encodeURIComponent(t.name)}">
+      <span class="topic-left">
+        <span class="dot">${s.dot}</span>
+        <span class="tname">${t.name}</span>
+        <span class="tstatus">${s.label}</span>
+      </span>
+      <span class="topic-right">
+        <span class="track"><span class="fill" style="display:block;width:${t.prog}%"></span></span>
+        <span class="pct">${t.prog}%</span>
+      </span>
+    </a>`;
+  }).join('') : '<div class="empty">Nenhum tópico com esse status.</div>';
+}
+render();
+</script>
+</body>
+</html>
