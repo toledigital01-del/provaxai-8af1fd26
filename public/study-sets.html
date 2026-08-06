@@ -232,7 +232,7 @@ document.getElementById('sets-grid').innerHTML = DISCS.map(d => {
   const cnt = st => d.topics.filter(t => t.st === st).length;
   return `
   <a class="set-card ${areaClass(d.name)}" href="disciplina.html?${MAT_BASE}&disc=${encodeURIComponent(d.name)}">
-    <div class="set-card-head"><h3>${d.name}</h3><span class="type-badge">${MAT.title}</span></div>
+    <div class="set-card-head"><h3>${d.name}</h3></div>
     <div class="meta-grid">
       <div class="meta-item">Tópicos<b>${d.topics.length}</b></div>
       <div class="meta-item">Dominados<b>${cnt('dom')}</b></div>
