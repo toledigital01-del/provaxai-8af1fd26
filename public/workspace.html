@@ -77,6 +77,9 @@
   .ws-right h2 { font-size:0.95rem; font-weight:600; letter-spacing:-0.01em; }
   .stat-row { display:flex; align-items:baseline; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--line); font-size:0.82rem; color:var(--muted); }
   .stat-row b { font-size:0.92rem; color:var(--text); font-weight:600; font-variant-numeric:tabular-nums; }
+  .rtabs { display:flex; gap:4px; background:#fff; border:1px solid var(--line); border-radius:10px; padding:3px; }
+  .rtab { flex:1; border:none; background:transparent; border-radius:8px; padding:7px 8px; font-size:0.8rem; font-weight:600; color:var(--muted); cursor:pointer; font-family:inherit; }
+  .rtab.active { background:#EEF2FF; color:#2563EB; }
   .reco { margin-top:18px; }
   .reco .rlbl { font-size:0.68rem; text-transform:uppercase; letter-spacing:.08em; color:#A6ACBB; font-weight:600; margin-bottom:10px; }
   .reco a { display:block; padding:8px 10px; background:rgba(255,251,235,.6); border:1px solid rgba(253,230,138,.6); border-radius:8px; font-size:0.84rem; text-decoration:none; color:var(--text); margin-bottom:7px; }
@@ -143,8 +146,7 @@ let tab = params.get('tab') || 'tutor';
 renderShell({
   active: 'materiais',
   topicNav: {
-    label: 'Tópico',
-    items: TABS.map(t => `<div class="ws-item${t.id === tab ? ' active' : ''}" data-t="${t.id}"><span class="ic">${t.ic}</span><span>${t.label}</span></div>`).join(''),
+    items: wsMenuHTML(t => `<div class="ws-item${t.id === tab ? ' active' : ''}" data-t="${t.id}"><span class="ic">${t.ic}</span><span>${t.label}</span></div>`),
   },
 });
 
@@ -165,22 +167,21 @@ const cards = [1,2,3,4].map(i => ({ q: `${topic} — conceito-chave ${i}`, a: `R
 function renderPane() {
   const p = document.getElementById('pane');
   if (tab === 'tutor') {
-    p.innerHTML = `<div class="pane">
-      <div class="chatlog" id="chat">
-        <div class="bub ai">Vamos estudar <b>${topic}</b>. Quer começar pela explicação simples ou direto pelas pegadinhas de prova?</div>
-      </div>
-      <div class="composer"><input id="msg" placeholder="Pergunte qualquer coisa sobre ${topic}..."><button id="send">Enviar</button></div>
+    p.innerHTML = `<div class="pane prose">
+      <h3>Aula com Athena IA — ${topic}</h3>
+      <p>Esta aula apresenta <b>${topic}</b> dentro de ${disc}, com foco no que costuma ser cobrado em prova.</p>
+      <h3>1. Conceito e regra geral</h3>
+      <p>Comece fixando a definição e a regra geral de ${topic.toLowerCase()}. É a partir dela que a banca constrói os itens de certo/errado, trocando uma palavra ou invertendo uma condição.</p>
+      <h3>2. Exceções que a banca adora</h3>
+      <ul>
+        <li>Situações em que a regra geral não se aplica.</li>
+        <li>Prazos, competências e requisitos formais.</li>
+        <li>Confusões clássicas com institutos parecidos.</li>
+      </ul>
+      <h3>3. Como estudar este tópico</h3>
+      <p>Leia a aula, ouça o podcast, resolva a bateria de questões no padrão Cebraspe e feche o ciclo com flashcards e revisão espaçada.</p>
+      <p style="margin-top:16px;color:var(--muted);font-size:0.85rem;">Dúvidas? Use o chat da Athena no painel à direita.</p>
     </div>`;
-    const send = () => {
-      const i = document.getElementById('msg');
-      if (!i.value.trim()) return;
-      const log = document.getElementById('chat');
-      log.insertAdjacentHTML('beforeend', `<div class="bub me">${i.value}</div>`);
-      const q = i.value; i.value = '';
-      setTimeout(() => log.insertAdjacentHTML('beforeend', `<div class="bub ai">Boa pergunta sobre "${q}". Em ${topic}, comece pela regra geral e depois teste as exceções com 5 questões.</div>`), 350);
-    };
-    document.getElementById('send').onclick = send;
-    document.getElementById('msg').onkeydown = e => { if (e.key === 'Enter') send(); };
   } else if (tab === 'flashcards') {
     const c = cards[fcIdx];
     p.innerHTML = `<div class="pane">
@@ -231,7 +232,7 @@ function renderPane() {
   } else if (tab === 'revisao') {
     const fila = (TOPICS[disc] || []).slice(0, 5).map((t,i) => ({ t, quando: ['Hoje','Hoje','Amanhã','Em 3 dias','Em 1 semana'][i] || 'Em 1 semana' }));
     p.innerHTML = `<div class="pane">
-      <div class="cesp-head"><b>Revisão espaçada</b><span>Intervalos crescentes: 1 dia · 3 dias · 7 dias · 15 dias · 30 dias.</span></div>
+      <div class="cesp-head"><b>Revisão espaçada</b><span>Plano de revisão de ${disc} — intervalos crescentes: 1 · 3 · 7 · 15 · 30 dias.</span></div>
       <div class="qbox" style="padding:0;overflow:hidden;">
         ${fila.map(f => `<div class="rev-row"><span>${dotHTML(statusOf(f.t))} ${f.t}</span><span class="rev-when">${f.quando}</span></div>`).join('')}
       </div>
@@ -256,6 +257,21 @@ function renderPane() {
         <div><div style="font-size:0.92rem;font-weight:600;">${topic} — episódio em áudio</div><div class="subtitle" style="margin-top:2px;">12 min · gerado por IA</div></div>
       </div>
     </div>`;
+  } else if (tab === 'evolucao') {
+    p.innerHTML = `<div class="pane">
+      <div class="cesp-head"><b>Evolução em ${topic}</b><span>Acompanhe seu índice de domínio e suas estatísticas de estudo.</span></div>
+      <div class="qbox">
+        <div class="stat-row" style="border-bottom:none;padding-bottom:6px;"><span>Índice de domínio</span><b>${stats.dominio}%</b></div>
+        <div class="track"><div class="fill ${fillClass(stats.dominio)}" style="width:${stats.dominio}%"></div></div>
+        <div class="stat-row"><span>Tempo estudado</span><b>${stats.tempo}</b></div>
+        <div class="stat-row"><span>Questões resolvidas</span><b>${stats.questoes}</b></div>
+        <div class="stat-row"><span>Acertos</span><b>${stats.acertos}%</b></div>
+        <div class="stat-row"><span>Flashcards revisados</span><b>${stats.flashcards}</b></div>
+        <div class="stat-row"><span>Próxima revisão</span><b>${stats.revisao}</b></div>
+        <div class="stat-row"><span>Dificuldade</span><b>${stats.dificuldade}</b></div>
+        <div class="stat-row" style="border-bottom:none;"><span>Último acesso</span><b>${stats.acesso}</b></div>
+      </div>
+    </div>`;
   } else {
     const key = 'notes:' + id + ':' + disc + ':' + topic;
     p.innerHTML = `<div class="pane"><textarea class="notes" id="nt" placeholder="Suas anotações sobre ${topic}...">${localStorage.getItem(key) || ''}</textarea></div>`;
@@ -267,29 +283,43 @@ renderPane();
 /* ---------- Coluna direita ---------- */
 const reco = (TOPICS[disc] || []).filter(t => t !== topic).slice(0, 3);
 document.getElementById('ws-right').innerHTML = `
-  <h2>${topic}</h2>
-  <div style="margin-top:14px;">
-    <div class="stat-row" style="border-bottom:none;padding-bottom:4px;"><span>Índice de domínio</span><b>${stats.dominio}%</b></div>
-    <div class="track"><div class="fill ${fillClass(stats.dominio)}" style="width:${stats.dominio}%"></div></div>
+  <div class="rtabs">
+    <button class="rtab active" data-r="chat">Chat</button>
+    <button class="rtab" data-r="stats">Estatísticas</button>
   </div>
-  <div style="margin-top:12px;">
-    <div class="stat-row"><span>Tempo estudado</span><b>${stats.tempo}</b></div>
-    <div class="stat-row"><span>Questões</span><b>${stats.questoes}</b></div>
-    <div class="stat-row"><span>Acertos</span><b>${stats.acertos}%</b></div>
-    <div class="stat-row"><span>Flashcards</span><b>${stats.flashcards}</b></div>
-    <div class="stat-row"><span>Próxima revisão</span><b>${stats.revisao}</b></div>
-    <div class="stat-row"><span>Dificuldade</span><b>${stats.dificuldade}</b></div>
-    <div class="stat-row"><span>Último acesso</span><b>${stats.acesso}</b></div>
+  <div id="r-chat">
+    <div class="ws-chat" style="margin-top:14px;border-top:none;padding-top:0;">
+      <div class="rlbl">Chat com Athena IA</div>
+      <div class="log" id="side-log"><div class="b">Aqui para te ajudar a aprender ${topic}. Pergunte o que quiser sobre a aula.</div></div>
+      <form id="side-form"><input id="side-msg" placeholder="Pergunte-me qualquer coisa sobre o material..." autocomplete="off"><button type="submit">↑</button></form>
+    </div>
   </div>
-  <div class="reco">
-    <div class="rlbl">IA recomenda estudar</div>
-    ${reco.map(r => `<a href="workspace.html?${base}&disc=${encodeURIComponent(disc)}&topic=${encodeURIComponent(r)}">${dotHTML(statusOf(r))} ${r}</a>`).join('')}
-  </div>
-  <div class="ws-chat">
-    <div class="rlbl">Chat com Athena IA</div>
-    <div class="log" id="side-log"><div class="b">Aqui para te ajudar a aprender ${topic}.</div></div>
-    <form id="side-form"><input id="side-msg" placeholder="Pergunte-me qualquer coisa sobre o material..." autocomplete="off"><button type="submit">↑</button></form>
+  <div id="r-stats" hidden>
+    <h2>${topic}</h2>
+    <div style="margin-top:14px;">
+      <div class="stat-row" style="border-bottom:none;padding-bottom:4px;"><span>Índice de domínio</span><b>${stats.dominio}%</b></div>
+      <div class="track"><div class="fill ${fillClass(stats.dominio)}" style="width:${stats.dominio}%"></div></div>
+    </div>
+    <div style="margin-top:12px;">
+      <div class="stat-row"><span>Tempo estudado</span><b>${stats.tempo}</b></div>
+      <div class="stat-row"><span>Questões</span><b>${stats.questoes}</b></div>
+      <div class="stat-row"><span>Acertos</span><b>${stats.acertos}%</b></div>
+      <div class="stat-row"><span>Flashcards</span><b>${stats.flashcards}</b></div>
+      <div class="stat-row"><span>Próxima revisão</span><b>${stats.revisao}</b></div>
+      <div class="stat-row"><span>Dificuldade</span><b>${stats.dificuldade}</b></div>
+      <div class="stat-row"><span>Último acesso</span><b>${stats.acesso}</b></div>
+    </div>
+    <div class="reco">
+      <div class="rlbl">IA recomenda estudar</div>
+      ${reco.map(r => `<a href="workspace.html?${base}&disc=${encodeURIComponent(disc)}&topic=${encodeURIComponent(r)}">${dotHTML(statusOf(r))} ${r}</a>`).join('')}
+    </div>
   </div>`;
+
+document.querySelectorAll('.rtab').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.rtab').forEach(x => x.classList.toggle('active', x === b));
+  document.getElementById('r-chat').hidden = b.dataset.r !== 'chat';
+  document.getElementById('r-stats').hidden = b.dataset.r !== 'stats';
+});
 
 document.getElementById('side-form').onsubmit = e => {
   e.preventDefault();
