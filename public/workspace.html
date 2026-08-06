@@ -215,6 +215,92 @@ document.getElementById('shell-sidebar').addEventListener('click', e => {
 
 /* ---------- Coluna central ---------- */
 let fcIdx = 0, fcOpen = false;
+
+/* ---------- Revisão Inteligente (resumo + lacunas) ---------- */
+let rzOn = false, rzGap = false, rzMode = 'ce';
+function rzSubject() { return scope === 'topico' ? topic : (scope === 'disc' ? disc : (selDisc === 'all' ? title : selDisc)); }
+function rzBlocks() {
+  const s = rzSubject(), l = s.toLowerCase();
+  return [
+    { t: `Conceito central`, p: [
+      ['Em ', null], ['regra geral', 'chave'], [`, ${l} é definido pela norma como o núcleo do tema — é daqui que a banca extrai a maior parte dos itens.`, null],
+    ]},
+    { t: `Requisitos`, p: [
+      ['A aplicação depende de ', null], ['requisitos formais e prazos', 'chave'], [' previstos em lei; a ausência de qualquer um deles ', null], ['invalida o ato', 'chave'], ['.', null],
+    ]},
+    { t: `Exceções`, p: [
+      ['A regra não se aplica quando houver ', null], ['previsão legal expressa em sentido contrário', 'chave'], [`, hipótese em que prevalece a norma especial sobre a geral.`, null],
+    ]},
+    { t: `Pegadinha clássica`, p: [
+      ['A banca costuma trocar ', null], ['competência por atribuição', 'chave'], [' e inverter ', null], ['o prazo aplicável', 'chave'], [`, mudando totalmente o gabarito de ${l}.`, null],
+    ]},
+  ];
+}
+function rzDistractor(txt) {
+  const alt = ['ausência de previsão legal', 'mera liberalidade do agente', 'decisão discricionária sem motivação'];
+  return alt[txt.length % alt.length];
+}
+function renderResumo(p) {
+  if (!rzOn) {
+    p.innerHTML = `<div class="pane">
+      <div class="cesp-head"><b>Revisão Inteligente</b><span>${ctxLabel()} — a Athena lê o material aberto (aula, PDF, link ou vídeo) e gera um resumo com os trechos essenciais grifados.</span></div>
+      ${scopePickerHTML()}
+      <div class="rz-bar"><button class="on icobtn" id="rz-go">Gerar Resumo Inteligente</button></div>
+      <p class="prose" style="color:var(--muted);">Depois de gerar, clique no ícone de lacuna para transformar os trechos grifados em espaços em branco e testar sua memória em Certo/Errado ou Múltipla escolha.</p>
+    </div>`;
+    mountScopePicker();
+    document.getElementById('rz-go').onclick = () => { rzOn = true; renderPane(); };
+    return;
+  }
+  const blocks = rzBlocks();
+  let gi = 0;
+  const body = blocks.map(b => {
+    const html = b.p.map(([txt, kind]) => {
+      if (kind !== 'chave') return txt;
+      if (!rzGap) return `<mark class="hl">${txt}</mark>`;
+      const i = gi++;
+      const wrong = rzDistractor(txt);
+      if (rzMode === 'ce') {
+        const shown = i % 2 === 0 ? txt : wrong;
+        return `<span class="gap" data-i="${i}" data-gab="${i % 2 === 0 ? 'C' : 'E'}" data-ans="${txt}"><span class="cand">${shown}</span><button class="gbtn" data-v="C">C</button><button class="gbtn" data-v="E">E</button></span>`;
+      }
+      const opts = [txt, wrong, 'nenhuma das anteriores'].sort((a, x) => (a.length % 3) - (x.length % 3));
+      return `<span class="gap" data-i="${i}" data-ans="${txt}"><select><option value="">selecione...</option>${opts.map(o => `<option value="${o}">${o}</option>`).join('')}</select></span>`;
+    }).join('');
+    return `<h3>${b.t}</h3><p>${html}</p>`;
+  }).join('');
+  p.innerHTML = `<div class="pane">
+    <div class="cesp-head"><b>Revisão Inteligente</b><span>${ctxLabel()} — resumo gerado pela Athena com os trechos essenciais grifados.</span></div>
+    ${scopePickerHTML()}
+    <div class="rz-bar">
+      <button class="icobtn${rzGap ? ' on' : ''}" id="rz-gap" title="Transformar grifos em lacunas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 12h5M15 12h5"/><rect x="9" y="8" width="6" height="8" rx="1.5" stroke-dasharray="3 3"/></svg>
+        Lacunas
+      </button>
+      ${rzGap ? `<select id="rz-mode"><option value="ce"${rzMode==='ce'?' selected':''}>Certo / Errado</option><option value="me"${rzMode==='me'?' selected':''}>Múltipla escolha</option></select>` : ''}
+      <button id="rz-new">Gerar novamente</button>
+    </div>
+    <div class="prose" id="rz-body">${body}</div>
+  </div>`;
+  mountScopePicker();
+  document.getElementById('rz-gap').onclick = () => { rzGap = !rzGap; renderPane(); };
+  document.getElementById('rz-new').onclick = () => { rzGap = false; renderPane(); };
+  const ms = document.getElementById('rz-mode');
+  if (ms) ms.onchange = () => { rzMode = ms.value; renderPane(); };
+  p.querySelectorAll('.gap').forEach(g => {
+    g.querySelectorAll('.gbtn').forEach(b => b.onclick = () => {
+      const ok = b.dataset.v === g.dataset.gab;
+      g.classList.toggle('ok', ok); g.classList.toggle('no', !ok);
+      g.querySelector('.cand').textContent = ok ? g.dataset.ans : `${g.querySelector('.cand').textContent} → ${g.dataset.ans}`;
+    });
+    const sel = g.querySelector('select');
+    if (sel) sel.onchange = () => {
+      const ok = sel.value === g.dataset.ans;
+      g.classList.toggle('ok', ok); g.classList.toggle('no', !ok);
+    };
+  });
+}
+
 function buildCards() {
   const pool = poolTopics();
   return Array.from({ length: Math.min(8, pool.length * 2) || 4 }).map((_, i) => {
