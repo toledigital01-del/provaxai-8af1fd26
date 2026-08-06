@@ -96,6 +96,26 @@ function topicHref(name) {
   return `workspace.html?${base}&disc=${encodeURIComponent(disc)}&topic=${encodeURIComponent(name)}`;
 }
 
+/* Continue de onde parou nesta disciplina */
+(function renderContinuar() {
+  const last = pxLastGet(disc);
+  const nome = (last && info.topics.some(t => t.name === last.topic))
+    ? last.topic
+    : (info.topics.find(t => t.prog > 0 && t.prog < 100) || info.topics[0] || {}).name;
+  if (!nome) return;
+  const t = info.topics.find(x => x.name === nome);
+  document.getElementById('cont-panel').style.display = '';
+  document.getElementById('cont-topic').textContent = nome;
+  document.getElementById('cont-sub').textContent =
+    (last ? 'Último tópico aberto' : 'Sugestão para retomar') + ` · ${disc}`;
+  const fill = document.getElementById('cont-fill');
+  fill.className = 'fill ' + fillClass(t ? t.prog : 0);
+  fill.style.width = (t ? t.prog : 0) + '%';
+  document.getElementById('cont-pct').textContent = (t ? t.prog : 0) + '%';
+  document.getElementById('cont-link').href = topicHref(nome);
+})();
+
+
 let filter = 'all';
 document.querySelectorAll('.chip').forEach(c => c.onclick = () => {
   filter = c.dataset.f;
