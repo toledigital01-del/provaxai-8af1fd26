@@ -257,13 +257,23 @@ function renderMeu() {
   document.getElementById('meu-lbl').textContent =
     pastaAtiva === 'all' ? 'Meu material · monte suas disciplinas' : 'Pasta · ' + pastaAtiva;
   const box = document.getElementById('meu-grid');
-  if (!list.length) {
+
+  const prf = materialById('prf-2021');
+  const cursoCard = (pastaAtiva === 'all' && prf) ? `<div class="mcard area-transito">
+      <a href="${materialHref(prf)}" style="text-decoration:none;color:inherit;display:block;">
+        <h3>Concurso PRF</h3>
+        <div class="cmeta">${prf.disc} disciplinas · curso completo</div>
+        <div class="progress-line"><div class="track"><div class="fill ${fillClass(prf.pct)}" style="width:${prf.pct}%"></div></div><div class="pct">${prf.pct}%</div></div>
+      </a>
+    </div>` : '';
+
+  if (!list.length && !cursoCard) {
     box.innerHTML = '<div class="empty-box">' + (pastaAtiva === 'all'
       ? 'Você ainda não criou disciplinas próprias. Envie um PDF, cole um link ou crie manualmente — o material vira aulas, flashcards, questões e revisões automaticamente.'
       : 'Nenhuma disciplina nesta pasta ainda.') + '</div>';
     return;
   }
-  box.innerHTML = '<div class="grid-cards">' + list.map(d => {
+  box.innerHTML = '<div class="grid-cards">' + cursoCard + list.map(d => {
     const info = disciplinaInfo(d.name);
     return `<div class="mcard ${areaClass(d.name)}">
       <button class="del" title="Remover" onclick="removeDisc('${d.name.replace(/'/g, "\\'")}')">✕</button>
@@ -274,6 +284,7 @@ function renderMeu() {
       </a>
     </div>`;
   }).join('') + '</div>';
+
 }
 function removeDisc(name) {
   if (!confirm('Remover a disciplina "' + name + '"?')) return;
