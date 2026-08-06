@@ -1,46 +1,42 @@
-# O que falta para publicar e vender
+# Acabamento visual premium (sem mudar cores nem estrutura)
 
-Verifiquei o app: o conteúdo (15 disciplinas, 303 tópicos), o painel admin, o webhook da Hotmart e o checkout já estão prontos. Faltam 5 pontos, todos bloqueantes para cobrar de verdade.
+Objetivo: dar sensação de produto caro, mantendo exatamente a mesma paleta, o mesmo layout e as mesmas funcionalidades. Só refinamento de acabamento.
 
-## 1. Desligar o modo convidado (crítico)
+## O que muda
 
-Hoje qualquer pessoa entra sem senha: `public/px-auth.js` cria um usuário "convidado" e a checagem de assinatura (`hasActiveSub`) retorna **true** para convidado. Ou seja, o produto inteiro está liberado de graça.
+1. **Profundidade e sombras**
+   - Trocar as sombras "chapadas" por sombras em camadas (uma bem sutil de contato + uma difusa), como em apps premium.
+   - Bordas de 1px mais suaves (usando a mesma cor, só com opacidade menor).
 
-- Remover o login sem senha e voltar o fluxo de e-mail/senha (+ Google) em `public/login.html`.
-- Manter o convidado apenas como "demo" limitado, se você quiser — mas sem acesso ao curso.
+2. **Cantos e espaçamento**
+   - Padronizar raio de canto entre cards, botões, inputs e modais (hoje há valores diferentes espalhados).
+   - Padronizar respiros internos dos cards e distância entre blocos, numa escala única (8/12/16/24/32) — nada muda de lugar, só fica mais alinhado.
 
-## 2. Bloqueio de acesso (paywall)
+3. **Tipografia**
+   - Escala de títulos e textos mais consistente, com peso e altura de linha ajustados.
+   - Números grandes (KPIs, percentuais) com espaçamento entre letras levemente reduzido, que é o que dá aspecto de painel caro.
 
-A função que checa assinatura existe, mas nenhuma tela usa. Aluno sem assinatura ativa consegue abrir aula, questões, simulados e cronograma.
+4. **Microinterações**
+   - Hover suave em cards e itens de menu (elevação leve + transição de 150–200ms), sem trocar cor.
+   - Estado de foco visível e elegante em botões, inputs e links (acessibilidade).
+   - Barras de progresso e checkboxes com transição animada em vez de salto seco.
 
-- Criar um guard único (`px-auth.js`) chamado em `workspace.html`, `disciplina.html`, `home.html`, `cronograma.html`, `dashboard.html`, `resolver.html`.
-- Sem assinatura ativa → tela de bloqueio com botão "Assinar" (checkout Hotmart).
-- Liberar 1 tópico gratuito como amostra (recomendado para conversão).
+5. **Detalhes finos**
+   - Ícones e textos alinhados opticamente nos itens de menu e nas linhas de tópico.
+   - Divisórias mais discretas; scrollbar customizada e discreta.
+   - Skeleton/fade suave ao carregar listas, em vez de o conteúdo aparecer de repente.
+   - Modais com entrada suave e fundo com leve desfoque.
 
-## 3. Oferta anual da Hotmart
-
-`public/hotmart.js` usa o mesmo link para mensal e anual. Preciso do link da oferta anual (`?off=...`) para separar os planos de R$ 29/mês e R$ 290/ano.
-
-## 4. Teste ponta a ponta do pagamento
-
-- Disparar uma compra de teste na Hotmart e confirmar que o webhook grava em `subscriptions`/`purchases` e libera o acesso.
-- Testar reembolso/cancelamento revogando o acesso.
-- Confirmar que quem compra sem ter conta é liberado ao se cadastrar com o mesmo e-mail.
-
-## 5. Itens legais e de publicação
-
-- Páginas **Termos de Uso** e **Política de Privacidade** (obrigatório para Hotmart e LGPD) + links no rodapé.
-- Título e descrição do site (hoje ainda "Lovable App" na raiz) e og:image para compartilhamento.
-- Varredura de segurança (RLS/policies) antes de publicar.
+6. **Modo escuro**
+   - Mesmos refinamentos calibrados para o tema escuro (sombras não funcionam igual no escuro; ali o realce vem de bordas sutis).
 
 ## Detalhes técnicos
 
-- `public/px-auth.js`: remover `px_guest`, fazer `hasActiveSub()` consultar `subscriptions` sempre; expor `PX.requirePro()`.
-- Guard chamado no topo de cada página protegida, antes do render.
-- `public/hotmart.js`: separar `mensal` / `anual` com o código da oferta.
-- Novas páginas estáticas `public/termos.html` e `public/privacidade.html`.
-- Metadados em `src/routes/__root.tsx` e `public/index.html`.
+- Trabalho concentrado em `public/shell.css`, com variáveis novas para sombra, raio e transição, reaproveitadas nas páginas.
+- Ajustes pontuais de classes nas páginas (`home.html`, `disciplina.html`, `workspace.html`, `dashboard.html`, `cronograma.html`, `cobertura.html`, `resolver.html`) apenas onde houver estilo inline que atrapalhe a padronização.
+- Nenhuma alteração em valores de cor da marca, hierarquia de navegação, textos ou lógica.
+- Respeito a `prefers-reduced-motion` para quem desativa animações.
 
 ## Verificação
 
-Teste de navegador: (a) visitante sem login não abre workspace; (b) usuário logado sem assinatura vê a tela de bloqueio; (c) usuário com assinatura ativa acessa tudo; (d) webhook de compra aprovada libera o acesso.
+Comparação visual antes/depois em desktop e celular, nos temas claro e escuro, confirmando que nada mudou de posição e que todos os botões continuam funcionando.
