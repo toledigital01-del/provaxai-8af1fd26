@@ -78,8 +78,36 @@
   .fold.active svg { color:#0F172A; }
   .fold b { font-size:0.9rem; font-weight:700; color:#0F172A; display:block; line-height:1.25; }
   .fold .sub { font-size:0.78rem; color:#6B7280; display:block; margin-top:3px; line-height:1.3; }
-  .fold .fdel { position:absolute; right:8px; top:8px; border:none; background:transparent; color:#C0C6D2; cursor:pointer; font-size:0.8rem; }
-  .fold .fdel:hover { color:#EF4444; }
+  .fold .fdots { position:absolute; right:6px; top:10px; border:none; background:transparent; color:#9AA1AE; cursor:pointer; font-size:1rem; line-height:1; padding:4px 6px; border-radius:6px; letter-spacing:1px; }
+  .fold .fdots:hover { background:#F1F5F9; color:#0F172A; }
+
+  /* Menu de contexto da pasta */
+  .fmenu { position:absolute; z-index:200; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:0 16px 40px rgba(15,23,42,.18); padding:6px; min-width:186px; }
+  .fmenu button { display:flex; align-items:center; gap:12px; width:100%; border:none; background:transparent; font-family:inherit; font-size:0.9rem; color:#0F172A; padding:10px 12px; border-radius:8px; cursor:pointer; text-align:left; }
+  .fmenu button:hover:not(:disabled) { background:#F5F6F8; }
+  .fmenu button svg { width:17px; height:17px; flex-shrink:0; }
+  .fmenu button.dis { color:#C4C8D0; cursor:not-allowed; }
+  .fmenu button.dan { color:#EF4444; }
+  .fmenu .fsep { height:1px; background:var(--line); margin:4px 6px; }
+
+  /* Modal criar pasta */
+  .pmodal { max-width:470px; border-radius:18px; }
+  .pmodal .modal-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:22px 24px 18px; }
+  .pmodal .modal-head h3 { font-size:1.45rem; font-weight:800; letter-spacing:-0.02em; }
+  .pmodal .x { border:none; background:transparent; cursor:pointer; color:#6B7280; font-size:1.2rem; line-height:1; padding:4px; }
+  .pmodal .modal-body { padding:22px 24px 26px; gap:22px; }
+  .pmodal .fl { font-size:0.92rem; font-weight:700; color:#0F172A; margin-bottom:10px; }
+  .pmodal .input { background:#F8F9FB; border:1px solid #E7E9EE; border-radius:12px; padding:14px 14px; font-size:0.95rem; }
+  .swatches { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; }
+  .sw { aspect-ratio:1; border-radius:14px; border:none; cursor:pointer; padding:0; outline:3px solid transparent; outline-offset:2px; transition:outline-color .12s, transform .12s; }
+  .sw:hover { transform:translateY(-1px); }
+  .sw.sel { outline-color:#0F172A; }
+  .pmodal .modal-foot { padding:16px 24px 18px; align-items:center; justify-content:space-between; }
+  .pmodal .lnk { border:none; background:transparent; font-family:inherit; font-size:0.92rem; color:#6B7280; cursor:pointer; padding:8px 4px; }
+  .pmodal .btn-create { background:#7FA8F0; color:#fff; border-radius:12px; padding:12px 22px; font-weight:700; }
+  .pmodal .btn-create.on { background:#2563EB; }
+
+
 
 
   /* Modal */
@@ -214,6 +242,31 @@
   </div>
 </div>
 
+<!-- Criar / editar pasta -->
+<div class="ov" id="ov-pasta" onclick="if(event.target.id==='ov-pasta') closePasta()">
+  <div class="modal pmodal">
+    <div class="modal-head">
+      <h3 id="pm-title">Criar Nova Pasta</h3>
+      <button class="x" onclick="closePasta()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div>
+        <label class="fl">Nome da Pasta</label>
+        <input class="input" id="pm-nome" placeholder="Digite o nome da pasta..." oninput="pmSync()">
+      </div>
+      <div>
+        <label class="fl">Escolha a Cor</label>
+        <div class="swatches" id="pm-cores"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="lnk" onclick="closePasta()">Cancelar</button>
+      <button class="btn btn-create" id="pm-ok" onclick="salvarPasta()">+ Criar Pasta</button>
+    </div>
+  </div>
+</div>
+
+
 <script src="data.js"></script>
 <script src="shell.js"></script>
 <script>
@@ -227,26 +280,97 @@ renderShell({ active: 'inicio' });
 
 /* ---------- Pastas do aluno ---------- */
 const FOLD_KEY = 'px_pastas_v1';
+const FOLD_COLORS = ['#6B7280','#FB923C','#FACC15','#4ADE80','#2DD4BF','#22A6C3','#6D4AE0','#F472F6','#F98C93','#F05252','#60A5FA','#7FE9E0'];
 let pastaAtiva = 'all';
-function pastasGet() { try { return JSON.parse(localStorage.getItem(FOLD_KEY)) || []; } catch(e) { return []; } }
+function pastasGet() {
+  let raw; try { raw = JSON.parse(localStorage.getItem(FOLD_KEY)) || []; } catch(e) { raw = []; }
+  return raw.map((p, i) => typeof p === 'string' ? { name: p, color: FOLD_COLORS[i % FOLD_COLORS.length] } : p);
+}
 function pastasSave(l) { try { localStorage.setItem(FOLD_KEY, JSON.stringify(l)); } catch(e) {} }
+function esc(s) { return String(s).replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+
+/* modal */
+let pmCor = FOLD_COLORS[0], pmEdit = null;
+function pmRenderCores() {
+  document.getElementById('pm-cores').innerHTML = FOLD_COLORS.map(c =>
+    `<button class="sw ${c===pmCor?'sel':''}" style="background:${c}" onclick="pmSetCor('${c}')"></button>`).join('');
+}
+function pmSetCor(c) { pmCor = c; pmRenderCores(); }
+function pmSync() {
+  const on = !!document.getElementById('pm-nome').value.trim();
+  document.getElementById('pm-ok').classList.toggle('on', on);
+}
 function novaPasta() {
-  const n = prompt('Nome da nova pasta:');
-  if (!n || !n.trim()) return;
+  pmEdit = null; pmCor = FOLD_COLORS[0];
+  document.getElementById('pm-title').textContent = 'Criar Nova Pasta';
+  document.getElementById('pm-ok').textContent = '+ Criar Pasta';
+  document.getElementById('pm-nome').value = '';
+  pmRenderCores(); pmSync();
+  document.getElementById('ov-pasta').classList.add('open');
+  setTimeout(() => document.getElementById('pm-nome').focus(), 40);
+}
+function editarPasta(n) {
+  const p = pastasGet().find(x => x.name === n); if (!p) return;
+  pmEdit = n; pmCor = p.color || FOLD_COLORS[0];
+  document.getElementById('pm-title').textContent = 'Editar Pasta';
+  document.getElementById('pm-ok').textContent = 'Salvar';
+  document.getElementById('pm-nome').value = p.name;
+  pmRenderCores(); pmSync();
+  document.getElementById('ov-pasta').classList.add('open');
+}
+function closePasta() { document.getElementById('ov-pasta').classList.remove('open'); }
+function salvarPasta() {
+  const nome = document.getElementById('pm-nome').value.trim();
+  if (!nome) return;
   const l = pastasGet();
-  if (l.includes(n.trim())) { alert('Já existe uma pasta com esse nome.'); return; }
-  l.push(n.trim()); pastasSave(l); renderPastas(); renderMeu();
+  if (l.some(p => p.name === nome && p.name !== pmEdit)) { alert('Já existe uma pasta com esse nome.'); return; }
+  if (pmEdit) {
+    const antigo = pmEdit;
+    l.forEach(p => { if (p.name === antigo) { p.name = nome; p.color = pmCor; } });
+    meuMaterialSave(meuMaterialGet().map(d => d.pasta === antigo ? { ...d, pasta: nome } : d));
+    if (pastaAtiva === antigo) pastaAtiva = nome;
+  } else {
+    l.push({ name: nome, color: pmCor });
+  }
+  pastasSave(l); closePasta(); renderPastas(); renderMeu();
+}
+function compartilharPasta(n) {
+  const url = location.origin + location.pathname + '?pasta=' + encodeURIComponent(n);
+  if (navigator.clipboard) navigator.clipboard.writeText(url);
+  alert('Link da pasta copiado:\n' + url);
 }
 function removerPasta(n) {
   if (!confirm('Remover a pasta "' + n + '"? As disciplinas continuam disponíveis.')) return;
-  pastasSave(pastasGet().filter(p => p !== n));
-  meuMaterialGet().forEach(d => { if (d.pasta === n) d.pasta = ''; });
+  pastasSave(pastasGet().filter(p => p.name !== n));
   meuMaterialSave(meuMaterialGet().map(d => d.pasta === n ? { ...d, pasta: '' } : d));
   if (pastaAtiva === n) pastaAtiva = 'all';
   renderPastas(); renderMeu();
 }
 function setPasta(p) { pastaAtiva = p; renderPastas(); renderMeu(); }
-const FOLD_COLORS = ['#22C55E', '#7C3AED', '#22C55E', '#F59E0B', '#3B82F6', '#EC4899'];
+
+/* menu ••• */
+function closeFMenu() { const m = document.getElementById('fmenu'); if (m) m.remove(); }
+document.addEventListener('click', closeFMenu);
+function abrirMenuPasta(ev, n) {
+  ev.stopPropagation();
+  const aberto = document.getElementById('fmenu');
+  closeFMenu();
+  if (aberto && aberto.dataset.n === n) return;
+  const r = ev.currentTarget.getBoundingClientRect();
+  const i = (s, p) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+  const el = document.createElement('div');
+  el.className = 'fmenu'; el.id = 'fmenu'; el.dataset.n = n;
+  el.style.top = (r.bottom + window.scrollY + 6) + 'px';
+  el.style.left = Math.max(8, r.right + window.scrollX - 186) + 'px';
+  el.onclick = e => e.stopPropagation();
+  el.innerHTML =
+    `<button onclick="closeFMenu();editarPasta('${esc(n)}')">${i(0,'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>')}Editar</button>` +
+    `<button onclick="closeFMenu();compartilharPasta('${esc(n)}')">${i(0,'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>')}Compartilhar</button>` +
+    `<div class="fsep"></div>` +
+    `<button class="dan" onclick="closeFMenu();removerPasta('${esc(n)}')">${i(0,'<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/>')}Excluir</button>`;
+  document.body.appendChild(el);
+}
+
 function toggleFolders() {
   const el = document.getElementById('fold-list');
   const btn = document.getElementById('fold-toggle');
@@ -260,15 +384,15 @@ function renderPastas() {
   const plural = n => n + ' conjunto' + (n === 1 ? '' : 's') + ' de estudo';
   document.getElementById('fold-list').innerHTML =
     `<button class="fold ${pastaAtiva==='all'?'active':''}" style="--fold-c:#0F172A" onclick="setPasta('all')">${ic}<span><b>Todos os Conjuntos de Estudo</b><span class="sub">${plural(mats.length)} total</span></span></button>` +
-    list.map((p, i) => {
-      const n = mats.filter(m => m.pasta === p).length;
-      const c = FOLD_COLORS[i % FOLD_COLORS.length];
-      return `<button class="fold ${pastaAtiva===p?'active':''}" style="--fold-c:${c}" onclick="setPasta('${p.replace(/'/g,"\\'")}')">${ic}<span><b>${p}</b><span class="sub">${plural(n)}</span></span>
-        <span class="fdel" onclick="event.stopPropagation();removerPasta('${p.replace(/'/g,"\\'")}')">✕</span></button>`;
+    list.map(p => {
+      const n = mats.filter(m => m.pasta === p.name).length;
+      return `<button class="fold ${pastaAtiva===p.name?'active':''}" style="--fold-c:${p.color}" onclick="setPasta('${esc(p.name)}')">${ic}<span><b>${p.name}</b><span class="sub">${plural(n)}</span></span>
+        <span class="fdots" role="button" onclick="abrirMenuPasta(event,'${esc(p.name)}')">•••</span></button>`;
     }).join('');
   const sel = document.getElementById('in-pasta');
-  sel.innerHTML = '<option value="">Sem pasta</option>' + list.map(p => `<option value="${p}">${p}</option>`).join('');
+  sel.innerHTML = '<option value="">Sem pasta</option>' + list.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
 }
+
 
 
 /* ---------- Meu material ---------- */
