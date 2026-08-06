@@ -68,6 +68,10 @@
       
 
       <section class="ws-center">
+        <a class="page-back" id="page-back" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          <span id="page-back-label"></span>
+        </a>
         <div class="crumb" id="crumb"></div>
         <h1 id="t-title"></h1>
         <p class="subtitle" id="t-sub"></p>
@@ -94,6 +98,9 @@ const disc = params.get('disc') || allDiscs[0];
 const topic = params.get('topic') || (TOPICS[disc] || ['Tópico'])[0];
 const base = `id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}&title=${encodeURIComponent(title)}`;
 const discHref = `disciplina.html?${base}&disc=${encodeURIComponent(disc)}`;
+
+document.getElementById('page-back').href = discHref;
+document.getElementById('page-back-label').textContent = disc;
 
 document.getElementById('crumb').innerHTML =
   `<a href="study-sets.html">Meus Materiais</a><span class="sep">/</span>` +
@@ -122,8 +129,6 @@ let tab = params.get('tab') || 'conteudo';
 renderShell({
   active: 'materiais',
   topicNav: {
-    backHref: discHref,
-    backLabel: disc,
     label: 'Tópico',
     items: TABS.map(t => `<div class="ws-item${t.id === tab ? ' active' : ''}" data-t="${t.id}"><span class="ic">${t.ic}</span><span>${t.label}</span></div>`).join(''),
   },
