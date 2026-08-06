@@ -152,11 +152,15 @@
         </div>
       </div>
 
-      <aside class="folders">
-        <div class="hsec-lbl" style="margin-bottom:12px;">Pastas</div>
-        <button class="btn btn-primary" onclick="novaPasta()">+ Criar nova pasta</button>
+      <aside class="folders" id="folders-panel">
+        <div class="fold-head">
+          <div class="hsec-lbl">Pastas</div>
+          <button class="fold-collapse" id="fold-toggle" onclick="toggleFolders()" title="Recolher">&raquo;</button>
+        </div>
+        <button class="btn btn-primary" onclick="novaPasta()">+ Criar Nova Pasta</button>
         <div id="fold-list"></div>
       </aside>
+
     </div>
   </div>
 </div>
