@@ -409,8 +409,11 @@ function renderPastas() {
       return `<button class="fold ${pastaAtiva===p.name?'active':''}" style="--fold-c:${p.color}" onclick="setPasta('${esc(p.name)}')">${ic}<span><b>${p.name}</b><span class="sub">${plural(n)}</span></span>
         <span class="fdots" role="button" onclick="abrirMenuPasta(event,'${esc(p.name)}')">•••</span></button>`;
     }).join('') : empty);
-  const sel = document.getElementById('in-pasta');
-  sel.innerHTML = '<option value="">Sem pasta</option>' + list.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+  const sel = document.getElementById('in-pasta'), prev = sel.value;
+  sel.innerHTML = '<option value="">Sem pasta</option>' + list.map(p => `<option value="${p.name}">${p.name}</option>`).join('')
+    + '<option value="__new">+ Criar nova pasta…</option>';
+  if (prev && prev !== '__new') sel.value = prev;
+
 }
 
 
