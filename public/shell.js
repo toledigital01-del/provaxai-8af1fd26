@@ -1,9 +1,10 @@
 /* Shell compartilhado: sidebar + topbar com pesquisa global */
 (function () {
   const NAV = [
-    { id: 'hoje', href: 'dashboard.html', label: 'Hoje', icon: '<path d="M12 2v4M5 8h14M4 8h16v12H4z"/><path d="M9 13h2v2H9z"/>' },
+    { id: 'cronograma', href: 'cronograma.html', label: 'Cronograma', icon: '<rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/>' },
     { id: 'materiais', href: 'study-sets.html', label: 'Meus Concursos', icon: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>' },
   ];
+
 
 
   function icon(d) {
