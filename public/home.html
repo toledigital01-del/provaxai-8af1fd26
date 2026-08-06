@@ -382,13 +382,18 @@ function renderPastas() {
   const list = pastasGet(), mats = meuMaterialGet();
   const ic = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
   const plural = n => n + ' conjunto' + (n === 1 ? '' : 's') + ' de estudo';
+  const empty = `<div class="fold-empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      <b>Ainda não há pastas</b>
+      <span>Crie sua primeira pasta para organizar seus conjuntos de estudo</span>
+    </div>`;
   document.getElementById('fold-list').innerHTML =
     `<button class="fold ${pastaAtiva==='all'?'active':''}" style="--fold-c:#0F172A" onclick="setPasta('all')">${ic}<span><b>Todos os Conjuntos de Estudo</b><span class="sub">${plural(mats.length)} total</span></span></button>` +
-    list.map(p => {
+    (list.length ? list.map(p => {
       const n = mats.filter(m => m.pasta === p.name).length;
       return `<button class="fold ${pastaAtiva===p.name?'active':''}" style="--fold-c:${p.color}" onclick="setPasta('${esc(p.name)}')">${ic}<span><b>${p.name}</b><span class="sub">${plural(n)}</span></span>
         <span class="fdots" role="button" onclick="abrirMenuPasta(event,'${esc(p.name)}')">•••</span></button>`;
-    }).join('');
+    }).join('') : empty);
   const sel = document.getElementById('in-pasta');
   sel.innerHTML = '<option value="">Sem pasta</option>' + list.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
 }
