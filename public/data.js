@@ -169,3 +169,58 @@ function wsMenuHTML(render) {
   return out;
 }
 
+
+/* ============ Material próprio do aluno (fora do curso) ============
+   Disciplinas criadas pelo aluno a partir de PDF, link, texto ou gravação.
+   Persistidas no navegador e injetadas nas mesmas estruturas do curso,
+   de modo que todas as ferramentas (workspace, chat, flashcards, etc.)
+   funcionem igual às disciplinas prontas. */
+const MEU_ID = 'meu-material';
+const PX_STORE_KEY = 'px_meu_material_v1';
+
+function meuMaterialGet() {
+  try { return JSON.parse(localStorage.getItem(PX_STORE_KEY)) || []; }
+  catch (e) { return []; }
+}
+function meuMaterialSave(list) {
+  try { localStorage.setItem(PX_STORE_KEY, JSON.stringify(list)); } catch (e) {}
+  meuMaterialMount();
+}
+function meuMaterialAdd(disc) {
+  const list = meuMaterialGet();
+  list.push(disc);
+  meuMaterialSave(list);
+  return disc;
+}
+function meuMaterialRemove(name) {
+  meuMaterialSave(meuMaterialGet().filter(d => d.name !== name));
+}
+
+/* injeta as disciplinas do aluno nas estruturas globais */
+function meuMaterialMount() {
+  const list = meuMaterialGet();
+  DISCIPLINAS_POR_CONCURSO[MEU_ID] = list.map(d => d.name);
+  list.forEach(d => { TOPICS[d.name] = d.topics && d.topics.length ? d.topics : ['Conteúdo geral']; });
+  const idx = MATERIALS.findIndex(m => m.id === MEU_ID);
+  const entry = {
+    id: MEU_ID, title: 'Meu Material', type: 'Pessoal', folder: 'Pessoais',
+    disc: list.length, top: list.reduce((a, d) => a + (d.topics || []).length, 0),
+    pag: 0, envio: '—', acesso: 'hoje', tempo: '—',
+    pct: list.length ? Math.round(list.reduce((a, d) => a + disciplinaInfo(d.name).pct, 0) / list.length) : 0,
+  };
+  if (list.length) { if (idx >= 0) MATERIALS[idx] = entry; else MATERIALS.push(entry); }
+  else if (idx >= 0) MATERIALS.splice(idx, 1);
+}
+meuMaterialMount();
+
+/* ============ Curso em destaque ============ */
+const CURSOS = [
+  {
+    id: 'prf-2021',
+    nome: 'Curso Polícia Rodoviária Federal',
+    tag: 'CURSO COMPLETO',
+    capa: 'curso-prf.jpg',
+    resumo: 'Curso completo para a PRF: planejamento de estudos, aulas com a Athena IA, flashcards, questões e simulados no padrão Cebraspe.',
+    bullets: ['15 disciplinas do edital', '96 tópicos com trilha guiada', 'Questões e simulados Certo/Errado', 'Revisão espaçada e inteligente'],
+  },
+];
