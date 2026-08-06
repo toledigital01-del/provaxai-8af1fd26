@@ -6,10 +6,39 @@
 <title>Disciplina – Prova X</title>
 <link rel="stylesheet" href="shell.css">
 <style>
+  .disc-layout { display:flex; align-items:stretch; min-height:100%; }
+  .disc-main { flex:1; min-width:0; }
   .filters { display:flex; gap:6px; flex-wrap:wrap; margin-top:22px; }
   .chip { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line-strong); background:#fff; border-radius:999px; padding:5px 12px; font-size:0.78rem; color:var(--muted); cursor:pointer; font-family:inherit; transition:all .14s; }
   .chip:hover { background:#F6F6F7; }
   .chip.active { background:#2563EB; color:#fff; border-color:#2563EB; }
+
+  /* Barra lateral direita de tópicos */
+  .tpanel { width:320px; min-width:320px; border-left:1px solid var(--line); background:#fff; padding:16px 14px 40px; transition:width .18s, min-width .18s, padding .18s; }
+  .tpanel-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; }
+  .tpanel-head h2 { font-size:0.78rem; text-transform:uppercase; letter-spacing:.08em; color:#A6ACBB; font-weight:600; }
+  .tpanel-toggle { border:1px solid var(--line-strong); background:#fff; border-radius:9px; width:30px; height:30px; display:grid; place-items:center; cursor:pointer; color:var(--muted); flex-shrink:0; }
+  .tpanel-toggle:hover { background:#F6F6F7; }
+  .tpanel-toggle svg { width:16px; height:16px; transition:transform .18s; }
+  .tpanel.collapsed { width:58px; min-width:58px; padding:16px 12px; }
+  .tpanel.collapsed .tpanel-head { justify-content:center; }
+  .tpanel.collapsed .tpanel-head h2, .tpanel.collapsed .tpanel-body { display:none; }
+  .tpanel.collapsed .tpanel-toggle svg { transform:rotate(180deg); }
+
+  .titem { display:block; padding:10px 10px; border-radius:10px; text-decoration:none; color:inherit; border:1px solid transparent; }
+  .titem:hover { background:#F6F8FB; border-color:var(--line); }
+  .titem .tt { display:flex; align-items:center; gap:8px; font-size:0.86rem; font-weight:500; }
+  .titem .tt span.txt { min-width:0; }
+  .titem .tb { display:flex; align-items:center; gap:8px; margin-top:7px; }
+  .titem .track { flex:1; height:5px; border-radius:999px; background:#EEF1F5; overflow:hidden; }
+  .titem .fill { display:block; height:100%; border-radius:999px; }
+  .titem .pct { font-size:0.72rem; color:var(--muted); min-width:30px; text-align:right; }
+
+  @media (max-width: 900px) {
+    .disc-layout { flex-direction:column; }
+    .tpanel, .tpanel.collapsed { width:auto; min-width:0; border-left:none; border-top:1px solid var(--line); }
+    .tpanel.collapsed .tpanel-body { display:none; }
+  }
 </style>
 </head>
 <body>
@@ -17,24 +46,38 @@
 <div class="shell-main">
   <header id="shell-topbar"></header>
   <div class="shell-body">
-    <div class="page">
-      <a class="page-back" id="page-back" href="#">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-        <span id="page-back-label"></span>
-      </a>
-      <div class="crumb" id="crumb"></div>
-      <h1 class="title" id="d-h1"></h1>
-      <p class="subtitle" id="d-meta"></p>
+    <div class="disc-layout">
+      <div class="disc-main">
+        <div class="page">
+          <a class="page-back" id="page-back" href="#">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            <span id="page-back-label"></span>
+          </a>
+          <div class="crumb" id="crumb"></div>
+          <h1 class="title" id="d-h1"></h1>
+          <p class="subtitle" id="d-meta"></p>
 
-      <div class="filters">
-        <button class="chip active" data-f="all">Todos</button>
-        <button class="chip" data-f="nao"><span class="sdot" style="background:#EF4444"></span> Não Familiar</button>
-        <button class="chip" data-f="apr"><span class="sdot" style="background:#F59E0B"></span> Aprendendo</button>
-        <button class="chip" data-f="fam"><span class="sdot" style="background:#22C55E"></span> Familiar</button>
-        <button class="chip" data-f="dom"><span class="sdot" style="background:#3B82F6"></span> Dominado</button>
+          <div class="filters">
+            <button class="chip active" data-f="all">Todos</button>
+            <button class="chip" data-f="nao"><span class="sdot" style="background:#EF4444"></span> Não Familiar</button>
+            <button class="chip" data-f="apr"><span class="sdot" style="background:#F59E0B"></span> Aprendendo</button>
+            <button class="chip" data-f="fam"><span class="sdot" style="background:#22C55E"></span> Familiar</button>
+            <button class="chip" data-f="dom"><span class="sdot" style="background:#3B82F6"></span> Dominado</button>
+          </div>
+
+          <div class="topic-list" id="topics"></div>
+        </div>
       </div>
 
-      <div class="topic-list" id="topics"></div>
+      <aside class="tpanel" id="tpanel">
+        <div class="tpanel-head">
+          <h2>Tópicos</h2>
+          <button class="tpanel-toggle" id="tpanel-toggle" aria-label="Recolher tópicos" onclick="toggleTPanel()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+        <div class="tpanel-body" id="tpanel-body"></div>
+      </aside>
     </div>
   </div>
 </div>
@@ -53,11 +96,7 @@ const info = disciplinaInfo(disc);
 
 const base = `id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}&title=${encodeURIComponent(title)}`;
 document.getElementById('crumb').innerHTML =
-  `<a href="study-sets.html">Meus Concursos</a><span class="sep">/</span>` +
-  (allDiscs.length > 1
-    ? `<a href="disciplinas.html?${base}">${title}</a>`
-    : `<span>${title}</span>`) +
-  `<span class="sep">/</span><span>${disc}</span>`;
+  `<a href="study-sets.html">Disciplinas</a><span class="sep">/</span><span>${disc}</span>`;
 
 const wsBase = `workspace.html?${base}&disc=${encodeURIComponent(disc)}&scope=disc`;
 
@@ -68,13 +107,16 @@ renderShell({
   },
 });
 
-
-document.getElementById('page-back').href = allDiscs.length > 1 ? `disciplinas.html?${base}` : 'study-sets.html';
-document.getElementById('page-back-label').textContent = allDiscs.length > 1 ? title : 'Meus Concursos';
+document.getElementById('page-back').href = 'study-sets.html';
+document.getElementById('page-back-label').textContent = 'Disciplinas';
 
 document.getElementById('d-h1').textContent = disc;
 document.getElementById('d-meta').textContent =
   `${info.topics.length} tópicos · Índice de domínio ${info.pct}%`;
+
+function topicHref(name) {
+  return `workspace.html?${base}&disc=${encodeURIComponent(disc)}&topic=${encodeURIComponent(name)}`;
+}
 
 let filter = 'all';
 document.querySelectorAll('.chip').forEach(c => c.onclick = () => {
@@ -87,7 +129,7 @@ function render() {
   const list = info.topics.filter(t => filter === 'all' || t.st === filter);
   document.getElementById('topics').innerHTML = list.length ? list.map(t => {
     const s = STATUS_META[t.st];
-    return `<a class="topic-row" href="workspace.html?${base}&disc=${encodeURIComponent(disc)}&topic=${encodeURIComponent(t.name)}">
+    return `<a class="topic-row" href="${topicHref(t.name)}">
       <span class="topic-left">
         <span class="dot">${dotHTML(t.st)}</span>
         <span class="tname">${t.name}</span>
@@ -101,6 +143,23 @@ function render() {
   }).join('') : '<div class="empty">Nenhum tópico com esse status.</div>';
 }
 render();
+
+/* Painel lateral direito: navegação por tópicos */
+document.getElementById('tpanel-body').innerHTML = info.topics.map(t => `
+  <a class="titem" href="${topicHref(t.name)}">
+    <span class="tt">${dotHTML(t.st)}<span class="txt">${t.name}</span></span>
+    <span class="tb">
+      <span class="track"><span class="fill ${fillClass(t.prog)}" style="width:${t.prog}%"></span></span>
+      <span class="pct">${t.prog}%</span>
+    </span>
+  </a>`).join('');
+
+function toggleTPanel() {
+  const p = document.getElementById('tpanel');
+  p.classList.toggle('collapsed');
+  localStorage.setItem('tpanel-collapsed', p.classList.contains('collapsed') ? '1' : '0');
+}
+if (localStorage.getItem('tpanel-collapsed') === '1') document.getElementById('tpanel').classList.add('collapsed');
 </script>
 </body>
 </html>
