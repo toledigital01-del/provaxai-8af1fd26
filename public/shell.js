@@ -2,7 +2,7 @@
 (function () {
   const NAV = [
     { id: 'hoje', href: 'dashboard.html', label: 'Hoje', icon: '<path d="M12 2v4M5 8h14M4 8h16v12H4z"/><path d="M9 13h2v2H9z"/>' },
-    { id: 'materiais', href: 'study-sets.html', label: 'Meus Materiais', icon: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>' },
+    { id: 'materiais', href: 'study-sets.html', label: 'Meus Concursos', icon: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>' },
   ];
 
 
@@ -95,6 +95,28 @@
     document.body.classList.toggle('sidebar-open');
   };
 
+  /* Gesto de arrastar (celular): abre da borda esquerda, fecha arrastando para a esquerda */
+  function mountSwipe() {
+    if (window.__swipeMounted) return;
+    window.__swipeMounted = true;
+    let x0 = null, y0 = null, fromEdge = false;
+    document.addEventListener('touchstart', e => {
+      if (window.innerWidth > 860 || e.touches.length !== 1) return;
+      x0 = e.touches[0].clientX; y0 = e.touches[0].clientY;
+      fromEdge = x0 < 28;
+    }, { passive: true });
+    document.addEventListener('touchend', e => {
+      if (x0 === null) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - x0, dy = Math.abs(t.clientY - y0);
+      x0 = null;
+      if (dy > 60 || Math.abs(dx) < 55) return;
+      const open = document.body.classList.contains('sidebar-open');
+      if (dx > 0 && fromEdge && !open) document.body.classList.add('sidebar-open');
+      if (dx < 0 && open) document.body.classList.remove('sidebar-open');
+    }, { passive: true });
+  }
+
   window.renderShell = function (opts) {
     opts = opts || {};
     const side = document.getElementById('shell-sidebar');
@@ -108,6 +130,7 @@
       sc.onclick = () => document.body.classList.remove('sidebar-open');
       document.body.appendChild(sc);
     }
+    mountSwipe();
     if (side) side.addEventListener('click', e => { if (e.target.closest('a, .ws-item')) document.body.classList.remove('sidebar-open'); });
   };
 })();

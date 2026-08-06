@@ -5,6 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Disciplinas – Prova X</title>
 <link rel="stylesheet" href="shell.css">
+<style>
+  .grid2 { display:grid; grid-template-columns: 1.4fr 1fr; gap:14px; margin-top:20px; }
+  @media (max-width: 860px) { .grid2 { grid-template-columns:1fr; } }
+  .panel { border:1px solid var(--line); border-radius:14px; padding:20px; background:#fff; }
+  .panel h2 { font-size:0.78rem; text-transform:uppercase; letter-spacing:.08em; color:#A6ACBB; font-weight:600; margin-bottom:14px; }
+  .big { font-size:1.7rem; font-weight:700; letter-spacing:-0.03em; }
+  .row { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); font-size:0.88rem; }
+  .row:last-child { border-bottom:none; }
+  .check { width:18px; height:18px; border-radius:6px; border:1.5px solid var(--line-strong); display:grid; place-items:center; font-size:0.7rem; color:var(--muted); }
+  .btn { display:inline-flex; align-items:center; gap:8px; margin-top:16px; padding:9px 16px; border-radius:9px; background:#2563EB; color:#fff; text-decoration:none; font-size:0.85rem; font-weight:600; }
+  .btn:hover { background:#1D4ED8; }
+  .stat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:14px; }
+  @media (max-width: 640px) { .stat-grid { grid-template-columns:1fr; } }
+  .stat { border:1px solid var(--line); border-radius:12px; padding:16px; background:#fff; }
+  .stat span { font-size:0.76rem; color:var(--muted); }
+  .sec-lbl { font-size:0.78rem; text-transform:uppercase; letter-spacing:.08em; color:#A6ACBB; font-weight:600; margin:34px 0 0; }
+</style>
 </head>
 <body>
 <aside id="shell-sidebar"></aside>
@@ -13,10 +30,34 @@
   <div class="shell-body">
     <div class="page">
       <div class="crumb">
-        <a href="study-sets.html">Meus Materiais</a><span class="sep">/</span><span id="c-title"></span>
+        <a href="study-sets.html">Meus Concursos</a><span class="sep">/</span><span id="c-title"></span>
       </div>
       <h1 class="title" id="c-h1"></h1>
       <p class="subtitle" id="c-meta"></p>
+
+      <div class="grid2">
+        <div class="panel">
+          <h2>Continue de onde parou</h2>
+          <div style="font-size:1.15rem;font-weight:600;letter-spacing:-0.02em;" id="cont-topic"></div>
+          <div class="subtitle" style="margin-top:4px;" id="cont-sub"></div>
+          <div class="progress-line"><div class="track"><div class="fill lvl-mid" id="cont-fill" style="width:63%"></div></div><div class="pct" id="cont-pct">63%</div></div>
+          <a class="btn" id="continue-link" href="#">Continuar →</a>
+        </div>
+        <div class="panel">
+          <h2>Sua missão hoje</h2>
+          <div class="row"><span class="check">✓</span><span>15 Flashcards</span></div>
+          <div class="row"><span class="check">✓</span><span>20 Questões</span></div>
+          <div class="row"><span class="check">✓</span><span>Revisão espaçada do dia</span></div>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat"><span>Tempo estudado</span><div class="big">2h13</div></div>
+        <div class="stat"><span>Índice geral</span><div class="big" id="idx-geral">74%</div></div>
+        <div class="stat"><span>Streak</span><div class="big">18 <span style="font-size:0.9rem;font-weight:500;color:var(--muted)">dias</span></div></div>
+      </div>
+
+      <div class="sec-lbl">Disciplinas</div>
       <div class="card-grid" id="disc-grid"></div>
     </div>
   </div>
@@ -25,8 +66,6 @@
 <script src="data.js"></script>
 <script src="shell.js"></script>
 <script>
-renderShell({ active: 'materiais' });
-
 const params = new URLSearchParams(location.search);
 const id = params.get('id') || 'prf-2021';
 const mat = materialById(id);
@@ -41,8 +80,33 @@ const totalTopics = DISCIPLINAS.reduce((a, d) => a + d.topics.length, 0);
 const overall = DISCIPLINAS.length ? Math.round(DISCIPLINAS.reduce((a, d) => a + d.pct, 0) / DISCIPLINAS.length) : 0;
 document.getElementById('c-meta').textContent =
   `${type} · ${DISCIPLINAS.length} disciplinas · ${totalTopics} tópicos · Índice de domínio ${overall}%`;
+document.getElementById('idx-geral').textContent = overall + '%';
 
 const base = `id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}&title=${encodeURIComponent(title)}`;
+
+/* Continue de onde parou: primeiro tópico da primeira disciplina */
+const firstDisc = DISCIPLINAS[0];
+const firstTopic = firstDisc && firstDisc.topics[0] ? firstDisc.topics[0] : null;
+if (firstTopic) {
+  const wsFirst = `workspace.html?${base}&disc=${encodeURIComponent(firstDisc.name)}&topic=${encodeURIComponent(firstTopic.name)}`;
+  document.getElementById('cont-topic').textContent = firstTopic.name;
+  document.getElementById('cont-sub').textContent = `${title} · ${firstDisc.name}`;
+  document.getElementById('cont-fill').className = 'fill ' + fillClass(firstTopic.prog);
+  document.getElementById('cont-fill').style.width = firstTopic.prog + '%';
+  document.getElementById('cont-pct').textContent = firstTopic.prog + '%';
+  document.getElementById('continue-link').href = wsFirst;
+
+  renderShell({
+    active: 'materiais',
+    topicNav: {
+      label: 'Tópico',
+      items: WS_TABS.map(t => `<a class="ws-item" href="${wsFirst}&tab=${t.id}"><span class="ic">${t.ic}</span><span>${t.label}</span></a>`).join(''),
+    },
+  });
+} else {
+  renderShell({ active: 'materiais' });
+}
+
 document.getElementById('disc-grid').innerHTML = DISCIPLINAS.map(d => `
   <a class="card ${areaClass(d.name)}" href="disciplina.html?${base}&disc=${encodeURIComponent(d.name)}">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">

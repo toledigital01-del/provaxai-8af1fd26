@@ -38,6 +38,30 @@
   .opt.ok { border-color:#22C55E; background:#F2FDF5; }
   .opt.no { border-color:#EF4444; background:#FEF3F2; }
 
+  .cesp-head { margin-top:18px; display:flex; flex-direction:column; gap:4px; }
+  .cesp-head b { font-size:0.95rem; }
+  .cesp-head span { font-size:0.8rem; color:var(--muted); }
+  .qtxt { font-size:0.9rem; line-height:1.6; }
+  .ce { display:flex; align-items:center; gap:8px; margin-top:12px; flex-wrap:wrap; }
+  .ce-btn { border:1px solid var(--line-strong); background:#fff; border-radius:8px; padding:7px 16px; font-size:0.8rem; font-weight:700; letter-spacing:.03em; cursor:pointer; font-family:inherit; color:#4A5162; }
+  .ce-btn:hover { background:#F6F6F7; }
+  .ce-btn.sel { background:#2563EB; border-color:#2563EB; color:#fff; }
+  .ce-fb { font-size:0.8rem; color:var(--muted); }
+  .qbox.ok { border-color:#22C55E; background:#F6FDF8; }
+  .qbox.no { border-color:#EF4444; background:#FEF6F5; }
+  .rev-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 16px; border-bottom:1px solid var(--line); font-size:0.88rem; }
+  .rev-row:last-child { border-bottom:none; }
+  .rev-when { font-size:0.8rem; color:var(--muted); }
+
+  .ws-chat { margin-top:20px; border-top:1px solid var(--line); padding-top:16px; }
+  .ws-chat .rlbl { font-size:0.68rem; text-transform:uppercase; letter-spacing:.08em; color:#A6ACBB; font-weight:600; margin-bottom:10px; }
+  .ws-chat .log { display:flex; flex-direction:column; gap:8px; max-height:220px; overflow-y:auto; }
+  .ws-chat .b { font-size:0.82rem; line-height:1.55; padding:8px 10px; border-radius:10px; background:#fff; border:1px solid var(--line); }
+  .ws-chat .b.me { background:var(--text); color:#fff; border-color:var(--text); align-self:flex-end; max-width:90%; }
+  .ws-chat form { display:flex; gap:6px; margin-top:10px; }
+  .ws-chat input { flex:1; min-width:0; border:1px solid var(--line-strong); border-radius:9px; padding:8px 10px; font-size:0.82rem; font-family:inherit; outline:none; }
+  .ws-chat button { border:none; background:#2563EB; color:#fff; border-radius:9px; padding:0 12px; font-size:0.8rem; font-weight:600; cursor:pointer; }
+
   .chatlog { margin-top:18px; display:flex; flex-direction:column; gap:12px; }
   .bub { max-width:80%; padding:11px 14px; border-radius:12px; font-size:0.88rem; line-height:1.6; }
   .bub.ai { background:#F5F5F6; }
@@ -103,7 +127,7 @@ document.getElementById('page-back').href = discHref;
 document.getElementById('page-back-label').textContent = disc;
 
 document.getElementById('crumb').innerHTML =
-  `<a href="study-sets.html">Meus Materiais</a><span class="sep">/</span>` +
+  `<a href="study-sets.html">Meus Concursos</a><span class="sep">/</span>` +
   (allDiscs.length > 1 ? `<a href="disciplinas.html?${base}">${title}</a>` : `<span>${title}</span>`) +
   `<span class="sep">/</span><a href="${discHref}">${disc}</a><span class="sep">/</span><span>${topic}</span>`;
 
@@ -114,7 +138,7 @@ document.getElementById('t-sub').innerHTML = `${dotHTML(stats.status)} ${sm.labe
 
 /* ---------- Coluna esquerda ---------- */
 const TABS = WS_TABS;
-let tab = params.get('tab') || 'conteudo';
+let tab = params.get('tab') || 'tutor';
 
 renderShell({
   active: 'materiais',
@@ -140,17 +164,7 @@ const cards = [1,2,3,4].map(i => ({ q: `${topic} — conceito-chave ${i}`, a: `R
 
 function renderPane() {
   const p = document.getElementById('pane');
-  if (tab === 'conteudo') {
-    p.innerHTML = `<div class="pane prose">
-      <p>Resumo gerado por IA sobre <b>${topic}</b>, dentro de ${disc} (${title}).</p>
-      <h3>Pontos essenciais</h3>
-      <ul><li>Definição e alcance do tema na banca.</li><li>Regras principais e exceções mais cobradas.</li><li>Pegadinhas recorrentes em provas anteriores.</li></ul>
-      <h3>Como cai na prova</h3>
-      <p>Questões costumam misturar a regra geral com casos de exceção. Domine primeiro a regra, depois memorize as exceções por repetição espaçada.</p>
-      <h3>Resumo em uma frase</h3>
-      <p>Entenda a lógica antes de decorar a lista.</p>
-    </div>`;
-  } else if (tab === 'tutor') {
+  if (tab === 'tutor') {
     p.innerHTML = `<div class="pane">
       <div class="chatlog" id="chat">
         <div class="bub ai">Vamos estudar <b>${topic}</b>. Quer começar pela explicação simples ou direto pelas pegadinhas de prova?</div>
@@ -177,13 +191,52 @@ function renderPane() {
     document.getElementById('prev').onclick = () => { fcIdx = (fcIdx - 1 + cards.length) % cards.length; fcOpen = false; renderPane(); };
     document.getElementById('next').onclick = () => { fcIdx = (fcIdx + 1) % cards.length; fcOpen = false; renderPane(); };
   } else if (tab === 'questoes' || tab === 'simulados') {
-    const n = tab === 'simulados' ? 3 : 2;
-    p.innerHTML = `<div class="pane">${Array.from({length:n}).map((_,i) => `
-      <div class="qbox">
-        <div style="font-size:0.9rem;font-weight:600;">${i+1}. Sobre ${topic}, assinale a alternativa correta.</div>
-        ${['Alternativa A','Alternativa B','Alternativa C','Alternativa D'].map((o,j) => `<div class="opt" data-ok="${j===1}">${String.fromCharCode(65+j)}) ${o} referente a ${topic.toLowerCase()}.</div>`).join('')}
-      </div>`).join('')}</div>`;
-    p.querySelectorAll('.opt').forEach(o => o.onclick = () => o.classList.add(o.dataset.ok === 'true' ? 'ok' : 'no'));
+    const n = tab === 'simulados' ? 10 : 5;
+    const items = Array.from({length:n}).map((_,i) => ({
+      txt: `Julgue o item a seguir, relativo a ${topic.toLowerCase()}: a regra geral aplicável ao caso ${i % 2 === 0 ? 'admite' : 'não admite'} exceção expressa em lei, conforme entendimento cobrado pela banca.`,
+      gab: i % 2 === 0 ? 'C' : 'E',
+    }));
+    p.innerHTML = `<div class="pane">
+      <div class="cesp-head">
+        <b>${tab === 'simulados' ? 'Simulado' : 'Bateria de questões'} — estilo Cebraspe/Cespe</b>
+        <span>Julgue os itens em CERTO ou ERRADO. Item errado anula um item certo.</span>
+      </div>
+      ${items.map((q,i) => `
+      <div class="qbox" data-gab="${q.gab}">
+        <div class="qtxt"><b>${i+1}.</b> ${q.txt}</div>
+        <div class="ce">
+          <button class="ce-btn" data-v="C">CERTO</button>
+          <button class="ce-btn" data-v="E">ERRADO</button>
+          <span class="ce-fb"></span>
+        </div>
+      </div>`).join('')}
+      <div class="mini"><button id="gab">Ver desempenho</button></div>
+    </div>`;
+    p.querySelectorAll('.qbox').forEach(box => {
+      box.querySelectorAll('.ce-btn').forEach(b => b.onclick = () => {
+        box.querySelectorAll('.ce-btn').forEach(x => x.classList.remove('sel'));
+        b.classList.add('sel');
+        box.dataset.resp = b.dataset.v;
+        const ok = b.dataset.v === box.dataset.gab;
+        box.classList.toggle('ok', ok); box.classList.toggle('no', !ok);
+        box.querySelector('.ce-fb').textContent = ok ? 'Certo — item correto.' : `Errado — gabarito: ${box.dataset.gab === 'C' ? 'CERTO' : 'ERRADO'}.`;
+      });
+    });
+    document.getElementById('gab').onclick = () => {
+      const boxes = [...p.querySelectorAll('.qbox')];
+      const resp = boxes.filter(b => b.dataset.resp);
+      const certos = resp.filter(b => b.dataset.resp === b.dataset.gab).length;
+      alert(`Respondidos: ${resp.length}/${boxes.length}\nAcertos: ${certos}\nLíquido (Cebraspe): ${certos - (resp.length - certos)}`);
+    };
+  } else if (tab === 'revisao') {
+    const fila = (TOPICS[disc] || []).slice(0, 5).map((t,i) => ({ t, quando: ['Hoje','Hoje','Amanhã','Em 3 dias','Em 1 semana'][i] || 'Em 1 semana' }));
+    p.innerHTML = `<div class="pane">
+      <div class="cesp-head"><b>Revisão espaçada</b><span>Intervalos crescentes: 1 dia · 3 dias · 7 dias · 15 dias · 30 dias.</span></div>
+      <div class="qbox" style="padding:0;overflow:hidden;">
+        ${fila.map(f => `<div class="rev-row"><span>${dotHTML(statusOf(f.t))} ${f.t}</span><span class="rev-when">${f.quando}</span></div>`).join('')}
+      </div>
+      <div class="mini"><button onclick="alert('Sessão de revisão iniciada!')">Iniciar revisão de hoje</button></div>
+    </div>`;
   } else if (tab === 'teste') {
     p.innerHTML = `<div class="pane">
       <p class="prose">Discorra sobre <b>${topic}</b> em até 15 linhas, destacando regra geral, exceções e aplicação prática.</p>
@@ -231,7 +284,29 @@ document.getElementById('ws-right').innerHTML = `
   <div class="reco">
     <div class="rlbl">IA recomenda estudar</div>
     ${reco.map(r => `<a href="workspace.html?${base}&disc=${encodeURIComponent(disc)}&topic=${encodeURIComponent(r)}">${dotHTML(statusOf(r))} ${r}</a>`).join('')}
+  </div>
+  <div class="ws-chat">
+    <div class="rlbl">Chat com Athena IA</div>
+    <div class="log" id="side-log"><div class="b">Aqui para te ajudar a aprender ${topic}.</div></div>
+    <form id="side-form"><input id="side-msg" placeholder="Pergunte-me qualquer coisa sobre o material..." autocomplete="off"><button type="submit">↑</button></form>
   </div>`;
+
+document.getElementById('side-form').onsubmit = e => {
+  e.preventDefault();
+  const i = document.getElementById('side-msg');
+  const v = i.value.trim();
+  if (!v) return;
+  const log = document.getElementById('side-log');
+  log.insertAdjacentHTML('beforeend', `<div class="b me"></div>`);
+  log.lastElementChild.textContent = v;
+  i.value = '';
+  setTimeout(() => {
+    log.insertAdjacentHTML('beforeend', `<div class="b"></div>`);
+    log.lastElementChild.textContent = `Sobre "${v}" em ${topic}: comece pela regra geral e depois treine com itens certo/errado.`;
+    log.scrollTop = log.scrollHeight;
+  }, 300);
+  log.scrollTop = log.scrollHeight;
+};
 </script>
 </body>
 </html>
