@@ -124,6 +124,7 @@ function searchIndex() {
 
 /* Regra de roteamento: >1 disciplina abre a grid de disciplinas; 1 disciplina vai direto aos tópicos */
 function materialHref(m) {
+  if (m.soon) return 'javascript:void(0)';
   const base = `id=${encodeURIComponent(m.id)}&type=${encodeURIComponent(m.type)}&title=${encodeURIComponent(m.title)}`;
   const discs = disciplinasDe(m.id);
   if (discs.length > 1) return `disciplinas.html?${base}`;
