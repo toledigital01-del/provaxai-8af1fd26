@@ -129,6 +129,7 @@
   <div class="folder-item" style="border-left:4px solid #EC4899;"><div><div class="fname">Pessoais</div><div class="fsub">0 materiais</div></div></div>
 </aside>
 
+<script src="data.js"></script>
 <script>
 const params = new URLSearchParams(location.search);
 const title = params.get('title') || 'Concurso PRF 2021';
@@ -140,45 +141,31 @@ document.getElementById('m-type').textContent = type;
 const STATUSES = [['nao','Não Familiar','st-nao'],['apr','Aprendendo','st-apr'],['fam','Familiar','st-fam'],['dom','Dominado','st-dom']];
 const TOPIC_ACTIONS = ['Resumo IA','Flashcards','Questões','Questões Comentadas','Revisão Espaçada','Mapa Mental','Anotações'];
 
-const TOPICS = {
-  'Língua Portuguesa': ['Compreensão e Interpretação de Textos','Ortografia Oficial','Acentuação Gráfica','Classes de Palavras','Sintaxe da Oração e do Período','Concordância Verbal e Nominal','Regência','Pontuação','Redação Oficial'],
-  'Raciocínio Lógico-Matemático': ['Estruturas Lógicas','Lógica de Argumentação','Diagramas Lógicos','Razão e Proporção','Porcentagem e Juros','Análise Combinatória','Probabilidade','Estatística Básica'],
-  'Informática': ['Conceitos de Internet e Intranet','Sistemas Operacionais','Editores de Texto e Planilhas','Segurança da Informação','Redes de Computadores','Computação em Nuvem'],
-  'Física': ['Cinemática','Dinâmica','Energia e Trabalho','Colisões e Quantidade de Movimento','Óptica','Eletricidade Básica'],
-  'Ética no Serviço Público': ['Código de Ética do Servidor','Moralidade Administrativa','Improbidade Administrativa','Conflito de Interesses'],
-  'Geopolítica Brasileira': ['Formação Territorial','Fronteiras e Faixa de Fronteira','Recursos Naturais','Rodovias e Logística Nacional','Segurança Pública e Geopolítica'],
-  'Língua Inglesa': ['Reading Comprehension','Vocabulary','Verb Tenses','Prepositions and Connectors'],
-  'Língua Espanhola': ['Comprensión Lectora','Vocabulario','Tiempos Verbales','Conectores'],
-  'Legislação de Trânsito': ['Sistema Nacional de Trânsito','Normas Gerais de Circulação','Sinalização de Trânsito','Habilitação','Infrações e Penalidades','Crimes de Trânsito','Registro e Licenciamento de Veículos'],
-  'Direito Administrativo': ['Princípios da Administração Pública','Atos Administrativos','Poderes Administrativos','Licitações e Contratos','Servidores Públicos','Responsabilidade Civil do Estado','Controle da Administração'],
-  'Direito Constitucional': ['Poder Constituinte','Princípios Fundamentais','Direitos e Garantias Fundamentais','Nacionalidade','Direitos Políticos','Organização do Estado','Administração Pública','Segurança Pública','Controle de Constitucionalidade'],
-  'Direito Penal': ['Aplicação da Lei Penal','Teoria do Crime','Crimes contra a Pessoa','Crimes contra o Patrimônio','Crimes contra a Administração Pública','Penas e Medidas de Segurança'],
-  'Direito Processual Penal': ['Inquérito Policial','Ação Penal','Prova','Prisão e Medidas Cautelares','Competência','Habeas Corpus'],
-  'Legislação Penal Especial': ['Lei de Drogas (11.343/06)','Estatuto do Desarmamento','Lei de Tortura','Crimes Hediondos','Lei Maria da Penha','Abuso de Autoridade'],
-  'Direitos Humanos e Cidadania': ['Declaração Universal dos Direitos Humanos','Convenções Internacionais','Direitos Humanos na Constituição','Cidadania e Participação Social']
-};
-
 let filter = 'all';
 function setFilter(f){ filter=f; document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active', c.dataset.f===f)); render(); }
 
-// deterministic pseudo-status
-function statusOf(name){
-  let h=0; for(let i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))%997;
-  const r=h%100;
-  return r<58?'nao':r<80?'apr':r<93?'fam':'dom';
+const id = params.get('id') || 'prf-2021';
+const disc = params.get('disc');
+const allDiscs = disciplinasDe(id);
+const DATA = (disc ? [disc] : allDiscs).map(disciplinaInfo);
+
+// breadcrumb: quando veio de uma disciplina, mostra o caminho completo
+if (disc) {
+  document.getElementById('crumb-name').innerHTML =
+    allDiscs.length > 1
+      ? `<a href="disciplinas.html?id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}&title=${encodeURIComponent(title)}">${title}</a> <span>/</span> <span>${disc}</span>`
+      : `${title} <span style="color:#9CA3AF;">/</span> ${disc}`;
+  document.getElementById('m-title').textContent = disc;
+  document.getElementById('m-type').textContent = 'Disciplina';
 }
-const DATA = Object.keys(TOPICS).map(d => {
-  const topics = TOPICS[d].map(t => ({ name:t, st:statusOf(t) }));
-  const dom = topics.filter(t=>t.st==='dom').length, fam = topics.filter(t=>t.st==='fam').length;
-  const pct = Math.round(((dom + fam*0.5) / topics.length) * 100);
-  return { name:d, topics, pct };
-});
+
 const totalTopics = DATA.reduce((a,d)=>a+d.topics.length,0);
-const overall = Math.round(DATA.reduce((a,d)=>a+d.pct,0)/DATA.length);
+const overall = DATA.length ? Math.round(DATA.reduce((a,d)=>a+d.pct,0)/DATA.length) : 0;
 document.getElementById('m-pct').textContent = overall+'%';
 document.getElementById('m-fill').style.width = overall+'%';
-document.getElementById('m-meta').textContent =
-  `${DATA.length} disciplinas · ${totalTopics} tópicos · 214 páginas · Enviado em 12/03/2026 · Último acesso hoje · 14h32min estudados`;
+document.getElementById('m-meta').textContent = disc
+  ? `${totalTopics} tópicos · Índice de domínio ${overall}% · Último acesso hoje`
+  : `${DATA.length} disciplinas · ${totalTopics} tópicos · 214 páginas · Enviado em 12/03/2026 · Último acesso hoje · 14h32min estudados`;
 
 function render(){
   const q = document.getElementById('q').value.trim().toLowerCase();
