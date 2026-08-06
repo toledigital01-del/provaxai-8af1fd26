@@ -181,7 +181,7 @@ const cdiscs = disciplinasDe(curso.id).map(disciplinaInfo);
 const cpct = cdiscs.length ? Math.round(cdiscs.reduce((a,d)=>a+d.pct,0)/cdiscs.length) : 0;
 
 document.getElementById('course-box').innerHTML = `
-  <div class="course-cover"><img src="${curso.capa}" alt="Capa do ${curso.nome}" loading="lazy" width="1280" height="720"></div>
+  <div class="course-cover"><img src="${curso.capa}" alt="Viatura da Polícia Rodoviária Federal em rodovia ao entardecer" loading="lazy" width="1600" height="912"></div>
   <div class="course-body">
     <span class="course-tag">${curso.tag}</span>
     <h2>${curso.nome}</h2>
