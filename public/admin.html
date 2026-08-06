@@ -323,13 +323,59 @@ async function render(){
   catch(e){ view.innerHTML = '<div class="card"><p class="muted">Erro ao carregar: '+esc(e.message||e)+'</p></div>'; }
 }
 
-(async function(){
-  const u = await PX.requireAdmin();
-  if(!u) return;
+function gateForm(msg){
+  document.getElementById('tabs').innerHTML = '';
+  view.innerHTML = `
+    <div class="card" style="max-width:420px;margin:0 auto">
+      <h2 style="font-size:1rem;font-weight:700;margin-bottom:4px">Acesso administrativo</h2>
+      <p class="muted" style="margin-bottom:12px">${esc(msg||'Entre com a conta de administrador. O primeiro acesso vira admin automaticamente.')}</p>
+      <label class="muted">E-mail</label>
+      <input id="a-email" type="email" placeholder="admin@provax.com" style="margin:4px 0 10px">
+      <label class="muted">Senha</label>
+      <input id="a-pass" type="password" placeholder="mínimo 6 caracteres" style="margin:4px 0 14px">
+      <div style="display:flex;gap:8px">
+        <button class="act primary" id="a-in" style="flex:1">Entrar</button>
+        <button class="act" id="a-up" style="flex:1">Criar admin</button>
+      </div>
+      <p class="muted" id="a-msg" style="margin-top:10px"></p>
+    </div>`;
+  const m = document.getElementById('a-msg');
+  const creds = () => [document.getElementById('a-email').value.trim(), document.getElementById('a-pass').value];
+  document.getElementById('a-in').onclick = async () => {
+    const [e,p] = creds(); m.textContent = 'Entrando…';
+    const { error } = await PX.signIn(e, p);
+    if (error) { m.textContent = error.message; return; }
+    boot();
+  };
+  document.getElementById('a-up').onclick = async () => {
+    const [e,p] = creds(); m.textContent = 'Criando conta…';
+    const { error } = await PX.signUp(e, p, 'Administrador');
+    if (error) { m.textContent = error.message; return; }
+    const r = await PX.signIn(e, p);
+    if (r.error) { m.textContent = r.error.message; return; }
+    boot();
+  };
+}
+
+async function boot(){
+  await PX.ready;
+  if (!PX.user || PX.user.guest) { renderTabs(); return gateForm(); }
+  if (!PX.isAdmin()) {
+    try {
+      const { data } = await PX.sb.rpc('claim_admin');
+      if (data === true) { PX.roles.push('admin'); }
+    } catch (e) {}
+  }
+  if (!PX.isAdmin()) {
+    renderTabs();
+    return gateForm('Esta conta (' + PX.user.email + ') não é administradora. Já existe um admin cadastrado — entre com ela.');
+  }
   document.getElementById('who').textContent = PX.displayName();
   renderTabs();
   render();
-})();
+}
+boot();
+
 </script>
 </body>
 </html>
