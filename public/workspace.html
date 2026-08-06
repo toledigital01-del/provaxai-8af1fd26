@@ -119,11 +119,17 @@ const TABS = [
 ];
 let tab = params.get('tab') || 'conteudo';
 
-document.getElementById('ws-left').innerHTML =
-  `<div class="lbl">Tópico</div>` +
-  TABS.map(t => `<div class="ws-item${t.id === tab ? ' active' : ''}" data-t="${t.id}"><span class="ic">${t.ic}</span><span>${t.label}</span></div>`).join('');
+renderShell({
+  active: 'materiais',
+  topicNav: {
+    backHref: discHref,
+    backLabel: disc,
+    label: 'Tópico',
+    items: TABS.map(t => `<div class="ws-item${t.id === tab ? ' active' : ''}" data-t="${t.id}"><span class="ic">${t.ic}</span><span>${t.label}</span></div>`).join(''),
+  },
+});
 
-document.getElementById('ws-left').addEventListener('click', e => {
+document.getElementById('shell-sidebar').addEventListener('click', e => {
   const el = e.target.closest('.ws-item');
   if (!el) return;
   tab = el.dataset.t;
