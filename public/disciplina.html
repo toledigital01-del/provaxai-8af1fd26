@@ -9,7 +9,7 @@
   .filters { display:flex; gap:6px; flex-wrap:wrap; margin-top:22px; }
   .chip { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line-strong); background:#fff; border-radius:999px; padding:5px 12px; font-size:0.78rem; color:var(--muted); cursor:pointer; font-family:inherit; transition:all .14s; }
   .chip:hover { background:#F6F6F7; }
-  .chip.active { background:var(--text); color:#fff; border-color:var(--text); }
+  .chip.active { background:#2563EB; color:#fff; border-color:#2563EB; }
 </style>
 </head>
 <body>
@@ -79,7 +79,7 @@ function render() {
         <span class="tstatus">${s.label}</span>
       </span>
       <span class="topic-right">
-        <span class="track"><span class="fill" style="display:block;width:${t.prog}%"></span></span>
+        <span class="track"><span class="fill ${fillClass(t.prog)}" style="display:block;width:${t.prog}%"></span></span>
         <span class="pct">${t.prog}%</span>
       </span>
     </a>`;
