@@ -68,6 +68,10 @@
 
 <main class="pt-16">
 
+  <div id="px-locked-banner" style="display:none" class="bg-orange-50 border-b border-orange-200 text-orange-800 text-sm font-medium text-center py-3 px-4">
+    Sua conta não tem uma assinatura ativa. Assine um plano abaixo para continuar estudando.
+  </div>
+
   <!-- HERO -->
   <section class="py-20 text-center" style="background:linear-gradient(to bottom,#fff,#FFF0E8);">
     <div class="section-max">
@@ -85,7 +89,7 @@
         </button>
         <span class="text-sm font-medium text-gray-900 flex items-center gap-2" id="label-yearly">
           Anual
-          <span class="bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full">2 meses grátis</span>
+          <span class="bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full">Economize 30%</span>
         </span>
       </div>
 
@@ -125,10 +129,10 @@
           <div class="mb-6">
             <p class="text-sm font-semibold text-orange-500 uppercase tracking-wide mb-2">Pro</p>
             <div class="flex items-end gap-1 mb-1">
-              <span class="text-5xl font-bold text-gray-900" id="pro-price">R$29</span>
-              <span class="text-gray-400 mb-2">/mês</span>
+              <span class="text-5xl font-bold text-gray-900" id="pro-price">R$47</span>
+              <span class="text-gray-400 mb-2" id="pro-price-unit">/mês</span>
             </div>
-            <p class="text-sm text-gray-500">Para estudantes sérios</p>
+            <p class="text-sm text-gray-500" id="pro-price-sub">Para estudantes sérios</p>
           </div>
           <a href="#" onclick="event.preventDefault();pxHotmartCheckout(window.__pxBilling==='anual'?'anual':'mensal');" class="block w-full text-center py-3 px-4 rounded-xl font-semibold text-white mb-6 btn-orange transition-all active:scale-[0.98]">
             <div class="btn-orange-inner-glow"></div>
@@ -268,7 +272,7 @@
               <span class="font-semibold text-gray-900">O desconto anual é aplicado automaticamente?</span>
               <svg class="faq-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </button>
-            <div class="faq-content px-6 pb-4"><p class="text-gray-500 text-sm">Sim. Ao escolher o plano anual, você paga 10 meses e ganha 2 meses grátis. O desconto é aplicado automaticamente no checkout.</p></div>
+            <div class="faq-content px-6 pb-4"><p class="text-gray-500 text-sm">Sim. O plano anual custa R$397 (equivalente a R$33/mês), cerca de 30% mais barato que pagar R$47 todo mês. O desconto já vem aplicado no checkout.</p></div>
           </div>
           <div class="faq-item bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
             <button class="w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleFaq(this)">
@@ -334,8 +338,8 @@
       <div>
         <h4 class="font-semibold text-gray-900 mb-3 text-sm">Jurídico</h4>
         <ul class="space-y-2 text-sm text-gray-500">
-          <li><a href="#" class="hover:text-gray-900">Política de Privacidade</a></li>
-          <li><a href="#" class="hover:text-gray-900">Termos de Uso</a></li>
+          <li><a href="privacidade.html" class="hover:text-gray-900">Política de Privacidade</a></li>
+          <li><a href="termos.html" class="hover:text-gray-900">Termos de Uso</a></li>
         </ul>
       </div>
     </div>
@@ -355,12 +359,19 @@
     const dot = document.getElementById('toggle-dot');
     const toggle = document.getElementById('billing-toggle');
     const price = document.getElementById('pro-price');
+    const unit = document.getElementById('pro-price-unit');
+    const sub = document.getElementById('pro-price-sub');
     dot.style.transform = isYearly ? 'translateX(24px)' : 'translateX(0)';
     toggle.style.background = isYearly ? '#FF4D00' : '#E5E7EB';
-    price.textContent = isYearly ? 'R$24' : 'R$29';
+    price.textContent = isYearly ? 'R$397' : 'R$47';
+    unit.textContent = isYearly ? '/ano' : '/mês';
+    sub.textContent = isYearly ? 'Equivale a R$33/mês · cobrado uma vez por ano' : 'Para estudantes sérios';
   }
   function toggleFaq(btn) {
     btn.closest('.faq-item').classList.toggle('open');
+  }
+  if (new URLSearchParams(location.search).get('locked') === '1') {
+    document.getElementById('px-locked-banner').style.display = 'block';
   }
 </script>
 </body>

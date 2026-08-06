@@ -363,7 +363,7 @@ async function boot(){
     renderTabs();
     return gateForm('Não foi possível conectar ao servidor. Recarregue a página.');
   }
-  if (!PX.user || PX.user.guest) { renderTabs(); return gateForm(); }
+  if (!PX.user) { renderTabs(); return gateForm(); }
   if (!PX.isAdmin()) {
     try {
       const { data } = await PX.sb.rpc('claim_admin');
@@ -391,7 +391,6 @@ async function boot(){
         else { btn.textContent = 'Tentar novamente'; document.getElementById('a-msg').textContent = 'Ainda sem permissão de administrador nesta conta.'; }
       };
       document.getElementById('a-out').onclick = async () => {
-        try { localStorage.removeItem('px_guest'); } catch(e){}
         await PX.sb.auth.signOut();
         location.href = 'home.html';
       };

@@ -108,24 +108,47 @@
 
   PX.ready.then(() => { if (PX.user) go(); });
 
-  // Acesso liberado temporariamente: qualquer botão entra sem senha.
-  el('senha').removeAttribute('required');
-  el('email').removeAttribute('required');
-
-  function enter() {
-    PX.ready.then(() => { PX.enterAsGuest(); go(); }).catch(go);
+  function traduzErro(err) {
+    const msg = (err && err.message) || '';
+    if (msg.includes('Invalid login credentials')) return 'E-mail ou senha incorretos.';
+    if (msg.includes('already registered') || msg.includes('User already registered')) return 'Este e-mail já tem conta. Tente entrar.';
+    if (msg.includes('Password should be')) return 'A senha precisa ter pelo menos 6 caracteres.';
+    return msg || 'Não foi possível concluir. Tente novamente.';
   }
 
-  el('f').addEventListener('submit', e => {
+  el('f').addEventListener('submit', async e => {
     e.preventDefault();
-    show('Entrando…', 'ok');
-    enter();
+    const email = el('email').value.trim();
+    const senha = el('senha').value;
+    const nome = el('nome').value.trim();
+    el('submit').disabled = true;
+    show(mode === 'up' ? 'Criando conta…' : 'Entrando…', 'ok');
+    try {
+      await PX.ready;
+      const res = mode === 'up' ? await PX.signUp(email, senha, nome) : await PX.signIn(email, senha);
+      if (res.error) {
+        show(traduzErro(res.error), 'err');
+        el('submit').disabled = false;
+        return;
+      }
+      if (mode === 'up' && !res.data.session) {
+        show('Conta criada! Confirme seu e-mail para entrar.', 'ok');
+        el('submit').disabled = false;
+        return;
+      }
+      go();
+    } catch (err) {
+      show(traduzErro(err), 'err');
+      el('submit').disabled = false;
+    }
   });
 
-  el('google').onclick = () => {
-    show('Entrando…', 'ok');
+  el('google').onclick = async () => {
+    show('Redirecionando para o Google…', 'ok');
     sessionStorage.setItem('px_next', nextUrl);
-    enter();
+    const res = await PX.signInWithGoogle(nextUrl);
+    if (res && res.error) show(traduzErro(res.error), 'err');
+    else if (res && res.ok) go();
   };
 
 </script>

@@ -1,0 +1,11 @@
+-- A migration anterior (20260806085401) revogou EXECUTE em is_admin() de "anon",
+-- mas várias políticas de leitura pública (courses, plans, coupons,
+-- platform_settings, questions, flashcards) usam `USING (condicao OR public.is_admin())`
+-- e o Postgres não garante curto-circuito em OR dentro de RLS. Resultado: qualquer
+-- select anônimo nessas tabelas falha com "permission denied for function is_admin"
+-- em vez de simplesmente considerar is_admin() = false.
+--
+-- is_admin() é SECURITY DEFINER e, para anon, auth.uid() é NULL — has_role(NULL, ...)
+-- sempre retorna false (comparação com NULL nunca é verdadeira), então liberar
+-- EXECUTE para anon não abre nenhum acesso administrativo, só corrige a leitura pública.
+GRANT EXECUTE ON FUNCTION public.is_admin() TO anon;

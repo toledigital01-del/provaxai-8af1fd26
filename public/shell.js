@@ -197,12 +197,8 @@
     if (++tries > 200) return clearInterval(t);
     if (!window.PX || !PX.ready) return;
     clearInterval(t);
-    PX.ready.then(function () {
-      if (!PX.user) {
-        var next = location.pathname.split('/').pop() + location.search;
-        location.replace('login.html?next=' + encodeURIComponent(next));
-        return;
-      }
+    PX.requirePro('prf-2021').then(function (u) {
+      if (!u) return;
       paint();
       var p = setInterval(function () { if (document.getElementById('px-username')) paint(); }, 400);
       setTimeout(function () { clearInterval(p); }, 4000);
