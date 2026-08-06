@@ -20,9 +20,8 @@
       : `<nav class="shell-nav">
           <div class="shell-sec">Workspace</div>
           ${NAV.map(n => `<a href="${n.href}" class="nav-item${n.id === active ? ' active' : ''}">${icon(n.icon)}<span>${n.label}</span></a>`).join('')}
-          <div class="shell-sec">Recentes</div>
-          ${MATERIALS.filter(m => !m.soon).slice(0, 4).map(m => `<a href="${materialHref(m)}" class="nav-item">${icon('<path d="M4 4h10l6 6v10H4z"/>')}<span>${m.title}</span></a>`).join('')}
         </nav>`;
+
     return `
       <a href="study-sets.html" class="shell-logo">
         <svg width="22" height="22" viewBox="0 0 32 32" fill="none"><path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="#FF4D00"/><path d="M16 8C16 8 11 14 11 18C11 20.8 13.2 23 16 23C18.8 23 21 20.8 21 18C21 14 16 8 16 8Z" fill="#FF8040"/></svg>
