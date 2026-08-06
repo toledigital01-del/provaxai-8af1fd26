@@ -372,13 +372,24 @@ async function boot(){
   }
   if (!PX.isAdmin()) {
     renderTabs();
-    gateForm('Esta conta (' + PX.user.email + ') não tem permissão de administrador. Entre com uma conta admin.');
+    gateForm('Esta conta (' + PX.user.email + ') está autenticada, mas ainda não possui o papel de administrador. Se a permissão acabou de ser concedida, clique em "Tentar novamente".');
     const box = document.querySelector('#view .card');
     if (box) {
       const p = document.createElement('p');
       p.style.marginTop = '10px';
-      p.innerHTML = '<button class="act danger" id="a-out" style="width:100%">Sair desta conta</button>';
+      p.innerHTML = '<button class="act primary" id="a-retry" style="width:100%;margin-bottom:8px">Tentar novamente</button>'
+                  + '<button class="act danger" id="a-out" style="width:100%">Sair desta conta</button>';
       box.appendChild(p);
+      document.getElementById('a-retry').onclick = async () => {
+        const btn = document.getElementById('a-retry');
+        btn.textContent = 'Verificando…';
+        try {
+          const { data } = await PX.sb.from('user_roles').select('role').eq('user_id', PX.user.id);
+          PX.roles = (data || []).map(r => r.role);
+        } catch (e) {}
+        if (PX.isAdmin()) { boot(); }
+        else { btn.textContent = 'Tentar novamente'; document.getElementById('a-msg').textContent = 'Ainda sem permissão de administrador nesta conta.'; }
+      };
       document.getElementById('a-out').onclick = async () => {
         try { localStorage.removeItem('px_guest'); } catch(e){}
         await PX.sb.auth.signOut();
@@ -387,6 +398,7 @@ async function boot(){
     }
     return;
   }
+
   document.getElementById('who').textContent = PX.displayName();
   renderTabs();
   render();
