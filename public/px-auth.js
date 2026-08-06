@@ -96,6 +96,7 @@
 
   PX.signOut = async function () {
     await PX.ready;
+    try { localStorage.removeItem('px_guest'); } catch (e) {}
     await PX.sb.auth.signOut();
     PX.user = null; PX.profile = null; PX.roles = [];
     window.location.href = 'login.html';
@@ -246,6 +247,7 @@
   PX.hasCourseAccess = async function (courseSlug) {
     await PX.ready;
     if (!PX.user) return false;
+    if (PX.user.guest) return true;
     if (PX.isAdmin()) return true;
     const { data: sub } = await PX.sb.from('subscriptions').select('status').eq('user_id', PX.user.id).eq('status', 'ativa').maybeSingle();
     if (sub) return true;
