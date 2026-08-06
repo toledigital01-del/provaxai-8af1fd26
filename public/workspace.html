@@ -222,7 +222,7 @@ document.getElementById('ws-right').innerHTML = `
   <h2>${topic}</h2>
   <div style="margin-top:14px;">
     <div class="stat-row" style="border-bottom:none;padding-bottom:4px;"><span>Índice de domínio</span><b>${stats.dominio}%</b></div>
-    <div class="track"><div class="fill" style="width:${stats.dominio}%"></div></div>
+    <div class="track"><div class="fill ${fillClass(stats.dominio)}" style="width:${stats.dominio}%"></div></div>
   </div>
   <div style="margin-top:12px;">
     <div class="stat-row"><span>Tempo estudado</span><b>${stats.tempo}</b></div>

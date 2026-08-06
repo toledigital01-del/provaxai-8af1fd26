@@ -79,7 +79,7 @@ function render() {
         <span class="tstatus">${s.label}</span>
       </span>
       <span class="topic-right">
-        <span class="track"><span class="fill" style="display:block;width:${t.prog}%"></span></span>
+        <span class="track"><span class="fill ${fillClass(t.prog)}" style="display:block;width:${t.prog}%"></span></span>
         <span class="pct">${t.prog}%</span>
       </span>
     </a>`;

@@ -136,3 +136,17 @@ function materialHref(m) {
   if (discs.length > 1) return `disciplinas.html?${base}`;
   return `disciplina.html?${base}&disc=${encodeURIComponent(discs[0])}`;
 }
+
+/* classe de cor semântica da barra de progresso */
+function fillClass(pct) {
+  return pct < 40 ? 'lvl-low' : pct <= 70 ? 'lvl-mid' : 'lvl-high';
+}
+
+/* categoria visual da disciplina (borda esquerda colorida) */
+const AREA_DIREITO = ['Direito Constitucional','Direito Administrativo','Direito Penal','Direito Processual Penal','Direitos Humanos e Cidadania','Ética no Serviço Público'];
+const AREA_TRANSITO = ['Legislação de Trânsito','Legislação Penal Especial'];
+function areaClass(nome) {
+  if (AREA_TRANSITO.includes(nome)) return 'area-transito';
+  if (AREA_DIREITO.includes(nome)) return 'area-direito';
+  return 'area-basica';
+}
