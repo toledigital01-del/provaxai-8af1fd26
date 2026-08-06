@@ -254,13 +254,7 @@ const FOLDERS = [
   { name:'Trabalho', color:'#F59E0B' },
   { name:'Pessoais', color:'#EC4899' },
 ];
-document.getElementById('folders-list').innerHTML = FOLDERS.map(f => {
-  const n = f.all ? MATERIALS.length : MATERIALS.filter(m=>m.folder===f.name).length;
-  return `<div class="folder-item${f.all?' active':''}" style="border-left:4px solid ${f.color};">
-    <svg width="18" height="18" fill="none" stroke="${f.color}" stroke-width="2" viewBox="0 0 24 24"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
-    <div><div class="fname">${f.name}</div><div class="fsub">${n} ${n===1?'material':'materiais'}</div></div>
-  </div>`;
-}).join('');
+
 
 
 function openModal(id){ document.getElementById(id).classList.add('open'); }
