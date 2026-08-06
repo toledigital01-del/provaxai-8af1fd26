@@ -22,12 +22,29 @@
     return PX;
   }
 
+  /* modo convidado: acesso liberado sem senha (temporário) */
+  PX.isGuest = function () {
+    try { return localStorage.getItem('px_guest') === '1'; } catch (e) { return false; }
+  };
+  PX.enterAsGuest = function () {
+    try { localStorage.setItem('px_guest', '1'); } catch (e) {}
+    applyGuest();
+  };
+  function applyGuest() {
+    if (PX.user) return false;
+    if (!PX.isGuest()) return false;
+    PX.user = { id: 'guest', email: 'convidado@provax.app', guest: true };
+    PX.profile = { full_name: 'Convidado' };
+    PX.roles = [];
+    return true;
+  }
+
   async function hydrate(session) {
     PX.session = session || null;
     PX.user = session ? session.user : null;
     PX.profile = null;
     PX.roles = [];
-    if (!PX.user) return;
+    if (!PX.user) { applyGuest(); return; }
     const [{ data: prof }, { data: roles }] = await Promise.all([
       PX.sb.from('profiles').select('*').eq('id', PX.user.id).maybeSingle(),
       PX.sb.from('user_roles').select('role').eq('user_id', PX.user.id),
@@ -37,6 +54,7 @@
   }
 
   PX.ready = boot();
+
 
   /* ---------- Autenticação ---------- */
   PX.signUp = async function (email, password, fullName) {
@@ -78,6 +96,7 @@
 
   PX.signOut = async function () {
     await PX.ready;
+    try { localStorage.removeItem('px_guest'); } catch (e) {}
     await PX.sb.auth.signOut();
     PX.user = null; PX.profile = null; PX.roles = [];
     window.location.href = 'login.html';
@@ -112,7 +131,7 @@
   /* ---------- Progresso ---------- */
   PX.saveProgress = async function (p) {
     await PX.ready;
-    if (!PX.user) return null;
+    if (!PX.user || PX.user.guest) return null;
     const row = {
       user_id: PX.user.id,
       course_slug: p.course || '',
@@ -127,7 +146,7 @@
 
   PX.getProgress = async function (disc) {
     await PX.ready;
-    if (!PX.user) return [];
+    if (!PX.user || PX.user.guest) return [];
     let q = PX.sb.from('topic_progress').select('*').eq('user_id', PX.user.id);
     if (disc) q = q.eq('discipline_nome', disc);
     const { data } = await q;
@@ -136,7 +155,7 @@
 
   PX.logSession = async function (disc, topic, ferramenta, segundos) {
     await PX.ready;
-    if (!PX.user) return;
+    if (!PX.user || PX.user.guest) return;
     PX.sb.from('study_sessions').insert({
       user_id: PX.user.id, discipline_nome: disc, topic_nome: topic, ferramenta, segundos: segundos || 0,
     }).then(() => {});
@@ -144,7 +163,7 @@
 
   PX.logAttempt = async function (a) {
     await PX.ready;
-    if (!PX.user) return;
+    if (!PX.user || PX.user.guest) return;
     PX.sb.from('question_attempts').insert({
       user_id: PX.user.id, discipline_nome: a.disc, topic_nome: a.topic,
       resposta: a.resposta, correta: !!a.correta, segundos: a.segundos || 0,
@@ -154,7 +173,7 @@
   /* ---------- Pastas e material próprio ---------- */
   PX.listFolders = async function () {
     await PX.ready;
-    if (!PX.user) return [];
+    if (!PX.user || PX.user.guest) return [];
     const { data } = await PX.sb.from('folders').select('*').order('created_at');
     return data || [];
   };
@@ -164,7 +183,7 @@
   };
   PX.listMaterials = async function () {
     await PX.ready;
-    if (!PX.user) return [];
+    if (!PX.user || PX.user.guest) return [];
     const { data } = await PX.sb.from('user_materials').select('*').order('created_at', { ascending: false });
     return data || [];
   };
@@ -184,7 +203,7 @@
   /* ---------- Anotações ---------- */
   PX.saveNote = async function (disc, topic, conteudo) {
     await PX.ready;
-    if (!PX.user) return null;
+    if (!PX.user || PX.user.guest) return null;
     const { data } = await PX.sb.from('notes').select('id')
       .eq('user_id', PX.user.id).eq('discipline_nome', disc).eq('topic_nome', topic).maybeSingle();
     if (data) return PX.sb.from('notes').update({ conteudo }).eq('id', data.id);
@@ -192,7 +211,7 @@
   };
   PX.getNote = async function (disc, topic) {
     await PX.ready;
-    if (!PX.user) return null;
+    if (!PX.user || PX.user.guest) return null;
     const { data } = await PX.sb.from('notes').select('conteudo')
       .eq('user_id', PX.user.id).eq('discipline_nome', disc).eq('topic_nome', topic).maybeSingle();
     return data ? data.conteudo : null;
@@ -201,13 +220,13 @@
   /* ---------- Cronograma ---------- */
   PX.getPlan = async function () {
     await PX.ready;
-    if (!PX.user) return null;
+    if (!PX.user || PX.user.guest) return null;
     const { data } = await PX.sb.from('study_plans').select('*').eq('user_id', PX.user.id).maybeSingle();
     return data;
   };
   PX.savePlan = async function (plan) {
     await PX.ready;
-    if (!PX.user) return null;
+    if (!PX.user || PX.user.guest) return null;
     return PX.sb.from('study_plans').upsert(
       { user_id: PX.user.id, data_prova: plan.data_prova || null, horas_por_dia: plan.horas_por_dia || 3, dias_descanso: plan.dias_descanso || [] },
       { onConflict: 'user_id' }
@@ -228,6 +247,7 @@
   PX.hasCourseAccess = async function (courseSlug) {
     await PX.ready;
     if (!PX.user) return false;
+    if (PX.user.guest) return true;
     if (PX.isAdmin()) return true;
     const { data: sub } = await PX.sb.from('subscriptions').select('status').eq('user_id', PX.user.id).eq('status', 'ativa').maybeSingle();
     if (sub) return true;

@@ -108,40 +108,26 @@
 
   PX.ready.then(() => { if (PX.user) go(); });
 
-  el('f').addEventListener('submit', async e => {
+  // Acesso liberado temporariamente: qualquer botão entra sem senha.
+  el('senha').removeAttribute('required');
+  el('email').removeAttribute('required');
+
+  function enter() {
+    PX.ready.then(() => { PX.enterAsGuest(); go(); }).catch(go);
+  }
+
+  el('f').addEventListener('submit', e => {
     e.preventDefault();
-    const btn = el('submit');
-    btn.disabled = true;
-    show('Aguarde…', '');
-    const email = el('email').value.trim();
-    const senha = el('senha').value;
-    try {
-      if (mode === 'up') {
-        const { data, error } = await PX.signUp(email, senha, el('nome').value.trim());
-        if (error) throw error;
-        if (data.session) { go(); return; }
-        show('Conta criada! Confirme o e-mail enviado para ' + email + ' para entrar.', 'ok');
-      } else {
-        const { error } = await PX.signIn(email, senha);
-        if (error) throw error;
-        go(); return;
-      }
-    } catch (err) {
-      const m = String(err.message || err);
-      show(m.includes('Invalid login') ? 'E-mail ou senha incorretos.'
-        : m.includes('already registered') ? 'Este e-mail já possui conta. Faça login.'
-        : m, 'err');
-    }
-    btn.disabled = false;
+    show('Entrando…', 'ok');
+    enter();
   });
 
-  el('google').onclick = async () => {
-    show('Abrindo o Google…', '');
+  el('google').onclick = () => {
+    show('Entrando…', 'ok');
     sessionStorage.setItem('px_next', nextUrl);
-    const r = await PX.signInWithGoogle(nextUrl);
-    if (r && r.error) show(String(r.error.message || r.error), 'err');
-    else if (r && r.ok) go();
+    enter();
   };
+
 </script>
 </body>
 </html>
