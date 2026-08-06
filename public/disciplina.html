@@ -18,6 +18,10 @@
   <header id="shell-topbar"></header>
   <div class="shell-body">
     <div class="page">
+      <a class="page-back" id="page-back" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        <span id="page-back-label"></span>
+      </a>
       <div class="crumb" id="crumb"></div>
       <h1 class="title" id="d-h1"></h1>
       <p class="subtitle" id="d-meta"></p>
@@ -38,8 +42,6 @@
 <script src="data.js"></script>
 <script src="shell.js"></script>
 <script>
-renderShell({ active: 'materiais' });
-
 const params = new URLSearchParams(location.search);
 const id = params.get('id') || 'prf-2021';
 const mat = materialById(id);
@@ -56,6 +58,20 @@ document.getElementById('crumb').innerHTML =
     ? `<a href="disciplinas.html?${base}">${title}</a>`
     : `<span>${title}</span>`) +
   `<span class="sep">/</span><span>${disc}</span>`;
+
+const firstTopic = (info.topics[0] || { name: disc }).name;
+const wsBase = `workspace.html?${base}&disc=${encodeURIComponent(disc)}&topic=${encodeURIComponent(firstTopic)}`;
+
+renderShell({
+  active: 'materiais',
+  topicNav: {
+    label: 'Tópico',
+    items: WS_TABS.map(t => `<a class="ws-item" href="${wsBase}&tab=${t.id}"><span class="ic">${t.ic}</span><span>${t.label}</span></a>`).join(''),
+  },
+});
+
+document.getElementById('page-back').href = allDiscs.length > 1 ? `disciplinas.html?${base}` : 'study-sets.html';
+document.getElementById('page-back-label').textContent = allDiscs.length > 1 ? title : 'Meus Materiais';
 
 document.getElementById('d-h1').textContent = disc;
 document.getElementById('d-meta').textContent =
