@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Disciplinas – Studley AI</title>
+<title>Meus Materiais – Studley AI</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; background: #FFF; color: #111827; height: 100vh; overflow: hidden; display: flex; }
@@ -101,26 +101,11 @@
 </head>
 <body>
 
-<aside class="sidebar">
-  <a href="study-sets.html" class="sidebar-logo">
-    <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="#FF4D00"/><path d="M16 8C16 8 11 14 11 18C11 20.8 13.2 23 16 23C18.8 23 21 20.8 21 18C21 14 16 8 16 8Z" fill="#FF8040"/><circle cx="16" cy="19" r="3" fill="#FFF0E8"/></svg>
-    <span class="sidebar-logo-text">Studley</span>
-  </a>
-  <nav style="flex:1;display:flex;flex-direction:column;gap:2px;">
-    <a href="study-sets.html" class="nav-item active"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Meus Materiais</span></a>
-    <a href="solve.html" class="nav-item"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><span>Resolver</span></a>
-    <a href="paper-grader.html" class="nav-item"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg><span>Corretor de Trabalhos</span></a>
-    <a href="app.html" class="nav-item"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18" stroke-width="2.5" stroke-linecap="round"/></svg><span>App</span></a>
-  </nav>
-  <button class="upgrade-btn" onclick="location.href='pricing.html'">Atualizar para Ilimitado</button>
-  <button class="user-chip" onclick="alert('Perfil em breve!')">
-    <div class="avatar">F</div>
-    <span style="flex:1;text-align:left;font-size:0.88rem;font-weight:500;">Fernando</span>
-    <svg width="14" height="14" fill="none" stroke="#9CA3AF" stroke-width="2.2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
-  </button>
-</aside>
+<aside id="shell-sidebar"></aside>
 
-<main class="main">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;height:100vh;">
+<header id="shell-topbar"></header>
+<main class="main" style="flex:1;">
   <div class="hero">
     <h1>Ei Fernando, o que você quer dominar?</h1>
     <p>Envie qualquer coisa e obtenha notas interativas, cartões de memória, questionários e mais</p>
@@ -154,6 +139,7 @@
 
   <div class="sets-grid" id="sets-grid"></div>
 </main>
+</div>
 
 <aside class="folders">
   <div class="folders-head">
@@ -236,27 +222,11 @@
   </div>
 </div>
 
+<link rel="stylesheet" href="shell.css">
 <script src="data.js"></script>
+<script src="shell.js"></script>
 <script>
-const MATERIALS = [
-  { id:'prf-2021', title:'Concurso PRF 2021', type:'Edital', folder:'Concursos', disc:15, top:96, pag:214, envio:'12/03/2026', acesso:'hoje', tempo:'14h32', pct:18 },
-  { id:'ctb', title:'Código de Trânsito Brasileiro', type:'Legislação', folder:'Direito', disc:6, top:42, pag:138, envio:'02/03/2026', acesso:'ontem', tempo:'6h10', pct:34 },
-  { id:'dconst', title:'Apostila de Direito Constitucional', type:'Apostila', folder:'Direito', disc:1, top:9, pag:96, envio:'21/02/2026', acesso:'há 3 dias', tempo:'9h45', pct:52 },
-  { id:'portugues', title:'Curso Completo de Português', type:'Curso', folder:'Concursos', disc:4, top:38, pag:180, envio:'15/02/2026', acesso:'há 5 dias', tempo:'11h20', pct:41 },
-  { id:'info', title:'Manual de Informática', type:'PDF', folder:'Trabalho', disc:2, top:18, pag:74, envio:'10/02/2026', acesso:'há 1 semana', tempo:'3h05', pct:22 },
-  { id:'biologia', title:'Biologia', type:'Livro', folder:'Faculdade', disc:5, top:47, pag:320, envio:'28/01/2026', acesso:'há 2 semanas', tempo:'8h50', pct:12 },
-  { id:'dadm', title:'Apostila de Direito Administrativo', type:'Apostila', folder:'Direito', disc:1, top:7, pag:88, envio:'20/01/2026', acesso:'há 2 semanas', tempo:'5h15', pct:29 },
-  { id:'cf88', title:'Constituição Federal', type:'Legislação', folder:'Concursos', disc:9, top:64, pag:250, envio:'12/01/2026', acesso:'há 3 semanas', tempo:'12h40', pct:37 },
-  { id:'lei9503', title:'Lei 9.503/97', type:'Legislação', folder:'Direito', disc:3, top:21, pag:110, envio:'05/01/2026', acesso:'há 1 mês', tempo:'2h30', pct:15 },
-  { id:'lei8112', title:'Lei 8.112/90', type:'Legislação', folder:'Concursos', disc:2, top:16, pag:64, envio:'02/01/2026', acesso:'há 1 mês', tempo:'1h55', pct:8 },
-];
-// Regra de roteamento: >1 disciplina abre a grid de disciplinas; 1 disciplina vai direto aos tópicos
-function materialHref(m) {
-  const base = `id=${encodeURIComponent(m.id)}&type=${encodeURIComponent(m.type)}&title=${encodeURIComponent(m.title)}`;
-  const discs = disciplinasDe(m.id);
-  if (discs.length > 1) return `disciplinas.html?${base}`;
-  return `material.html?${base}&disc=${encodeURIComponent(discs[0])}`;
-}
+renderShell({ active: 'materiais' });
 const SHORTCUTS = ['Resumos','Flashcards','Questões','Questões Comentadas','Mapas Mentais','Anotações','Revisões','IA','Cronograma'];
 document.getElementById('sets-grid').innerHTML = MATERIALS.map(m => `
   <a class="set-card" href="${materialHref(m)}">
