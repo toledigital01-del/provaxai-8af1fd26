@@ -13,7 +13,7 @@
   /* Curso em destaque */
   .course { display:grid; grid-template-columns: 1.05fr 1fr; gap:0; border:1px solid var(--line); border-radius:16px; overflow:hidden; background:#fff; margin-top:14px; }
   .course-cover { position:relative; min-height:230px; background:#0B1220; }
-  .course-cover img { width:100%; height:100%; object-fit:cover; display:block; }
+  .course-cover img { width:100%; height:100%; object-fit:cover; object-position:35% 60%; display:block; }
   .course-body { padding:24px; display:flex; flex-direction:column; }
   .course-tag { display:inline-flex; align-self:flex-start; font-size:0.66rem; font-weight:700; letter-spacing:.08em; padding:4px 10px; border-radius:999px; background:#EFF6FF; color:#2563EB; }
   .course-body h2 { font-size:1.5rem; font-weight:700; letter-spacing:-0.03em; margin:12px 0 8px; }
@@ -181,7 +181,7 @@ const cdiscs = disciplinasDe(curso.id).map(disciplinaInfo);
 const cpct = cdiscs.length ? Math.round(cdiscs.reduce((a,d)=>a+d.pct,0)/cdiscs.length) : 0;
 
 document.getElementById('course-box').innerHTML = `
-  <div class="course-cover"><img src="${curso.capa}" alt="Capa do ${curso.nome}" loading="lazy" width="1280" height="720"></div>
+  <div class="course-cover"><img src="${curso.capa}" alt="Viatura da Polícia Rodoviária Federal em rodovia ao entardecer" loading="lazy" width="1600" height="912"></div>
   <div class="course-body">
     <span class="course-tag">${curso.tag}</span>
     <h2>${curso.nome}</h2>
