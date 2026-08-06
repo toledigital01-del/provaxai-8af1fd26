@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Disciplinas do concurso – Studley AI</title>
+<style>
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; background:#fff; color:#111827; height:100vh; overflow:hidden; display:flex; }
+
+  .sidebar { width:220px; min-width:220px; background:#FFE1D9; height:100vh; display:flex; flex-direction:column; padding:16px 12px; flex-shrink:0; }
+  .sidebar-logo { display:flex; align-items:center; gap:8px; padding:6px 8px; margin-bottom:20px; text-decoration:none; margin-top:4px; }
+  .sidebar-logo-text { font-weight:800; font-size:1.4rem; letter-spacing:-0.03em; background:linear-gradient(to right,#FF8040,#FF4D00); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; cursor:pointer; font-size:0.9rem; font-weight:500; color:#6B2D00; text-decoration:none; transition:background .15s; margin-bottom:2px; }
+  .nav-item:hover { background:rgba(255,255,255,.5); }
+  .nav-item.active { background:#fff; color:#FF4D00; font-weight:600; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+  .upgrade-btn { display:block; width:100%; text-align:center; padding:11px 12px; border:none; border-radius:999px; background:linear-gradient(to right,#FF8040,#FF4D00); color:#fff; font-weight:700; font-size:0.85rem; cursor:pointer; margin-bottom:12px; box-shadow:0 4px 14px rgba(255,77,0,.3); }
+  .user-chip { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:14px; background:#fff; border:1px solid rgba(255,77,0,.15); cursor:pointer; width:100%; }
+  .avatar { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#FF8040,#FF4D00); color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:700; }
+
+  .main { flex:1; overflow-y:auto; padding:0 28px 60px; min-width:0; }
+  .crumb { display:flex; align-items:center; gap:8px; font-size:0.8rem; color:#9CA3AF; padding:22px 0 10px; }
+  .crumb a { color:#FF4D00; text-decoration:none; }
+  .head { padding-bottom:18px; border-bottom:1px solid #EFEFEF; }
+  .head h1 { font-size:1.7rem; font-weight:700; letter-spacing:-0.02em; }
+  .badge { display:inline-block; margin-top:8px; font-size:0.72rem; font-weight:600; padding:4px 10px; border-radius:999px; background:#FFF0E8; color:#FF4D00; }
+  .meta-line { font-size:0.8rem; color:#6B7280; margin-top:8px; }
+
+  .section-title { display:flex; align-items:center; gap:10px; font-size:1.05rem; font-weight:600; margin:28px 0 16px; }
+  .section-title::before { content:''; width:3px; height:20px; background:#FF4D00; border-radius:2px; }
+
+  /* mesmos cards da tela Meus Materiais */
+  .sets-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:18px; }
+  .set-card { background:#fff; border:1px solid #E9E9E9; border-radius:12px; overflow:hidden; cursor:pointer; transition:all .18s; text-decoration:none; color:inherit; display:block; }
+  .set-card:hover { border-color:#FF8040; box-shadow:0 8px 26px rgba(0,0,0,.06); }
+  .set-card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 16px; border-bottom:1px solid #EFEFEF; }
+  .set-card-head h3 { font-size:1.02rem; font-weight:600; }
+  .type-badge { font-size:0.68rem; font-weight:700; padding:3px 9px; border-radius:999px; background:#FFF0E8; color:#FF4D00; white-space:nowrap; }
+  .meta-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 12px; padding:14px 16px 6px; }
+  .meta-item { font-size:0.76rem; color:#9CA3AF; }
+  .meta-item b { display:block; font-size:0.88rem; font-weight:600; color:#374151; margin-top:2px; }
+  .set-card-foot { padding:10px 16px 14px; }
+  .set-card-foot .lbl { font-size:0.78rem; color:#6B7280; margin-bottom:8px; }
+  .progress-line { display:flex; align-items:center; gap:8px; }
+  .track { flex:1; height:6px; border-radius:999px; background:#EFEFEF; overflow:hidden; }
+  .fill { height:100%; background:linear-gradient(to right,#FF8040,#FF4D00); border-radius:999px; }
+  .pct { font-size:0.75rem; color:#6B7280; min-width:32px; }
+  ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-thumb { background:#E5E5E5; border-radius:3px; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <a href="study-sets.html" class="sidebar-logo">
+    <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="#FF4D00"/><path d="M16 8C16 8 11 14 11 18C11 20.8 13.2 23 16 23C18.8 23 21 20.8 21 18C21 14 16 8 16 8Z" fill="#FF8040"/><circle cx="16" cy="19" r="3" fill="#FFF0E8"/></svg>
+    <span class="sidebar-logo-text">Studley</span>
+  </a>
+  <nav style="flex:1;display:flex;flex-direction:column;gap:2px;">
+    <a href="study-sets.html" class="nav-item active"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Meus Materiais</span></a>
+    <a href="solve.html" class="nav-item"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><span>Resolver</span></a>
+    <a href="paper-grader.html" class="nav-item"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg><span>Corretor de Trabalhos</span></a>
+    <a href="app.html" class="nav-item"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18" stroke-width="2.5" stroke-linecap="round"/></svg><span>App</span></a>
+  </nav>
+  <button class="upgrade-btn" onclick="location.href='pricing.html'">Atualizar para Ilimitado</button>
+  <button class="user-chip" onclick="alert('Perfil em breve!')">
+    <div class="avatar">F</div>
+    <span style="flex:1;text-align:left;font-size:0.88rem;font-weight:500;">Fernando</span>
+    <svg width="14" height="14" fill="none" stroke="#9CA3AF" stroke-width="2.2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+  </button>
+</aside>
+
+<main class="main">
+  <div class="crumb"><a href="study-sets.html">Meus Materiais</a> <span>/</span> <span id="crumb-name">Concurso</span></div>
+  <div class="head">
+    <h1 id="c-title">Concurso</h1>
+    <span class="badge" id="c-type">Edital</span>
+    <div class="meta-line" id="c-meta"></div>
+  </div>
+
+  <div class="section-title">Disciplinas do concurso</div>
+  <div class="sets-grid" id="disc-grid"></div>
+</main>
+
+<script src="data.js"></script>
+<script>
+const params = new URLSearchParams(location.search);
+const id = params.get('id') || 'prf-2021';
+const title = params.get('title') || 'Concurso PRF 2021';
+const type = params.get('type') || 'Edital';
+
+document.getElementById('c-title').textContent = title;
+document.getElementById('crumb-name').textContent = title;
+document.getElementById('c-type').textContent = type;
+
+const DISCIPLINAS = disciplinasDe(id).map(disciplinaInfo);
+const totalTopics = DISCIPLINAS.reduce((a, d) => a + d.topics.length, 0);
+const overall = DISCIPLINAS.length ? Math.round(DISCIPLINAS.reduce((a, d) => a + d.pct, 0) / DISCIPLINAS.length) : 0;
+document.getElementById('c-meta').textContent =
+  `${DISCIPLINAS.length} disciplinas · ${totalTopics} tópicos · Índice de domínio geral ${overall}%`;
+
+const base = `material.html?id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}&title=${encodeURIComponent(title)}`;
+document.getElementById('disc-grid').innerHTML = DISCIPLINAS.map(d => `
+  <a class="set-card" href="${base}&disc=${encodeURIComponent(d.name)}">
+    <div class="set-card-head"><h3>${d.name}</h3><span class="type-badge">Disciplina</span></div>
+    <div class="meta-grid">
+      <div class="meta-item">Tópicos<b>${d.topics.length}</b></div>
+      <div class="meta-item">Dominados<b>${d.topics.filter(t=>t.st==='dom').length}</b></div>
+    </div>
+    <div class="set-card-foot">
+      <div class="lbl">Índice de domínio</div>
+      <div class="progress-line">
+        <div class="track"><div class="fill" style="width:${d.pct}%"></div></div>
+        <div class="pct">${d.pct}%</div>
+      </div>
+    </div>
+  </a>`).join('');
+</script>
+</body>
+</html>
