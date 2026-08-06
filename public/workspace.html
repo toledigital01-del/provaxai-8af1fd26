@@ -446,12 +446,70 @@ function renderPane() {
       <div class="mini"><button onclick="alert('Verificação em breve!')">Verificar</button></div>
     </div>`;
   } else if (tab === 'podcast') {
+    const dur = 5 * 60 + 29;
+    const fmt = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+    const roteiro = [
+      { who:'Anna', me:false, txt:`Você viu que o edital cobra <b>${topic}</b> dentro de ${disc}? É um dos pontos que mais aparecem nas últimas provas da banca.` },
+      { who:'Simon', me:true, txt:`Sim. Vale começar pela regra geral: o que a lei determina de forma expressa, e só depois olhar as exceções — é assim que a Cebraspe costuma montar o item.` },
+      { who:'Anna', me:false, txt:`Exato. E repare que a banca adora trocar uma palavra da regra — “sempre”, “nunca”, “somente” — para transformar um item certo em errado.` },
+      { who:'Simon', me:true, txt:`Boa. Então o roteiro de estudo é: entender o conceito, decorar as exceções e treinar com itens Certo/Errado de ${topic.toLowerCase()}.` },
+      { who:'Anna', me:false, txt:`Fechado. No fim do episódio, abra os flashcards e a revisão espaçada para fixar o que ouvimos aqui.` },
+    ];
     p.innerHTML = `<div class="pane">
-      <div class="qbox" style="display:flex;align-items:center;gap:16px;">
-        <div style="width:46px;height:46px;border-radius:12px;background:var(--text);color:#fff;display:grid;place-items:center;font-size:1.1rem;">▶</div>
-        <div><div style="font-size:0.92rem;font-weight:600;">${topic} — episódio em áudio</div><div class="subtitle" style="margin-top:2px;">12 min · gerado por IA</div></div>
+      <div class="pod">
+        <div class="pod-top">
+          <div class="pod-hosts"><span class="pod-av a">A</span><span class="pod-av s">S</span></div>
+          <div class="pod-id">
+            <b>${topic}</b>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> ${fmt(dur)} · ${disc}</span>
+          </div>
+          <button class="pod-hand" id="pod-hand">✋ Levantar a mão</button>
+        </div>
+        <input class="pod-range" id="pod-seek" type="range" min="0" max="${dur}" value="0" step="1">
+        <div class="pod-times"><span id="pod-cur">0:00</span><span id="pod-left">-${fmt(dur)}</span></div>
+        <div class="pod-ctrl">
+          <div class="pod-vol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9v6h4l5 4V5L8 9H4z"/></svg><input class="pod-range sm" type="range" min="0" max="100" value="70"></div>
+          <div class="pod-mid">
+            <button class="pod-skip" id="pod-prev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 5v14L9 12l10-7z"/><path d="M5 5v14"/></svg></button>
+            <button class="pod-play" id="pod-play">▶</button>
+            <button class="pod-skip" id="pod-next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 5v14l10-7L5 5z"/><path d="M19 5v14"/></svg></button>
+          </div>
+          <button class="pod-rate" id="pod-rate">1x</button>
+        </div>
+      </div>
+
+      <div class="pod-script">
+        ${roteiro.map(l => `
+          <div class="pod-line ${l.me ? 'me' : ''}">
+            <span class="pod-av ${l.me ? 's' : 'a'}">${l.who[0]}</span>
+            <div class="pod-b"><span class="pod-who">${l.who}</span><div class="pod-msg">${l.txt}</div></div>
+          </div>`).join('')}
+      </div>
+
+      <div class="pod-foot">
+        <button title="Baixar episódio" onclick="alert('Download do episódio em breve!')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg></button>
+        <button title="Gerar novo episódio" onclick="alert('Novo episódio sendo gerado pela Athena IA!')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></button>
       </div>
     </div>`;
+
+    let t = 0, timer = null, rate = 1;
+    const seek = document.getElementById('pod-seek');
+    const cur = document.getElementById('pod-cur'), left = document.getElementById('pod-left');
+    const play = document.getElementById('pod-play');
+    const paint = () => { seek.value = t; cur.textContent = fmt(t); left.textContent = '-' + fmt(dur - t); seek.style.setProperty('--p', (t/dur*100) + '%'); };
+    const stop = () => { clearInterval(timer); timer = null; play.textContent = '▶'; };
+    play.onclick = () => {
+      if (timer) return stop();
+      play.textContent = '❚❚';
+      timer = setInterval(() => { t = Math.min(dur, t + rate); paint(); if (t >= dur) stop(); }, 1000);
+    };
+    seek.oninput = () => { t = +seek.value; paint(); };
+    document.getElementById('pod-prev').onclick = () => { t = Math.max(0, t - 15); paint(); };
+    document.getElementById('pod-next').onclick = () => { t = Math.min(dur, t + 15); paint(); };
+    document.getElementById('pod-rate').onclick = e => { rate = rate === 1 ? 1.5 : rate === 1.5 ? 2 : 1; e.target.textContent = rate + 'x'; };
+    document.getElementById('pod-hand').onclick = () => { stop(); document.getElementById('side-msg') && document.getElementById('side-msg').focus(); };
+    paint();
+
   } else if (tab === 'evolucao') {
     p.innerHTML = `<div class="pane">
       <div class="cesp-head"><b>Evolução em ${topic}</b><span>Acompanhe seu índice de domínio e suas estatísticas de estudo.</span></div>
