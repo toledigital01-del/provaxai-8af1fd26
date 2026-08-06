@@ -6,11 +6,10 @@
 <title>Workspace – Studley AI</title>
 <link rel="stylesheet" href="shell.css">
 <style>
-  .ws { display:grid; grid-template-columns: 220px minmax(0,1fr) 268px; height:100%; }
-  @media (max-width: 1100px) { .ws { grid-template-columns: 200px minmax(0,1fr); } .ws-right { display:none; } }
+  .ws { display:grid; grid-template-columns: minmax(0,1fr) 268px; height:100%; }
+  @media (max-width: 1100px) { .ws { grid-template-columns: minmax(0,1fr); } .ws-right { display:none; } }
 
-  .ws-left { border-right:1px solid var(--line); padding:18px 10px; overflow-y:auto; }
-  .ws-left .lbl { font-size:0.68rem; text-transform:uppercase; letter-spacing:.08em; color:#A6ACBB; font-weight:600; padding:0 10px 8px; }
+
   .ws-item { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; font-size:0.86rem; color:#4A5162; cursor:pointer; transition:background .14s, color .14s; }
   .ws-item:hover { background:#F2F2F3; color:var(--text); }
   .ws-item.active { background:#EDEDEE; color:var(--text); font-weight:600; }
