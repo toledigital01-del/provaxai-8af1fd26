@@ -29,20 +29,13 @@ const DISCIPLINAS_POR_CONCURSO = {
   'dadm': ['Direito Administrativo'],
   'cf88': ['Direito Constitucional','Direito Administrativo','Direito Penal','Direito Processual Penal','Direitos Humanos e Cidadania','Ética no Serviço Público','Geopolítica Brasileira','Legislação Penal Especial','Língua Portuguesa'],
   'lei9503': ['Legislação de Trânsito','Direito Administrativo','Direito Penal'],
-  'lei8112': ['Direito Administrativo','Ética no Serviço Público']
+  'lei8112': ['Direito Administrativo','Ética no Serviço Público'],
+  'pf-2026': []
 };
 
 const MATERIALS = [
   { id:'prf-2021', title:'Concurso PRF 2021', type:'Edital', folder:'Concursos', disc:15, top:96, pag:214, envio:'12/03/2026', acesso:'hoje', tempo:'14h32', pct:18 },
-  { id:'ctb', title:'Código de Trânsito Brasileiro', type:'Legislação', folder:'Direito', disc:6, top:42, pag:138, envio:'02/03/2026', acesso:'ontem', tempo:'6h10', pct:34 },
-  { id:'dconst', title:'Apostila de Direito Constitucional', type:'Apostila', folder:'Direito', disc:1, top:9, pag:96, envio:'21/02/2026', acesso:'há 3 dias', tempo:'9h45', pct:52 },
-  { id:'portugues', title:'Curso Completo de Português', type:'Curso', folder:'Concursos', disc:4, top:38, pag:180, envio:'15/02/2026', acesso:'há 5 dias', tempo:'11h20', pct:41 },
-  { id:'info', title:'Manual de Informática', type:'PDF', folder:'Trabalho', disc:2, top:18, pag:74, envio:'10/02/2026', acesso:'há 1 semana', tempo:'3h05', pct:22 },
-  { id:'biologia', title:'Biologia', type:'Livro', folder:'Faculdade', disc:5, top:47, pag:320, envio:'28/01/2026', acesso:'há 2 semanas', tempo:'8h50', pct:12 },
-  { id:'dadm', title:'Apostila de Direito Administrativo', type:'Apostila', folder:'Direito', disc:1, top:7, pag:88, envio:'20/01/2026', acesso:'há 2 semanas', tempo:'5h15', pct:29 },
-  { id:'cf88', title:'Constituição Federal', type:'Legislação', folder:'Concursos', disc:9, top:64, pag:250, envio:'12/01/2026', acesso:'há 3 semanas', tempo:'12h40', pct:37 },
-  { id:'lei9503', title:'Lei 9.503/97', type:'Legislação', folder:'Direito', disc:3, top:21, pag:110, envio:'05/01/2026', acesso:'há 1 mês', tempo:'2h30', pct:15 },
-  { id:'lei8112', title:'Lei 8.112/90', type:'Legislação', folder:'Concursos', disc:2, top:16, pag:64, envio:'02/01/2026', acesso:'há 1 mês', tempo:'1h55', pct:8 },
+  { id:'pf-2026', title:'Concurso PF', type:'Edital', folder:'Concursos', disc:0, top:0, pag:0, envio:'—', acesso:'—', tempo:'—', pct:0, soon:true },
 ];
 
 /* Indicadores visuais de status */
