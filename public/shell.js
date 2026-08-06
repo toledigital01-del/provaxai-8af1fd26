@@ -1,5 +1,30 @@
 /* Shell compartilhado: sidebar + topbar com pesquisa global */
+
+/* ---- Tema (claro / escuro) ---- */
 (function () {
+  var KEY = 'px_theme';
+  function apply(t) {
+    document.body.classList.toggle('dark', t === 'dark');
+    var b = document.getElementById('px-theme-btn');
+    if (b) b.innerHTML = t === 'dark' ? window.__pxSunIcon : window.__pxMoonIcon;
+  }
+  window.__pxMoonIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+  window.__pxSunIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+  window.pxTheme = function () {
+    try { return localStorage.getItem(KEY) || 'light'; } catch (e) { return 'light'; }
+  };
+  window.pxSetTheme = function (t) {
+    try { localStorage.setItem(KEY, t); } catch (e) {}
+    apply(t);
+  };
+  window.pxToggleTheme = function () { pxSetTheme(pxTheme() === 'dark' ? 'light' : 'dark'); };
+  window.__pxApplyTheme = function () { apply(pxTheme()); };
+  if (document.body) apply(pxTheme());
+  else document.addEventListener('DOMContentLoaded', function () { apply(pxTheme()); });
+})();
+
+(function () {
+
   const NAV = [
     { id: 'inicio', href: 'home.html', label: 'Início', icon: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>' },
     { id: 'cronograma', href: 'cronograma.html', label: 'Cronograma', icon: '<rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/>' },
@@ -56,6 +81,7 @@
         <div class="gresults" id="gres"></div>
       </div>
       <div style="flex:1"></div>
+      <button class="theme-toggle" id="px-theme-btn" aria-label="Alternar tema" title="Alternar modo escuro" onclick="pxToggleTheme()"></button>
       ${right || ''}`;
   }
 
@@ -128,6 +154,7 @@
     const top = document.getElementById('shell-topbar');
     if (side) { side.className = 'shell-sidebar'; side.innerHTML = sidebarHTML(opts.active, opts.topicNav); }
     if (top) { top.className = 'shell-topbar'; top.innerHTML = topbarHTML(opts.right); mountSearch(); }
+    if (window.__pxApplyTheme) window.__pxApplyTheme();
     if (!document.getElementById('shell-scrim')) {
       const sc = document.createElement('div');
       sc.id = 'shell-scrim';
