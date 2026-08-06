@@ -29,11 +29,12 @@
       </a>
       ${nav}
       <div class="shell-foot">
-        <button class="user-chip" onclick="alert('Perfil em breve!')">
-          <div class="avatar">F</div>
-          <span style="flex:1;font-size:0.84rem;font-weight:500;">Fernando</span>
+        <button class="user-chip" id="px-user-chip" onclick="pxUserMenu()">
+          <div class="avatar" id="px-avatar">·</div>
+          <span style="flex:1;font-size:0.84rem;font-weight:500;" id="px-username">Carregando…</span>
         </button>
       </div>`;
+
   }
 
 
@@ -133,4 +134,45 @@
     mountSwipe();
     if (side) side.addEventListener('click', e => { if (e.target.closest('a, .ws-item')) document.body.classList.remove('sidebar-open'); });
   };
+})();
+
+/* ============ Sessão do aluno (Lovable Cloud) ============ */
+(function () {
+  if (!window.PX) {
+    var s = document.createElement('script');
+    s.src = 'px-auth.js';
+    document.head.appendChild(s);
+  }
+  function paint() {
+    var chip = document.getElementById('px-username');
+    var av = document.getElementById('px-avatar');
+    if (!chip || !window.PX || !PX.user) return;
+    var nome = PX.displayName();
+    chip.textContent = nome;
+    av.textContent = (nome[0] || 'A').toUpperCase();
+  }
+  window.pxUserMenu = function () {
+    if (!window.PX || !PX.user) return;
+    var opts = PX.isAdmin() ? '\n1 - Painel administrativo\n2 - Sair' : '\n1 - Sair';
+    var r = prompt(PX.displayName() + ' (' + PX.user.email + ')' + opts, '1');
+    if (r === null) return;
+    if (PX.isAdmin() && r.trim() === '1') location.href = 'admin.html';
+    else PX.signOut();
+  };
+  var tries = 0;
+  var t = setInterval(function () {
+    if (++tries > 200) return clearInterval(t);
+    if (!window.PX || !PX.ready) return;
+    clearInterval(t);
+    PX.ready.then(function () {
+      if (!PX.user) {
+        var next = location.pathname.split('/').pop() + location.search;
+        location.replace('login.html?next=' + encodeURIComponent(next));
+        return;
+      }
+      paint();
+      var p = setInterval(function () { if (document.getElementById('px-username')) paint(); }, 400);
+      setTimeout(function () { clearInterval(p); }, 4000);
+    });
+  }, 40);
 })();
