@@ -8,19 +8,46 @@
   PX.profile = null;
   PX.roles = [];
 
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src; s.async = true;
+      s.onload = resolve; s.onerror = () => reject(new Error('falha ao carregar ' + src));
+      document.head.appendChild(s);
+    });
+  }
+
+  async function getCreateClient() {
+    if (window.supabase && window.supabase.createClient) return window.supabase.createClient;
+    // bundle local (funciona no preview mesmo sem acesso a CDNs externos)
+    try {
+      await loadScript('supabase.js');
+      if (window.supabase && window.supabase.createClient) return window.supabase.createClient;
+    } catch (e) {}
+    const mod = await import('https://esm.sh/@supabase/supabase-js@2.58.0');
+    return mod.createClient;
+  }
+
   async function boot() {
-    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.58.0');
-    const sb = createClient(SUPABASE_URL, SUPABASE_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: 'px-auth' },
-    });
-    PX.sb = sb;
-    const { data } = await sb.auth.getSession();
-    await hydrate(data.session);
-    sb.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') hydrate(session);
-    });
+    try {
+      const createClient = await getCreateClient();
+      const sb = createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: 'px-auth' },
+      });
+      PX.sb = sb;
+      const { data } = await sb.auth.getSession();
+      await hydrate(data.session);
+      sb.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') hydrate(session);
+      });
+    } catch (e) {
+      PX.bootError = e;
+      console.error('[PX] backend indisponível:', e);
+      applyGuest();
+    }
     return PX;
   }
+
 
   /* modo convidado: acesso liberado sem senha (temporário) */
   PX.isGuest = function () {
@@ -45,13 +72,16 @@
     PX.profile = null;
     PX.roles = [];
     if (!PX.user) { applyGuest(); return; }
-    const [{ data: prof }, { data: roles }] = await Promise.all([
-      PX.sb.from('profiles').select('*').eq('id', PX.user.id).maybeSingle(),
-      PX.sb.from('user_roles').select('role').eq('user_id', PX.user.id),
-    ]);
-    PX.profile = prof || null;
-    PX.roles = (roles || []).map(r => r.role);
+    try {
+      const [{ data: prof }, { data: roles }] = await Promise.all([
+        PX.sb.from('profiles').select('*').eq('id', PX.user.id).maybeSingle(),
+        PX.sb.from('user_roles').select('role').eq('user_id', PX.user.id),
+      ]);
+      PX.profile = prof || null;
+      PX.roles = (roles || []).map(r => r.role);
+    } catch (e) { console.error('[PX] perfil:', e); }
   }
+
 
   PX.ready = boot();
 
