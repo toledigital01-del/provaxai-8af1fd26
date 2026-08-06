@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Meus Materiais – Studley AI</title>
+<title>Meus Materiais – Prova X</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; background: #FFF; color: #111827; height: 100vh; overflow: hidden; display: flex; }
@@ -233,8 +233,8 @@
 renderShell({ active: 'materiais' });
 const SHORTCUTS = ['Resumos','Flashcards','Questões','Questões Comentadas','Mapas Mentais','Anotações','Revisões','IA','Cronograma'];
 document.getElementById('sets-grid').innerHTML = MATERIALS.map(m => `
-  <a class="set-card" href="${materialHref(m)}">
-    <div class="set-card-head"><h3>${m.title}</h3><span class="type-badge">${m.type}</span></div>
+  <a class="set-card${m.soon ? ' soon' : ''}" href="${materialHref(m)}">
+    <div class="set-card-head"><h3>${m.title}</h3>${m.soon ? '<span class="soon-badge">EM BREVE</span>' : `<span class="type-badge">${m.type}</span>`}</div>
     <div class="meta-grid">
       <div class="meta-item">Disciplinas<b>${m.disc}</b></div>
       <div class="meta-item">Tópicos<b>${m.top}</b></div>
@@ -244,7 +244,7 @@ document.getElementById('sets-grid').innerHTML = MATERIALS.map(m => `
       <div class="meta-item">Tempo estudado<b>${m.tempo}</b></div>
     </div>
     <div class="set-card-foot">
-      <div class="lbl">Índice de domínio</div>
+      <div class="lbl">${m.soon ? 'Disponível em breve' : 'Índice de domínio'}</div>
       <div class="progress-line">
         <div class="track"><div class="fill ${fillClass(m.pct)}" style="width:${m.pct}%"></div></div>
         <div class="pct">${m.pct}%</div>

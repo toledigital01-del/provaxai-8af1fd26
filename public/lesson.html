@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Disciplina – Studley AI</title>
+<title>Disciplina – Prova X</title>
 <style>
   *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; background:#fff; color:#111827; height:100vh; overflow:hidden; display:flex; }
@@ -56,7 +56,7 @@
 <aside class="sidebar">
   <a href="study-sets.html" class="sidebar-logo">
     <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="#FF4D00"/><path d="M16 8C16 8 11 14 11 18C11 20.8 13.2 23 16 23C18.8 23 21 20.8 21 18C21 14 16 8 16 8Z" fill="#FF8040"/><circle cx="16" cy="19" r="3" fill="#FFF0E8"/></svg>
-    <span class="sidebar-logo-text">Studley</span>
+    <span class="sidebar-logo-text">Prova X</span>
   </a>
   <nav style="flex:1;display:flex;flex-direction:column;gap:2px;">
     <button class="nav-item active" onclick="setMode('tutor',this)">🎓 <span>Lição com Tutor</span></button>
@@ -137,7 +137,7 @@
 const p = new URLSearchParams(location.search);
 const title = p.get('title') ? decodeURIComponent(p.get('title')) : 'Concurso PRF 2021';
 document.getElementById('set-title').textContent = title;
-document.title = title + ' – Studley AI';
+document.title = title + ' – Prova X';
 
 function setMode(mode, el){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));

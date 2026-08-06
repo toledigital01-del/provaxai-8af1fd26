@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Disciplinas – Studley AI</title>
+<title>Disciplinas – Prova X</title>
 <link rel="stylesheet" href="shell.css">
 </head>
 <body>
@@ -46,7 +46,7 @@ const base = `id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}&titl
 document.getElementById('disc-grid').innerHTML = DISCIPLINAS.map(d => `
   <a class="card ${areaClass(d.name)}" href="disciplina.html?${base}&disc=${encodeURIComponent(d.name)}">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-      <h3>${d.name}</h3><span class="tag">Disciplina</span>
+      <h3>${d.name}</h3>
     </div>
     <div class="cmeta">${d.topics.length} tópicos</div>
     <div class="progress-line"><div class="track"><div class="fill ${fillClass(d.pct)}" style="width:${d.pct}%"></div></div><div class="pct">${d.pct}%</div></div>

@@ -29,20 +29,13 @@ const DISCIPLINAS_POR_CONCURSO = {
   'dadm': ['Direito Administrativo'],
   'cf88': ['Direito Constitucional','Direito Administrativo','Direito Penal','Direito Processual Penal','Direitos Humanos e Cidadania','Ética no Serviço Público','Geopolítica Brasileira','Legislação Penal Especial','Língua Portuguesa'],
   'lei9503': ['Legislação de Trânsito','Direito Administrativo','Direito Penal'],
-  'lei8112': ['Direito Administrativo','Ética no Serviço Público']
+  'lei8112': ['Direito Administrativo','Ética no Serviço Público'],
+  'pf-2026': []
 };
 
 const MATERIALS = [
   { id:'prf-2021', title:'Concurso PRF 2021', type:'Edital', folder:'Concursos', disc:15, top:96, pag:214, envio:'12/03/2026', acesso:'hoje', tempo:'14h32', pct:18 },
-  { id:'ctb', title:'Código de Trânsito Brasileiro', type:'Legislação', folder:'Direito', disc:6, top:42, pag:138, envio:'02/03/2026', acesso:'ontem', tempo:'6h10', pct:34 },
-  { id:'dconst', title:'Apostila de Direito Constitucional', type:'Apostila', folder:'Direito', disc:1, top:9, pag:96, envio:'21/02/2026', acesso:'há 3 dias', tempo:'9h45', pct:52 },
-  { id:'portugues', title:'Curso Completo de Português', type:'Curso', folder:'Concursos', disc:4, top:38, pag:180, envio:'15/02/2026', acesso:'há 5 dias', tempo:'11h20', pct:41 },
-  { id:'info', title:'Manual de Informática', type:'PDF', folder:'Trabalho', disc:2, top:18, pag:74, envio:'10/02/2026', acesso:'há 1 semana', tempo:'3h05', pct:22 },
-  { id:'biologia', title:'Biologia', type:'Livro', folder:'Faculdade', disc:5, top:47, pag:320, envio:'28/01/2026', acesso:'há 2 semanas', tempo:'8h50', pct:12 },
-  { id:'dadm', title:'Apostila de Direito Administrativo', type:'Apostila', folder:'Direito', disc:1, top:7, pag:88, envio:'20/01/2026', acesso:'há 2 semanas', tempo:'5h15', pct:29 },
-  { id:'cf88', title:'Constituição Federal', type:'Legislação', folder:'Concursos', disc:9, top:64, pag:250, envio:'12/01/2026', acesso:'há 3 semanas', tempo:'12h40', pct:37 },
-  { id:'lei9503', title:'Lei 9.503/97', type:'Legislação', folder:'Direito', disc:3, top:21, pag:110, envio:'05/01/2026', acesso:'há 1 mês', tempo:'2h30', pct:15 },
-  { id:'lei8112', title:'Lei 8.112/90', type:'Legislação', folder:'Concursos', disc:2, top:16, pag:64, envio:'02/01/2026', acesso:'há 1 mês', tempo:'1h55', pct:8 },
+  { id:'pf-2026', title:'Concurso PF', type:'Edital', folder:'Concursos', disc:0, top:0, pag:0, envio:'—', acesso:'—', tempo:'—', pct:0, soon:true },
 ];
 
 /* Indicadores visuais de status */
@@ -131,6 +124,7 @@ function searchIndex() {
 
 /* Regra de roteamento: >1 disciplina abre a grid de disciplinas; 1 disciplina vai direto aos tópicos */
 function materialHref(m) {
+  if (m.soon) return 'javascript:void(0)';
   const base = `id=${encodeURIComponent(m.id)}&type=${encodeURIComponent(m.type)}&title=${encodeURIComponent(m.title)}`;
   const discs = disciplinasDe(m.id);
   if (discs.length > 1) return `disciplinas.html?${base}`;
@@ -150,3 +144,16 @@ function areaClass(nome) {
   if (AREA_DIREITO.includes(nome)) return 'area-direito';
   return 'area-basica';
 }
+
+/* Itens do menu do tópico (workspace) */
+const WS_TABS = [
+  { id:'conteudo',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v5h5"/></svg>`, label:'Conteúdo' },
+  { id:'tutor',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 8l10 5 10-5z"/><path d="M6 11v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/></svg>`, label:'Tutor IA' },
+  { id:'flashcards',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="14" height="12" rx="2"/><path d="M8 3h11a2 2 0 0 1 2 2v11"/></svg>`, label:'Flashcards' },
+  { id:'questoes',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 1 1 3.4 2.5c-.6.2-.9.8-.9 1.4v.4"/><path d="M12 17h.01"/></svg>`, label:'Questões' },
+  { id:'simulados',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15 9-4.5 1.5L9 15l4.5-1.5z"/></svg>`, label:'Simulados' },
+  { id:'teste',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M14.5 4.5 19 9 9 19H4.5V14z"/></svg>`, label:'Teste Escrito' },
+  { id:'espacos',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h5"/><path d="M11 6v12"/><path d="M15 12h5"/></svg>`, label:'Preencher Espaços' },
+  { id:'podcast',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2.5" y="13" width="4" height="7" rx="2"/><rect x="17.5" y="13" width="4" height="7" rx="2"/></svg>`, label:'Podcast' },
+  { id:'anotacoes',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>`, label:'Anotações' },
+];

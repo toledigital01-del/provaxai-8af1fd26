@@ -3,8 +3,6 @@
   const NAV = [
     { id: 'hoje', href: 'dashboard.html', label: 'Hoje', icon: '<path d="M12 2v4M5 8h14M4 8h16v12H4z"/><path d="M9 13h2v2H9z"/>' },
     { id: 'materiais', href: 'study-sets.html', label: 'Meus Materiais', icon: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>' },
-    { id: 'resolver', href: 'solve.html', label: 'Resolver', icon: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>' },
-    { id: 'corretor', href: 'paper-grader.html', label: 'Corretor', icon: '<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/>' },
   ];
 
 
@@ -15,10 +13,6 @@
   function sidebarHTML(active, topicNav) {
     const nav = topicNav
       ? `<nav class="shell-nav">
-          <a class="shell-back" href="${topicNav.backHref}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-            <span>${topicNav.backLabel || 'Voltar'}</span>
-          </a>
           <div class="shell-sec">${topicNav.label || 'Tópico'}</div>
           ${topicNav.items}
         </nav>`
@@ -26,12 +20,12 @@
           <div class="shell-sec">Workspace</div>
           ${NAV.map(n => `<a href="${n.href}" class="nav-item${n.id === active ? ' active' : ''}">${icon(n.icon)}<span>${n.label}</span></a>`).join('')}
           <div class="shell-sec">Recentes</div>
-          ${MATERIALS.slice(0, 4).map(m => `<a href="${materialHref(m)}" class="nav-item">${icon('<path d="M4 4h10l6 6v10H4z"/>')}<span>${m.title}</span></a>`).join('')}
+          ${MATERIALS.filter(m => !m.soon).slice(0, 4).map(m => `<a href="${materialHref(m)}" class="nav-item">${icon('<path d="M4 4h10l6 6v10H4z"/>')}<span>${m.title}</span></a>`).join('')}
         </nav>`;
     return `
       <a href="dashboard.html" class="shell-logo">
         <svg width="22" height="22" viewBox="0 0 32 32" fill="none"><path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="#FF4D00"/><path d="M16 8C16 8 11 14 11 18C11 20.8 13.2 23 16 23C18.8 23 21 20.8 21 18C21 14 16 8 16 8Z" fill="#FF8040"/></svg>
-        <span>Studley</span>
+        <span>Prova X</span>
       </a>
       ${nav}
       <div class="shell-foot">
@@ -45,6 +39,9 @@
 
   function topbarHTML(right) {
     return `
+      <button class="shell-burger" aria-label="Menu" onclick="toggleSidebar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
       <div class="gsearch">
         <div class="gsearch-input">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#98a0b0" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
@@ -94,11 +91,23 @@
     });
   }
 
+  window.toggleSidebar = function () {
+    document.body.classList.toggle('sidebar-open');
+  };
+
   window.renderShell = function (opts) {
     opts = opts || {};
     const side = document.getElementById('shell-sidebar');
     const top = document.getElementById('shell-topbar');
     if (side) { side.className = 'shell-sidebar'; side.innerHTML = sidebarHTML(opts.active, opts.topicNav); }
     if (top) { top.className = 'shell-topbar'; top.innerHTML = topbarHTML(opts.right); mountSearch(); }
+    if (!document.getElementById('shell-scrim')) {
+      const sc = document.createElement('div');
+      sc.id = 'shell-scrim';
+      sc.className = 'shell-scrim';
+      sc.onclick = () => document.body.classList.remove('sidebar-open');
+      document.body.appendChild(sc);
+    }
+    if (side) side.addEventListener('click', e => { if (e.target.closest('a, .ws-item')) document.body.classList.remove('sidebar-open'); });
   };
 })();

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Resolver – Studley AI</title>
+  <title>Resolver – Prova X</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; background: #FAFAFA; color: #111827; height: 100vh; overflow: hidden; display: flex; }
@@ -60,12 +60,12 @@
 <aside class="sidebar">
   <a href="study-sets.html" class="sidebar-logo">
     <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="#FF4D00"/><path d="M16 8C16 8 11 14 11 18C11 20.8 13.2 23 16 23C18.8 23 21 20.8 21 18C21 14 16 8 16 8Z" fill="#FF8040"/><circle cx="16" cy="19" r="3" fill="#FFF0E8"/></svg>
-    <span class="sidebar-logo-text">Studley</span>
+    <span class="sidebar-logo-text">Prova X</span>
   </a>
   <nav style="flex:1;display:flex;flex-direction:column;gap:2px;">
     <a href="study-sets.html" class="nav-item">
       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>
-      <span>Disciplinas</span>
+      <span>Concursos</span>
     </a>
     <a href="solve.html" class="nav-item active">
       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -99,7 +99,7 @@
     <div class="msg">
       <div class="avatar ai">S</div>
       <div class="bubble ai">
-        <strong>Olá! 👋 Sou o Studley AI</strong><br><br>
+        <strong>Olá! 👋 Sou o Prova X</strong><br><br>
         Pode me fazer qualquer pergunta sobre seus estudos, me dar um exercício para resolver ou pedir ajuda com algum conceito difícil.<br><br>
         Estou aqui para ajudar! O que você quer resolver hoje?
       </div>
@@ -108,10 +108,6 @@
 
   <div class="chat-input">
     <div class="quick-prompts">
-      <button class="quick-btn" onclick="quickSend('Explique o conceito de derivada em cálculo')">📐 Derivadas em cálculo</button>
-      <button class="quick-btn" onclick="quickSend('Resolva a equação: 2x² + 5x - 3 = 0')">🔢 Equação quadrática</button>
-      <button class="quick-btn" onclick="quickSend('O que é mitose e como se diferencia da meiose?')">🔬 Mitose vs Meiose</button>
-      <button class="quick-btn" onclick="quickSend('Me explique a Lei de Ohm com exemplos práticos')">⚡ Lei de Ohm</button>
     </div>
     <div class="input-wrap">
       <textarea id="user-input" placeholder="Digite sua pergunta ou cole um exercício aqui..." rows="1"
