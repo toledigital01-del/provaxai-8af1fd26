@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hoje – Studley AI</title>
+<link rel="stylesheet" href="shell.css">
+<style>
+  .grid2 { display:grid; grid-template-columns: 1.4fr 1fr; gap:14px; margin-top:24px; }
+  @media (max-width: 860px) { .grid2 { grid-template-columns:1fr; } }
+  .panel { border:1px solid var(--line); border-radius:14px; padding:20px; background:#fff; }
+  .panel h2 { font-size:0.78rem; text-transform:uppercase; letter-spacing:.08em; color:#A6ACBB; font-weight:600; margin-bottom:14px; }
+  .big { font-size:2rem; font-weight:700; letter-spacing:-0.03em; }
+  .row { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); font-size:0.88rem; }
+  .row:last-child { border-bottom:none; }
+  .check { width:18px; height:18px; border-radius:6px; border:1.5px solid var(--line-strong); display:grid; place-items:center; font-size:0.7rem; color:var(--muted); }
+  .btn { display:inline-flex; align-items:center; gap:8px; margin-top:16px; padding:9px 16px; border-radius:9px; background:var(--text); color:#fff; text-decoration:none; font-size:0.85rem; font-weight:600; transition:opacity .15s; }
+  .btn:hover { opacity:.86; }
+  .stat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:14px; }
+  .stat { border:1px solid var(--line); border-radius:12px; padding:16px; }
+  .stat span { font-size:0.76rem; color:var(--muted); }
+</style>
+</head>
+<body>
+<aside id="shell-sidebar"></aside>
+<div class="shell-main">
+  <header id="shell-topbar"></header>
+  <div class="shell-body">
+    <div class="page">
+      <h1 class="title">Hoje</h1>
+      <p class="subtitle" id="today-date"></p>
+
+      <div class="grid2">
+        <div class="panel">
+          <h2>Continue de onde parou</h2>
+          <div style="font-size:1.15rem;font-weight:600;letter-spacing:-0.02em;">Ortografia Oficial</div>
+          <div class="subtitle" style="margin-top:4px;">Concurso PRF 2021 · Língua Portuguesa</div>
+          <div class="progress-line"><div class="track"><div class="fill" style="width:63%"></div></div><div class="pct">63%</div></div>
+          <a class="btn" id="continue-link" href="#">Continuar →</a>
+        </div>
+
+        <div class="panel">
+          <h2>Sua missão hoje</h2>
+          <div class="row"><span class="check">✓</span><span>15 Flashcards</span></div>
+          <div class="row"><span class="check">✓</span><span>20 Questões</span></div>
+          <div class="row"><span class="check">✓</span><span>Revisar Crase</span></div>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat"><span>Tempo estudado</span><div class="big">2h13</div></div>
+        <div class="stat"><span>Índice geral</span><div class="big">74%</div></div>
+        <div class="stat"><span>Streak</span><div class="big">18 <span style="font-size:0.9rem;font-weight:500;color:var(--muted)">dias</span></div></div>
+      </div>
+
+      <h2 style="font-size:0.78rem;text-transform:uppercase;letter-spacing:.08em;color:#A6ACBB;font-weight:600;margin:34px 0 0;">Seus materiais</h2>
+      <div class="card-grid" id="mat-grid"></div>
+    </div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="shell.js"></script>
+<script>
+  renderShell({ active: 'hoje' });
+  document.getElementById('today-date').textContent =
+    new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  document.getElementById('continue-link').href =
+    'workspace.html?id=prf-2021&title=' + encodeURIComponent('Concurso PRF 2021') +
+    '&type=Edital&disc=' + encodeURIComponent('Língua Portuguesa') +
+    '&topic=' + encodeURIComponent('Ortografia Oficial');
+
+  document.getElementById('mat-grid').innerHTML = MATERIALS.slice(0, 6).map(m => `
+    <a class="card" href="${materialHref(m)}">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <h3>${m.title}</h3><span class="tag">${m.type}</span>
+      </div>
+      <div class="cmeta">${m.disc} disciplinas · ${m.top} tópicos</div>
+      <div class="progress-line"><div class="track"><div class="fill" style="width:${m.pct}%"></div></div><div class="pct">${m.pct}%</div></div>
+    </a>`).join('');
+</script>
+</body>
+</html>
