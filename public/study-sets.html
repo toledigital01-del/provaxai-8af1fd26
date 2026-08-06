@@ -236,6 +236,7 @@
   </div>
 </div>
 
+<script src="data.js"></script>
 <script>
 const MATERIALS = [
   { id:'prf-2021', title:'Concurso PRF 2021', type:'Edital', folder:'Concursos', disc:15, top:96, pag:214, envio:'12/03/2026', acesso:'hoje', tempo:'14h32', pct:18 },
@@ -249,9 +250,16 @@ const MATERIALS = [
   { id:'lei9503', title:'Lei 9.503/97', type:'Legislação', folder:'Direito', disc:3, top:21, pag:110, envio:'05/01/2026', acesso:'há 1 mês', tempo:'2h30', pct:15 },
   { id:'lei8112', title:'Lei 8.112/90', type:'Legislação', folder:'Concursos', disc:2, top:16, pag:64, envio:'02/01/2026', acesso:'há 1 mês', tempo:'1h55', pct:8 },
 ];
+// Regra de roteamento: >1 disciplina abre a grid de disciplinas; 1 disciplina vai direto aos tópicos
+function materialHref(m) {
+  const base = `id=${encodeURIComponent(m.id)}&type=${encodeURIComponent(m.type)}&title=${encodeURIComponent(m.title)}`;
+  const discs = disciplinasDe(m.id);
+  if (discs.length > 1) return `disciplinas.html?${base}`;
+  return `material.html?${base}&disc=${encodeURIComponent(discs[0])}`;
+}
 const SHORTCUTS = ['Resumos','Flashcards','Questões','Questões Comentadas','Mapas Mentais','Anotações','Revisões','IA','Cronograma'];
 document.getElementById('sets-grid').innerHTML = MATERIALS.map(m => `
-  <a class="set-card" href="material.html?id=${m.id}&type=${encodeURIComponent(m.type)}&title=${encodeURIComponent(m.title)}">
+  <a class="set-card" href="${materialHref(m)}">
     <div class="set-card-head"><h3>${m.title}</h3><span class="type-badge">${m.type}</span></div>
     <div class="meta-grid">
       <div class="meta-item">Disciplinas<b>${m.disc}</b></div>
