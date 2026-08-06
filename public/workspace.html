@@ -6,8 +6,17 @@
 <title>Workspace – Prova X</title>
 <link rel="stylesheet" href="shell.css">
 <style>
-  .ws { display:grid; grid-template-columns: minmax(0,1fr) 268px; height:100%; }
-  @media (max-width: 1100px) { .ws { grid-template-columns: minmax(0,1fr); } .ws-right { display:none; } }
+  .ws { display:grid; grid-template-columns: minmax(0,1fr) 340px; height:100%; }
+  @media (max-width: 1200px) { .ws { grid-template-columns: minmax(0,1fr); } .ws-right { display:none; } }
+  .fixa { margin-top:26px; padding-top:18px; border-top:1px solid var(--line); }
+  .fixa .lbl { font-size:0.95rem; font-weight:600; }
+  .fixa .btns { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+  .fixa .btns button { flex:1 1 220px; border-radius:10px; padding:11px 14px; font-size:0.86rem; font-weight:600; cursor:pointer; font-family:inherit; }
+  .btn-primary { background:#2563EB; color:#fff; border:1px solid #2563EB; }
+  .btn-secondary { background:#fff; color:var(--text); border:1px solid var(--line-strong); }
+  .scope-pick { display:flex; align-items:center; gap:8px; margin-top:16px; flex-wrap:wrap; }
+  .scope-pick select { border:1px solid var(--line-strong); border-radius:9px; padding:8px 10px; font-family:inherit; font-size:0.85rem; background:#fff; }
+
 
 
   .ws-item { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; font-size:0.86rem; color:#4A5162; cursor:pointer; transition:background .14s, color .14s; }
