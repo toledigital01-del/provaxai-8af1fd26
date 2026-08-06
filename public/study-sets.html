@@ -246,7 +246,7 @@ document.getElementById('sets-grid').innerHTML = MATERIALS.map(m => `
     <div class="set-card-foot">
       <div class="lbl">Índice de domínio</div>
       <div class="progress-line">
-        <div class="track"><div class="fill" style="width:${m.pct}%"></div></div>
+        <div class="track"><div class="fill ${fillClass(m.pct)}" style="width:${m.pct}%"></div></div>
         <div class="pct">${m.pct}%</div>
       </div>
     </div>
