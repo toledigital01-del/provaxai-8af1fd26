@@ -22,12 +22,29 @@
     return PX;
   }
 
+  /* modo convidado: acesso liberado sem senha (temporário) */
+  PX.isGuest = function () {
+    try { return localStorage.getItem('px_guest') === '1'; } catch (e) { return false; }
+  };
+  PX.enterAsGuest = function () {
+    try { localStorage.setItem('px_guest', '1'); } catch (e) {}
+    applyGuest();
+  };
+  function applyGuest() {
+    if (PX.user) return false;
+    if (!PX.isGuest()) return false;
+    PX.user = { id: 'guest', email: 'convidado@provax.app', guest: true };
+    PX.profile = { full_name: 'Convidado' };
+    PX.roles = [];
+    return true;
+  }
+
   async function hydrate(session) {
     PX.session = session || null;
     PX.user = session ? session.user : null;
     PX.profile = null;
     PX.roles = [];
-    if (!PX.user) return;
+    if (!PX.user) { applyGuest(); return; }
     const [{ data: prof }, { data: roles }] = await Promise.all([
       PX.sb.from('profiles').select('*').eq('id', PX.user.id).maybeSingle(),
       PX.sb.from('user_roles').select('role').eq('user_id', PX.user.id),
@@ -37,6 +54,7 @@
   }
 
   PX.ready = boot();
+
 
   /* ---------- Autenticação ---------- */
   PX.signUp = async function (email, password, fullName) {
