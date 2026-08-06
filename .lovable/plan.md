@@ -10,7 +10,7 @@
    - **URL do Webhook**: (eu forneço a URL definitiva quando o app for publicado — formato `https://SEU-APP.lovable.app/api/public/hotmart/webhook`)
    - **Versão**: 2.0.0 (a mais recente disponível)
    - **Produto**: o produto do Prova X
-   - **Eventos**: marque **Compra aprovada**, **Compra completa**, **Compra reembolsada**, **Compra cancelada**, **Chargeback**, **Assinatura cancelada** e **Reativação de assinatura**.
+   - **Eventos**: marque os que existirem na sua lista — **Compra aprovada**, **Compra completa**, **Compra reembolsada**, **Compra cancelada**, **Chargeback**, **Compra expirada** e **Assinatura cancelada**. "Reativação de assinatura" só aparece em contas com produto de assinatura/recorrência configurado; se não estiver na lista, ignore — não é obrigatório e o app trata a reativação como uma nova compra aprovada.
 5. Salve. A Hotmart mostra na tela (e no e-mail de confirmação) o token chamado **hottok** — é uma sequência longa de letras e números.
 6. Copie esse valor. Quando eu pedir, você cola no formulário seguro do Lovable (o valor fica guardado como segredo, nunca aparece no código).
 
