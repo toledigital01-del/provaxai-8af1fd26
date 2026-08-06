@@ -2,7 +2,10 @@
 (function () {
   const NAV = [
     { id: 'inicio', href: 'home.html', label: 'Início', icon: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>' },
+    { id: 'cronograma', href: 'cronograma.html', label: 'Cronograma', icon: '<rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/>' },
+    { id: 'estatisticas', href: 'dashboard.html', label: 'Estatísticas', icon: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>' },
     { id: 'resolver', href: 'resolver.html', label: 'Resolver', icon: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/>' },
+
   ];
 
 
