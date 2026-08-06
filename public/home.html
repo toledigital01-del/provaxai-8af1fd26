@@ -415,21 +415,26 @@ function renderMeu() {
   const box = document.getElementById('meu-grid');
 
   const prf = materialById('prf-2021');
-  const cursoCard = (pastaAtiva === 'all' && prf) ? `<div class="mcard area-transito">
-      <a href="${materialHref(prf)}" style="text-decoration:none;color:inherit;display:block;">
-        <h3>Concurso PRF</h3>
-        <div class="cmeta">${prf.disc} disciplinas · curso completo</div>
-        <div class="progress-line"><div class="track"><div class="fill ${fillClass(prf.pct)}" style="width:${prf.pct}%"></div></div><div class="pct">${prf.pct}%</div></div>
+  const pbase = prf ? `id=${encodeURIComponent(prf.id)}&type=${encodeURIComponent(prf.type)}&title=${encodeURIComponent(prf.title)}` : '';
+  const cursoCards = (pastaAtiva === 'all' && prf) ? disciplinasDe(prf.id).map(nome => {
+    const info = disciplinaInfo(nome);
+    return `<div class="mcard ${areaClass(nome)}">
+      <a href="disciplina.html?${pbase}&disc=${encodeURIComponent(nome)}" style="text-decoration:none;color:inherit;display:block;">
+        <h3>${nome}</h3>
+        <div class="cmeta">${info.topics.length} tópicos · curso PRF</div>
+        <div class="progress-line"><div class="track"><div class="fill ${fillClass(info.pct)}" style="width:${info.pct}%"></div></div><div class="pct">${info.pct}%</div></div>
       </a>
-    </div>` : '';
+    </div>`;
+  }).join('') : '';
 
-  if (!list.length && !cursoCard) {
+  if (!list.length && !cursoCards) {
     box.innerHTML = '<div class="empty-box">' + (pastaAtiva === 'all'
       ? 'Você ainda não criou disciplinas próprias. Envie um PDF, cole um link ou crie manualmente — o material vira aulas, flashcards, questões e revisões automaticamente.'
       : 'Nenhuma disciplina nesta pasta ainda.') + '</div>';
     return;
   }
-  box.innerHTML = '<div class="grid-cards">' + cursoCard + list.map(d => {
+  box.innerHTML = '<div class="grid-cards">' + cursoCards + list.map(d => {
+
     const info = disciplinaInfo(d.name);
     return `<div class="mcard ${areaClass(d.name)}">
       <button class="del" title="Remover" onclick="removeDisc('${d.name.replace(/'/g, "\\'")}')">✕</button>
