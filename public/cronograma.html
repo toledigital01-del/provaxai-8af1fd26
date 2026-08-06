@@ -3,25 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cronograma – Prova X</title>
+<title>Cronograma Inteligente – Prova X</title>
 <link rel="stylesheet" href="shell.css">
 <style>
   .cr-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap; }
   .btn-primary { background:#2563EB; color:#fff; border:1px solid #2563EB; border-radius:10px; padding:9px 14px; font-size:0.85rem; font-weight:600; cursor:pointer; font-family:inherit; }
   .btn-secondary { background:#fff; color:var(--text); border:1px solid var(--line-strong); border-radius:10px; padding:9px 14px; font-size:0.85rem; font-weight:600; cursor:pointer; font-family:inherit; }
   .box { border:1px solid var(--line); border-radius:12px; background:#fff; padding:18px; margin-top:18px; }
-  .blk { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:13px 0; border-bottom:1px solid var(--line); }
-  .blk:last-child { border-bottom:none; }
-  .blk .l { min-width:0; }
-  .blk .t { font-size:0.9rem; font-weight:600; }
-  .blk .s { font-size:0.78rem; color:var(--muted); margin-top:2px; }
-  .blk .r { font-size:0.8rem; color:var(--muted); white-space:nowrap; }
+  .toolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-top:20px; }
+  .seg { display:inline-flex; background:#F1F3F7; border-radius:10px; padding:3px; }
+  .seg button { border:none; background:transparent; font-family:inherit; font-size:0.82rem; font-weight:600; color:var(--muted); padding:7px 14px; border-radius:8px; cursor:pointer; }
+  .seg button.on { background:#fff; color:#2563EB; box-shadow:0 1px 2px rgba(15,23,42,.10); }
+  .nav-week { display:flex; align-items:center; gap:8px; }
+  .nav-week button { width:30px; height:30px; border-radius:8px; border:1px solid var(--line-strong); background:#fff; cursor:pointer; font-family:inherit; }
+  .nav-week b { font-size:0.88rem; }
+
+  .week { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:10px; margin-top:16px; }
+  .day { border:1px solid var(--line); border-radius:12px; background:#fff; padding:10px; min-height:150px; display:flex; flex-direction:column; gap:7px; }
+  .day.today { border-color:#2563EB; box-shadow:0 0 0 2px rgba(37,99,235,.12); }
+  .day.rest { background:#FAFBFC; }
+  .day .dh { display:flex; align-items:baseline; justify-content:space-between; }
+  .day .dn { font-size:0.7rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:700; }
+  .day .dd { font-size:0.95rem; font-weight:700; }
+  .task { display:block; text-decoration:none; color:inherit; border:1px solid var(--line); border-left-width:3px; border-radius:9px; padding:7px 8px; background:#fff; }
+  .task:hover { background:#F7F8FA; }
+  .task .td { font-size:0.74rem; font-weight:700; line-height:1.2; }
+  .task .tt { font-size:0.72rem; color:var(--muted); margin-top:2px; line-height:1.25; }
+  .task .tm { font-size:0.68rem; color:#2563EB; font-weight:700; margin-top:3px; }
+  .empty { font-size:0.74rem; color:var(--muted); }
+
+  .month { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:6px; margin-top:16px; }
+  .mhd { font-size:0.68rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:700; text-align:center; padding-bottom:4px; }
+  .mday { border:1px solid var(--line); border-radius:10px; background:#fff; min-height:92px; padding:7px; display:flex; flex-direction:column; gap:4px; }
+  .mday.out { opacity:.4; }
+  .mday.today { border-color:#2563EB; box-shadow:0 0 0 2px rgba(37,99,235,.12); }
+  .mday .n { font-size:0.76rem; font-weight:700; }
+  .pill { font-size:0.64rem; padding:2px 5px; border-radius:5px; background:#EFF4FF; color:#1D4ED8; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pill.rest { background:#F1F5F9; color:#64748B; }
+
+  .legend { display:flex; gap:14px; flex-wrap:wrap; margin-top:14px; font-size:0.75rem; color:var(--muted); }
+  .legend span i { display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:5px; }
+
   .modal { position:fixed; inset:0; background:rgba(15,23,42,.35); display:none; align-items:center; justify-content:center; padding:20px; z-index:60; }
   .modal.open { display:flex; }
   .modal .card2 { background:#fff; border-radius:14px; padding:22px; width:100%; max-width:400px; }
   .modal label { display:block; font-size:0.8rem; color:var(--muted); margin:12px 0 5px; }
-  .modal input { width:100%; border:1px solid var(--line-strong); border-radius:9px; padding:9px 11px; font-family:inherit; font-size:0.88rem; outline:none; }
+  .modal input, .modal select { width:100%; border:1px solid var(--line-strong); border-radius:9px; padding:9px 11px; font-family:inherit; font-size:0.88rem; outline:none; background:#fff; }
   .m-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:18px; }
+
+  @media (max-width: 900px) {
+    .week { grid-template-columns:1fr; }
+    .day { min-height:auto; }
+    .month { gap:4px; }
+    .mday { min-height:70px; }
+  }
 </style>
 </head>
 <body>
@@ -46,8 +81,26 @@
         <div class="track" style="margin-top:10px;"><div class="fill" id="meta-fill"></div></div>
       </div>
 
-      <div class="sec-lbl" style="margin-top:26px;">Blocos de estudo de hoje</div>
-      <div class="box" style="padding:4px 18px;" id="blocos"></div>
+      <div class="toolbar">
+        <div class="seg">
+          <button id="v-semana" class="on">Semana</button>
+          <button id="v-mes">Mês</button>
+        </div>
+        <div class="nav-week">
+          <button id="prev">‹</button>
+          <b id="range"></b>
+          <button id="next">›</button>
+          <button id="hoje" style="width:auto;padding:0 10px;font-size:0.8rem;font-weight:600;">Hoje</button>
+        </div>
+      </div>
+
+      <div id="view"></div>
+
+      <div class="legend">
+        <span><i style="background:#2563EB"></i>Alta incidência na PRF</span>
+        <span><i style="background:#F59E0B"></i>Ponto fraco (domínio baixo)</span>
+        <span><i style="background:#10B981"></i>Manutenção / revisão</span>
+      </div>
     </div>
   </div>
 </div>
@@ -59,6 +112,12 @@
     <input type="date" id="f-data">
     <label for="f-horas">Horas disponíveis por dia</label>
     <input type="number" id="f-horas" min="1" max="16" step="0.5">
+    <label for="f-desc">Dia de descanso</label>
+    <select id="f-desc">
+      <option value="-1">Nenhum</option>
+      <option value="0">Domingo</option>
+      <option value="6">Sábado</option>
+    </select>
     <div class="m-actions">
       <button class="btn-secondary" id="m-cancel">Cancelar</button>
       <button class="btn-primary" id="m-save">Salvar plano</button>
@@ -72,61 +131,172 @@
 renderShell({ active: 'cronograma' });
 
 const KEY = 'plano:estudos';
-const plano = Object.assign({ data: '', horas: 3 }, JSON.parse(localStorage.getItem(KEY) || '{}'));
+const plano = Object.assign({ data: '', horas: 3, descanso: 0 }, JSON.parse(localStorage.getItem(KEY) || '{}'));
 
 const mat = MATERIALS.find(m => !m.soon) || MATERIALS[0];
 const discs = disciplinasDe(mat.id);
+const base = `id=${encodeURIComponent(mat.id)}&type=${encodeURIComponent(mat.type)}&title=${encodeURIComponent(mat.title)}`;
 
-/* tópicos mais fracos primeiro: peso do edital (nº de tópicos) + índice de domínio baixo */
-function blocos() {
+const DIAS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+/* ---- fila adaptativa: incidência PRF + peso do edital + fraqueza/dificuldade ---- */
+const FILA = (() => {
   const all = [];
-  discs.forEach(d => {
-    const peso = (TOPICS[d] || []).length;
-    (TOPICS[d] || []).forEach(t => all.push({ d, t, prog: progressOf(t), peso }));
-  });
-  all.sort((a, b) => (a.prog - b.prog) || (b.peso - a.peso));
-  const horas = Number(plano.horas) || 3;
-  const n = Math.max(2, Math.min(6, Math.round(horas / 0.75)));
-  const min = Math.max(25, Math.round((horas * 60) / n / 5) * 5);
-  return all.slice(0, n).map((b, i) => ({ ...b, i: i + 1, min }));
+  discs.forEach(d => (TOPICS[d] || []).forEach(t => {
+    const prog = progressOf(t);
+    all.push({ d, t, prog, pri: prioridadeTopico(d, t), inc: pesoDe(d).incidencia });
+  }));
+  all.sort((a, b) => b.pri - a.pri);
+  return all;
+})();
+
+function corDoBloco(b) {
+  if (b.prog < 40) return '#F59E0B';
+  if (b.inc >= 80) return '#2563EB';
+  return '#10B981';
 }
 
+function keyOf(dt) { return dt.toISOString().slice(0, 10); }
+function isRest(dt) { return dt.getDay() === Number(plano.descanso); }
+function sameDay(a, b) { return keyOf(a) === keyOf(b); }
+
+/* dias de estudo desde uma âncora fixa → distribuição estável e adaptativa */
+const ANCORA = new Date(new Date().getFullYear(), 0, 1);
+function indiceDoDia(dt) {
+  let n = 0;
+  const c = new Date(ANCORA);
+  while (c < dt) { if (!isRest(c)) n++; c.setDate(c.getDate() + 1); }
+  return n;
+}
+
+function blocosPorDia() {
+  const horas = Number(plano.horas) || 3;
+  return Math.max(2, Math.min(6, Math.round(horas / 0.75)));
+}
+function minutosBloco() {
+  const horas = Number(plano.horas) || 3;
+  const n = blocosPorDia();
+  return Math.max(25, Math.round((horas * 60) / n / 5) * 5);
+}
+
+function agendaDe(dt) {
+  if (isRest(dt)) return [];
+  const n = blocosPorDia(), min = minutosBloco();
+  const start = (indiceDoDia(dt) * n) % FILA.length;
+  const out = [];
+  for (let i = 0; i < n; i++) out.push({ ...FILA[(start + i) % FILA.length], min, i: i + 1 });
+  return out;
+}
+
+function hrefBloco(b) {
+  return `workspace.html?${base}&disc=${encodeURIComponent(b.d)}&topic=${encodeURIComponent(b.t)}&tab=tutor`;
+}
+
+/* ---------------- header ---------------- */
 function diasRestantes() {
   if (!plano.data) return null;
   const diff = Math.ceil((new Date(plano.data + 'T00:00:00') - new Date()) / 86400000);
   return isNaN(diff) ? null : diff;
 }
 
-function render() {
+function renderHeader() {
   const horas = Number(plano.horas) || 3;
   const dias = diasRestantes();
   document.getElementById('meta-sub').textContent =
-    `${mat.title}${dias !== null ? ` · prova em ${dias} dia${dias === 1 ? '' : 's'}` : ' · defina a data da prova em Ajustar Plano'}`;
+    `${mat.title}${dias !== null ? ` · prova em ${dias} dia${dias === 1 ? '' : 's'}` : ' · defina a data da prova em Ajustar Plano'} · distribuição adaptativa por peso do edital, incidência e seu desempenho`;
   document.getElementById('meta-hoje').textContent = `Meta de Hoje: ${horas}h líquidas`;
-
   const feito = Math.min(horas, Math.round(horas * 0.45 * 10) / 10);
   const pct = Math.round((feito / horas) * 100);
   document.getElementById('meta-pct').textContent = `${feito}h / ${horas}h`;
   const fill = document.getElementById('meta-fill');
   fill.className = 'fill ' + fillClass(pct);
   fill.style.width = pct + '%';
+}
 
-  const base = `id=${encodeURIComponent(mat.id)}&type=${encodeURIComponent(mat.type)}&title=${encodeURIComponent(mat.title)}`;
-  document.getElementById('blocos').innerHTML = blocos().map(b => `
-    <a class="blk" style="text-decoration:none;color:inherit;" href="workspace.html?${base}&disc=${encodeURIComponent(b.d)}&topic=${encodeURIComponent(b.t)}&tab=tutor">
-      <span class="l">
-        <span class="t">Bloco ${b.i}: ${b.d}</span>
-        <span class="s">${dotHTML(statusOf(b.t))} ${b.t} · domínio ${b.prog}%</span>
-      </span>
-      <span class="r">${b.min} min</span>
-    </a>`).join('');
+/* ---------------- views ---------------- */
+let modo = 'semana';
+let cursor = new Date();
+
+function startOfWeek(dt) {
+  const d = new Date(dt); d.setHours(0,0,0,0);
+  d.setDate(d.getDate() - d.getDay());
+  return d;
+}
+
+function renderSemana() {
+  const ini = startOfWeek(cursor);
+  const hoje = new Date();
+  const fim = new Date(ini); fim.setDate(fim.getDate() + 6);
+  document.getElementById('range').textContent =
+    `${ini.getDate()} ${MESES[ini.getMonth()].slice(0,3)} – ${fim.getDate()} ${MESES[fim.getMonth()].slice(0,3)} ${fim.getFullYear()}`;
+
+  let html = '<div class="week">';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(ini); d.setDate(ini.getDate() + i);
+    const rest = isRest(d);
+    const tasks = agendaDe(d);
+    html += `<div class="day${sameDay(d, hoje) ? ' today' : ''}${rest ? ' rest' : ''}">
+      <div class="dh"><span class="dn">${DIAS[d.getDay()]}</span><span class="dd">${d.getDate()}</span></div>
+      ${rest ? '<span class="empty">Descanso</span>' :
+        tasks.map(b => `<a class="task" style="border-left-color:${corDoBloco(b)}" href="${hrefBloco(b)}">
+          <span class="td">${b.d}</span>
+          <span class="tt">${dotHTML(statusOf(b.t))} ${b.t}</span>
+          <span class="tm">${b.min} min · domínio ${b.prog}%</span>
+        </a>`).join('')}
+    </div>`;
+  }
+  return html + '</div>';
+}
+
+function renderMes() {
+  const y = cursor.getFullYear(), m = cursor.getMonth();
+  document.getElementById('range').textContent = `${MESES[m]} ${y}`;
+  const first = new Date(y, m, 1);
+  const start = startOfWeek(first);
+  const hoje = new Date();
+
+  let html = '<div class="month">' + DIAS.map(d => `<div class="mhd">${d}</div>`).join('');
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    const out = d.getMonth() !== m;
+    const rest = isRest(d);
+    const tasks = agendaDe(d);
+    html += `<div class="mday${out ? ' out' : ''}${sameDay(d, hoje) ? ' today' : ''}">
+      <span class="n">${d.getDate()}</span>
+      ${rest ? '<span class="pill rest">Descanso</span>'
+        : tasks.slice(0, 2).map(b => `<span class="pill" title="${b.d} · ${b.t}">${b.d}</span>`).join('')
+          + (tasks.length > 2 ? `<span class="pill rest">+${tasks.length - 2}</span>` : '')}
+    </div>`;
+  }
+  return html + '</div>';
+}
+
+function render() {
+  renderHeader();
+  document.getElementById('view').innerHTML = modo === 'semana' ? renderSemana() : renderMes();
+  document.getElementById('v-semana').classList.toggle('on', modo === 'semana');
+  document.getElementById('v-mes').classList.toggle('on', modo === 'mes');
 }
 render();
+
+document.getElementById('v-semana').onclick = () => { modo = 'semana'; render(); };
+document.getElementById('v-mes').onclick = () => { modo = 'mes'; render(); };
+document.getElementById('prev').onclick = () => {
+  if (modo === 'semana') cursor.setDate(cursor.getDate() - 7); else cursor.setMonth(cursor.getMonth() - 1);
+  render();
+};
+document.getElementById('next').onclick = () => {
+  if (modo === 'semana') cursor.setDate(cursor.getDate() + 7); else cursor.setMonth(cursor.getMonth() + 1);
+  render();
+};
+document.getElementById('hoje').onclick = () => { cursor = new Date(); render(); };
 
 const modal = document.getElementById('modal');
 document.getElementById('open-plan').onclick = () => {
   document.getElementById('f-data').value = plano.data || '';
   document.getElementById('f-horas').value = plano.horas || 3;
+  document.getElementById('f-desc').value = String(plano.descanso ?? 0);
   modal.classList.add('open');
 };
 document.getElementById('m-cancel').onclick = () => modal.classList.remove('open');
@@ -134,6 +304,7 @@ modal.onclick = e => { if (e.target === modal) modal.classList.remove('open'); }
 document.getElementById('m-save').onclick = () => {
   plano.data = document.getElementById('f-data').value;
   plano.horas = Number(document.getElementById('f-horas').value) || 3;
+  plano.descanso = Number(document.getElementById('f-desc').value);
   localStorage.setItem(KEY, JSON.stringify(plano));
   modal.classList.remove('open');
   render();
