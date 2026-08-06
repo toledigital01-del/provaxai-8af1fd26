@@ -246,19 +246,30 @@ function removerPasta(n) {
   renderPastas(); renderMeu();
 }
 function setPasta(p) { pastaAtiva = p; renderPastas(); renderMeu(); }
+const FOLD_COLORS = ['#22C55E', '#7C3AED', '#22C55E', '#F59E0B', '#3B82F6', '#EC4899'];
+function toggleFolders() {
+  const el = document.getElementById('fold-list');
+  const btn = document.getElementById('fold-toggle');
+  const hidden = el.style.display === 'none';
+  el.style.display = hidden ? '' : 'none';
+  btn.innerHTML = hidden ? '&raquo;' : '&laquo;';
+}
 function renderPastas() {
   const list = pastasGet(), mats = meuMaterialGet();
   const ic = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
+  const plural = n => n + ' conjunto' + (n === 1 ? '' : 's') + ' de estudo';
   document.getElementById('fold-list').innerHTML =
-    `<button class="fold ${pastaAtiva==='all'?'active':''}" onclick="setPasta('all')">${ic}<span><b>Todas as disciplinas</b><span>${mats.length} disciplina(s)</span></span></button>` +
-    list.map(p => {
+    `<button class="fold ${pastaAtiva==='all'?'active':''}" style="--fold-c:#0F172A" onclick="setPasta('all')">${ic}<span><b>Todos os Conjuntos de Estudo</b><span class="sub">${plural(mats.length)} total</span></span></button>` +
+    list.map((p, i) => {
       const n = mats.filter(m => m.pasta === p).length;
-      return `<button class="fold ${pastaAtiva===p?'active':''}" onclick="setPasta('${p.replace(/'/g,"\\'")}')">${ic}<span><b>${p}</b><span>${n} disciplina(s)</span></span>
+      const c = FOLD_COLORS[i % FOLD_COLORS.length];
+      return `<button class="fold ${pastaAtiva===p?'active':''}" style="--fold-c:${c}" onclick="setPasta('${p.replace(/'/g,"\\'")}')">${ic}<span><b>${p}</b><span class="sub">${plural(n)}</span></span>
         <span class="fdel" onclick="event.stopPropagation();removerPasta('${p.replace(/'/g,"\\'")}')">✕</span></button>`;
     }).join('');
   const sel = document.getElementById('in-pasta');
   sel.innerHTML = '<option value="">Sem pasta</option>' + list.map(p => `<option value="${p}">${p}</option>`).join('');
 }
+
 
 /* ---------- Meu material ---------- */
 const mbase = `id=${encodeURIComponent(MEU_ID)}&type=${encodeURIComponent('Pessoal')}&title=${encodeURIComponent('Meu Material')}`;
