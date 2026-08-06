@@ -369,3 +369,167 @@ body.dark .badge.done { background:#172554 !important; color:#93C5FD !important;
   .kpis { grid-template-columns: 1fr !important; }
   .topic-right { width: 88px; }
 }
+
+/* ==========================================================================
+   Acabamento premium — só refinamento (sombras, raios, ritmo, microinterações)
+   Nenhuma cor de marca, hierarquia ou posição é alterada aqui.
+   ========================================================================== */
+:root {
+  --ease: cubic-bezier(.2,.8,.2,1);
+  --dur: .18s;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --sh-1: 0 1px 1px rgba(15,23,42,.04), 0 1px 2px rgba(15,23,42,.04);
+  --sh-2: 0 1px 2px rgba(15,23,42,.05), 0 6px 16px -6px rgba(15,23,42,.10);
+  --sh-3: 0 2px 4px rgba(15,23,42,.05), 0 16px 40px -12px rgba(15,23,42,.16);
+  --sh-4: 0 8px 12px -8px rgba(15,23,42,.14), 0 30px 70px -20px rgba(15,23,42,.24);
+}
+
+body {
+  font-feature-settings: "cv02","cv03","cv04","ss01";
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* --- Tipografia: hierarquia mais firme, números com aspecto de painel --- */
+h1.title, .hero h1 { letter-spacing: -.032em; line-height: 1.12; }
+h2, h3 { letter-spacing: -.018em; line-height: 1.25; }
+.subtitle, .cmeta, .muted, .gs { line-height: 1.55; }
+.pct, .kpi b, .kpi strong, .kpi .v, .stat b, .stat .v, .big, .num, .kn {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em;
+}
+
+/* --- Superfícies: raio e sombra em camadas --- */
+.card, .set-card, .mcard, .fold, .kpi, .chap, .box, .box2, .panel, .stat,
+.pcard, .course, .action, .action-box, .day, .mday, .task, .cont, .card2,
+.file-row, .fc, .answer, .ask, .rec-area, .dashed {
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-1);
+  transition: border-color var(--dur) var(--ease),
+              box-shadow var(--dur) var(--ease),
+              transform var(--dur) var(--ease),
+              background-color var(--dur) var(--ease);
+}
+.card, .set-card, .mcard, .fold, .course, .pcard { border-radius: var(--r-lg); }
+
+.card:hover, .set-card:hover, .mcard:hover, .fold:hover,
+.course:hover, .action:hover, .action-box:hover, .day:hover, .task:hover {
+  box-shadow: var(--sh-2);
+  transform: translateY(-2px);
+}
+.card:active, .set-card:active, .mcard:active, .action:active { transform: translateY(0); }
+.set-card.soon:hover { transform: none; box-shadow: var(--sh-1); }
+
+/* --- Barras laterais e topo: separação mais delicada --- */
+.shell-sidebar { box-shadow: inset -1px 0 0 rgba(15,23,42,.03); }
+.shell-topbar { box-shadow: 0 1px 0 rgba(15,23,42,.03); backdrop-filter: saturate(180%) blur(10px); }
+.shell-logo span { letter-spacing: -.028em; }
+.shell-sec { letter-spacing: .1em; }
+.nav-item, .ws-item, .shell-back {
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.nav-item:active, .ws-item:active { transform: scale(.985); }
+.nav-item svg, .ws-item .ic svg { transition: opacity var(--dur) var(--ease); }
+.nav-item:hover svg, .nav-item.active svg, .ws-item:hover .ic svg, .ws-item.active .ic svg { opacity: 1; }
+.avatar { box-shadow: 0 1px 2px rgba(15,23,42,.18), inset 0 1px 0 rgba(255,255,255,.24); }
+
+/* --- Busca e resultados --- */
+.gsearch-input { border-radius: var(--r-sm); box-shadow: var(--sh-1); }
+.gresults { border-radius: var(--r-md); box-shadow: var(--sh-3); }
+.gres { transition: background-color var(--dur) var(--ease); }
+
+/* --- Botões e controles: toque tátil, sem trocar cor --- */
+button, .btn, .btn-ghost, .btn-secondary, .note-btn, .note-save,
+.page-back, .theme-toggle, .shell-burger, .pill, .chip, .seg button, .tabs button, .gbtn, .ce-btn {
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+              color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+button:not(:disabled):active, .btn:active, .page-back:active,
+.theme-toggle:active, .shell-burger:active, .chip:active { transform: scale(.97); }
+.page-back, .theme-toggle, .shell-burger { box-shadow: var(--sh-1); }
+.page-back:hover, .theme-toggle:hover, .shell-burger:hover { box-shadow: var(--sh-2); }
+button:disabled { opacity: .55; cursor: not-allowed; }
+
+/* --- Foco visível e elegante (acessibilidade) --- */
+a:focus-visible, button:focus-visible, input:focus-visible,
+textarea:focus-visible, select:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid rgba(37,99,235,.55);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+body.dark a:focus-visible, body.dark button:focus-visible, body.dark input:focus-visible,
+body.dark textarea:focus-visible, body.dark select:focus-visible {
+  outline-color: rgba(96,165,250,.65);
+}
+
+/* --- Progresso e marcações com movimento suave --- */
+.track { box-shadow: inset 0 1px 1px rgba(15,23,42,.05); }
+.fill { transition: width .55s var(--ease); }
+input[type="checkbox"] { accent-color: #2563EB; cursor: pointer; transition: transform var(--dur) var(--ease); }
+input[type="checkbox"]:active { transform: scale(.9); }
+
+/* --- Listas de tópicos: leitura mais confortável --- */
+.topic-row, .trow { transition: background-color var(--dur) var(--ease), padding-left var(--dur) var(--ease); }
+.topic-row:hover, .trow:hover { padding-left: 14px; }
+.topic-list { border-radius: var(--r-md); overflow: hidden; }
+
+/* --- Divisórias mais discretas --- */
+hr, .topic-row, .topic-list, .trow { border-color: rgba(15,23,42,.07); }
+body.dark hr, body.dark .topic-row, body.dark .topic-list, body.dark .trow { border-color: rgba(255,255,255,.07); }
+
+/* --- Modais e sobreposições --- */
+.modal, .fmenu, .popover, .sheet {
+  border-radius: var(--r-xl);
+  box-shadow: var(--sh-4);
+  animation: pxRise .2s var(--ease) both;
+}
+.modal-scrim, .scrim, .overlay { backdrop-filter: blur(3px) saturate(120%); animation: pxFade .18s var(--ease) both; }
+@keyframes pxRise { from { opacity: 0; transform: translateY(8px) scale(.985); } to { opacity: 1; transform: none; } }
+@keyframes pxFade { from { opacity: 0; } to { opacity: 1; } }
+
+/* --- Entrada suave do conteúdo --- */
+.page, .ws-center { animation: pxFade .22s var(--ease) both; }
+
+/* --- Scrollbar discreta --- */
+* { scrollbar-width: thin; scrollbar-color: rgba(15,23,42,.16) transparent; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(15,23,42,.14); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(15,23,42,.24); }
+body.dark * { scrollbar-color: rgba(255,255,255,.16) transparent; }
+body.dark ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.14); }
+body.dark ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.24); }
+
+/* --- Seleção de texto --- */
+::selection { background: rgba(37,99,235,.16); }
+body.dark ::selection { background: rgba(96,165,250,.26); }
+
+/* --- Imagens/capas com acabamento --- */
+img.cover, .course img, .set-card img, .mcard img { border-radius: var(--r-md); }
+
+/* --- Modo escuro: profundidade vem de borda + brilho interno, não de sombra --- */
+body.dark .card, body.dark .set-card, body.dark .mcard, body.dark .fold, body.dark .kpi,
+body.dark .chap, body.dark .box, body.dark .box2, body.dark .panel, body.dark .stat,
+body.dark .pcard, body.dark .course, body.dark .action, body.dark .action-box,
+body.dark .day, body.dark .task, body.dark .cont, body.dark .card2 {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 1px 2px rgba(0,0,0,.35);
+}
+body.dark .card:hover, body.dark .set-card:hover, body.dark .mcard:hover,
+body.dark .fold:hover, body.dark .course:hover, body.dark .day:hover, body.dark .task:hover {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 12px 28px -12px rgba(0,0,0,.7);
+}
+body.dark .gresults, body.dark .modal, body.dark .fmenu { box-shadow: 0 24px 60px -16px rgba(0,0,0,.75); }
+body.dark .track { box-shadow: inset 0 1px 1px rgba(0,0,0,.4); }
+
+/* --- Respeita quem desativou animações --- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .card:hover, .set-card:hover, .mcard:hover, .topic-row:hover { transform: none; padding-left: inherit; }
+}
