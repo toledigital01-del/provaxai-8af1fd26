@@ -65,8 +65,7 @@ const wsBase = `workspace.html?${base}&disc=${encodeURIComponent(disc)}&topic=${
 renderShell({
   active: 'materiais',
   topicNav: {
-    label: 'Tópico',
-    items: WS_TABS.map(t => `<a class="ws-item" href="${wsBase}&tab=${t.id}"><span class="ic">${t.ic}</span><span>${t.label}</span></a>`).join(''),
+    items: wsMenuHTML(t => `<a class="ws-item" href="${wsBase}&tab=${t.id}"><span class="ic">${t.ic}</span><span>${t.label}</span></a>`),
   },
 });
 
