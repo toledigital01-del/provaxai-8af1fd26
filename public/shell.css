@@ -126,3 +126,6 @@ h1.title { font-size: 1.9rem; font-weight: 700; letter-spacing: -0.03em; }
 .topic-right .track { flex: 1; }
 
 .empty { color: var(--muted); font-size: 0.86rem; padding: 30px 0; }
+
+.sdot { display:inline-block; width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.ws-item .ic svg { width:16px; height:16px; opacity:.75; }

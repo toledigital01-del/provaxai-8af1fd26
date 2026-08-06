@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="shell.css">
 <style>
   .filters { display:flex; gap:6px; flex-wrap:wrap; margin-top:22px; }
-  .chip { border:1px solid var(--line-strong); background:#fff; border-radius:999px; padding:5px 12px; font-size:0.78rem; color:var(--muted); cursor:pointer; font-family:inherit; transition:all .14s; }
+  .chip { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line-strong); background:#fff; border-radius:999px; padding:5px 12px; font-size:0.78rem; color:var(--muted); cursor:pointer; font-family:inherit; transition:all .14s; }
   .chip:hover { background:#F6F6F7; }
   .chip.active { background:var(--text); color:#fff; border-color:var(--text); }
 </style>
@@ -24,10 +24,10 @@
 
       <div class="filters">
         <button class="chip active" data-f="all">Todos</button>
-        <button class="chip" data-f="nao">🔴 Não Familiar</button>
-        <button class="chip" data-f="apr">🟡 Aprendendo</button>
-        <button class="chip" data-f="fam">🟢 Familiar</button>
-        <button class="chip" data-f="dom">🔵 Dominado</button>
+        <button class="chip" </button>
+        <button class="chip" data-f="apr"><span class="sdot" style="background:#F59E0B"></span> Aprendendo</button>
+        <button class="chip" data-f="fam"><span class="sdot" style="background:#22C55E"></span> Familiar</button>
+        <button class="chip" data-f="dom"><span class="sdot" style="background:#3B82F6"></span> Dominado</button>
       </div>
 
       <div class="topic-list" id="topics"></div>
@@ -74,7 +74,7 @@ function render() {
     const s = STATUS_META[t.st];
     return `<a class="topic-row" href="workspace.html?${base}&disc=${encodeURIComponent(disc)}&topic=${encodeURIComponent(t.name)}">
       <span class="topic-left">
-        <span class="dot">${s.dot}</span>
+        <span class="dot">${dotHTML(t.st)}</span>
         <span class="tname">${t.name}</span>
         <span class="tstatus">${s.label}</span>
       </span>

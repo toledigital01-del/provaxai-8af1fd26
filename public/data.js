@@ -53,6 +53,11 @@ const STATUS_META = {
   dom: { dot: '🔵', label: 'Dominado',     color: '#3B82F6' },
 };
 
+function dotHTML(st) {
+  const c = (STATUS_META[st] || STATUS_META.nao).color;
+  return `<span class="sdot" style="background:${c}"></span>`;
+}
+
 function disciplinasDe(id) {
   return DISCIPLINAS_POR_CONCURSO[id] || Object.keys(TOPICS);
 }

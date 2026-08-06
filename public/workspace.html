@@ -104,19 +104,19 @@ document.getElementById('crumb').innerHTML =
 const stats = topicStats(topic);
 const sm = STATUS_META[stats.status];
 document.getElementById('t-title').textContent = topic;
-document.getElementById('t-sub').innerHTML = `${sm.dot} ${sm.label} · ${disc}`;
+document.getElementById('t-sub').innerHTML = `${dotHTML(stats.status)} ${sm.label} · ${disc}`;
 
 /* ---------- Coluna esquerda ---------- */
 const TABS = [
-  { id:'conteudo',   ic:'📄', label:'Conteúdo' },
-  { id:'tutor',      ic:'🎓', label:'Tutor IA' },
-  { id:'flashcards', ic:'📚', label:'Flashcards' },
-  { id:'questoes',   ic:'❓', label:'Questões' },
-  { id:'simulados',  ic:'🧭', label:'Simulados' },
-  { id:'teste',      ic:'📝', label:'Teste Escrito' },
-  { id:'espacos',    ic:'✏️', label:'Preencher Espaços' },
-  { id:'podcast',    ic:'🎧', label:'Podcast' },
-  { id:'anotacoes',  ic:'🗒️', label:'Anotações' },
+  { id:'conteudo',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v5h5"/></svg>`, label:'Conteúdo' },
+  { id:'tutor',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 8l10 5 10-5z"/><path d="M6 11v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/></svg>`, label:'Tutor IA' },
+  { id:'flashcards',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="14" height="12" rx="2"/><path d="M8 3h11a2 2 0 0 1 2 2v11"/></svg>`, label:'Flashcards' },
+  { id:'questoes',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 1 1 3.4 2.5c-.6.2-.9.8-.9 1.4v.4"/><path d="M12 17h.01"/></svg>`, label:'Questões' },
+  { id:'simulados',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15 9-4.5 1.5L9 15l4.5-1.5z"/></svg>`, label:'Simulados' },
+  { id:'teste',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M14.5 4.5 19 9 9 19H4.5V14z"/></svg>`, label:'Teste Escrito' },
+  { id:'espacos',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h5"/><path d="M11 6v12"/><path d="M15 12h5"/></svg>`, label:'Preencher Espaços' },
+  { id:'podcast',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2.5" y="13" width="4" height="7" rx="2"/><rect x="17.5" y="13" width="4" height="7" rx="2"/></svg>`, label:'Podcast' },
+  { id:'anotacoes',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>`, label:'Anotações' },
 ];
 let tab = params.get('tab') || 'conteudo';
 
@@ -230,7 +230,7 @@ document.getElementById('ws-right').innerHTML = `
   </div>
   <div class="reco">
     <div class="rlbl">IA recomenda estudar</div>
-    ${reco.map(r => `<a href="workspace.html?${base}&disc=${encodeURIComponent(disc)}&topic=${encodeURIComponent(r)}">${STATUS_META[statusOf(r)].dot} ${r}</a>`).join('')}
+    ${reco.map(r => `<a href="workspace.html?${base}&disc=${encodeURIComponent(disc)}&topic=${encodeURIComponent(r)}">${dotHTML(statusOf(r))} ${r}</a>`).join('')}
   </div>`;
 </script>
 </body>
