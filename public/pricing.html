@@ -345,10 +345,13 @@
   </div>
 </footer>
 
+<script src="hotmart.js"></script>
 <script>
   let isYearly = false;
   function toggleBilling() {
     isYearly = !isYearly;
+    window.__pxBilling = isYearly ? 'anual' : 'mensal';
+
     const dot = document.getElementById('toggle-dot');
     const toggle = document.getElementById('billing-toggle');
     const price = document.getElementById('pro-price');
