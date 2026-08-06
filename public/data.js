@@ -260,3 +260,24 @@ const CURSOS = [
     bullets: ['15 disciplinas do edital', '96 tópicos com trilha guiada', 'Questões e simulados Certo/Errado', 'Revisão espaçada e inteligente'],
   },
 ];
+
+/* ============ Continue de onde parou ============
+   Guarda o último tópico aberto por disciplina (e o global). */
+const PX_LAST_KEY = 'px_ultimo_topico_v1';
+
+function pxLastAll() {
+  try { return JSON.parse(localStorage.getItem(PX_LAST_KEY)) || {}; }
+  catch (e) { return {}; }
+}
+function pxLastSet(entry) {
+  if (!entry || !entry.disc || !entry.topic) return;
+  const all = pxLastAll();
+  const rec = { ...entry, ts: Date.now() };
+  all['disc:' + entry.disc] = rec;
+  all.__global = rec;
+  try { localStorage.setItem(PX_LAST_KEY, JSON.stringify(all)); } catch (e) {}
+}
+function pxLastGet(disc) {
+  const all = pxLastAll();
+  return (disc ? all['disc:' + disc] : all.__global) || null;
+}
