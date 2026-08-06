@@ -64,15 +64,23 @@
 
   /* Pastas (coluna direita) */
   .folders { width:260px; min-width:260px; border-left:1px solid var(--line); padding:22px 16px; }
-  .folders .btn-primary { width:100%; justify-content:center; margin-bottom:14px; }
-  .fold { display:flex; align-items:flex-start; gap:10px; width:100%; text-align:left; border:1px solid var(--line); background:#fff; border-radius:10px; padding:11px 12px; cursor:pointer; font-family:inherit; margin-bottom:8px; transition:all .14s; position:relative; }
-  .fold:hover { border-color:#2563EB; }
-  .fold.active { background:#EFF6FF; border-color:#2563EB; }
-  .fold svg { width:16px; height:16px; color:#2563EB; flex-shrink:0; margin-top:1px; }
-  .fold b { font-size:0.85rem; font-weight:600; display:block; }
-  .fold span { font-size:0.74rem; color:var(--muted); }
+  .fold-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .fold-head .hsec-lbl { margin:0; }
+  .fold-collapse { border:none; background:transparent; color:#0F172A; cursor:pointer; font-size:1.05rem; line-height:1; padding:2px 4px; border-radius:6px; }
+  .fold-collapse:hover { background:#F1F5F9; }
+  .folders .btn-primary { width:100%; justify-content:center; margin-bottom:16px; background:#2563EB; border:none; border-radius:12px; padding:14px 16px; font-size:0.95rem; font-weight:700; color:#fff; box-shadow:4px 4px 0 #0F172A; }
+  .folders .btn-primary:hover { background:#1D4ED8; }
+  .folders .btn-primary:active { transform:translate(2px,2px); box-shadow:2px 2px 0 #0F172A; }
+  .fold { display:flex; align-items:flex-start; gap:12px; width:100%; text-align:left; border:1px solid var(--line); border-left:5px solid var(--fold-c, #22C55E); background:#fff; border-radius:12px; padding:14px 14px; cursor:pointer; font-family:inherit; margin-bottom:10px; transition:all .14s; position:relative; }
+  .fold:hover { border-color:var(--line-strong); border-left-color:var(--fold-c, #22C55E); box-shadow:0 2px 8px rgba(15,23,42,.06); }
+  .fold.active { background:#E5E7EB; border-color:#D1D5DB; border-left-color:#0F172A; }
+  .fold svg { width:20px; height:20px; color:var(--fold-c, #22C55E); flex-shrink:0; margin-top:2px; }
+  .fold.active svg { color:#0F172A; }
+  .fold b { font-size:0.9rem; font-weight:700; color:#0F172A; display:block; line-height:1.25; }
+  .fold .sub { font-size:0.78rem; color:#6B7280; display:block; margin-top:3px; line-height:1.3; }
   .fold .fdel { position:absolute; right:8px; top:8px; border:none; background:transparent; color:#C0C6D2; cursor:pointer; font-size:0.8rem; }
   .fold .fdel:hover { color:#EF4444; }
+
 
   /* Modal */
   .ov { position:fixed; inset:0; background:rgba(17,24,39,.45); display:none; align-items:center; justify-content:center; padding:20px; z-index:120; }
@@ -144,11 +152,15 @@
         </div>
       </div>
 
-      <aside class="folders">
-        <div class="hsec-lbl" style="margin-bottom:12px;">Pastas</div>
-        <button class="btn btn-primary" onclick="novaPasta()">+ Criar nova pasta</button>
+      <aside class="folders" id="folders-panel">
+        <div class="fold-head">
+          <div class="hsec-lbl">Pastas</div>
+          <button class="fold-collapse" id="fold-toggle" onclick="toggleFolders()" title="Recolher">&raquo;</button>
+        </div>
+        <button class="btn btn-primary" onclick="novaPasta()">+ Criar Nova Pasta</button>
         <div id="fold-list"></div>
       </aside>
+
     </div>
   </div>
 </div>
@@ -234,19 +246,30 @@ function removerPasta(n) {
   renderPastas(); renderMeu();
 }
 function setPasta(p) { pastaAtiva = p; renderPastas(); renderMeu(); }
+const FOLD_COLORS = ['#22C55E', '#7C3AED', '#22C55E', '#F59E0B', '#3B82F6', '#EC4899'];
+function toggleFolders() {
+  const el = document.getElementById('fold-list');
+  const btn = document.getElementById('fold-toggle');
+  const hidden = el.style.display === 'none';
+  el.style.display = hidden ? '' : 'none';
+  btn.innerHTML = hidden ? '&raquo;' : '&laquo;';
+}
 function renderPastas() {
   const list = pastasGet(), mats = meuMaterialGet();
   const ic = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
+  const plural = n => n + ' conjunto' + (n === 1 ? '' : 's') + ' de estudo';
   document.getElementById('fold-list').innerHTML =
-    `<button class="fold ${pastaAtiva==='all'?'active':''}" onclick="setPasta('all')">${ic}<span><b>Todas as disciplinas</b><span>${mats.length} disciplina(s)</span></span></button>` +
-    list.map(p => {
+    `<button class="fold ${pastaAtiva==='all'?'active':''}" style="--fold-c:#0F172A" onclick="setPasta('all')">${ic}<span><b>Todos os Conjuntos de Estudo</b><span class="sub">${plural(mats.length)} total</span></span></button>` +
+    list.map((p, i) => {
       const n = mats.filter(m => m.pasta === p).length;
-      return `<button class="fold ${pastaAtiva===p?'active':''}" onclick="setPasta('${p.replace(/'/g,"\\'")}')">${ic}<span><b>${p}</b><span>${n} disciplina(s)</span></span>
+      const c = FOLD_COLORS[i % FOLD_COLORS.length];
+      return `<button class="fold ${pastaAtiva===p?'active':''}" style="--fold-c:${c}" onclick="setPasta('${p.replace(/'/g,"\\'")}')">${ic}<span><b>${p}</b><span class="sub">${plural(n)}</span></span>
         <span class="fdel" onclick="event.stopPropagation();removerPasta('${p.replace(/'/g,"\\'")}')">✕</span></button>`;
     }).join('');
   const sel = document.getElementById('in-pasta');
   sel.innerHTML = '<option value="">Sem pasta</option>' + list.map(p => `<option value="${p}">${p}</option>`).join('');
 }
+
 
 /* ---------- Meu material ---------- */
 const mbase = `id=${encodeURIComponent(MEU_ID)}&type=${encodeURIComponent('Pessoal')}&title=${encodeURIComponent('Meu Material')}`;
