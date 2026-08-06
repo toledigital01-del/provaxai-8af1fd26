@@ -268,12 +268,17 @@ function renderPane() {
         <div class="btns">
           <button class="btn-primary" id="fx-q">Praticar Questões deste Tópico</button>
           <button class="btn-secondary" id="fx-f">Ver Flashcards desta Aula</button>
+          <button class="btn-secondary" id="fx-r">Gerar Resumo Inteligente</button>
         </div>
       </div>
     </div>`;
     document.getElementById('fx-q').onclick = () => goTab('questoes');
     document.getElementById('fx-f').onclick = () => goTab('flashcards');
+    document.getElementById('fx-r').onclick = () => { rzOn = true; goTab('resumo'); };
+  } else if (tab === 'resumo') {
+    renderResumo(p);
   } else if (tab === 'flashcards') {
+
     const cards = buildCards();
     if (fcIdx >= cards.length) fcIdx = 0;
     const c = cards[fcIdx];
