@@ -144,22 +144,6 @@ function render() {
 }
 render();
 
-/* Painel lateral direito: navegação por tópicos */
-document.getElementById('tpanel-body').innerHTML = info.topics.map(t => `
-  <a class="titem" href="${topicHref(t.name)}">
-    <span class="tt">${dotHTML(t.st)}<span class="txt">${t.name}</span></span>
-    <span class="tb">
-      <span class="track"><span class="fill ${fillClass(t.prog)}" style="width:${t.prog}%"></span></span>
-      <span class="pct">${t.prog}%</span>
-    </span>
-  </a>`).join('');
-
-function toggleTPanel() {
-  const p = document.getElementById('tpanel');
-  p.classList.toggle('collapsed');
-  localStorage.setItem('tpanel-collapsed', p.classList.contains('collapsed') ? '1' : '0');
-}
-if (localStorage.getItem('tpanel-collapsed') === '1') document.getElementById('tpanel').classList.add('collapsed');
 </script>
 </body>
 </html>
