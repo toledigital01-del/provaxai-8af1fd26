@@ -130,27 +130,56 @@ const mat = materialById(id);
 const title = params.get('title') || (mat ? mat.title : 'Material');
 const type = params.get('type') || (mat ? mat.type : 'Material');
 const allDiscs = disciplinasDe(id);
+const scope = params.get('scope') === 'geral' ? 'geral' : (params.get('scope') === 'disc' ? 'disc' : 'topico');
 const disc = params.get('disc') || allDiscs[0];
 const topic = params.get('topic') || (TOPICS[disc] || ['Tópico'])[0];
 const base = `id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}&title=${encodeURIComponent(title)}`;
 const discHref = `disciplina.html?${base}&disc=${encodeURIComponent(disc)}`;
 
-document.getElementById('page-back').href = discHref;
-document.getElementById('page-back-label').textContent = disc;
+/* escopo geral: o aluno escolhe a disciplina dentro da própria ferramenta */
+let selDisc = scope === 'geral' ? (params.get('disc') || 'all') : disc;
+function poolTopics() {
+  if (scope === 'topico') return [topic];
+  const ds = scope === 'disc' ? [disc] : (selDisc === 'all' ? allDiscs : [selDisc]);
+  return ds.flatMap(d => (TOPICS[d] || []).map(t => ({ t, d })));
+}
+function ctxLabel() {
+  if (scope === 'topico') return `${topic} · ${disc}`;
+  if (scope === 'disc') return `${disc} · todos os tópicos`;
+  return selDisc === 'all' ? `${title} · todo o edital` : `${title} · ${selDisc}`;
+}
+function scopePickerHTML() {
+  if (scope !== 'geral') return '';
+  return `<div class="scope-pick"><span style="font-size:0.82rem;color:var(--muted);">Disciplina:</span>
+    <select id="scope-sel"><option value="all"${selDisc==='all'?' selected':''}>Todas as disciplinas</option>
+    ${allDiscs.map(d => `<option value="${d}"${selDisc===d?' selected':''}>${d}</option>`).join('')}</select></div>`;
+}
+function mountScopePicker() {
+  const s = document.getElementById('scope-sel');
+  if (s) s.onchange = () => { selDisc = s.value; fcIdx = 0; fcOpen = false; renderPane(); };
+}
+
+document.getElementById('page-back').href = scope === 'geral' ? `disciplinas.html?${base}` : discHref;
+document.getElementById('page-back-label').textContent = scope === 'geral' ? title : disc;
 
 document.getElementById('crumb').innerHTML =
   `<a href="study-sets.html">Meus Concursos</a><span class="sep">/</span>` +
   (allDiscs.length > 1 ? `<a href="disciplinas.html?${base}">${title}</a>` : `<span>${title}</span>`) +
-  `<span class="sep">/</span><a href="${discHref}">${disc}</a><span class="sep">/</span><span>${topic}</span>`;
+  (scope === 'geral' ? '' :
+    `<span class="sep">/</span><a href="${discHref}">${disc}</a>` +
+    (scope === 'topico' ? `<span class="sep">/</span><span>${topic}</span>` : ''));
 
-const stats = topicStats(topic);
+const stats = topicStats(scope === 'topico' ? topic : disc);
 const sm = STATUS_META[stats.status];
-document.getElementById('t-title').textContent = topic;
-document.getElementById('t-sub').innerHTML = `${dotHTML(stats.status)} ${sm.label} · ${disc}`;
+document.getElementById('t-title').textContent = scope === 'topico' ? topic : (scope === 'disc' ? disc : title);
+document.getElementById('t-sub').innerHTML = scope === 'topico'
+  ? `${dotHTML(stats.status)} ${sm.label} · ${disc}`
+  : ctxLabel();
 
 /* ---------- Coluna esquerda ---------- */
 const TABS = WS_TABS;
 let tab = params.get('tab') || 'tutor';
+
 
 renderShell({
   active: 'materiais',
