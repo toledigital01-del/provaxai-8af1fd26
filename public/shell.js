@@ -2,7 +2,7 @@
 (function () {
   const NAV = [
     { id: 'cronograma', href: 'cronograma.html', label: 'Cronograma', icon: '<rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/>' },
-    { id: 'materiais', href: 'study-sets.html', label: 'Meus Concursos', icon: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>' },
+    { id: 'materiais', href: 'study-sets.html', label: 'Disciplinas', icon: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>' },
   ];
 
 

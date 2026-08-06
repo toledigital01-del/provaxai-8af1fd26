@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Meus Concursos – Prova X</title>
+<title>Disciplinas – Prova X</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; background: #FFF; color: #111827; height: 100vh; overflow: hidden; display: flex; }
@@ -135,7 +135,7 @@
   </div>
 
   <div class="section-head">
-    <div class="section-title">Meus Concursos</div>
+    <div class="section-title">Disciplinas</div>
     <div class="view-toggle">
       <button class="active"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
       <button><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></button>
@@ -223,26 +223,33 @@
 <script src="shell.js"></script>
 <script>
 renderShell({ active: 'materiais' });
-const SHORTCUTS = ['Resumos','Flashcards','Questões','Questões Comentadas','Mapas Mentais','Anotações','Revisões','IA','Cronograma'];
-document.getElementById('sets-grid').innerHTML = MATERIALS.map(m => `
-  <a class="set-card${m.soon ? ' soon' : ''}" href="${materialHref(m)}">
-    <div class="set-card-head"><h3>${m.title}</h3>${m.soon ? '<span class="soon-badge">EM BREVE</span>' : `<span class="type-badge">${m.type}</span>`}</div>
+/* Grade de disciplinas do concurso principal, no mesmo formato dos cards */
+const MAT = MATERIALS.find(m => !m.soon) || MATERIALS[0];
+const MAT_BASE = `id=${encodeURIComponent(MAT.id)}&type=${encodeURIComponent(MAT.type)}&title=${encodeURIComponent(MAT.title)}`;
+const DISCS = disciplinasDe(MAT.id).map(disciplinaInfo);
+
+document.getElementById('sets-grid').innerHTML = DISCS.map(d => {
+  const cnt = st => d.topics.filter(t => t.st === st).length;
+  return `
+  <a class="set-card ${areaClass(d.name)}" href="disciplina.html?${MAT_BASE}&disc=${encodeURIComponent(d.name)}">
+    <div class="set-card-head"><h3>${d.name}</h3><span class="type-badge">${MAT.title}</span></div>
     <div class="meta-grid">
-      <div class="meta-item">Disciplinas<b>${m.disc}</b></div>
-      <div class="meta-item">Tópicos<b>${m.top}</b></div>
-      <div class="meta-item">Páginas<b>${m.pag}</b></div>
-      <div class="meta-item">Enviado em<b>${m.envio}</b></div>
-      <div class="meta-item">Último acesso<b>${m.acesso}</b></div>
-      <div class="meta-item">Tempo estudado<b>${m.tempo}</b></div>
+      <div class="meta-item">Tópicos<b>${d.topics.length}</b></div>
+      <div class="meta-item">Dominados<b>${cnt('dom')}</b></div>
+      <div class="meta-item">Familiar<b>${cnt('fam')}</b></div>
+      <div class="meta-item">Aprendendo<b>${cnt('apr')}</b></div>
+      <div class="meta-item">Não familiar<b>${cnt('nao')}</b></div>
+      <div class="meta-item">Status<b>${d.pct >= 70 ? 'Avançado' : d.pct >= 40 ? 'Intermediário' : 'Inicial'}</b></div>
     </div>
     <div class="set-card-foot">
-      <div class="lbl">${m.soon ? 'Disponível em breve' : 'Índice de domínio'}</div>
+      <div class="lbl">Índice de domínio</div>
       <div class="progress-line">
-        <div class="track"><div class="fill ${fillClass(m.pct)}" style="width:${m.pct}%"></div></div>
-        <div class="pct">${m.pct}%</div>
+        <div class="track"><div class="fill ${fillClass(d.pct)}" style="width:${d.pct}%"></div></div>
+        <div class="pct">${d.pct}%</div>
       </div>
     </div>
-  </a>`).join('');
+  </a>`;
+}).join('');
 
 const FOLDERS = [
   { name:'Todos os Materiais', color:'#111827', all:true },
