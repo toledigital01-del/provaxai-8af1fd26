@@ -195,7 +195,17 @@ const disc = params.get('disc') || allDiscs[0];
 const topic = params.get('topic') || (TOPICS[disc] || ['Tópico'])[0];
 const base = `id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}&title=${encodeURIComponent(title)}`;
 const discHref = `disciplina.html?${base}&disc=${encodeURIComponent(disc)}`;
-if (scope === 'topico') { try { pxLastSet({ id, type, title, disc, topic }); } catch (e) {} }
+if (scope === 'topico') {
+  try { pxLastSet({ id, type, title, disc, topic }); } catch (e) {}
+  try {
+    if (window.PX && PX.ready) PX.ready.then(() => {
+      if (!PX.user) return;
+      PX.saveProgress({ course: id, disc, topic, status: statusOf(topic), dominio: progressOf(topic) });
+      PX.logSession(disc, topic, 'workspace', 0);
+    });
+  } catch (e) {}
+}
+
 
 
 /* escopo geral: o aluno escolhe a disciplina dentro da própria ferramenta */
