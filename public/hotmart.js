@@ -1,10 +1,12 @@
 /* Configuração do checkout Hotmart do Prova X.
-   Cole aqui os links de checkout gerados na Hotmart (Produto > Links). */
+   Links gerados na Hotmart (Produto > Links / Ofertas). */
 window.PX_HOTMART = {
-  // Ex.: "https://pay.hotmart.com/XXXXXXXX?off=abcdefgh"
-  mensal: "",
-  anual: "",
+  mensal: "https://pay.hotmart.com/I107044926Q",
+  // Enquanto a oferta anual não existir, cai no mesmo checkout.
+  // Basta trocar por "https://pay.hotmart.com/I107044926Q?off=CODIGO_DA_OFERTA_ANUAL".
+  anual: "https://pay.hotmart.com/I107044926Q",
 };
+
 
 window.pxHotmartCheckout = function (ciclo) {
   var cfg = window.PX_HOTMART || {};
