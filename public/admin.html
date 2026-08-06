@@ -358,7 +358,11 @@ function gateForm(msg){
 }
 
 async function boot(){
-  await PX.ready;
+  try { await PX.ready; } catch(e){}
+  if (PX.bootError) {
+    renderTabs();
+    return gateForm('Não foi possível conectar ao servidor. Recarregue a página.');
+  }
   if (!PX.user || PX.user.guest) { renderTabs(); return gateForm(); }
   if (!PX.isAdmin()) {
     try {
@@ -368,13 +372,27 @@ async function boot(){
   }
   if (!PX.isAdmin()) {
     renderTabs();
-    return gateForm('Esta conta (' + PX.user.email + ') não é administradora. Já existe um admin cadastrado — entre com ela.');
+    gateForm('Esta conta (' + PX.user.email + ') não tem permissão de administrador. Entre com uma conta admin.');
+    const box = document.querySelector('#view .card');
+    if (box) {
+      const p = document.createElement('p');
+      p.style.marginTop = '10px';
+      p.innerHTML = '<button class="act danger" id="a-out" style="width:100%">Sair desta conta</button>';
+      box.appendChild(p);
+      document.getElementById('a-out').onclick = async () => {
+        try { localStorage.removeItem('px_guest'); } catch(e){}
+        await PX.sb.auth.signOut();
+        location.href = 'home.html';
+      };
+    }
+    return;
   }
   document.getElementById('who').textContent = PX.displayName();
   renderTabs();
   render();
 }
 boot();
+
 
 </script>
 </body>
