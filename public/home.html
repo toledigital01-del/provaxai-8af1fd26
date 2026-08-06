@@ -207,26 +207,8 @@
 <script>
 renderShell({ active: 'inicio' });
 
-/* ---------- Curso em destaque ---------- */
-const curso = CURSOS[0];
-const cmat = materialById(curso.id);
-const cbase = `id=${encodeURIComponent(curso.id)}&type=${encodeURIComponent(cmat.type)}&title=${encodeURIComponent(cmat.title)}`;
-const cdiscs = disciplinasDe(curso.id).map(disciplinaInfo);
-const cpct = cdiscs.length ? Math.round(cdiscs.reduce((a,d)=>a+d.pct,0)/cdiscs.length) : 0;
 
-document.getElementById('course-box').innerHTML = `
-  <div class="course-cover"><img src="${curso.capa}" alt="Viatura da Polícia Rodoviária Federal em rodovia ao entardecer" loading="lazy" width="1600" height="912"></div>
-  <div class="course-body">
-    <span class="course-tag">${curso.tag}</span>
-    <h2>${curso.nome}</h2>
-    <p>${curso.resumo}</p>
-    <ul class="blist">${curso.bullets.map(b => `<li>${b}</li>`).join('')}</ul>
-    <div class="progress-line"><div class="track"><div class="fill ${fillClass(cpct)}" style="width:${cpct}%"></div></div><div class="pct">${cpct}%</div></div>
-    <div class="cta-row">
-      <a class="btn btn-primary" href="disciplinas.html?${cbase}">Acessar o curso →</a>
-      <a class="btn btn-ghost" href="cronograma.html">Ver cronograma</a>
-    </div>
-  </div>`;
+
 
 
 
