@@ -79,7 +79,7 @@
 <div class="wrap">
   <div class="topbar">
     <a class="back" href="study-sets.html">‹</a>
-    <h1 id="set-title">Concurso PRF 2021</h1>
+    <h1 id="set-title">Concurso PRF</h1>
     <span style="color:#9CA3AF;">···</span>
   </div>
 
@@ -135,7 +135,7 @@
 
 <script>
 const p = new URLSearchParams(location.search);
-const title = p.get('title') ? decodeURIComponent(p.get('title')) : 'Concurso PRF 2021';
+const title = p.get('title') ? decodeURIComponent(p.get('title')) : 'Concurso PRF';
 document.getElementById('set-title').textContent = title;
 document.title = title + ' – Prova X';
 
@@ -151,7 +151,7 @@ function setTab(tab, el){
   const panel = document.getElementById('panel');
   document.getElementById('composer').style.display = tab === 'chat' ? 'block' : 'none';
   if (tab === 'chat') panel.innerHTML = '<div class="empty"><span>Aqui para te ajudar a aprender</span></div>';
-  if (tab === 'conteudo') panel.innerHTML = '<div style="font-size:0.88rem;color:#374151;line-height:1.7;">Material original: edital do Concurso PRF 2021 (PDF, 218 páginas).</div>';
+  if (tab === 'conteudo') panel.innerHTML = '<div style="font-size:0.88rem;color:#374151;line-height:1.7;">Material original: edital do Concurso PRF (PDF, 218 páginas).</div>';
   if (tab === 'anotacao') panel.innerHTML = '<div style="font-size:0.88rem;color:#9CA3AF;">Suas anotações aparecerão aqui.</div>';
 }
 function send(){
