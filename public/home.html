@@ -78,8 +78,36 @@
   .fold.active svg { color:#0F172A; }
   .fold b { font-size:0.9rem; font-weight:700; color:#0F172A; display:block; line-height:1.25; }
   .fold .sub { font-size:0.78rem; color:#6B7280; display:block; margin-top:3px; line-height:1.3; }
-  .fold .fdel { position:absolute; right:8px; top:8px; border:none; background:transparent; color:#C0C6D2; cursor:pointer; font-size:0.8rem; }
-  .fold .fdel:hover { color:#EF4444; }
+  .fold .fdots { position:absolute; right:6px; top:10px; border:none; background:transparent; color:#9AA1AE; cursor:pointer; font-size:1rem; line-height:1; padding:4px 6px; border-radius:6px; letter-spacing:1px; }
+  .fold .fdots:hover { background:#F1F5F9; color:#0F172A; }
+
+  /* Menu de contexto da pasta */
+  .fmenu { position:absolute; z-index:200; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:0 16px 40px rgba(15,23,42,.18); padding:6px; min-width:186px; }
+  .fmenu button { display:flex; align-items:center; gap:12px; width:100%; border:none; background:transparent; font-family:inherit; font-size:0.9rem; color:#0F172A; padding:10px 12px; border-radius:8px; cursor:pointer; text-align:left; }
+  .fmenu button:hover:not(:disabled) { background:#F5F6F8; }
+  .fmenu button svg { width:17px; height:17px; flex-shrink:0; }
+  .fmenu button.dis { color:#C4C8D0; cursor:not-allowed; }
+  .fmenu button.dan { color:#EF4444; }
+  .fmenu .fsep { height:1px; background:var(--line); margin:4px 6px; }
+
+  /* Modal criar pasta */
+  .pmodal { max-width:470px; border-radius:18px; }
+  .pmodal .modal-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:22px 24px 18px; }
+  .pmodal .modal-head h3 { font-size:1.45rem; font-weight:800; letter-spacing:-0.02em; }
+  .pmodal .x { border:none; background:transparent; cursor:pointer; color:#6B7280; font-size:1.2rem; line-height:1; padding:4px; }
+  .pmodal .modal-body { padding:22px 24px 26px; gap:22px; }
+  .pmodal .fl { font-size:0.92rem; font-weight:700; color:#0F172A; margin-bottom:10px; }
+  .pmodal .input { background:#F8F9FB; border:1px solid #E7E9EE; border-radius:12px; padding:14px 14px; font-size:0.95rem; }
+  .swatches { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; }
+  .sw { aspect-ratio:1; border-radius:14px; border:none; cursor:pointer; padding:0; outline:3px solid transparent; outline-offset:2px; transition:outline-color .12s, transform .12s; }
+  .sw:hover { transform:translateY(-1px); }
+  .sw.sel { outline-color:#0F172A; }
+  .pmodal .modal-foot { padding:16px 24px 18px; align-items:center; justify-content:space-between; }
+  .pmodal .lnk { border:none; background:transparent; font-family:inherit; font-size:0.92rem; color:#6B7280; cursor:pointer; padding:8px 4px; }
+  .pmodal .btn-create { background:#7FA8F0; color:#fff; border-radius:12px; padding:12px 22px; font-weight:700; }
+  .pmodal .btn-create.on { background:#2563EB; }
+
+
 
 
   /* Modal */
