@@ -242,6 +242,31 @@
   </div>
 </div>
 
+<!-- Criar / editar pasta -->
+<div class="ov" id="ov-pasta" onclick="if(event.target.id==='ov-pasta') closePasta()">
+  <div class="modal pmodal">
+    <div class="modal-head">
+      <h3 id="pm-title">Criar Nova Pasta</h3>
+      <button class="x" onclick="closePasta()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div>
+        <label class="fl">Nome da Pasta</label>
+        <input class="input" id="pm-nome" placeholder="Digite o nome da pasta..." oninput="pmSync()">
+      </div>
+      <div>
+        <label class="fl">Escolha a Cor</label>
+        <div class="swatches" id="pm-cores"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="lnk" onclick="closePasta()">Cancelar</button>
+      <button class="btn btn-create" id="pm-ok" onclick="salvarPasta()">+ Criar Pasta</button>
+    </div>
+  </div>
+</div>
+
+
 <script src="data.js"></script>
 <script src="shell.js"></script>
 <script>
