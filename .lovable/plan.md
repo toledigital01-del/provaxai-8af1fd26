@@ -1,20 +1,35 @@
-# Integração Hotmart — como pegar o token (hottok) e ligar tudo
+# Integração Hotmart — criar o produto, pegar o token (hottok) e ligar tudo
 
-## Parte 1 — Passo a passo para obter a chave na Hotmart
+## Parte 0 — Criar o produto na Hotmart (é isso que está faltando)
 
-1. Acesse [app-vlc.hotmart.com](https://app-vlc.hotmart.com) e faça login na sua conta de **Produtor**.
-2. No menu lateral, clique em **Ferramentas** (ou "Aplicativos", dependendo da versão da conta).
-3. Procure o card **Webhook (Postback)** e clique em **Adicionar Webhook** / **Configurar**.
-4. Preencha:
-   - **Nome**: `Prova X`
-   - **URL do Webhook**: (eu forneço a URL definitiva quando o app for publicado — formato `https://SEU-APP.lovable.app/api/public/hotmart/webhook`)
-   - **Versão**: 2.0.0 (a mais recente disponível)
-   - **Produto**: o produto do Prova X
-   - **Eventos**: marque os que existirem na sua lista — **Compra aprovada**, **Compra completa**, **Compra reembolsada**, **Compra cancelada**, **Chargeback**, **Compra expirada** e **Assinatura cancelada**. "Reativação de assinatura" só aparece em contas com produto de assinatura/recorrência configurado; se não estiver na lista, ignore — não é obrigatório e o app trata a reativação como uma nova compra aprovada.
-5. Salve. A Hotmart mostra na tela (e no e-mail de confirmação) o token chamado **hottok** — é uma sequência longa de letras e números.
-6. Copie esse valor. Quando eu pedir, você cola no formulário seguro do Lovable (o valor fica guardado como segredo, nunca aparece no código).
+O campo "Selecione um produto" está vazio porque ainda não existe produto cadastrado. Crie antes de configurar o webhook:
 
-Observação: se o webhook já estiver criado, o hottok aparece ao clicar em **Editar** no webhook existente.
+1. No menu lateral, clique em **Produtos** > **Cadastrar produto**.
+2. Formato: escolha **Assinatura** (cobrança recorrente mensal/anual) — é o modelo do Prova X. Se preferir venda avulsa, escolha "Curso online / Área de membros".
+3. Preencha:
+   - **Nome do produto**: `Prova X — Curso PRF`
+   - **Idioma**: Português (Brasil) — **Moeda**: Real (BRL)
+   - **Categoria**: Educação / Concursos
+   - **Página de vendas**: o endereço público do app (ex.: `https://provaxai.lovable.app`)
+4. Em **Preço / Ofertas**, crie duas ofertas: **R$ 29,00 mensal** e **R$ 290,00 anual**.
+5. Salve. O produto nasce como **rascunho** — isso já basta para aparecer na lista do webhook. Para vender de verdade, depois envie para **análise/aprovação** da Hotmart.
+6. Volte em **Ferramentas > Webhook** e agora o produto aparecerá no seletor.
+
+## Parte 1 — Cadastrar o webhook e pegar o hottok
+
+1. **Ferramentas** (ou "Aplicativos") > **Webhook (Postback)** > **Cadastrar Webhook**.
+2. Preencha:
+   - **Nome da configuração**: `Prova X`
+   - **Produto**: o produto criado na Parte 0
+   - **URL para envio de dados**: `https://provaxai.lovable.app/api/public/hotmart/webhook`
+     (atenção: não é `.../index.html` — precisa ser exatamente esse caminho)
+   - **Versão**: 2.0.0 (Recomendado)
+   - **Eventos**: marque os que existirem na sua lista — **Compra aprovada**, **Compra completa**, **Compra reembolsada**, **Compra cancelada**, **Chargeback**, **Compra expirada** e **Assinatura cancelada**. "Reativação de assinatura" só aparece em contas com produto de assinatura configurado; se não estiver na lista, ignore.
+3. Salve. A Hotmart mostra o token **hottok** (sequência longa de letras e números) na tela e no e-mail de confirmação.
+4. Copie esse valor. Quando eu pedir, você cola no formulário seguro do Lovable (fica guardado como segredo, nunca no código).
+
+Observação: se o webhook já existir, o hottok aparece ao clicar em **Editar**.
+
 
 ## Parte 2 — Links de checkout (também vindos da Hotmart)
 
