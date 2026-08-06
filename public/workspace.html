@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workspace – Studley AI</title>
+<link rel="stylesheet" href="shell.css">
+<style>
+  .ws { display:grid; grid-template-columns: 220px minmax(0,1fr) 268px; height:100%; }
+  @media (max-width: 1100px) { .ws { grid-template-columns: 200px minmax(0,1fr); } .ws-right { display:none; } }
+
+  .ws-left { border-right:1px solid var(--line); padding:18px 10px; overflow-y:auto; }
+  .ws-left .lbl { font-size:0.68rem; text-transform:uppercase; letter-spacing:.08em; color:#A6ACBB; font-weight:600; padding:0 10px 8px; }
+  .ws-item { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; font-size:0.86rem; color:#4A5162; cursor:pointer; transition:background .14s, color .14s; }
+  .ws-item:hover { background:#F2F2F3; color:var(--text); }
+  .ws-item.active { background:#EDEDEE; color:var(--text); font-weight:600; }
+  .ws-item .ic { width:18px; text-align:center; font-size:0.9rem; }
+
+  .ws-center { overflow-y:auto; padding:26px 34px 80px; }
+  .ws-center h1 { font-size:1.5rem; font-weight:700; letter-spacing:-0.025em; }
+  .pane { animation: fade .18s ease; }
+  @keyframes fade { from { opacity:0; transform:translateY(4px);} to { opacity:1; transform:none;} }
+  .prose { font-size:0.92rem; line-height:1.75; color:#31363F; margin-top:18px; }
+  .prose h3 { font-size:1rem; font-weight:600; color:var(--text); margin:22px 0 8px; }
+  .prose ul { margin:8px 0 8px 18px; }
+  .prose li { margin:4px 0; }
+
+  .fc { border:1px solid var(--line); border-radius:14px; padding:36px 24px; text-align:center; margin-top:20px; cursor:pointer; min-height:190px; display:grid; place-items:center; transition:border-color .16s; background:#fff; }
+  .fc:hover { border-color:var(--line-strong); }
+  .fc .q { font-size:1.05rem; font-weight:600; }
+  .fc .a { font-size:0.9rem; color:var(--muted); margin-top:12px; }
+  .mini { display:flex; gap:8px; margin-top:14px; }
+  .mini button { border:1px solid var(--line-strong); background:#fff; border-radius:8px; padding:7px 14px; font-size:0.82rem; cursor:pointer; font-family:inherit; color:#4A5162; }
+  .mini button:hover { background:#F6F6F7; }
+
+  .qbox { border:1px solid var(--line); border-radius:12px; padding:18px; margin-top:16px; }
+  .opt { display:flex; gap:10px; align-items:center; padding:10px 12px; border:1px solid var(--line); border-radius:9px; margin-top:8px; font-size:0.88rem; cursor:pointer; transition:all .14s; }
+  .opt:hover { background:#FAFAFA; border-color:var(--line-strong); }
+  .opt.ok { border-color:#22C55E; background:#F2FDF5; }
+  .opt.no { border-color:#EF4444; background:#FEF3F2; }
+
+  .chatlog { margin-top:18px; display:flex; flex-direction:column; gap:12px; }
+  .bub { max-width:80%; padding:11px 14px; border-radius:12px; font-size:0.88rem; line-height:1.6; }
+  .bub.ai { background:#F5F5F6; }
+  .bub.me { background:var(--text); color:#fff; align-self:flex-end; }
+  .composer { display:flex; gap:8px; margin-top:16px; }
+  .composer input { flex:1; border:1px solid var(--line-strong); border-radius:9px; padding:10px 12px; font-size:0.88rem; font-family:inherit; outline:none; }
+  .composer button { border:none; background:var(--text); color:#fff; border-radius:9px; padding:0 16px; font-size:0.85rem; font-weight:600; cursor:pointer; }
+
+  textarea.notes { width:100%; min-height:280px; border:1px solid var(--line); border-radius:12px; padding:16px; font-size:0.9rem; line-height:1.7; font-family:inherit; resize:vertical; outline:none; margin-top:18px; }
+  textarea.notes:focus { border-color:var(--line-strong); }
+
+  .ws-right { border-left:1px solid var(--line); padding:22px 18px; overflow-y:auto; background:var(--bg-soft); }
+  .ws-right h2 { font-size:0.95rem; font-weight:600; letter-spacing:-0.01em; }
+  .stat-row { display:flex; align-items:baseline; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--line); font-size:0.82rem; color:var(--muted); }
+  .stat-row b { font-size:0.92rem; color:var(--text); font-weight:600; font-variant-numeric:tabular-nums; }
+  .reco { margin-top:18px; }
+  .reco .rlbl { font-size:0.68rem; text-transform:uppercase; letter-spacing:.08em; color:#A6ACBB; font-weight:600; margin-bottom:10px; }
+  .reco a { display:block; padding:8px 10px; background:#fff; border:1px solid var(--line); border-radius:8px; font-size:0.84rem; text-decoration:none; color:var(--text); margin-bottom:7px; }
+  .reco a:hover { border-color:var(--line-strong); }
+</style>
+</head>
+<body>
+<aside id="shell-sidebar"></aside>
+<div class="shell-main">
+  <header id="shell-topbar"></header>
+  <div class="shell-body" style="overflow:hidden;">
+    <div class="ws">
+      <nav class="ws-left" id="ws-left"></nav>
+
+      <section class="ws-center">
+        <div class="crumb" id="crumb"></div>
+        <h1 id="t-title"></h1>
+        <p class="subtitle" id="t-sub"></p>
+        <div id="pane"></div>
+      </section>
+
+      <aside class="ws-right" id="ws-right"></aside>
+    </div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="shell.js"></script>
+<script>
+renderShell({ active: 'materiais' });
+
+const params = new URLSearchParams(location.search);
+const id = params.get('id') || 'prf-2021';
+const mat = materialById(id);
+const title = params.get('title') || (mat ? mat.title : 'Material');
+const type = params.get('type') || (mat ? mat.type : 'Material');
+const allDiscs = disciplinasDe(id);
+const disc = params.get('disc') || allDiscs[0];
+const topic = params.get('topic') || (TOPICS[disc] || ['Tópico'])[0];
+const base = `id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}&title=${encodeURIComponent(title)}`;
+const discHref = `disciplina.html?${base}&disc=${encodeURIComponent(disc)}`;
+
+document.getElementById('crumb').innerHTML =
+  `<a href="study-sets.html">Meus Materiais</a><span class="sep">/</span>` +
+  (allDiscs.length > 1 ? `<a href="disciplinas.html?${base}">${title}</a>` : `<span>${title}</span>`) +
+  `<span class="sep">/</span><a href="${discHref}">${disc}</a><span class="sep">/</span><span>${topic}</span>`;
+
+const stats = topicStats(topic);
+const sm = STATUS_META[stats.status];
+document.getElementById('t-title').textContent = topic;
+document.getElementById('t-sub').innerHTML = `${dotHTML(stats.status)} ${sm.label} · ${disc}`;
+
+/* ---------- Coluna esquerda ---------- */
+const TABS = [
+  { id:'conteudo',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v5h5"/></svg>`, label:'Conteúdo' },
+  { id:'tutor',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 8l10 5 10-5z"/><path d="M6 11v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/></svg>`, label:'Tutor IA' },
+  { id:'flashcards',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="14" height="12" rx="2"/><path d="M8 3h11a2 2 0 0 1 2 2v11"/></svg>`, label:'Flashcards' },
+  { id:'questoes',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 1 1 3.4 2.5c-.6.2-.9.8-.9 1.4v.4"/><path d="M12 17h.01"/></svg>`, label:'Questões' },
+  { id:'simulados',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15 9-4.5 1.5L9 15l4.5-1.5z"/></svg>`, label:'Simulados' },
+  { id:'teste',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M14.5 4.5 19 9 9 19H4.5V14z"/></svg>`, label:'Teste Escrito' },
+  { id:'espacos',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h5"/><path d="M11 6v12"/><path d="M15 12h5"/></svg>`, label:'Preencher Espaços' },
+  { id:'podcast',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2.5" y="13" width="4" height="7" rx="2"/><rect x="17.5" y="13" width="4" height="7" rx="2"/></svg>`, label:'Podcast' },
+  { id:'anotacoes',   ic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>`, label:'Anotações' },
+];
+let tab = params.get('tab') || 'conteudo';
+
+document.getElementById('ws-left').innerHTML =
+  `<div class="lbl">Tópico</div>` +
+  TABS.map(t => `<div class="ws-item${t.id === tab ? ' active' : ''}" data-t="${t.id}"><span class="ic">${t.ic}</span><span>${t.label}</span></div>`).join('');
+
+document.getElementById('ws-left').addEventListener('click', e => {
+  const el = e.target.closest('.ws-item');
+  if (!el) return;
+  tab = el.dataset.t;
+  document.querySelectorAll('.ws-item').forEach(x => x.classList.toggle('active', x === el));
+  const u = new URL(location.href); u.searchParams.set('tab', tab);
+  history.replaceState(null, '', u);
+  renderPane();
+});
+
+/* ---------- Coluna central ---------- */
+let fcIdx = 0, fcOpen = false;
+const cards = [1,2,3,4].map(i => ({ q: `${topic} — conceito-chave ${i}`, a: `Resposta objetiva sobre ${topic.toLowerCase()} (ponto ${i}).` }));
+
+function renderPane() {
+  const p = document.getElementById('pane');
+  if (tab === 'conteudo') {
+    p.innerHTML = `<div class="pane prose">
+      <p>Resumo gerado por IA sobre <b>${topic}</b>, dentro de ${disc} (${title}).</p>
+      <h3>Pontos essenciais</h3>
+      <ul><li>Definição e alcance do tema na banca.</li><li>Regras principais e exceções mais cobradas.</li><li>Pegadinhas recorrentes em provas anteriores.</li></ul>
+      <h3>Como cai na prova</h3>
+      <p>Questões costumam misturar a regra geral com casos de exceção. Domine primeiro a regra, depois memorize as exceções por repetição espaçada.</p>
+      <h3>Resumo em uma frase</h3>
+      <p>Entenda a lógica antes de decorar a lista.</p>
+    </div>`;
+  } else if (tab === 'tutor') {
+    p.innerHTML = `<div class="pane">
+      <div class="chatlog" id="chat">
+        <div class="bub ai">Vamos estudar <b>${topic}</b>. Quer começar pela explicação simples ou direto pelas pegadinhas de prova?</div>
+      </div>
+      <div class="composer"><input id="msg" placeholder="Pergunte qualquer coisa sobre ${topic}..."><button id="send">Enviar</button></div>
+    </div>`;
+    const send = () => {
+      const i = document.getElementById('msg');
+      if (!i.value.trim()) return;
+      const log = document.getElementById('chat');
+      log.insertAdjacentHTML('beforeend', `<div class="bub me">${i.value}</div>`);
+      const q = i.value; i.value = '';
+      setTimeout(() => log.insertAdjacentHTML('beforeend', `<div class="bub ai">Boa pergunta sobre "${q}". Em ${topic}, comece pela regra geral e depois teste as exceções com 5 questões.</div>`), 350);
+    };
+    document.getElementById('send').onclick = send;
+    document.getElementById('msg').onkeydown = e => { if (e.key === 'Enter') send(); };
+  } else if (tab === 'flashcards') {
+    const c = cards[fcIdx];
+    p.innerHTML = `<div class="pane">
+      <div class="fc" id="fc"><div><div class="q">${c.q}</div>${fcOpen ? `<div class="a">${c.a}</div>` : '<div class="a">Clique para revelar</div>'}</div></div>
+      <div class="mini"><button id="prev">← Anterior</button><button id="next">Próximo →</button><span style="align-self:center;font-size:0.8rem;color:var(--muted);">${fcIdx+1} de ${cards.length}</span></div>
+    </div>`;
+    document.getElementById('fc').onclick = () => { fcOpen = !fcOpen; renderPane(); };
+    document.getElementById('prev').onclick = () => { fcIdx = (fcIdx - 1 + cards.length) % cards.length; fcOpen = false; renderPane(); };
+    document.getElementById('next').onclick = () => { fcIdx = (fcIdx + 1) % cards.length; fcOpen = false; renderPane(); };
+  } else if (tab === 'questoes' || tab === 'simulados') {
+    const n = tab === 'simulados' ? 3 : 2;
+    p.innerHTML = `<div class="pane">${Array.from({length:n}).map((_,i) => `
+      <div class="qbox">
+        <div style="font-size:0.9rem;font-weight:600;">${i+1}. Sobre ${topic}, assinale a alternativa correta.</div>
+        ${['Alternativa A','Alternativa B','Alternativa C','Alternativa D'].map((o,j) => `<div class="opt" data-ok="${j===1}">${String.fromCharCode(65+j)}) ${o} referente a ${topic.toLowerCase()}.</div>`).join('')}
+      </div>`).join('')}</div>`;
+    p.querySelectorAll('.opt').forEach(o => o.onclick = () => o.classList.add(o.dataset.ok === 'true' ? 'ok' : 'no'));
+  } else if (tab === 'teste') {
+    p.innerHTML = `<div class="pane">
+      <p class="prose">Discorra sobre <b>${topic}</b> em até 15 linhas, destacando regra geral, exceções e aplicação prática.</p>
+      <textarea class="notes" placeholder="Escreva sua resposta..."></textarea>
+      <div class="mini"><button onclick="alert('Correção por IA em breve!')">Corrigir com IA</button></div>
+    </div>`;
+  } else if (tab === 'espacos') {
+    p.innerHTML = `<div class="pane prose">
+      <p>Complete as lacunas sobre ${topic}:</p>
+      <p style="margin-top:14px;">A regra geral de ${topic.toLowerCase()} determina que <input style="border:none;border-bottom:1.5px solid var(--line-strong);outline:none;font-family:inherit;font-size:0.9rem;width:180px;"> deve ser observado, salvo quando <input style="border:none;border-bottom:1.5px solid var(--line-strong);outline:none;font-family:inherit;font-size:0.9rem;width:180px;">.</p>
+      <div class="mini"><button onclick="alert('Verificação em breve!')">Verificar</button></div>
+    </div>`;
+  } else if (tab === 'podcast') {
+    p.innerHTML = `<div class="pane">
+      <div class="qbox" style="display:flex;align-items:center;gap:16px;">
+        <div style="width:46px;height:46px;border-radius:12px;background:var(--text);color:#fff;display:grid;place-items:center;font-size:1.1rem;">▶</div>
+        <div><div style="font-size:0.92rem;font-weight:600;">${topic} — episódio em áudio</div><div class="subtitle" style="margin-top:2px;">12 min · gerado por IA</div></div>
+      </div>
+    </div>`;
+  } else {
+    const key = 'notes:' + id + ':' + disc + ':' + topic;
+    p.innerHTML = `<div class="pane"><textarea class="notes" id="nt" placeholder="Suas anotações sobre ${topic}...">${localStorage.getItem(key) || ''}</textarea></div>`;
+    document.getElementById('nt').oninput = e => localStorage.setItem(key, e.target.value);
+  }
+}
+renderPane();
+
+/* ---------- Coluna direita ---------- */
+const reco = (TOPICS[disc] || []).filter(t => t !== topic).slice(0, 3);
+document.getElementById('ws-right').innerHTML = `
+  <h2>${topic}</h2>
+  <div style="margin-top:14px;">
+    <div class="stat-row" style="border-bottom:none;padding-bottom:4px;"><span>Índice de domínio</span><b>${stats.dominio}%</b></div>
+    <div class="track"><div class="fill" style="width:${stats.dominio}%"></div></div>
+  </div>
+  <div style="margin-top:12px;">
+    <div class="stat-row"><span>Tempo estudado</span><b>${stats.tempo}</b></div>
+    <div class="stat-row"><span>Questões</span><b>${stats.questoes}</b></div>
+    <div class="stat-row"><span>Acertos</span><b>${stats.acertos}%</b></div>
+    <div class="stat-row"><span>Flashcards</span><b>${stats.flashcards}</b></div>
+    <div class="stat-row"><span>Próxima revisão</span><b>${stats.revisao}</b></div>
+    <div class="stat-row"><span>Dificuldade</span><b>${stats.dificuldade}</b></div>
+    <div class="stat-row"><span>Último acesso</span><b>${stats.acesso}</b></div>
+  </div>
+  <div class="reco">
+    <div class="rlbl">IA recomenda estudar</div>
+    ${reco.map(r => `<a href="workspace.html?${base}&disc=${encodeURIComponent(disc)}&topic=${encodeURIComponent(r)}">${dotHTML(statusOf(r))} ${r}</a>`).join('')}
+  </div>`;
+</script>
+</body>
+</html>
