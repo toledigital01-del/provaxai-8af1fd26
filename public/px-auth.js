@@ -130,7 +130,7 @@
   /* ---------- Progresso ---------- */
   PX.saveProgress = async function (p) {
     await PX.ready;
-    if (!PX.user) return null;
+    if (!PX.user || PX.user.guest) return null;
     const row = {
       user_id: PX.user.id,
       course_slug: p.course || '',
@@ -145,7 +145,7 @@
 
   PX.getProgress = async function (disc) {
     await PX.ready;
-    if (!PX.user) return [];
+    if (!PX.user || PX.user.guest) return [];
     let q = PX.sb.from('topic_progress').select('*').eq('user_id', PX.user.id);
     if (disc) q = q.eq('discipline_nome', disc);
     const { data } = await q;
@@ -154,7 +154,7 @@
 
   PX.logSession = async function (disc, topic, ferramenta, segundos) {
     await PX.ready;
-    if (!PX.user) return;
+    if (!PX.user || PX.user.guest) return;
     PX.sb.from('study_sessions').insert({
       user_id: PX.user.id, discipline_nome: disc, topic_nome: topic, ferramenta, segundos: segundos || 0,
     }).then(() => {});
@@ -162,7 +162,7 @@
 
   PX.logAttempt = async function (a) {
     await PX.ready;
-    if (!PX.user) return;
+    if (!PX.user || PX.user.guest) return;
     PX.sb.from('question_attempts').insert({
       user_id: PX.user.id, discipline_nome: a.disc, topic_nome: a.topic,
       resposta: a.resposta, correta: !!a.correta, segundos: a.segundos || 0,
@@ -172,7 +172,7 @@
   /* ---------- Pastas e material próprio ---------- */
   PX.listFolders = async function () {
     await PX.ready;
-    if (!PX.user) return [];
+    if (!PX.user || PX.user.guest) return [];
     const { data } = await PX.sb.from('folders').select('*').order('created_at');
     return data || [];
   };
@@ -182,7 +182,7 @@
   };
   PX.listMaterials = async function () {
     await PX.ready;
-    if (!PX.user) return [];
+    if (!PX.user || PX.user.guest) return [];
     const { data } = await PX.sb.from('user_materials').select('*').order('created_at', { ascending: false });
     return data || [];
   };
@@ -202,7 +202,7 @@
   /* ---------- Anotações ---------- */
   PX.saveNote = async function (disc, topic, conteudo) {
     await PX.ready;
-    if (!PX.user) return null;
+    if (!PX.user || PX.user.guest) return null;
     const { data } = await PX.sb.from('notes').select('id')
       .eq('user_id', PX.user.id).eq('discipline_nome', disc).eq('topic_nome', topic).maybeSingle();
     if (data) return PX.sb.from('notes').update({ conteudo }).eq('id', data.id);
@@ -210,7 +210,7 @@
   };
   PX.getNote = async function (disc, topic) {
     await PX.ready;
-    if (!PX.user) return null;
+    if (!PX.user || PX.user.guest) return null;
     const { data } = await PX.sb.from('notes').select('conteudo')
       .eq('user_id', PX.user.id).eq('discipline_nome', disc).eq('topic_nome', topic).maybeSingle();
     return data ? data.conteudo : null;
@@ -219,13 +219,13 @@
   /* ---------- Cronograma ---------- */
   PX.getPlan = async function () {
     await PX.ready;
-    if (!PX.user) return null;
+    if (!PX.user || PX.user.guest) return null;
     const { data } = await PX.sb.from('study_plans').select('*').eq('user_id', PX.user.id).maybeSingle();
     return data;
   };
   PX.savePlan = async function (plan) {
     await PX.ready;
-    if (!PX.user) return null;
+    if (!PX.user || PX.user.guest) return null;
     return PX.sb.from('study_plans').upsert(
       { user_id: PX.user.id, data_prova: plan.data_prova || null, horas_por_dia: plan.horas_por_dia || 3, dias_descanso: plan.dias_descanso || [] },
       { onConflict: 'user_id' }
