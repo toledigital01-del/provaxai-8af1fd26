@@ -351,6 +351,48 @@ export type Database = {
         }
         Relationships: []
       }
+      knowledge_docs: {
+        Row: {
+          conteudo: string
+          course_slug: string
+          created_at: string
+          disciplina: string
+          id: string
+          ordem: number
+          publicado: boolean
+          titulo: string | null
+          topico: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          conteudo?: string
+          course_slug?: string
+          created_at?: string
+          disciplina: string
+          id?: string
+          ordem?: number
+          publicado?: boolean
+          titulo?: string | null
+          topico?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          conteudo?: string
+          course_slug?: string
+          created_at?: string
+          disciplina?: string
+          id?: string
+          ordem?: number
+          publicado?: boolean
+          titulo?: string | null
+          topico?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       login_events: {
         Row: {
           created_at: string
