@@ -155,7 +155,9 @@ async function viewAlunos(){
         temAcesso(p.id)?'<span class="pill ok">Liberado</span>':'<span class="pill off">Sem acesso</span>',
         `<button class="act ${temAcesso(p.id)?'danger':'primary'}" onclick="acessoCurso('${p.id}',${!temAcesso(p.id)})">${temAcesso(p.id)?'Remover acesso':'Liberar acesso'}</button>
          <button class="act" onclick="toggleAdmin('${p.id}',${(roleMap[p.id]||[]).includes('admin')})">${(roleMap[p.id]||[]).includes('admin')?'Remover admin':'Tornar admin'}</button>
-         <button class="act ${p.suspended?'':'danger'}" onclick="suspender('${p.id}',${!p.suspended})">${p.suspended?'Reativar':'Suspender'}</button>`
+         <button class="act ${p.suspended?'':'danger'}" onclick="suspender('${p.id}',${!p.suspended})">${p.suspended?'Reativar':'Suspender'}</button>
+         <button class="act danger" onclick="excluirAluno('${p.id}','${esc(p.email||p.full_name||'')}')">Excluir</button>`
+
       ]));
   };
   paint('');
