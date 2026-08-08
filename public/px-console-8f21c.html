@@ -473,6 +473,9 @@ function kbEditor(){
         <button class="act" onclick="kbReindexar(false)">Reindexar base</button>
         <button class="act" onclick="kbCorrigirOrfaos('mover')" ${orfaos.length&&discOk?'':'disabled'}>Mover órfãos para ${esc(discOk||'—')}</button>
         <button class="act danger" onclick="kbCorrigirOrfaos('excluir')" ${orfaos.length?'':'disabled'}>Excluir órfãos</button>
+        <span style="flex:1"></span>
+        <button class="act" id="kb-exp-csv" onclick="kbExportLog('csv')" disabled>Baixar CSV</button>
+        <button class="act" id="kb-exp-pdf" onclick="kbExportLog('pdf')" disabled>Baixar PDF</button>
       </div>
       <div id="kb-prog-wrap" style="display:none;margin-top:8px">
         <div style="height:8px;border-radius:99px;background:#E2E8F0;overflow:hidden">
