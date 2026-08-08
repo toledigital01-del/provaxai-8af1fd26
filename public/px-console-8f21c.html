@@ -545,8 +545,10 @@ function kbPaintPreview(){
             '<input type="checkbox" ' + (a.incluir?'checked':'') + ' onchange="kbPreviewToggle(' + i + ',this.checked)" style="width:auto;margin-top:3px">' +
             '<div style="flex:1;min-width:0;cursor:pointer" onclick="kbPreviewAbrir(' + i + ')">' +
               '<b>' + esc(a.topico) + '</b>' +
+              ' <span style="font-size:0.68rem;font-weight:700;padding:1px 7px;border-radius:99px;background:' + (a.incidencia==='alta'?'#FEF3C7':a.incidencia==='baixa'?'#F1F5F9':'#DBEAFE') + ';color:' + (a.incidencia==='alta'?'#B45309':a.incidencia==='baixa'?'#64748B':'#1D4ED8') + '">incidência ' + esc(a.incidencia||'media') + '</span>' +
               (existe ? ' <span class="muted" style="color:#B45309">· sobrescreve conteúdo atual</span>' : ' <span class="muted" style="color:#047857">· novo</span>') +
               '<br><span class="muted">' + esc(a.titulo || '') + ' — ' + String(a.conteudo.length).replace(/\B(?=(\d{3})+(?!\d))/g,'.') + ' caracteres</span>' +
+
             '</div>' +
             '<button class="act" onclick="kbPreviewAbrir(' + i + ')">' + (aberta ? 'Fechar' : 'Revisar') + '</button>' +
           '</div>' +
