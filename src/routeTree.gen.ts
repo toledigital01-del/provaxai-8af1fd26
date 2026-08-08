@@ -11,9 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ApiPublicAiStatusRouteImport } from './routes/api/public/ai-status'
 import { Route as ApiPublicAthenaRouteImport } from './routes/api/public/athena'
 import { Route as ApiPublicKbAutocourseRouteImport } from './routes/api/public/kb-autocourse'
 import { Route as ApiPublicKbIngestRouteImport } from './routes/api/public/kb-ingest'
+import { Route as ApiPublicTtsRouteImport } from './routes/api/public/tts'
 import { Route as ApiPublicHotmartWebhookRouteImport } from './routes/api/public/hotmart/webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -24,6 +26,11 @@ const IndexRoute = IndexRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAiStatusRoute = ApiPublicAiStatusRouteImport.update({
+  id: '/api/public/ai-status',
+  path: '/api/public/ai-status',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicAthenaRoute = ApiPublicAthenaRouteImport.update({
@@ -41,6 +48,11 @@ const ApiPublicKbIngestRoute = ApiPublicKbIngestRouteImport.update({
   path: '/api/public/kb-ingest',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTtsRoute = ApiPublicTtsRouteImport.update({
+  id: '/api/public/tts',
+  path: '/api/public/tts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHotmartWebhookRoute = ApiPublicHotmartWebhookRouteImport.update({
   id: '/api/public/hotmart/webhook',
   path: '/api/public/hotmart/webhook',
@@ -50,26 +62,32 @@ const ApiPublicHotmartWebhookRoute = ApiPublicHotmartWebhookRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
+  '/api/public/tts': typeof ApiPublicTtsRoute
   '/api/public/hotmart/webhook': typeof ApiPublicHotmartWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
+  '/api/public/tts': typeof ApiPublicTtsRoute
   '/api/public/hotmart/webhook': typeof ApiPublicHotmartWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
+  '/api/public/tts': typeof ApiPublicTtsRoute
   '/api/public/hotmart/webhook': typeof ApiPublicHotmartWebhookRoute
 }
 export interface FileRouteTypes {
@@ -77,34 +95,42 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/sitemap.xml'
+    | '/api/public/ai-status'
     | '/api/public/athena'
     | '/api/public/kb-autocourse'
     | '/api/public/kb-ingest'
+    | '/api/public/tts'
     | '/api/public/hotmart/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/sitemap.xml'
+    | '/api/public/ai-status'
     | '/api/public/athena'
     | '/api/public/kb-autocourse'
     | '/api/public/kb-ingest'
+    | '/api/public/tts'
     | '/api/public/hotmart/webhook'
   id:
     | '__root__'
     | '/'
     | '/sitemap.xml'
+    | '/api/public/ai-status'
     | '/api/public/athena'
     | '/api/public/kb-autocourse'
     | '/api/public/kb-ingest'
+    | '/api/public/tts'
     | '/api/public/hotmart/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiPublicAiStatusRoute: typeof ApiPublicAiStatusRoute
   ApiPublicAthenaRoute: typeof ApiPublicAthenaRoute
   ApiPublicKbAutocourseRoute: typeof ApiPublicKbAutocourseRoute
   ApiPublicKbIngestRoute: typeof ApiPublicKbIngestRoute
+  ApiPublicTtsRoute: typeof ApiPublicTtsRoute
   ApiPublicHotmartWebhookRoute: typeof ApiPublicHotmartWebhookRoute
 }
 
@@ -122,6 +148,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/ai-status': {
+      id: '/api/public/ai-status'
+      path: '/api/public/ai-status'
+      fullPath: '/api/public/ai-status'
+      preLoaderRoute: typeof ApiPublicAiStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/athena': {
@@ -145,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicKbIngestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/tts': {
+      id: '/api/public/tts'
+      path: '/api/public/tts'
+      fullPath: '/api/public/tts'
+      preLoaderRoute: typeof ApiPublicTtsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hotmart/webhook': {
       id: '/api/public/hotmart/webhook'
       path: '/api/public/hotmart/webhook'
@@ -158,9 +198,11 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiPublicAiStatusRoute: ApiPublicAiStatusRoute,
   ApiPublicAthenaRoute: ApiPublicAthenaRoute,
   ApiPublicKbAutocourseRoute: ApiPublicKbAutocourseRoute,
   ApiPublicKbIngestRoute: ApiPublicKbIngestRoute,
+  ApiPublicTtsRoute: ApiPublicTtsRoute,
   ApiPublicHotmartWebhookRoute: ApiPublicHotmartWebhookRoute,
 }
 export const routeTree = rootRouteImport

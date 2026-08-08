@@ -52,6 +52,7 @@
     PX.user = session ? session.user : null;
     PX.profile = null;
     PX.roles = [];
+    PX.syncCurriculo();
     if (!PX.user) return;
     try {
       const [{ data: prof }, { data: roles }] = await Promise.all([
@@ -61,10 +62,53 @@
       PX.profile = prof || null;
       PX.roles = (roles || []).map(r => r.role);
     } catch (e) { console.error('[PX] perfil:', e); }
+    PX.syncProgresso();
   }
 
+  /* ---------- Sincronização com o painel administrativo ---------- */
+  /* currículo (cursos → disciplinas → tópicos) publicado pelo admin */
+  PX.syncCurriculo = async function () {
+    try {
+      const [{ data: cursos }, { data: discs }, { data: tops }] = await Promise.all([
+        PX.sb.from('courses').select('id,slug').order('ordem'),
+        PX.sb.from('disciplines').select('id,course_id,nome,ordem').order('ordem'),
+        PX.sb.from('topics').select('discipline_id,nome,ordem').order('ordem'),
+      ]);
+      if (!cursos || !discs || !discs.length) return;
+      const porDisc = {};
+      (tops || []).forEach(t => { (porDisc[t.discipline_id] = porDisc[t.discipline_id] || []).push(t.nome); });
+      const slugDe = {};
+      cursos.forEach(c => { slugDe[c.id] = c.slug; });
+      const out = {};
+      discs.forEach(d => {
+        const slug = slugDe[d.course_id];
+        if (!slug) return;
+        out[slug] = out[slug] || {};
+        out[slug][d.nome] = porDisc[d.id] || [];
+      });
+      localStorage.setItem('px_curriculo_v1', JSON.stringify({ cursos: out, ts: Date.now() }));
+    } catch (e) { /* mantém o currículo em cache */ }
+  };
+
+  /* progresso real do aluno usado pelas telas (data.js lê este cache) */
+  PX.syncProgresso = async function () {
+    if (!PX.user) return;
+    try {
+      const { data } = await PX.sb.from('topic_progress').select('*').eq('user_id', PX.user.id);
+      const map = {};
+      (data || []).forEach(r => {
+        map[r.topic_nome] = {
+          status: r.status, dominio: r.dominio, tempo_segundos: r.tempo_segundos,
+          questoes_respondidas: r.questoes_respondidas, questoes_certas: r.questoes_certas,
+          last_access_at: r.last_access_at,
+        };
+      });
+      localStorage.setItem('px_prog_cache_v1', JSON.stringify(map));
+    } catch (e) {}
+  };
 
   PX.ready = boot();
+
 
 
   /* ---------- Autenticação ---------- */
@@ -151,8 +195,19 @@
     };
     if (p.status) row.status = p.status;
     if (typeof p.dominio === 'number') row.dominio = p.dominio;
-    return PX.sb.from('topic_progress').upsert(row, { onConflict: 'user_id,course_slug,discipline_nome,topic_nome' });
+    const res = await PX.sb.from('topic_progress').upsert(row, { onConflict: 'user_id,course_slug,discipline_nome,topic_nome' });
+    try {
+      const map = JSON.parse(localStorage.getItem('px_prog_cache_v1')) || {};
+      map[p.topic] = Object.assign({}, map[p.topic], {
+        status: row.status || (map[p.topic] && map[p.topic].status) || 'apr',
+        dominio: typeof row.dominio === 'number' ? row.dominio : (map[p.topic] && map[p.topic].dominio) || 0,
+        last_access_at: row.last_access_at,
+      });
+      localStorage.setItem('px_prog_cache_v1', JSON.stringify(map));
+    } catch (e) {}
+    return res;
   };
+
 
   PX.getProgress = async function (disc) {
     await PX.ready;

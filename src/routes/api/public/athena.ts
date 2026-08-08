@@ -1,5 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
+import { SUPABASE_URL, SUPABASE_KEY, getSetting, aiKeys } from '@/lib/px-server'
+import { chat, normalizar, AIError } from '@/lib/ai-gateway'
 
 const Body = z.object({
   disciplina: z.string().min(1).max(200),
@@ -7,9 +9,6 @@ const Body = z.object({
   pergunta: z.string().min(1).max(2000),
   curso: z.string().max(80).optional(),
 })
-
-const SUPABASE_URL = 'https://rdokrryisfkhmevcxlws.supabase.co'
-const SUPABASE_KEY = 'sb_publishable_9ILwlXJNPJ5ZzpALdbmfBA_gRAtH4Qr'
 
 async function fetchKnowledge(curso: string, disciplina: string, topico?: string | null) {
   const params = new URLSearchParams({
@@ -47,8 +46,7 @@ export const Route = createFileRoute('/api/public/athena')({
           .map((d) => `### ${d.titulo || d.topico || body.disciplina}\n${(d.conteudo || '').slice(0, 12000)}`)
           .join('\n\n')
 
-        const apiKey = process.env['LOVABLE_API_KEY']
-        if (!apiKey) return Response.json({ error: 'IA indisponível no momento.' }, { status: 503 })
+        const cfg = normalizar(await getSetting('ia_athena'))
 
         const system = [
           'Você é a Athena, professora de concursos da plataforma Prova X.',
@@ -58,27 +56,23 @@ export const Route = createFileRoute('/api/public/athena')({
             : 'Ainda não há material oficial cadastrado para este tópico; responda com base no edital e avise o aluno que o conteúdo detalhado será publicado em breve.',
         ].join('\n')
 
-        const ai = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'google/gemini-3-flash-preview',
-            messages: [
-              { role: 'system', content: system },
-              {
-                role: 'user',
-                content: `Disciplina: ${body.disciplina}${body.topico ? ` | Tópico: ${body.topico}` : ''}\n\nPergunta: ${body.pergunta}`,
-              },
-            ],
-          }),
-        })
-
-        if (ai.status === 429) return Response.json({ error: 'Muitas perguntas seguidas. Tente em instantes.' }, { status: 429 })
-        if (!ai.ok) return Response.json({ error: 'Não consegui responder agora.' }, { status: 502 })
-
-        const data = (await ai.json()) as any
-        const resposta = data?.choices?.[0]?.message?.content || 'Não consegui responder agora.'
-        return Response.json({ resposta, fontes: docs.length })
+        try {
+          const resposta = await chat({
+            provider: cfg.provider,
+            model: cfg.model,
+            system,
+            user: `Disciplina: ${body.disciplina}${body.topico ? ` | Tópico: ${body.topico}` : ''}\n\nPergunta: ${body.pergunta}`,
+            keys: aiKeys(),
+          })
+          return Response.json({
+            resposta: resposta || 'Não consegui responder agora.',
+            fontes: docs.length,
+            modelo: cfg.model,
+          })
+        } catch (e) {
+          const err = e as AIError
+          return Response.json({ error: err.message || 'Não consegui responder agora.' }, { status: err.status || 502 })
+        }
       },
     },
   },

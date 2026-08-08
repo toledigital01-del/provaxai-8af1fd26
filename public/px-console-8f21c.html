@@ -300,13 +300,151 @@ async function viewLogs(){
       (le||[]).map(l=>[dt(l.created_at), esc((l.user_agent||'').slice(0,70))]))}</div>`;
 }
 
+let CFG_STATUS = null;
+const CFG_PROVEDORES = [
+  { id:'lovable', nome:'IA inclusa (Lovable)', dica:'Já vem conectada e não precisa de chave.' },
+  { id:'openai', nome:'OpenAI (GPT)', dica:'Requer a chave OPENAI_API_KEY.' },
+  { id:'gemini', nome:'Google Gemini', dica:'Requer a chave GEMINI_API_KEY.' },
+  { id:'anthropic', nome:'Anthropic (Claude)', dica:'Requer a chave ANTHROPIC_API_KEY.' },
+];
+function cfgPill(ok){ return `<span class="tag" style="background:${ok?'#dcfce7':'#fee2e2'};color:${ok?'#166534':'#991b1b'}">${ok?'conectado':'não conectado'}</span>`; }
+function cfgSelects(prefixo, atual){
+  const mods = (CFG_STATUS && CFG_STATUS.modelos) || {};
+  const prov = atual.provider || 'lovable';
+  const lista = mods[prov] || [];
+  return `<div class="row">
+    <div><label class="muted">Provedor</label>
+      <select id="${prefixo}-prov" onchange="cfgTrocaProv('${prefixo}')">
+        ${CFG_PROVEDORES.map(p=>`<option value="${p.id}" ${p.id===prov?'selected':''}>${esc(p.nome)}</option>`).join('')}
+      </select></div>
+    <div><label class="muted">Modelo</label>
+      <select id="${prefixo}-mod">${lista.map(m=>`<option value="${esc(m)}" ${m===atual.model?'selected':''}>${esc(m)}</option>`).join('')}</select></div>
+  </div>`;
+}
+function cfgTrocaProv(prefixo){
+  const prov = document.getElementById(prefixo+'-prov').value;
+  const mods = ((CFG_STATUS && CFG_STATUS.modelos) || {})[prov] || [];
+  document.getElementById(prefixo+'-mod').innerHTML = mods.map(m=>`<option value="${esc(m)}">${esc(m)}</option>`).join('');
+}
 async function viewConfig(){
+  view.innerHTML = '<div class="card"><p class="muted">Carregando configurações…</p></div>';
   const { data: ps } = await PX.sb.from('platform_settings').select('*').order('chave');
-  view.innerHTML = `<div class="card"><h2>Configurações da plataforma</h2>
+  const mapa = {}; (ps||[]).forEach(s => mapa[s.chave] = s);
+  try {
+    const { data:{ session } } = await PX.sb.auth.getSession();
+    const r = await fetch('/api/public/ai-status', { headers: { Authorization: 'Bearer ' + (session ? session.access_token : '') } });
+    CFG_STATUS = r.ok ? await r.json() : null;
+  } catch(e){ CFG_STATUS = null; }
+  const conect = (CFG_STATUS && CFG_STATUS.conectado) || {};
+  const athena = (mapa['ia_athena'] && mapa['ia_athena'].valor) || { provider:'lovable', model:'google/gemini-3-flash-preview' };
+  const sistema = (mapa['ia_sistema'] && mapa['ia_sistema'].valor) || { provider:'lovable', model:'google/gemini-3-flash-preview' };
+  const voz = (mapa['voz_elevenlabs'] && mapa['voz_elevenlabs'].valor) || { ativo:false, voice_id:'9BWtsMINqrJLrRacOk9x', model:'eleven_turbo_v2_5' };
+
+  view.innerHTML = `
+  <div class="card">
+    <h2>Integrações de IA</h2>
+    <p class="muted">As chaves ficam guardadas em segredo no servidor. Aqui você só escolhe quem faz o quê.</p>
+    <div class="grid">
+      ${CFG_PROVEDORES.map(p=>`<div class="row"><div><b>${esc(p.nome)}</b> ${cfgPill(!!conect[p.id])}<div class="muted">${esc(p.dica)}</div></div></div>`).join('')}
+      <div class="row"><div><b>ElevenLabs (voz)</b> ${cfgPill(!!conect.elevenlabs)}<div class="muted">Narração das aulas e podcasts. Requer a chave ELEVENLABS_API_KEY.</div></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>IA do curso — Athena</h2>
+    <p class="muted">Responde os alunos nas aulas, questões e chat.</p>
+    ${cfgSelects('athena', athena)}
+    <button class="act primary" onclick="cfgSalvarIA('ia_athena','athena')">Salvar IA da Athena</button>
+  </div>
+
+  <div class="card">
+    <h2>IA do sistema — administrativa</h2>
+    <p class="muted">Monta os cursos a partir do material enviado e cuida das tarefas do painel.</p>
+    ${cfgSelects('sistema', sistema)}
+    <button class="act primary" onclick="cfgSalvarIA('ia_sistema','sistema')">Salvar IA do sistema</button>
+  </div>
+
+  <div class="card">
+    <h2>Voz (ElevenLabs)</h2>
+    <div class="row">
+      <div><label class="muted">Narração ativa</label>
+        <select id="voz-ativo"><option value="1" ${voz.ativo?'selected':''}>Sim</option><option value="0" ${!voz.ativo?'selected':''}>Não</option></select></div>
+      <div><label class="muted">Voice ID</label><input id="voz-id" value="${esc(voz.voice_id||'')}"></div>
+      <div><label class="muted">Modelo</label><input id="voz-mod" value="${esc(voz.model||'eleven_turbo_v2_5')}"></div>
+    </div>
+    <button class="act primary" onclick="cfgSalvarVoz()">Salvar voz</button>
+  </div>
+
+  <div class="card">
+    <h2>Sincronizar com o app dos alunos</h2>
+    <p class="muted">Publica no banco o currículo (cursos, disciplinas e tópicos) para que as telas dos alunos leiam exatamente o que está aqui.</p>
+    <button class="act primary" id="cfg-sync" onclick="cfgSincronizar()">Sincronizar currículo agora</button>
+    <div class="muted" id="cfg-sync-msg" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <h2>Configurações avançadas (JSON)</h2>
     ${(ps||[]).map(s=>`<div class="row">
       <div><label class="muted">${esc(s.chave)}</label><input id="ps-${s.id}" value='${esc(JSON.stringify(s.valor))}'></div>
-      <div><button class="act primary" onclick="salvarConfig('${s.id}')">Salvar</button></div>
-    </div>`).join('') || '<p class="muted">Nenhuma configuração cadastrada.</p>'}</div>`;
+      <div><button class="act" onclick="salvarConfig('${s.id}')">Salvar</button></div>
+    </div>`).join('') || '<p class="muted">Nenhuma configuração cadastrada.</p>'}
+  </div>`;
+}
+async function cfgUpsert(chave, valor){
+  const { error } = await PX.sb.from('platform_settings').upsert({ chave, valor, publico:true }, { onConflict:'chave' });
+  if(error){ alert(error.message); return false; }
+  await logAdmin('config','platform_settings',chave);
+  return true;
+}
+async function cfgSalvarIA(chave, prefixo){
+  const provider = document.getElementById(prefixo+'-prov').value;
+  const model = document.getElementById(prefixo+'-mod').value;
+  const conect = (CFG_STATUS && CFG_STATUS.conectado) || {};
+  if(!conect[provider] && !confirm('Esse provedor ainda não está conectado. Salvar mesmo assim?')) return;
+  if(await cfgUpsert(chave, { provider, model })) alert('Configuração salva.');
+}
+async function cfgSalvarVoz(){
+  const valor = {
+    ativo: document.getElementById('voz-ativo').value === '1',
+    voice_id: document.getElementById('voz-id').value.trim(),
+    model: document.getElementById('voz-mod').value.trim() || 'eleven_turbo_v2_5',
+  };
+  if(await cfgUpsert('voz_elevenlabs', valor)) alert('Voz salva.');
+}
+async function cfgSincronizar(){
+  const btn = document.getElementById('cfg-sync'); const msg = document.getElementById('cfg-sync-msg');
+  const topics = kbGlobalTopics(); const porCurso = kbGlobalDiscs();
+  btn.disabled = true; msg.textContent = 'Sincronizando…';
+  try {
+    const { data: cursos } = await PX.sb.from('courses').select('id,slug');
+    let nd = 0, nt = 0;
+    for(const c of (cursos||[])){
+      const discs = porCurso[c.slug] || [];
+      for(let i=0;i<discs.length;i++){
+        const nome = discs[i];
+        let { data: d } = await PX.sb.from('disciplines').select('id').eq('course_id', c.id).eq('nome', nome).maybeSingle();
+        if(!d){
+          const ins = await PX.sb.from('disciplines').insert({ course_id:c.id, nome, area:'geral', ordem:i }).select('id').single();
+          if(ins.error) throw ins.error;
+          d = ins.data; nd++;
+        }
+        const { data: exist } = await PX.sb.from('topics').select('nome').eq('discipline_id', d.id);
+        const tem = new Set((exist||[]).map(t=>t.nome));
+        const novos = (topics[nome]||[]).map((t,j)=>({ discipline_id:d.id, nome:t, ordem:j })).filter(t=>!tem.has(t.nome));
+        if(novos.length){
+          const r = await PX.sb.from('topics').insert(novos);
+          if(r.error) throw r.error;
+          nt += novos.length;
+        }
+        msg.textContent = `Sincronizando… ${c.slug} · ${nome}`;
+      }
+    }
+    msg.textContent = `Pronto: ${nd} disciplina(s) e ${nt} tópico(s) publicados para os alunos.`;
+    await logAdmin('sincronizar_curriculo','courses',null);
+  } catch(e){
+    msg.textContent = 'Erro ao sincronizar: ' + (e.message || e);
+  }
+  btn.disabled = false;
 }
 async function salvarConfig(id){
   let valor;
@@ -317,6 +455,7 @@ async function salvarConfig(id){
   await logAdmin('config','platform_settings',id);
   alert('Configuração salva.');
 }
+
 
 /* ---------- Base de conhecimento da Athena ---------- */
 let KB_DOCS = [];
