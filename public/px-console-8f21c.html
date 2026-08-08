@@ -439,8 +439,26 @@ function kbEditor(){
       <p class="muted" id="kb-ing" style="margin-top:8px"></p>
       <div id="kb-preview" style="margin-top:8px"></div>
     </div>`;
+  kbPrefsLoad();
+}
+const KB_PREFS_KEY = 'px.kb.prefs';
+function kbPrefsGet(){ try{ return JSON.parse(localStorage.getItem(KB_PREFS_KEY) || '{}'); }catch(e){ return {}; } }
+function kbPrefsLoad(){
+  const p = kbPrefsGet();
+  const set = (id, v) => { const el = document.getElementById(id); if(el && v != null && v !== '') el.value = v; };
+  set('kb-modelo', p.modelo); set('kb-banca', p.banca); set('kb-cargo', p.cargo); set('kb-prof', p.prof);
+  const ap = document.getElementById('kb-aprov'); if(ap && typeof p.aprov === 'boolean') ap.checked = p.aprov;
+  ['kb-modelo','kb-banca','kb-cargo','kb-prof','kb-aprov'].forEach(function(id){
+    const el = document.getElementById(id); if(el) el.addEventListener('change', kbPrefsSave);
+  });
+}
+function kbPrefsSave(){
+  const v = id => (document.getElementById(id)||{}).value;
+  const ap = document.getElementById('kb-aprov');
+  try{ localStorage.setItem(KB_PREFS_KEY, JSON.stringify({ modelo:v('kb-modelo'), banca:v('kb-banca'), cargo:v('kb-cargo'), prof:v('kb-prof'), aprov: ap ? ap.checked : true })); }catch(e){}
 }
 function kbIngMsg(t){ const el = document.getElementById('kb-ing'); if(el) el.textContent = t; }
+
 async function kbToken(){ const { data } = await PX.sb.auth.getSession(); return data.session ? data.session.access_token : ''; }
 async function kbPost(path, payload){
   const r = await fetch(path, { method:'POST', headers:{ 'Content-Type':'application/json', Authorization:'Bearer ' + (await kbToken()) }, body: JSON.stringify(payload) });
