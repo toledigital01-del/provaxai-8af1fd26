@@ -583,31 +583,70 @@ async function viewConhecimento(){
   kbPaint();
 }
 
-function kbListHTML(items){
-  return `<div style="border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;max-height:60vh;overflow-y:auto">${items}</div>`;
+let kbQd = '', kbQt = '', KB_PANE = 'conteudo';
+function kbListHTML(items, id){
+  return `<div id="${id}" style="border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;max-height:56vh;overflow-y:auto;background:#fff">${items}</div>`;
 }
-function kbRow(label, active, ok, onclick){
+function kbBusca(id, val, ph, fn){
+  return `<input id="${id}" value="${esc(val)}" placeholder="${esc(ph)}" oninput="${fn}(this.value)" style="margin:0 0 6px;padding:7px 10px;font-size:0.78rem">`;
+}
+function kbRow(label, active, ok, onclick, extra){
   return `<button class="act" style="display:flex;width:100%;text-align:left;border:none;border-bottom:1px solid #F1F5F9;border-radius:0;padding:9px 11px;gap:8px;align-items:center;background:${active?'#EFF6FF':'#fff'};font-weight:${active?'700':'500'}" onclick="${onclick}">
     <span style="width:7px;height:7px;border-radius:99px;background:${ok?'#10B981':'#CBD5E1'};flex:none"></span>
-    <span style="flex:1;font-size:0.8rem">${esc(label)}</span></button>`;
+    <span style="flex:1;font-size:0.8rem">${esc(label)}</span>
+    ${extra?`<span class="muted" style="font-size:0.7rem;font-weight:600;flex:none">${esc(extra)}</span>`:''}</button>`;
 }
+function kbVazio(txt){ return `<div class="muted" style="padding:11px;font-size:0.78rem">${esc(txt)}</div>`; }
+
+function kbDiscItems(){
+  const q = kbQd.trim().toLowerCase();
+  const lista = kbDiscList().filter(d => !q || d.toLowerCase().includes(q));
+  if(!lista.length) return kbVazio('Nenhuma matéria com esse nome.');
+  return lista.map(d => {
+    const tops = kbTopicList(d);
+    const feitos = KB_DOCS.filter(x => x.disciplina === d && (x.conteudo||'').trim()).length;
+    return kbRow(d, d===kbDisc, feitos>0, `kbSelDisc('${escJs(d)}')`, feitos + '/' + (tops.length + 1));
+  }).join('');
+}
+function kbTopicItems(){
+  const q = kbQt.trim().toLowerCase();
+  const tops = kbTopicList(kbDisc).filter(t => !q || t.toLowerCase().includes(q));
+  const geral = (!q || 'visão geral da matéria'.includes(q))
+    ? kbRow('Visão geral da matéria', kbTopic===null, !!(kbFind(kbDisc,null)||{}).conteudo, 'kbSelTopic(null)')
+    : '';
+  if(!geral && !tops.length) return kbVazio('Nenhum tópico com esse nome.');
+  return geral + tops.map(t => kbRow(t, t===kbTopic, !!((kbFind(kbDisc,t)||{}).conteudo||'').trim(), `kbSelTopic('${escJs(t)}')`)).join('');
+}
+window.kbFiltroDisc = v => { kbQd = v; document.getElementById('kb-disc-list').innerHTML = kbDiscItems(); };
+window.kbFiltroTopic = v => { kbQt = v; document.getElementById('kb-topic-list').innerHTML = kbTopicItems(); };
+
 function kbPaint(){
   const discs = kbDiscList();
   if(!discs.length){
     document.getElementById('kb-discs').innerHTML = '<label class="muted">Matérias</label>' + kbListHTML(
-      '<div style="padding:11px;font-size:0.8rem" class="muted">Não consegui carregar a lista de matérias. Atualize a página (Ctrl+F5) e tente de novo.</div>');
+      kbVazio('Não consegui carregar a lista de matérias. Atualize a página (Ctrl+F5) e tente de novo.'), 'kb-disc-list');
     document.getElementById('kb-topics').innerHTML = '';
     document.getElementById('kb-editor').innerHTML = '';
     return;
   }
-  document.getElementById('kb-discs').innerHTML = '<label class="muted">Matérias</label>' + kbListHTML(
-    discs.map(d => kbRow(d, d===kbDisc, KB_DOCS.some(x=>x.disciplina===d && (x.conteudo||'').trim()), `kbSelDisc('${escJs(d)}')`)).join(''));
-  const tops = kbTopicList(kbDisc);
-  document.getElementById('kb-topics').innerHTML = '<label class="muted">Tópicos</label>' + kbListHTML(
-    kbRow('Visão geral da matéria', kbTopic===null, !!(kbFind(kbDisc,null)||{}).conteudo, `kbSelTopic(null)`) +
-    tops.map(t => kbRow(t, t===kbTopic, !!((kbFind(kbDisc,t)||{}).conteudo||'').trim(), `kbSelTopic('${escJs(t)}')`)).join(''));
+  document.getElementById('kb-discs').innerHTML =
+    '<label class="muted">Matérias</label>' + kbBusca('kb-q-disc', kbQd, 'Buscar matéria…', 'kbFiltroDisc') +
+    kbListHTML(kbDiscItems(), 'kb-disc-list');
+  document.getElementById('kb-topics').innerHTML =
+    '<label class="muted">Tópicos</label>' + kbBusca('kb-q-topic', kbQt, 'Buscar tópico…', 'kbFiltroTopic') +
+    kbListHTML(kbTopicItems(), 'kb-topic-list');
   kbEditor();
 }
+window.kbPane = p => {
+  KB_PANE = p;
+  document.querySelectorAll('[data-pane]').forEach(el => { el.style.display = el.getAttribute('data-pane') === p ? '' : 'none'; });
+  document.querySelectorAll('[data-panebtn]').forEach(el => {
+    const on = el.getAttribute('data-panebtn') === p;
+    el.style.background = on ? '#2563EB' : '#fff';
+    el.style.color = on ? '#fff' : '#475569';
+  });
+};
+
 
 function escJs(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 window.kbSelDisc = d => {
@@ -616,6 +655,8 @@ window.kbSelDisc = d => {
   if(!disc) return;
   kbDisc = disc;
   kbTopic = null;
+  kbQt = '';
+
   KB_GERADAS = [];
   KB_ABERTA = -1;
   kbPaint();
@@ -632,12 +673,22 @@ function kbEditor(){
       <span style="width:12px;height:12px;border-radius:99px;border:2px solid #93C5FD;border-top-color:#1D4ED8;display:inline-block;animation:pxspin .8s linear infinite"></span>
       <span data-msg>Processando…</span>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:${discOk?'#ECFDF5':'#FEF2F2'};border:1px solid ${discOk?'#A7F3D0':'#FECACA'};color:${discOk?'#047857':'#B91C1C'};border-radius:10px;padding:8px 11px;margin-bottom:10px;font-size:0.8rem;font-weight:600">
-      ${discOk ? 'Matéria selecionada: ' + esc(discOk) + (kbTopic ? ' › ' + esc(kbTopic) : ' (visão geral)') : 'Nenhuma matéria válida selecionada — escolha uma matéria na coluna à esquerda para salvar ou gerar conteúdo.'}
+    
+    <div style="position:sticky;top:0;z-index:5;background:#fff;padding-bottom:8px">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:${discOk?'#ECFDF5':'#FEF2F2'};border:1px solid ${discOk?'#A7F3D0':'#FECACA'};color:${discOk?'#047857':'#B91C1C'};border-radius:10px;padding:8px 11px;font-size:0.8rem;font-weight:600">
+        ${discOk ? esc(discOk) + (kbTopic ? ' › ' + esc(kbTopic) : ' › visão geral') : 'Nenhuma matéria válida selecionada — escolha uma matéria na coluna à esquerda para salvar ou gerar conteúdo.'}
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px;background:#F1F5F9;border-radius:10px;padding:4px;flex-wrap:wrap">
+        <button class="act" data-panebtn="conteudo" onclick="kbPane('conteudo')" style="border:none;border-radius:8px;font-size:0.78rem;font-weight:700">Conteúdo da aula</button>
+        <button class="act" data-panebtn="ia" onclick="kbPane('ia')" style="border:none;border-radius:8px;font-size:0.78rem;font-weight:700">Material e curso com IA</button>
+        <button class="act" data-panebtn="manut" onclick="kbPane('manut')" style="border:none;border-radius:8px;font-size:0.78rem;font-weight:700">Manutenção${orfaos.length?' ('+orfaos.length+')':''}</button>
+      </div>
     </div>
+    <div data-pane="conteudo">
     <label class="muted">Conteúdo — ${esc(alvo)}</label>
     <input id="kb-tit" placeholder="Título da aula (opcional)" value="${esc(doc.titulo||'')}" style="margin-bottom:8px">
     <textarea id="kb-txt" rows="18" placeholder="Cole aqui o material teórico completo deste tópico. Use ## para títulos, - para listas.">${esc(doc.conteudo||'')}</textarea>
+
     <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
       <label class="muted" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="kb-pub" ${doc.publicado===false?'':'checked'} style="width:auto"> Publicado para alunos</label>
       <div class="spacer" style="flex:1"></div>
@@ -645,8 +696,10 @@ function kbEditor(){
       <button class="act primary" onclick="kbSave()" ${discOk?'':'disabled'}>Salvar conteúdo</button>
     </div>
     <p class="muted" id="kb-msg" style="margin-top:8px">${doc.updated_at?'Atualizado em '+dt(doc.updated_at):'Sem conteúdo cadastrado.'}</p>
+    </div>
 
-    <div style="margin-top:12px;border:1px dashed #E2E8F0;border-radius:12px;padding:10px;font-size:0.8rem">
+    <div data-pane="manut" style="display:none;margin-top:4px;border:1px dashed #E2E8F0;border-radius:12px;padding:10px;font-size:0.8rem">
+
       <b>Manutenção da base</b>
       <p class="muted" style="margin:4px 0 8px">${orfaos.length ? orfaos.length + ' conteúdo(s) órfão(s) — matéria vazia ou fora do edital.' : 'Nenhum conteúdo órfão encontrado.'}</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -669,7 +722,7 @@ function kbEditor(){
     </div>
 
 
-    <div style="margin-top:16px;border:1px solid #E2E8F0;border-radius:12px;padding:12px">
+    <div data-pane="ia" style="display:none;margin-top:4px;border:1px solid #E2E8F0;border-radius:12px;padding:12px">
       <b style="font-size:0.9rem">Alimentar a IA com material</b>
       <p class="muted" style="margin:4px 0 10px">Solte os arquivos aqui (PDF, textos, imagens de apostila/slide/print — vários de uma vez) ou cole um endereço de site/vídeo. A leitura começa sozinha, sem etapa de extração.</p>
       <div id="kb-drop" style="border:2px dashed #CBD5E1;border-radius:12px;padding:14px;text-align:center;background:#F8FAFC">
@@ -723,6 +776,7 @@ function kbEditor(){
       <p class="muted" id="kb-ing" style="margin-top:8px"></p>
       <div id="kb-preview" style="margin-top:8px"></div>
     </div>`;
+  kbPane(KB_PANE);
   kbPrefsLoad();
   kbRenderLog();
   kbBindIngest();
