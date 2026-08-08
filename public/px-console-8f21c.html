@@ -674,11 +674,21 @@ function kbEditor(){
       <span data-msg>Processando…</span>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:${discOk?'#ECFDF5':'#FEF2F2'};border:1px solid ${discOk?'#A7F3D0':'#FECACA'};color:${discOk?'#047857':'#B91C1C'};border-radius:10px;padding:8px 11px;margin-bottom:10px;font-size:0.8rem;font-weight:600">
-      ${discOk ? 'Matéria selecionada: ' + esc(discOk) + (kbTopic ? ' › ' + esc(kbTopic) : ' (visão geral)') : 'Nenhuma matéria válida selecionada — escolha uma matéria na coluna à esquerda para salvar ou gerar conteúdo.'}
+    <div style="position:sticky;top:0;z-index:5;background:#fff;padding-bottom:8px">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:${discOk?'#ECFDF5':'#FEF2F2'};border:1px solid ${discOk?'#A7F3D0':'#FECACA'};color:${discOk?'#047857':'#B91C1C'};border-radius:10px;padding:8px 11px;font-size:0.8rem;font-weight:600">
+        ${discOk ? esc(discOk) + (kbTopic ? ' › ' + esc(kbTopic) : ' › visão geral') : 'Nenhuma matéria válida selecionada — escolha uma matéria na coluna à esquerda para salvar ou gerar conteúdo.'}
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px;background:#F1F5F9;border-radius:10px;padding:4px;flex-wrap:wrap">
+        <button class="act" data-panebtn="conteudo" onclick="kbPane('conteudo')" style="border:none;border-radius:8px;font-size:0.78rem;font-weight:700">Conteúdo da aula</button>
+        <button class="act" data-panebtn="ia" onclick="kbPane('ia')" style="border:none;border-radius:8px;font-size:0.78rem;font-weight:700">Material e curso com IA</button>
+        <button class="act" data-panebtn="manut" onclick="kbPane('manut')" style="border:none;border-radius:8px;font-size:0.78rem;font-weight:700">Manutenção${orfaos.length?' ('+orfaos.length+')':''}</button>
+      </div>
     </div>
+    <div data-pane="conteudo">
     <label class="muted">Conteúdo — ${esc(alvo)}</label>
     <input id="kb-tit" placeholder="Título da aula (opcional)" value="${esc(doc.titulo||'')}" style="margin-bottom:8px">
     <textarea id="kb-txt" rows="18" placeholder="Cole aqui o material teórico completo deste tópico. Use ## para títulos, - para listas.">${esc(doc.conteudo||'')}</textarea>
+
     <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
       <label class="muted" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="kb-pub" ${doc.publicado===false?'':'checked'} style="width:auto"> Publicado para alunos</label>
       <div class="spacer" style="flex:1"></div>
