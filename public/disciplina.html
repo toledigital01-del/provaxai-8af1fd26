@@ -34,6 +34,7 @@
 
 </style>
   <script src="px-guard.js"></script>
+  <script src="px-kb.js"></script>
 </head>
 <body>
 <aside id="shell-sidebar"></aside>
@@ -68,6 +69,7 @@
             <button class="chip" data-f="dom"><span class="sdot" style="background:#3B82F6"></span> Dominado</button>
           </div>
 
+          <div class="panel prose" id="kb-panel" style="display:none;margin-top:18px;"></div>
           <div class="topic-list" id="topics"></div>
         </div>
       </div>
@@ -192,6 +194,18 @@ document.getElementById('topics').addEventListener('click', e => {
 });
 
 
+
+/* Conteúdo teórico da matéria (base de conhecimento da Athena) */
+(async function () {
+  try {
+    const docs = await PX.kbDisciplina(disc, id);
+    const geral = (docs || []).find(d => !d.topico && (d.conteudo || '').trim());
+    if (!geral) return;
+    const el = document.getElementById('kb-panel');
+    el.innerHTML = '<h2>' + (geral.titulo || 'Conteúdo da matéria') + '</h2>' + PX.kbHTML(geral.conteudo);
+    el.style.display = '';
+  } catch (e) {}
+})();
 </script>
 </body>
 </html>
