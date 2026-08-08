@@ -14,6 +14,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ApiPublicAiStatusRouteImport } from './routes/api/public/ai-status'
 import { Route as ApiPublicAthenaRouteImport } from './routes/api/public/athena'
 import { Route as ApiPublicKbAutocourseRouteImport } from './routes/api/public/kb-autocourse'
+import { Route as ApiPublicKbEditalRouteImport } from './routes/api/public/kb-edital'
 import { Route as ApiPublicKbIngestRouteImport } from './routes/api/public/kb-ingest'
 import { Route as ApiPublicTtsRouteImport } from './routes/api/public/tts'
 import { Route as ApiPublicHotmartWebhookRouteImport } from './routes/api/public/hotmart/webhook'
@@ -43,6 +44,11 @@ const ApiPublicKbAutocourseRoute = ApiPublicKbAutocourseRouteImport.update({
   path: '/api/public/kb-autocourse',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicKbEditalRoute = ApiPublicKbEditalRouteImport.update({
+  id: '/api/public/kb-edital',
+  path: '/api/public/kb-edital',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicKbIngestRoute = ApiPublicKbIngestRouteImport.update({
   id: '/api/public/kb-ingest',
   path: '/api/public/kb-ingest',
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
+  '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
   '/api/public/tts': typeof ApiPublicTtsRoute
   '/api/public/hotmart/webhook': typeof ApiPublicHotmartWebhookRoute
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
+  '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
   '/api/public/tts': typeof ApiPublicTtsRoute
   '/api/public/hotmart/webhook': typeof ApiPublicHotmartWebhookRoute
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
+  '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
   '/api/public/tts': typeof ApiPublicTtsRoute
   '/api/public/hotmart/webhook': typeof ApiPublicHotmartWebhookRoute
@@ -98,6 +107,7 @@ export interface FileRouteTypes {
     | '/api/public/ai-status'
     | '/api/public/athena'
     | '/api/public/kb-autocourse'
+    | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
     | '/api/public/tts'
     | '/api/public/hotmart/webhook'
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/api/public/ai-status'
     | '/api/public/athena'
     | '/api/public/kb-autocourse'
+    | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
     | '/api/public/tts'
     | '/api/public/hotmart/webhook'
@@ -118,6 +129,7 @@ export interface FileRouteTypes {
     | '/api/public/ai-status'
     | '/api/public/athena'
     | '/api/public/kb-autocourse'
+    | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
     | '/api/public/tts'
     | '/api/public/hotmart/webhook'
@@ -129,6 +141,7 @@ export interface RootRouteChildren {
   ApiPublicAiStatusRoute: typeof ApiPublicAiStatusRoute
   ApiPublicAthenaRoute: typeof ApiPublicAthenaRoute
   ApiPublicKbAutocourseRoute: typeof ApiPublicKbAutocourseRoute
+  ApiPublicKbEditalRoute: typeof ApiPublicKbEditalRoute
   ApiPublicKbIngestRoute: typeof ApiPublicKbIngestRoute
   ApiPublicTtsRoute: typeof ApiPublicTtsRoute
   ApiPublicHotmartWebhookRoute: typeof ApiPublicHotmartWebhookRoute
@@ -171,6 +184,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicKbAutocourseRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/kb-edital': {
+      id: '/api/public/kb-edital'
+      path: '/api/public/kb-edital'
+      fullPath: '/api/public/kb-edital'
+      preLoaderRoute: typeof ApiPublicKbEditalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/kb-ingest': {
       id: '/api/public/kb-ingest'
       path: '/api/public/kb-ingest'
@@ -201,6 +221,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAiStatusRoute: ApiPublicAiStatusRoute,
   ApiPublicAthenaRoute: ApiPublicAthenaRoute,
   ApiPublicKbAutocourseRoute: ApiPublicKbAutocourseRoute,
+  ApiPublicKbEditalRoute: ApiPublicKbEditalRoute,
   ApiPublicKbIngestRoute: ApiPublicKbIngestRoute,
   ApiPublicTtsRoute: ApiPublicTtsRoute,
   ApiPublicHotmartWebhookRoute: ApiPublicHotmartWebhookRoute,
