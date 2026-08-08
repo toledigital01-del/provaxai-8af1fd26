@@ -369,3 +369,74 @@ body.dark .badge.done { background:#172554 !important; color:#93C5FD !important;
   .kpis { grid-template-columns: 1fr !important; }
   .topic-right { width: 88px; }
 }
+
+/* ============================================================
+   Acabamento premium — apenas refinamento (sombras, raios,
+   tipografia e transições). Sem alterar cores ou estrutura.
+   ============================================================ */
+:root {
+  --shadow-xs: 0 1px 2px rgba(16,18,24,.05);
+  --shadow-sm: 0 1px 2px rgba(16,18,24,.05), 0 2px 8px rgba(16,18,24,.045);
+  --shadow-md: 0 2px 4px rgba(16,18,24,.04), 0 10px 26px rgba(16,18,24,.07);
+  --shadow-lg: 0 6px 14px rgba(16,18,24,.06), 0 22px 60px rgba(16,18,24,.11);
+  --ease: cubic-bezier(.22,.61,.36,1);
+  --r-sm: 8px; --r-md: 12px; --r-lg: 16px;
+}
+
+body { text-rendering: optimizeLegibility; -moz-osx-font-smoothing: grayscale; }
+h1, h1.title, h2, h3 { letter-spacing: -0.021em; }
+h1.title { font-weight: 700; }
+.subtitle, .muted { letter-spacing: -0.004em; }
+
+/* superfícies */
+.card, .pcard, .panel, .box, .gres-box, .modal, .sheet {
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .22s var(--ease), transform .22s var(--ease), border-color .22s var(--ease);
+}
+.card:hover, .pcard:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.card:active, .pcard:active { transform: translateY(0); box-shadow: var(--shadow-sm); }
+
+/* foco acessível e consistente */
+a:focus-visible, button:focus-visible, input:focus-visible,
+textarea:focus-visible, select:focus-visible, [tabindex]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.18);
+  border-radius: var(--r-sm);
+}
+
+/* controles */
+button, .btn, .nav-item, .fold, .topic-row, .tag, .chip {
+  transition: background .18s var(--ease), color .18s var(--ease),
+              border-color .18s var(--ease), box-shadow .18s var(--ease),
+              transform .12s var(--ease);
+}
+button:active, .btn:active { transform: scale(.985); }
+.nav-item { border-radius: var(--r-sm); }
+
+/* progresso com preenchimento suave */
+.track { box-shadow: inset 0 1px 2px rgba(16,18,24,.06); }
+.fill { transition: width .6s var(--ease); }
+
+/* menus e overlays com profundidade */
+.gres-box, .fmenu, .dropdown, .popover { box-shadow: var(--shadow-lg); border-radius: var(--r-md); }
+
+/* imagens e capas */
+img.cover, .cover img { border-radius: var(--r-md); }
+
+/* entrada suave do conteúdo */
+.page > * { animation: px-in .34s var(--ease) both; }
+@keyframes px-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
+
+/* modo escuro: profundidade por borda + brilho discreto */
+body.dark .card, body.dark .pcard, body.dark .panel, body.dark .box {
+  box-shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 10px 30px rgba(0,0,0,.38);
+}
+body.dark .card:hover, body.dark .pcard:hover {
+  box-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 16px 40px rgba(0,0,0,.5);
+}
+body.dark .gres-box, body.dark .fmenu, body.dark .dropdown { box-shadow: 0 24px 70px rgba(0,0,0,.6); }
+body.dark .track { box-shadow: inset 0 1px 2px rgba(0,0,0,.45); }
