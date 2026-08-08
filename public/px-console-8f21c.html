@@ -583,7 +583,7 @@ async function viewConhecimento(){
   kbPaint();
 }
 
-let kbQd = '', kbQt = '', kbPane = 'conteudo';
+let kbQd = '', kbQt = '', KB_PANE = 'conteudo';
 function kbListHTML(items, id){
   return `<div id="${id}" style="border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;max-height:56vh;overflow-y:auto;background:#fff">${items}</div>`;
 }
@@ -638,7 +638,7 @@ function kbPaint(){
   kbEditor();
 }
 window.kbPane = p => {
-  kbPane = p;
+  KB_PANE = p;
   document.querySelectorAll('[data-pane]').forEach(el => { el.style.display = el.getAttribute('data-pane') === p ? '' : 'none'; });
   document.querySelectorAll('[data-panebtn]').forEach(el => {
     const on = el.getAttribute('data-panebtn') === p;
@@ -776,6 +776,7 @@ function kbEditor(){
       <p class="muted" id="kb-ing" style="margin-top:8px"></p>
       <div id="kb-preview" style="margin-top:8px"></div>
     </div>`;
+  kbPane(KB_PANE);
   kbPrefsLoad();
   kbRenderLog();
   kbBindIngest();
