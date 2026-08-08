@@ -1,10 +1,10 @@
 /* Checkout Hotmart do Prova X — popup (checkoutMode=2) com fallback para redirect. */
 window.PX_HOTMART = {
-  // Plano mensal — link de pagamento oficial
-  mensal: "https://pay.hotmart.com/I107044926Q?off=MENSAL_OFF",
-  // Plano anual — mesma página de pagamento, oferta anual
-  anual: "https://pay.hotmart.com/I107044926Q?off=ANUAL_OFF",
-  // Fallback usado enquanto os códigos de oferta acima não forem preenchidos
+  // Plano mensal — oferta oficial
+  mensal: "https://pay.hotmart.com/I107044926Q?off=ldzo9adn",
+  // Plano anual — oferta oficial
+  anual: "https://pay.hotmart.com/I107044926Q?off=gmnkhe7e",
+  // Fallback
   base: "https://pay.hotmart.com/I107044926Q",
 };
 
