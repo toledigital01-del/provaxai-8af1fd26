@@ -93,3 +93,72 @@ export async function aiKeys() {
     elevenlabs: db.elevenlabs || env('elevenlabs'),
   }
 }
+
+/** Cabeçalhos com a chave de serviço (uso exclusivo do servidor). */
+export function serviceHeaders(extra: Record<string, string> = {}) {
+  const key = process.env['SUPABASE_SERVICE_ROLE_KEY'] || ''
+  return { apikey: key, Authorization: `Bearer ${key}`, ...extra }
+}
+
+/** true quando o usuário tem compra vitalícia do curso ou assinatura ativa (ou é admin). */
+export async function hasCourseAccess(userId: string, slug: string): Promise<boolean> {
+  const h = serviceHeaders()
+  const [acesso, assin, admin] = await Promise.all([
+    fetch(
+      `${SUPABASE_URL}/rest/v1/course_access?select=id,expira_em,courses!inner(slug)&user_id=eq.${userId}&courses.slug=eq.${encodeURIComponent(slug)}`,
+      { headers: h },
+    ).then((r) => (r.ok ? r.json() : [])),
+    fetch(
+      `${SUPABASE_URL}/rest/v1/subscriptions?select=status,current_period_end&user_id=eq.${userId}&status=in.(active,trialing)`,
+      { headers: h },
+    ).then((r) => (r.ok ? r.json() : [])),
+    fetch(`${SUPABASE_URL}/rest/v1/user_roles?select=role&user_id=eq.${userId}&role=eq.admin`, {
+      headers: h,
+    }).then((r) => (r.ok ? r.json() : [])),
+  ])
+  const agora = Date.now()
+  const vivo = (d: string | null) => !d || new Date(d).getTime() > agora
+  return (
+    (Array.isArray(admin) && admin.length > 0) ||
+    (Array.isArray(acesso) && acesso.some((a: { expira_em: string | null }) => vivo(a.expira_em))) ||
+    (Array.isArray(assin) && assin.some((s: { current_period_end: string | null }) => vivo(s.current_period_end)))
+  )
+}
+
+/** Quantas chamadas o aluno já fez hoje em determinada ferramenta. */
+export async function usosHoje(userId: string, ferramenta: string): Promise<number> {
+  const inicio = new Date()
+  inicio.setUTCHours(0, 0, 0, 0)
+  const r = await fetch(
+    `${SUPABASE_URL}/rest/v1/ai_logs?select=id&user_id=eq.${userId}&ferramenta=eq.${encodeURIComponent(ferramenta)}&created_at=gte.${inicio.toISOString()}`,
+    { headers: serviceHeaders({ Prefer: 'count=exact' }) },
+  )
+  if (!r.ok) return 0
+  const rows = (await r.json()) as unknown[]
+  return Array.isArray(rows) ? rows.length : 0
+}
+
+/** Registra o uso de IA para acompanhamento de consumo. */
+export async function registrarUsoIA(reg: {
+  user_id: string
+  ferramenta: string
+  modelo?: string
+  discipline_nome?: string | null
+  topic_nome?: string | null
+  pergunta?: string
+  resposta?: string
+}) {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/ai_logs`, {
+      method: 'POST',
+      headers: serviceHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+      body: JSON.stringify({
+        ...reg,
+        pergunta: (reg.pergunta || '').slice(0, 4000),
+        resposta: (reg.resposta || '').slice(0, 8000),
+      }),
+    })
+  } catch {
+    /* log é best-effort */
+  }
+}

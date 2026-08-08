@@ -24,13 +24,15 @@ export const MODELOS: Record<Provider, string[]> = {
 
 export const PADRAO = { provider: 'lovable' as Provider, model: 'google/gemini-3-flash-preview' }
 
-export function normalizar(cfg: unknown): { provider: Provider; model: string } {
-  const c = (cfg || {}) as { provider?: string; model?: string }
+export function normalizar(cfg: unknown): { provider: Provider; model: string; limiteDiario: number } {
+  const c = (cfg || {}) as { provider?: string; model?: string; limiteDiario?: number; limite_diario?: number }
   const provider = (['lovable', 'openai', 'gemini', 'anthropic'] as string[]).includes(c.provider || '')
     ? (c.provider as Provider)
     : PADRAO.provider
   const model = MODELOS[provider].includes(c.model || '') ? (c.model as string) : MODELOS[provider][0]!
-  return { provider, model }
+  const bruto = Number(c.limiteDiario ?? c.limite_diario ?? 0)
+  const limiteDiario = Number.isFinite(bruto) && bruto > 0 ? Math.floor(bruto) : 0
+  return { provider, model, limiteDiario }
 }
 
 export function keyDe(provider: Provider, keys: Keys) {
