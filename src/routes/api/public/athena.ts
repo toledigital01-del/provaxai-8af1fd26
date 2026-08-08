@@ -62,7 +62,7 @@ export const Route = createFileRoute('/api/public/athena')({
             model: cfg.model,
             system,
             user: `Disciplina: ${body.disciplina}${body.topico ? ` | Tópico: ${body.topico}` : ''}\n\nPergunta: ${body.pergunta}`,
-            keys: aiKeys(),
+            keys: await aiKeys(),
           })
           return Response.json({
             resposta: resposta || 'Não consegui responder agora.',
