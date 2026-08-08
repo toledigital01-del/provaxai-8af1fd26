@@ -718,14 +718,86 @@ window.kbPublicarGeradas = async function(){
 };
 
 /* Manutenção: reindexar a base e tratar conteúdos órfãos (matéria vazia ou fora do edital). */
-window.kbReindexar = async function(){
-  const el = document.getElementById('kb-orf');
-  if(el) el.textContent = 'Reindexando…';
+let KB_LOG = [];
+function kbRenderLog(){
+  const pre = document.getElementById('kb-log');
+  if(!pre) return;
+  pre.style.display = KB_LOG.length ? 'block' : 'none';
+  pre.textContent = KB_LOG.join('\n');
+  pre.scrollTop = pre.scrollHeight;
+}
+function kbLogReset(titulo){ KB_LOG = titulo ? ['— ' + titulo + ' —'] : []; kbRenderLog(); }
+function kbLog(linha){ KB_LOG.push(linha); kbRenderLog(); }
+function kbProg(feito, total, texto){
+  const wrap = document.getElementById('kb-prog-wrap');
+  const bar = document.getElementById('kb-prog-bar');
+  const txt = document.getElementById('kb-prog-txt');
+  if(!wrap) return;
+  if(total <= 0){ wrap.style.display = 'none'; return; }
+  const pct = Math.round((feito / total) * 100);
+  wrap.style.display = 'block';
+  if(bar) bar.style.width = pct + '%';
+  if(txt) txt.textContent = (texto || 'Processando') + ' — ' + feito + '/' + total + ' (' + pct + '%)';
+}
+function kbProgHide(){ const w = document.getElementById('kb-prog-wrap'); if(w) w.style.display = 'none'; }
+function kbOrfMsg(t){ const el = document.getElementById('kb-orf'); if(el) el.textContent = t; }
+function kbPorDisciplina(docs){
+  const m = {};
+  (docs || []).forEach(function(d){ const k = (d.disciplina || '').trim() || '(sem matéria)'; m[k] = (m[k] || 0) + 1; });
+  return Object.keys(m).sort().map(function(k){ return k + ': ' + m[k]; });
+}
+async function kbFetchDocs(){
+  const { data, error } = await PX.sb.from('knowledge_docs').select('*').eq('course_slug','prf-2021').order('disciplina');
+  if(error) throw error;
+  return data || [];
+}
+
+window.kbReindexar = async function(dryRun){
+  const antes = KB_DOCS.slice();
+  const lista = kbDiscList();
+  kbLogReset(dryRun ? 'Prévia da reindexação (nada foi alterado)' : 'Reindexação da base');
+  kbOrfMsg(dryRun ? 'Simulando…' : 'Reindexando…');
+  kbProg(0, 1, 'Lendo banco');
+  let docs;
+  try{ docs = await kbFetchDocs(); }
+  catch(e){ kbProgHide(); kbOrfMsg('Erro: ' + e.message); return; }
+  kbLog(docs.length + ' documento(s) lidos do banco.');
+
+  const antesMap = {}; antes.forEach(function(d){ antesMap[d.id] = d; });
+  const virarOrfao = [], recuperar = [], novos = [], removidos = [];
+  const orfaosAgora = [];
+  docs.forEach(function(d, i){
+    const eraOrfao = antesMap[d.id] ? !PXKB.validarDisciplina(antesMap[d.id].disciplina, lista) : null;
+    const ehOrfao = !PXKB.validarDisciplina(d.disciplina, lista);
+    if(ehOrfao) orfaosAgora.push(d);
+    if(eraOrfao === null) novos.push(d);
+    else if(!eraOrfao && ehOrfao) virarOrfao.push(d);
+    else if(eraOrfao && !ehOrfao) recuperar.push(d);
+    if(i % 25 === 0 || i === docs.length - 1) kbProg(i + 1, docs.length, 'Analisando documentos');
+  });
+  const idsNovos = {}; docs.forEach(function(d){ idsNovos[d.id] = 1; });
+  antes.forEach(function(d){ if(!idsNovos[d.id]) removidos.push(d); });
+
+  kbProg(docs.length, docs.length, 'Análise concluída');
+  kbLog('Resultado por disciplina:');
+  kbPorDisciplina(docs).forEach(function(l){ kbLog('  • ' + l); });
+  kbLog('Órfãos após reindexar: ' + orfaosAgora.length);
+  kbLog('Vão virar órfãos: ' + virarOrfao.length + (virarOrfao.length ? ' → ' + virarOrfao.slice(0,10).map(function(d){ return (d.titulo || d.topico || d.id) + ' [' + (d.disciplina||'sem matéria') + ']'; }).join('; ') : ''));
+  kbLog('Vão recuperar disciplina válida: ' + recuperar.length + (recuperar.length ? ' → ' + recuperar.slice(0,10).map(function(d){ return (d.titulo || d.topico || d.id) + ' [' + d.disciplina + ']'; }).join('; ') : ''));
+  if(novos.length) kbLog('Novos desde a última leitura: ' + novos.length);
+  if(removidos.length) kbLog('Sumiram do banco: ' + removidos.length);
+
+  if(dryRun){
+    kbLog('Prévia — nenhuma alteração aplicada. Use "Reindexar base" para confirmar.');
+    kbOrfMsg('Prévia: ' + docs.length + ' documento(s), ' + orfaosAgora.length + ' órfão(s), ' + virarOrfao.length + ' novo(s) órfão(s), ' + recuperar.length + ' recuperado(s).');
+    return;
+  }
   await loadKB(); kbPaint();
-  const n = PXKB.encontrarOrfaos(KB_DOCS, kbDiscList()).length;
-  const el2 = document.getElementById('kb-orf');
-  if(el2) el2.textContent = 'Base reindexada: ' + KB_DOCS.length + ' conteúdo(s), ' + n + ' órfão(s).';
+  kbLog('Base reindexada com sucesso.');
+  kbProgHide();
+  kbOrfMsg('Base reindexada: ' + KB_DOCS.length + ' conteúdo(s), ' + PXKB.encontrarOrfaos(KB_DOCS, kbDiscList()).length + ' órfão(s).');
 };
+
 window.kbCorrigirOrfaos = async function(acao){
   const orfaos = PXKB.encontrarOrfaos(KB_DOCS, kbDiscList());
   if(!orfaos.length) return;
@@ -735,19 +807,35 @@ window.kbCorrigirOrfaos = async function(acao){
     ? 'Mover ' + orfaos.length + ' conteúdo(s) órfão(s) para "' + destino + '"?'
     : 'Excluir definitivamente ' + orfaos.length + ' conteúdo(s) órfão(s)?';
   if(!confirm(txt)) return;
-  const el = document.getElementById('kb-orf');
-  if(el) el.textContent = 'Processando…';
+  kbLogReset(acao === 'mover' ? 'Movendo órfãos para ' + destino : 'Excluindo órfãos');
+  kbOrfMsg('Processando…');
+  let feito = 0;
+  const porOrigem = {};
   for(const d of orfaos){
     const { error } = acao === 'mover'
       ? await PX.sb.from('knowledge_docs').update({ disciplina:destino, updated_by:PX.user.id }).eq('id', d.id)
       : await PX.sb.from('knowledge_docs').delete().eq('id', d.id);
-    if(error){ if(el) el.textContent = 'Erro: ' + error.message; return; }
+    feito++;
+    const origem = (d.disciplina || '').trim() || '(sem matéria)';
+    if(error){
+      kbLog('✗ ' + (d.titulo || d.topico || d.id) + ' — erro: ' + error.message);
+      kbProgHide();
+      kbOrfMsg('Erro: ' + error.message);
+      return;
+    }
+    porOrigem[origem] = (porOrigem[origem] || 0) + 1;
+    kbLog('✓ ' + (d.titulo || d.topico || d.id) + ' [' + origem + ']' + (acao === 'mover' ? ' → ' + destino : ' excluído'));
+    kbProg(feito, orfaos.length, acao === 'mover' ? 'Movendo' : 'Excluindo');
   }
+  kbLog('Resultado por disciplina de origem:');
+  Object.keys(porOrigem).sort().forEach(function(k){ kbLog('  • ' + k + ': ' + porOrigem[k]); });
   await logAdmin(acao === 'mover' ? 'reindexar_conhecimento' : 'limpar_orfaos_conhecimento','knowledge_docs', null, { total:orfaos.length, destino:destino||null });
   await loadKB(); kbPaint();
-  const el2 = document.getElementById('kb-orf');
-  if(el2) el2.textContent = orfaos.length + ' conteúdo(s) órfão(s) ' + (acao === 'mover' ? 'movidos para ' + destino + '.' : 'excluídos.');
+  kbProgHide();
+  kbLog('Concluído: ' + orfaos.length + ' documento(s) processados.');
+  kbOrfMsg(orfaos.length + ' conteúdo(s) órfão(s) ' + (acao === 'mover' ? 'movidos para ' + destino + '.' : 'excluídos.'));
 };
+
 
 window.kbSave = async function(){
   const msg = document.getElementById('kb-msg');
