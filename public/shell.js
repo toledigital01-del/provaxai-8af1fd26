@@ -186,12 +186,11 @@
   }
   window.pxUserMenu = function () {
     if (!window.PX || !PX.user) return;
-    var opts = PX.isAdmin() ? '\n1 - Painel administrativo\n2 - Sair' : '\n1 - Sair';
-    var r = prompt(PX.displayName() + ' (' + PX.user.email + ')' + opts, '1');
+    var r = prompt(PX.displayName() + ' (' + PX.user.email + ')\n1 - Sair', '1');
     if (r === null) return;
-    if (PX.isAdmin() && r.trim() === '1') location.href = 'admin.html';
-    else PX.signOut();
+    PX.signOut();
   };
+
   var tries = 0;
   var t = setInterval(function () {
     if (++tries > 200) return clearInterval(t);

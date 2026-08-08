@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
 <title>Painel Administrativo – Prova X</title>
 <meta name="description" content="Gestão de alunos, cursos, assinaturas, IA e suporte da plataforma Prova X.">
 <style>
@@ -56,10 +57,11 @@
   <div id="view"><p class="muted">Carregando…</p></div>
 </div>
 
+<script src="data.js"></script>
 <script src="px-auth.js"></script>
 <script>
 const TABS = [
-  ['geral','Visão geral'],['alunos','Alunos'],['cursos','Cursos'],['conteudo','Conteúdo'],
+  ['geral','Visão geral'],['conhecimento','Base de conhecimento (IA)'],['alunos','Alunos'],['cursos','Cursos'],['conteudo','Conteúdo'],
   ['financeiro','Financeiro'],['planos','Planos e cupons'],['ia','Athena IA'],
   ['suporte','Suporte'],['logs','Logs'],['config','Configurações']
 ];
@@ -314,8 +316,107 @@ async function salvarConfig(id){
   alert('Configuração salva.');
 }
 
+/* ---------- Base de conhecimento da Athena ---------- */
+let KB_DOCS = [];
+let kbDisc = null, kbTopic = null;
+const kbKey = (d,t) => d + '||' + (t || '');
+const kbDiscList = () => (window.DISCIPLINAS_POR_CONCURSO && DISCIPLINAS_POR_CONCURSO['prf-2021']) || Object.keys(window.TOPICS || {});
+const kbTopicList = d => (window.TOPICS && TOPICS[d]) || [];
+
+async function loadKB(){
+  const { data, error } = await PX.sb.from('knowledge_docs').select('*').eq('course_slug','prf-2021').order('disciplina');
+  if(error) throw error;
+  KB_DOCS = data || [];
+}
+function kbFind(d,t){ return KB_DOCS.find(x => x.disciplina === d && (x.topico || '') === (t || '')); }
+
+async function viewConhecimento(){
+  await loadKB();
+  const discs = kbDiscList();
+  if(!kbDisc || !discs.includes(kbDisc)) { kbDisc = discs[0]; kbTopic = null; }
+  const count = d => KB_DOCS.filter(x => x.disciplina === d && (x.conteudo||'').trim()).length;
+  const totalChars = KB_DOCS.reduce((a,x)=>a+(x.conteudo||'').length,0);
+  view.innerHTML = `
+    <div class="kpis">
+      <div class="kpi"><b>${KB_DOCS.filter(x=>(x.conteudo||'').trim()).length}</b><span>Conteúdos cadastrados</span></div>
+      <div class="kpi"><b>${discs.length}</b><span>Matérias do edital</span></div>
+      <div class="kpi"><b>${(totalChars/1000).toFixed(1)} mil</b><span>Caracteres na base da IA</span></div>
+    </div>
+    <div class="card"><h2>Base de conhecimento da Athena IA</h2>
+      <p class="muted" style="margin-bottom:12px">Tudo que você escrever aqui vira a fonte de verdade da IA e é exibido para o aluno na aula do tópico correspondente.</p>
+      <div style="display:grid;grid-template-columns:minmax(180px,240px) minmax(200px,280px) 1fr;gap:14px;align-items:start" id="kb-grid">
+        <div id="kb-discs"></div><div id="kb-topics"></div><div id="kb-editor"></div>
+      </div>
+    </div>`;
+  if (window.matchMedia('(max-width:820px)').matches)
+    document.getElementById('kb-grid').style.gridTemplateColumns = '1fr';
+  kbPaint();
+}
+
+function kbListHTML(items){
+  return `<div style="border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;max-height:60vh;overflow-y:auto">${items}</div>`;
+}
+function kbRow(label, active, ok, onclick){
+  return `<button class="act" style="display:flex;width:100%;text-align:left;border:none;border-bottom:1px solid #F1F5F9;border-radius:0;padding:9px 11px;gap:8px;align-items:center;background:${active?'#EFF6FF':'#fff'};font-weight:${active?'700':'500'}" onclick="${onclick}">
+    <span style="width:7px;height:7px;border-radius:99px;background:${ok?'#10B981':'#CBD5E1'};flex:none"></span>
+    <span style="flex:1;font-size:0.8rem">${esc(label)}</span></button>`;
+}
+function kbPaint(){
+  const discs = kbDiscList();
+  document.getElementById('kb-discs').innerHTML = '<label class="muted">Matérias</label>' + kbListHTML(
+    discs.map(d => kbRow(d, d===kbDisc, KB_DOCS.some(x=>x.disciplina===d && (x.conteudo||'').trim()), `kbSelDisc('${escJs(d)}')`)).join(''));
+  const tops = kbTopicList(kbDisc);
+  document.getElementById('kb-topics').innerHTML = '<label class="muted">Tópicos</label>' + kbListHTML(
+    kbRow('Visão geral da matéria', kbTopic===null, !!(kbFind(kbDisc,null)||{}).conteudo, `kbSelTopic(null)`) +
+    tops.map(t => kbRow(t, t===kbTopic, !!((kbFind(kbDisc,t)||{}).conteudo||'').trim(), `kbSelTopic('${escJs(t)}')`)).join(''));
+  kbEditor();
+}
+function escJs(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+window.kbSelDisc = d => { kbDisc = d; kbTopic = null; kbPaint(); };
+window.kbSelTopic = t => { kbTopic = t; kbPaint(); };
+
+function kbEditor(){
+  const doc = kbFind(kbDisc, kbTopic) || {};
+  const alvo = kbTopic ? `${kbDisc} › ${kbTopic}` : `${kbDisc} (visão geral)`;
+  document.getElementById('kb-editor').innerHTML = `
+    <label class="muted">Conteúdo — ${esc(alvo)}</label>
+    <input id="kb-tit" placeholder="Título da aula (opcional)" value="${esc(doc.titulo||'')}" style="margin-bottom:8px">
+    <textarea id="kb-txt" rows="18" placeholder="Cole aqui o material teórico completo deste tópico. Use ## para títulos, - para listas.">${esc(doc.conteudo||'')}</textarea>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
+      <label class="muted" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="kb-pub" ${doc.publicado===false?'':'checked'} style="width:auto"> Publicado para alunos</label>
+      <div class="spacer" style="flex:1"></div>
+      ${doc.id?`<button class="act danger" onclick="kbDelete('${doc.id}')">Excluir</button>`:''}
+      <button class="act primary" onclick="kbSave()">Salvar conteúdo</button>
+    </div>
+    <p class="muted" id="kb-msg" style="margin-top:8px">${doc.updated_at?'Atualizado em '+dt(doc.updated_at):'Sem conteúdo cadastrado.'}</p>`;
+}
+window.kbSave = async function(){
+  const conteudo = document.getElementById('kb-txt').value;
+  const titulo = document.getElementById('kb-tit').value.trim() || null;
+  const publicado = document.getElementById('kb-pub').checked;
+  const msg = document.getElementById('kb-msg'); msg.textContent = 'Salvando…';
+  const doc = kbFind(kbDisc, kbTopic);
+  const payload = { course_slug:'prf-2021', disciplina:kbDisc, topico:kbTopic, titulo, conteudo, publicado, updated_by:PX.user.id };
+  const { error } = doc
+    ? await PX.sb.from('knowledge_docs').update(payload).eq('id', doc.id)
+    : await PX.sb.from('knowledge_docs').insert(payload);
+  if(error){ msg.textContent = 'Erro: ' + error.message; return; }
+  await logAdmin('salvar_conhecimento','knowledge_docs', doc?doc.id:null, { disciplina:kbDisc, topico:kbTopic });
+  await loadKB(); kbPaint();
+  document.getElementById('kb-msg').textContent = 'Conteúdo salvo. A Athena já usa este material.';
+};
+window.kbDelete = async function(id){
+  if(!confirm('Excluir este conteúdo da base?')) return;
+  const { error } = await PX.sb.from('knowledge_docs').delete().eq('id', id);
+  if(error) return alert(error.message);
+  await logAdmin('excluir_conhecimento','knowledge_docs', id);
+  await loadKB(); kbPaint();
+};
+
 const VIEWS = { geral:viewGeral, alunos:viewAlunos, cursos:viewCursos, conteudo:viewConteudo,
+  conhecimento:viewConhecimento,
   financeiro:viewFinanceiro, planos:viewPlanos, ia:viewIA, suporte:viewSuporte, logs:viewLogs, config:viewConfig };
+
 
 async function render(){
   view.innerHTML = '<p class="muted">Carregando…</p>';

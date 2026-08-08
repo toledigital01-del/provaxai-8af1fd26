@@ -155,6 +155,7 @@
 
 </style>
   <script src="px-guard.js"></script>
+  <script src="px-kb.js"></script>
 </head>
 <body>
 <aside id="shell-sidebar"></aside>
@@ -375,6 +376,22 @@ function goTab(t) {
   document.querySelector('.ws-center').scrollTop = 0;
 }
 
+async function carregarConteudoKB() {
+  const box = document.getElementById('kb-conteudo');
+  const fb = document.getElementById('kb-fallback');
+  if (!box) return;
+  let doc = null;
+  try { doc = await PX.kbTopico(disc, topic, id); } catch (e) {}
+  if (!document.getElementById('kb-conteudo')) return;
+  if (doc && (doc.conteudo || '').trim()) {
+    box.innerHTML = (doc.titulo ? '<h3>' + doc.titulo + '</h3>' : '') + PX.kbHTML(doc.conteudo);
+    if (fb) fb.remove();
+  } else {
+    box.innerHTML = '';
+    if (fb) fb.hidden = false;
+  }
+}
+
 function renderPane() {
   const p = document.getElementById('pane');
   if (tab === 'tutor') {
@@ -392,6 +409,8 @@ function renderPane() {
     }
     p.innerHTML = `<div class="pane prose">
       <h3>Aula com Athena IA — ${topic}</h3>
+      <div id="kb-conteudo"><p style="color:var(--muted)">Carregando o material desta aula…</p></div>
+      <div id="kb-fallback" hidden>
       <p>Esta aula apresenta <b>${topic}</b> dentro de ${disc}, com foco no que costuma ser cobrado em prova.</p>
       <h3>1. Conceito e regra geral</h3>
       <p>Comece fixando a definição e a regra geral de ${topic.toLowerCase()}. É a partir dela que a banca constrói os itens de certo/errado, trocando uma palavra ou invertendo uma condição.</p>
@@ -403,6 +422,7 @@ function renderPane() {
       </ul>
       <h3>3. Como estudar este tópico</h3>
       <p>Leia a aula, ouça o podcast, resolva a bateria de questões no padrão Cebraspe e feche o ciclo com flashcards e revisão espaçada.</p>
+      </div>
       <p style="margin-top:16px;color:var(--muted);font-size:0.85rem;">Dúvidas? Use o chat da Athena no painel à direita.</p>
       <div class="fixa">
         <div class="lbl">Fixação Imediata</div>
@@ -416,6 +436,8 @@ function renderPane() {
     document.getElementById('fx-q').onclick = () => goTab('questoes');
     document.getElementById('fx-f').onclick = () => goTab('flashcards');
     document.getElementById('fx-r').onclick = () => { rzOn = true; goTab('resumo'); };
+    carregarConteudoKB();
+
   } else if (tab === 'resumo') {
     renderResumo(p);
   } else if (tab === 'flashcards') {
@@ -687,10 +709,13 @@ document.getElementById('side-form').onsubmit = e => {
   history_.push({ role: 'me', text: v, ctx });
   saveChat(history_); renderChat();
   i.value = '';
-  setTimeout(() => {
-    history_.push({ role: 'ai', ctx, text: `Sobre "${v}" em ${ctx}: comece pela regra geral, observe as exceções e depois treine com itens certo/errado.` });
+  history_.push({ role: 'ai', ctx, text: 'Athena está consultando o material…', pending: true });
+  saveChat(history_); renderChat();
+  PX.athenaAsk(disc, scope === 'topico' ? topic : null, v, id).then(resp => {
+    const i2 = history_.findIndex(m => m.pending);
+    if (i2 >= 0) history_[i2] = { role: 'ai', ctx, text: resp };
     saveChat(history_); renderChat();
-  }, 300);
+  });
 };
 </script>
 
