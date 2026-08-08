@@ -429,20 +429,30 @@ function kbPaint(){
 
 function escJs(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 window.kbSelDisc = d => {
-  const disc = typeof d === 'string' ? d.trim() : '';
-  if(!disc || !kbDiscList().includes(disc)) return;
+  if(KB_BUSY) return kbIngMsg('Aguarde terminar a operação atual antes de trocar de matéria.');
+  const disc = kbValidDisc(d);
+  if(!disc) return;
   kbDisc = disc;
   kbTopic = null;
   KB_GERADAS = [];
   KB_ABERTA = -1;
   kbPaint();
 };
-window.kbSelTopic = t => { kbTopic = t; kbPaint(); };
+window.kbSelTopic = t => { if(KB_BUSY) return; kbTopic = t; kbPaint(); };
 
 function kbEditor(){
+  const discOk = kbValidDisc(kbDisc);
   const doc = kbFind(kbDisc, kbTopic) || {};
   const alvo = kbTopic ? `${kbDisc} › ${kbTopic}` : `${kbDisc} (visão geral)`;
+  const orfaos = PXKB.encontrarOrfaos(KB_DOCS, kbDiscList());
   document.getElementById('kb-editor').innerHTML = `
+    <div id="kb-busy" style="display:none;gap:8px;align-items:center;background:#EFF6FF;border:1px solid #BFDBFE;color:#1D4ED8;border-radius:10px;padding:8px 11px;margin-bottom:8px;font-size:0.8rem;font-weight:600">
+      <span style="width:12px;height:12px;border-radius:99px;border:2px solid #93C5FD;border-top-color:#1D4ED8;display:inline-block;animation:pxspin .8s linear infinite"></span>
+      <span data-msg>Processando…</span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:${discOk?'#ECFDF5':'#FEF2F2'};border:1px solid ${discOk?'#A7F3D0':'#FECACA'};color:${discOk?'#047857':'#B91C1C'};border-radius:10px;padding:8px 11px;margin-bottom:10px;font-size:0.8rem;font-weight:600">
+      ${discOk ? 'Matéria selecionada: ' + esc(discOk) + (kbTopic ? ' › ' + esc(kbTopic) : ' (visão geral)') : 'Nenhuma matéria válida selecionada — escolha uma matéria na coluna à esquerda para salvar ou gerar conteúdo.'}
+    </div>
     <label class="muted">Conteúdo — ${esc(alvo)}</label>
     <input id="kb-tit" placeholder="Título da aula (opcional)" value="${esc(doc.titulo||'')}" style="margin-bottom:8px">
     <textarea id="kb-txt" rows="18" placeholder="Cole aqui o material teórico completo deste tópico. Use ## para títulos, - para listas.">${esc(doc.conteudo||'')}</textarea>
@@ -450,16 +460,27 @@ function kbEditor(){
       <label class="muted" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="kb-pub" ${doc.publicado===false?'':'checked'} style="width:auto"> Publicado para alunos</label>
       <div class="spacer" style="flex:1"></div>
       ${doc.id?`<button class="act danger" onclick="kbDelete('${doc.id}')">Excluir</button>`:''}
-      <button class="act primary" onclick="kbSave()">Salvar conteúdo</button>
+      <button class="act primary" onclick="kbSave()" ${discOk?'':'disabled'}>Salvar conteúdo</button>
     </div>
     <p class="muted" id="kb-msg" style="margin-top:8px">${doc.updated_at?'Atualizado em '+dt(doc.updated_at):'Sem conteúdo cadastrado.'}</p>
 
+    <div style="margin-top:12px;border:1px dashed #E2E8F0;border-radius:12px;padding:10px;font-size:0.8rem">
+      <b>Manutenção da base</b>
+      <p class="muted" style="margin:4px 0 8px">${orfaos.length ? orfaos.length + ' conteúdo(s) órfão(s) — matéria vazia ou fora do edital.' : 'Nenhum conteúdo órfão encontrado.'}</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="act" onclick="kbReindexar()">Reindexar base</button>
+        <button class="act" onclick="kbCorrigirOrfaos('mover')" ${orfaos.length&&discOk?'':'disabled'}>Mover órfãos para ${esc(discOk||'—')}</button>
+        <button class="act danger" onclick="kbCorrigirOrfaos('excluir')" ${orfaos.length?'':'disabled'}>Excluir órfãos</button>
+      </div>
+      <p class="muted" id="kb-orf" style="margin-top:6px"></p>
+    </div>
+
     <div style="margin-top:16px;border:1px solid #E2E8F0;border-radius:12px;padding:12px">
       <b style="font-size:0.9rem">Alimentar a IA com material</b>
-      <p class="muted" style="margin:4px 0 10px">Envie PDF ou TXT, cole o endereço de um site, um link de vídeo (com legendas) ou texto solto. O conteúdo é extraído e vai para a caixa acima.</p>
+      <p class="muted" style="margin:4px 0 10px">Envie PDF, TXT, imagens (foto de apostila, print, slide) ou qualquer arquivo de texto — vários de uma vez. Também dá para colar o endereço de um site, um link de vídeo (com legendas) ou texto solto.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <input type="file" id="kb-file" accept=".pdf,.txt,application/pdf,text/plain" style="width:auto;flex:1;min-width:200px">
-        <button class="act" onclick="kbIngestFile()">Extrair arquivo</button>
+        <input type="file" id="kb-file" multiple accept=".pdf,.txt,.md,.csv,.json,.html,.srt,.vtt,.png,.jpg,.jpeg,.webp,.gif,.bmp,.heic,image/*,application/pdf,text/*" style="width:auto;flex:1;min-width:200px">
+        <button class="act" onclick="kbIngestFile()">Ler arquivos</button>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px">
         <input id="kb-url" placeholder="https://site-ou-video…" style="flex:1;min-width:220px">
