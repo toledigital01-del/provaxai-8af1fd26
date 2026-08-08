@@ -4,11 +4,25 @@ import { z } from 'zod'
 const SUPABASE_URL = 'https://rdokrryisfkhmevcxlws.supabase.co'
 const SUPABASE_KEY = 'sb_publishable_9ILwlXJNPJ5ZzpALdbmfBA_gRAtH4Qr'
 
+const MODELOS = [
+  'google/gemini-3-flash-preview',
+  'google/gemini-3.1-pro-preview',
+  'openai/gpt-5.6-sol',
+  'openai/gpt-5.6-terra',
+] as const
+const MODELO_PADRAO = 'google/gemini-3-flash-preview'
+
 const Body = z.object({
   disciplina: z.string().min(1).max(200),
   topicos: z.array(z.string().max(300)).max(400),
   material: z.string().min(50).max(300000),
+  modelo: z.string().max(80).optional(),
+  banca: z.string().max(60).optional(),
+  cargo: z.string().max(120).optional(),
+  profundidade: z.enum(['essencial', 'completo', 'aprofundado']).optional(),
+  modo_aprovacao: z.boolean().optional(),
 })
+
 
 async function requireAdmin(request: Request) {
   const auth = request.headers.get('authorization') || ''
