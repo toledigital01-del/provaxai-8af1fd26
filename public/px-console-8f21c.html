@@ -320,8 +320,22 @@ async function salvarConfig(id){
 let KB_DOCS = [];
 let kbDisc = null, kbTopic = null;
 const kbKey = (d,t) => d + '||' + (t || '');
-const kbDiscList = () => (window.DISCIPLINAS_POR_CONCURSO && DISCIPLINAS_POR_CONCURSO['prf-2021']) || Object.keys(window.TOPICS || {});
-const kbTopicList = d => (window.TOPICS && TOPICS[d]) || [];
+let KB_DISCS_DB = [];
+function kbGlobalTopics(){
+  if (window.TOPICS) return window.TOPICS;
+  try { return (typeof TOPICS !== 'undefined') ? TOPICS : {}; } catch(e){ return {}; }
+}
+function kbGlobalDiscs(){
+  if (window.DISCIPLINAS_POR_CONCURSO) return window.DISCIPLINAS_POR_CONCURSO;
+  try { return (typeof DISCIPLINAS_POR_CONCURSO !== 'undefined') ? DISCIPLINAS_POR_CONCURSO : {}; } catch(e){ return {}; }
+}
+const kbDiscList = () => {
+  const list = (kbGlobalDiscs()['prf-2021'] || Object.keys(kbGlobalTopics()) || []).filter(Boolean);
+  if (list.length) return list;
+  return KB_DISCS_DB.slice();
+};
+const kbTopicList = d => (d && kbGlobalTopics()[d]) || [];
+
 
 async function loadKB(){
   const { data, error } = await PX.sb.from('knowledge_docs').select('*').eq('course_slug','prf-2021').order('disciplina');
