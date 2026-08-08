@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ApiPublicAthenaRouteImport } from './routes/api/public/athena'
+import { Route as ApiPublicKbAutocourseRouteImport } from './routes/api/public/kb-autocourse'
 import { Route as ApiPublicKbIngestRouteImport } from './routes/api/public/kb-ingest'
 import { Route as ApiPublicHotmartWebhookRouteImport } from './routes/api/public/hotmart/webhook'
 
@@ -30,6 +31,11 @@ const ApiPublicAthenaRoute = ApiPublicAthenaRouteImport.update({
   path: '/api/public/athena',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicKbAutocourseRoute = ApiPublicKbAutocourseRouteImport.update({
+  id: '/api/public/kb-autocourse',
+  path: '/api/public/kb-autocourse',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicKbIngestRoute = ApiPublicKbIngestRouteImport.update({
   id: '/api/public/kb-ingest',
   path: '/api/public/kb-ingest',
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
+  '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
   '/api/public/hotmart/webhook': typeof ApiPublicHotmartWebhookRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
+  '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
   '/api/public/hotmart/webhook': typeof ApiPublicHotmartWebhookRoute
 }
@@ -60,6 +68,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
+  '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
   '/api/public/hotmart/webhook': typeof ApiPublicHotmartWebhookRoute
 }
@@ -69,6 +78,7 @@ export interface FileRouteTypes {
     | '/'
     | '/sitemap.xml'
     | '/api/public/athena'
+    | '/api/public/kb-autocourse'
     | '/api/public/kb-ingest'
     | '/api/public/hotmart/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -76,6 +86,7 @@ export interface FileRouteTypes {
     | '/'
     | '/sitemap.xml'
     | '/api/public/athena'
+    | '/api/public/kb-autocourse'
     | '/api/public/kb-ingest'
     | '/api/public/hotmart/webhook'
   id:
@@ -83,6 +94,7 @@ export interface FileRouteTypes {
     | '/'
     | '/sitemap.xml'
     | '/api/public/athena'
+    | '/api/public/kb-autocourse'
     | '/api/public/kb-ingest'
     | '/api/public/hotmart/webhook'
   fileRoutesById: FileRoutesById
@@ -91,6 +103,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiPublicAthenaRoute: typeof ApiPublicAthenaRoute
+  ApiPublicKbAutocourseRoute: typeof ApiPublicKbAutocourseRoute
   ApiPublicKbIngestRoute: typeof ApiPublicKbIngestRoute
   ApiPublicHotmartWebhookRoute: typeof ApiPublicHotmartWebhookRoute
 }
@@ -118,6 +131,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAthenaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/kb-autocourse': {
+      id: '/api/public/kb-autocourse'
+      path: '/api/public/kb-autocourse'
+      fullPath: '/api/public/kb-autocourse'
+      preLoaderRoute: typeof ApiPublicKbAutocourseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/kb-ingest': {
       id: '/api/public/kb-ingest'
       path: '/api/public/kb-ingest'
@@ -139,6 +159,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiPublicAthenaRoute: ApiPublicAthenaRoute,
+  ApiPublicKbAutocourseRoute: ApiPublicKbAutocourseRoute,
   ApiPublicKbIngestRoute: ApiPublicKbIngestRoute,
   ApiPublicHotmartWebhookRoute: ApiPublicHotmartWebhookRoute,
 }
