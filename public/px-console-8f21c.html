@@ -1087,7 +1087,7 @@ window.kbCorrigirOrfaos = async function(acao){
     ? 'Mover ' + orfaos.length + ' conteúdo(s) órfão(s) para "' + destino + '"?'
     : 'Excluir definitivamente ' + orfaos.length + ' conteúdo(s) órfão(s)?';
   if(!confirm(txt)) return;
-  kbLogReset(acao === 'mover' ? 'Movendo órfãos para ' + destino : 'Excluindo órfãos');
+  kbLogReset(acao === 'mover' ? 'Movendo órfãos para ' + destino : 'Excluindo órfãos', acao === 'mover' ? 'mover_orfaos' : 'excluir_orfaos', 'real');
   kbOrfMsg('Processando…');
   let feito = 0;
   const porOrigem = {};
@@ -1099,16 +1099,26 @@ window.kbCorrigirOrfaos = async function(acao){
     const origem = (d.disciplina || '').trim() || '(sem matéria)';
     if(error){
       kbLog('✗ ' + (d.titulo || d.topico || d.id) + ' — erro: ' + error.message);
+      kbLogRow({ id:d.id, titulo:d.titulo || d.topico || '', origem:origem, destino: acao === 'mover' ? destino : '', resultado:'erro', detalhe:error.message });
+      kbLogResumo({ 'Processados antes do erro': feito - 1, 'Erro': error.message });
       kbProgHide();
       kbOrfMsg('Erro: ' + error.message);
       return;
     }
     porOrigem[origem] = (porOrigem[origem] || 0) + 1;
+    kbLogRow({ id:d.id, titulo:d.titulo || d.topico || '', origem:origem, destino: acao === 'mover' ? destino : '',
+      resultado: acao === 'mover' ? 'movido' : 'excluído', detalhe:'' });
     kbLog('✓ ' + (d.titulo || d.topico || d.id) + ' [' + origem + ']' + (acao === 'mover' ? ' → ' + destino : ' excluído'));
     kbProg(feito, orfaos.length, acao === 'mover' ? 'Movendo' : 'Excluindo');
   }
   kbLog('Resultado por disciplina de origem:');
   Object.keys(porOrigem).sort().forEach(function(k){ kbLog('  • ' + k + ': ' + porOrigem[k]); });
+  kbLogResumo({
+    'Ação': acao === 'mover' ? 'mover órfãos' : 'excluir órfãos',
+    'Documentos processados': orfaos.length,
+    'Disciplina de destino': acao === 'mover' ? destino : '—',
+    'Por disciplina de origem': Object.keys(porOrigem).sort().map(function(k){ return k + ': ' + porOrigem[k]; }).join(' | '),
+  });
   await logAdmin(acao === 'mover' ? 'reindexar_conhecimento' : 'limpar_orfaos_conhecimento','knowledge_docs', null, { total:orfaos.length, destino:destino||null });
   await loadKB(); kbPaint();
   kbProgHide();
