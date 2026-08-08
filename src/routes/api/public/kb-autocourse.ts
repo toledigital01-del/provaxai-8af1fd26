@@ -82,7 +82,7 @@ export const Route = createFileRoute('/api/public/kb-autocourse')({
 
         let raw = ''
         try {
-          raw = await chat({ provider, model: modelo, system, user, keys: aiKeys(), maxTokens: 16000 })
+          raw = await chat({ provider, model: modelo, system, user, keys: await aiKeys(), maxTokens: 16000 })
         } catch (e) {
           const err = e as AIError
           return Response.json(

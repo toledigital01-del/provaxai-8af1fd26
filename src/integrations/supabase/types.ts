@@ -119,6 +119,33 @@ export type Database = {
         }
         Relationships: []
       }
+      api_keys: {
+        Row: {
+          chave: string
+          created_at: string
+          id: string
+          updated_at: string
+          updated_by: string | null
+          valor: string
+        }
+        Insert: {
+          chave: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+          valor: string
+        }
+        Update: {
+          chave?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+          valor?: string
+        }
+        Relationships: []
+      }
       coupons: {
         Row: {
           ativo: boolean

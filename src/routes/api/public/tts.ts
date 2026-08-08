@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { currentUser, getSetting } from '@/lib/px-server'
+import { currentUser, getSetting, aiKeys } from '@/lib/px-server'
 
 const Body = z.object({
   texto: z.string().min(1).max(4000),
@@ -21,7 +21,7 @@ export const Route = createFileRoute('/api/public/tts')({
           return Response.json({ error: 'Requisição inválida.' }, { status: 400 })
         }
 
-        const key = process.env['ELEVENLABS_API_KEY']
+        const key = (await aiKeys()).elevenlabs
         if (!key) return Response.json({ error: 'Narração por voz ainda não está conectada.' }, { status: 503 })
 
         const cfg = (await getSetting<{ ativo?: boolean; voice_id?: string; model?: string }>('voz_elevenlabs')) || {}

@@ -307,6 +307,13 @@ const CFG_PROVEDORES = [
   { id:'gemini', nome:'Google Gemini', dica:'Requer a chave GEMINI_API_KEY.' },
   { id:'anthropic', nome:'Anthropic (Claude)', dica:'Requer a chave ANTHROPIC_API_KEY.' },
 ];
+const CFG_CHAVES = [
+  { id:'lovable', env:'LOVABLE_API_KEY', nome:'IA inclusa (Lovable)', exemplo:'já vem configurada', dica:'Vem pronta com a plataforma. Só preencha se quiser usar outra.' },
+  { id:'openai', env:'OPENAI_API_KEY', nome:'OpenAI (GPT)', exemplo:'sk-...', dica:'Pegue em platform.openai.com → API keys.' },
+  { id:'gemini', env:'GEMINI_API_KEY', nome:'Google Gemini', exemplo:'AIza...', dica:'Pegue em aistudio.google.com → Get API key.' },
+  { id:'anthropic', env:'ANTHROPIC_API_KEY', nome:'Anthropic (Claude)', exemplo:'sk-ant-...', dica:'Pegue em console.anthropic.com → API keys.' },
+  { id:'elevenlabs', env:'ELEVENLABS_API_KEY', nome:'ElevenLabs (voz)', exemplo:'sk_...', dica:'Narração das aulas e podcasts. Pegue em elevenlabs.io → Profile → API key.' },
+];
 function cfgPill(ok){ return `<span class="tag" style="background:${ok?'#dcfce7':'#fee2e2'};color:${ok?'#166534':'#991b1b'}">${ok?'conectado':'não conectado'}</span>`; }
 function cfgSelects(prefixo, atual){
   const mods = (CFG_STATUS && CFG_STATUS.modelos) || {};
@@ -336,6 +343,8 @@ async function viewConfig(){
     CFG_STATUS = r.ok ? await r.json() : null;
   } catch(e){ CFG_STATUS = null; }
   const conect = (CFG_STATUS && CFG_STATUS.conectado) || {};
+  const salvas = {};
+  try { const { data: ks } = await PX.sb.from('api_keys').select('chave'); (ks||[]).forEach(k => salvas[k.chave] = true); } catch(e){}
   const athena = (mapa['ia_athena'] && mapa['ia_athena'].valor) || { provider:'lovable', model:'google/gemini-3-flash-preview' };
   const sistema = (mapa['ia_sistema'] && mapa['ia_sistema'].valor) || { provider:'lovable', model:'google/gemini-3-flash-preview' };
   const voz = (mapa['voz_elevenlabs'] && mapa['voz_elevenlabs'].valor) || { ativo:false, voice_id:'9BWtsMINqrJLrRacOk9x', model:'eleven_turbo_v2_5' };
@@ -343,12 +352,22 @@ async function viewConfig(){
   view.innerHTML = `
   <div class="card">
     <h2>Integrações de IA</h2>
-    <p class="muted">As chaves ficam guardadas em segredo no servidor. Aqui você só escolhe quem faz o quê.</p>
+    <p class="muted">Cole aqui as chaves de cada serviço. Elas ficam gravadas em área restrita a administradores e nunca aparecem para os alunos.</p>
     <div class="grid">
-      ${CFG_PROVEDORES.map(p=>`<div class="row"><div><b>${esc(p.nome)}</b> ${cfgPill(!!conect[p.id])}<div class="muted">${esc(p.dica)}</div></div></div>`).join('')}
-      <div class="row"><div><b>ElevenLabs (voz)</b> ${cfgPill(!!conect.elevenlabs)}<div class="muted">Narração das aulas e podcasts. Requer a chave ELEVENLABS_API_KEY.</div></div></div>
+      ${CFG_CHAVES.map(c=>`<div class="row">
+        <div>
+          <label class="muted"><b>${esc(c.nome)}</b> ${cfgPill(!!conect[c.id])} ${salvas[c.env]?'<span class="tag">chave salva no painel</span>':''}</label>
+          <input id="key-${c.env}" type="password" autocomplete="new-password" placeholder="${salvas[c.env]?'•••••••••• (cole uma nova para trocar)':esc(c.exemplo)}">
+          <div class="muted">${esc(c.dica)}</div>
+        </div>
+        <div>
+          <button class="act primary" onclick="cfgSalvarChave('${c.env}')">Salvar</button>
+          ${salvas[c.env]?`<button class="act" onclick="cfgApagarChave('${c.env}')">Remover</button>`:''}
+        </div>
+      </div>`).join('')}
     </div>
   </div>
+
 
   <div class="card">
     <h2>IA do curso — Athena</h2>
@@ -389,6 +408,25 @@ async function viewConfig(){
       <div><button class="act" onclick="salvarConfig('${s.id}')">Salvar</button></div>
     </div>`).join('') || '<p class="muted">Nenhuma configuração cadastrada.</p>'}
   </div>`;
+}
+async function cfgSalvarChave(env){
+  const el = document.getElementById('key-'+env);
+  const valor = (el.value||'').trim();
+  if(!valor) return alert('Cole a chave antes de salvar.');
+  const { error } = await PX.sb.from('api_keys').upsert(
+    { chave: env, valor, updated_by: PX.user.id }, { onConflict:'chave' });
+  if(error) return alert(error.message);
+  await logAdmin('salvar_chave_api','api_keys',env);
+  el.value = '';
+  alert('Chave salva. Já está valendo para as próximas gerações.');
+  viewConfig();
+}
+async function cfgApagarChave(env){
+  if(!confirm('Remover esta chave? Os recursos que dependem dela deixam de funcionar.')) return;
+  const { error } = await PX.sb.from('api_keys').delete().eq('chave', env);
+  if(error) return alert(error.message);
+  await logAdmin('remover_chave_api','api_keys',env);
+  viewConfig();
 }
 async function cfgUpsert(chave, valor){
   const { error } = await PX.sb.from('platform_settings').upsert({ chave, valor, publico:true }, { onConflict:'chave' });
