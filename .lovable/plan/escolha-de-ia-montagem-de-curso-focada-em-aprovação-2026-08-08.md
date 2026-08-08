@@ -5,16 +5,13 @@
 Na aba **Base de conhecimento (IA)**, o bloco "Montar curso com IA" ganha:
 
 1. **Seletor de IA** — lista com os melhores modelos disponíveis, cada um com uma explicação curta de quando usar:
-   - **Máxima qualidade (padrão)** — melhor raciocínio pedagógico e escrita de aula.
-   - **Raciocínio profundo** — para matérias densas de lei seca e jurisprudência; mais lento.
-   - **Material gigante** — janela de contexto enorme, ideal quando você sobe apostilas/PDFs muito extensos.
-   - **Rápido e econômico** — o modelo usado hoje; bom para testes.
+  - **Máxima qualidade (padrão)** — melhor raciocínio pedagógico e escrita de aula.
+  - **Raciocínio profundo** — para matérias densas de lei seca e jurisprudência; mais lento.
+  - **Material gigante** — janela de contexto enorme, ideal quando você sobe apostilas/PDFs muito extensos.
+  - **Rápido e econômico** — o modelo usado hoje; bom para testes.
    A escolha fica salva no navegador para os próximos usos.
-
 2. **Campo "Banca"** (padrão Cebraspe, editável: FGV, FCC, Vunesp, Cesgranrio, IBFC, Outra) e **campo "Cargo/Concurso"** (pré-preenchido com Polícia Rodoviária Federal).
-
 3. **Nível de profundidade** — Essencial (aula enxuta), Completo (padrão) ou Aprofundado (aula longa com jurisprudência e casos).
-
 4. **Modo aprovação** (ligado por padrão): instrui a IA a priorizar o que mais cai, marcar o grau de incidência de cada assunto e incluir os blocos de fixação na aula.
 
 ## Como a IA passa a montar a aula
@@ -39,4 +36,5 @@ Cada aula gerada passa a trazer também uma **etiqueta de incidência** (alta/m�
 - O schema JSON de resposta ganha o campo opcional `incidencia` ("alta" | "media" | "baixa"), tratado com valor padrão quando ausente.
 - `public/px-console-8f21c.html`: novos controles no bloco de montagem, persistência das preferências em `localStorage`, envio dos parâmetros e exibição da etiqueta de incidência no painel de revisão.
 - Timeouts: modelos de raciocínio demoram mais, então a mensagem de progresso passa a avisar "pode levar alguns minutos" e o botão fica desabilitado durante a geração.
-- Nada muda no chat da Athena nesta etapa (continua no modelo rápido); posso trocar depois se quiser.
+- Nada muda no chat da Athena nesta etapa (continua no modelo rápido); posso trocar depois se quiser. mantemha a ia atual como padrao por enuqanto a gemini que é grtuita
+- &nbsp;
