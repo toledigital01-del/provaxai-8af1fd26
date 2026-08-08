@@ -87,6 +87,46 @@ async function extractVideo(url: string): Promise<string> {
   return ''
 }
 
+/* Lê imagens (foto de apostila, print, slide) transcrevendo com IA de visão. */
+async function extractImagem(b64: string, mime: string): Promise<string> {
+  const apiKey = process.env['LOVABLE_API_KEY']
+  if (!apiKey) throw new Error('IA indisponível para ler imagens no momento.')
+  const dataUrl = b64.startsWith('data:') ? b64 : `data:${mime || 'image/png'};base64,${b64}`
+  const r = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'google/gemini-3-flash-preview',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: 'Transcreva fielmente TODO o conteúdo textual desta imagem (apostila, slide, prova ou anotação) em Markdown simples, preservando títulos, listas, tabelas e fórmulas. Não resuma, não comente, não invente. Se não houver texto, responda apenas: SEM_TEXTO.',
+            },
+            { type: 'image_url', image_url: { url: dataUrl } },
+          ],
+        },
+      ],
+    }),
+  })
+  if (!r.ok) throw new Error('Não consegui ler a imagem agora. Tente novamente.')
+  const data = (await r.json()) as any
+  const texto = String(data?.choices?.[0]?.message?.content || '').trim()
+  return /^SEM_TEXTO/i.test(texto) ? '' : texto
+}
+
+/* Lê qualquer arquivo de texto (txt, md, csv, json, html, srt, código…) sem etapa extra. */
+function lerTextoDireto(bytes: Uint8Array, nome: string): string {
+  const raw = new TextDecoder('utf-8', { fatal: false }).decode(bytes)
+  return /\.html?$/i.test(nome) ? stripHtml(raw) : raw.replace(/\u0000/g, '').trim()
+}
+
+function ehImagem(nome: string, mime: string): boolean {
+  return /^image\//i.test(mime || '') || /\.(png|jpe?g|webp|gif|bmp|heic|heif|tiff?)$/i.test(nome || '')
+}
+
 export const Route = createFileRoute('/api/public/kb-ingest')({
   server: {
     handlers: {
