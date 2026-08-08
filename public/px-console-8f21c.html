@@ -1020,7 +1020,7 @@ async function kbFetchDocs(){
 window.kbReindexar = async function(dryRun){
   const antes = KB_DOCS.slice();
   const lista = kbDiscList();
-  kbLogReset(dryRun ? 'Prévia da reindexação (nada foi alterado)' : 'Reindexação da base');
+  kbLogReset(dryRun ? 'Prévia da reindexação (nada foi alterado)' : 'Reindexação da base', 'reindexar', dryRun ? 'previa' : 'real');
   kbOrfMsg(dryRun ? 'Simulando…' : 'Reindexando…');
   kbProg(0, 1, 'Lendo banco');
   let docs;
