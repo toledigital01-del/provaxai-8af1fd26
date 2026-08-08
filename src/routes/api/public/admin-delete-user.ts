@@ -35,7 +35,15 @@ export const Route = createFileRoute('/api/public/admin-delete-user')({
             { status: 400 },
           )
 
+        // Solta referências que não caem em cascata antes de remover a conta.
+        await fetch(`${SUPABASE_URL}/rest/v1/api_keys?updated_by=eq.${body.user_id}`, {
+          method: 'PATCH',
+          headers: serviceHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+          body: JSON.stringify({ updated_by: null }),
+        }).catch(() => {})
+
         // Apaga a conta de autenticação; as tabelas do app caem em cascata (ON DELETE CASCADE).
+
         const r = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${body.user_id}`, {
           method: 'DELETE',
           headers: serviceHeaders({ 'Content-Type': 'application/json' }),
