@@ -865,7 +865,7 @@ function kbPaintPreview(){
       }).join('') +
       '</div>' +
     '</div>' +
-    (semTopico.length ? '<p class="muted" style="margin-top:8px;font-size:0.78rem">Sem aula gerada (' + semTopico.length + '): ' + esc(semTopico.slice(0,8).join(' · ')) + (semTopico.length>8?' …':'') + '</p>' : '') +
+    (semTopico.length ? '<p class="muted" style="margin-top:8px;font-size:0.78rem;color:#B91C1C">Sem aula gerada (' + semTopico.length + '): ' + esc(semTopico.slice(0,8).join(' · ')) + (semTopico.length>8?' …':'') + '</p>' : '') +
     '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
       '<button class="act primary" onclick="kbPublicarGeradas()">Publicar ' + sel + ' aula(s) nos tópicos</button>' +
       '<button class="act" onclick="kbPreviewDescartar()">Descartar</button>' +
