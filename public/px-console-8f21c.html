@@ -499,15 +499,26 @@ window.kbMontarCurso = async function(){
   if(material.length < 200) return kbIngMsg('Coloque primeiro o material na caixa de conteúdo (arquivo, site, vídeo ou texto).');
   const topicos = kbTopicList(kbDisc);
   if(!topicos.length) return kbIngMsg('Esta matéria não tem tópicos cadastrados.');
-  kbIngMsg('A IA está montando o curso de ' + kbDisc + '… isso pode levar até 1 minuto.');
+  const val = id => (document.getElementById(id)||{}).value;
+  const btn = document.getElementById('kb-btn-montar');
+  kbPrefsSave();
+  if(btn){ btn.disabled = true; btn.textContent = 'Montando curso…'; }
+  kbIngMsg('A IA está montando o curso de ' + kbDisc + '… pode levar alguns minutos, não feche a página.');
   document.getElementById('kb-preview').innerHTML = '';
   try{
-    const j = await kbPost('/api/public/kb-autocourse', { disciplina:kbDisc, topicos, material: material.slice(0,300000) });
-    KB_GERADAS = (j.aulas || []).map(function(a){ return { topico:a.topico, titulo:a.titulo, conteudo:String(a.conteudo||''), incluir:true }; });
+    const j = await kbPost('/api/public/kb-autocourse', {
+      disciplina:kbDisc, topicos, material: material.slice(0,300000),
+      modelo: val('kb-modelo'), banca: val('kb-banca'), cargo: val('kb-cargo'),
+      profundidade: val('kb-prof') || 'completo',
+      modo_aprovacao: (document.getElementById('kb-aprov')||{}).checked !== false
+    });
+    KB_GERADAS = (j.aulas || []).map(function(a){ return { topico:a.topico, titulo:a.titulo, incidencia:a.incidencia||'media', conteudo:String(a.conteudo||''), incluir:true }; });
     kbIngMsg(KB_GERADAS.length + ' aula(s) geradas. Revise abaixo antes de publicar.');
     kbPaintPreview();
   }catch(e){ kbIngMsg('Erro: ' + e.message); }
+  finally{ if(btn){ btn.disabled = false; btn.textContent = 'Montar curso desta matéria'; } }
 };
+
 let KB_GERADAS = [];
 let KB_ABERTA = -1;
 function kbPaintPreview(){
