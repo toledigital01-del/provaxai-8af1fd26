@@ -376,21 +376,36 @@ function goTab(t) {
   document.querySelector('.ws-center').scrollTop = 0;
 }
 
+function kbAvisoHTML(titulo, texto, acao) {
+  return '<div style="border:1px solid var(--line);background:#F8FAFC;border-radius:12px;padding:16px 18px">'
+    + '<p style="font-weight:700;margin:0 0 6px">' + titulo + '</p>'
+    + '<p style="margin:0;color:var(--muted);font-size:0.9rem">' + texto + '</p>'
+    + (acao || '') + '</div>';
+}
+
 async function carregarConteudoKB() {
   const box = document.getElementById('kb-conteudo');
-  const fb = document.getElementById('kb-fallback');
   if (!box) return;
-  let doc = null;
-  try { doc = await PX.kbTopico(disc, topic, id); } catch (e) {}
+  let res = { status: 0, doc: null };
+  try { res = await PX.kbTopicoDetalhe(disc, topic, id); } catch (e) {}
   if (!document.getElementById('kb-conteudo')) return;
+  const doc = res.doc;
   if (doc && (doc.conteudo || '').trim()) {
     box.innerHTML = (doc.titulo ? '<h3>' + doc.titulo + '</h3>' : '') + PX.kbHTML(doc.conteudo);
-    if (fb) fb.remove();
+    return;
+  }
+  const btn = (txt, href) => '<p style="margin:12px 0 0"><a class="btn-primary" style="display:inline-block;text-decoration:none;padding:9px 16px;border-radius:10px" href="' + href + '">' + txt + '</a></p>';
+  if (res.status === 401) {
+    box.innerHTML = kbAvisoHTML('Entre para ver esta aula', 'O conteúdo completo é liberado para alunos com acesso ativo.', btn('Entrar na minha conta', 'login.html?next=' + encodeURIComponent(location.pathname + location.search)));
+  } else if (res.status === 403) {
+    box.innerHTML = kbAvisoHTML('Este conteúdo faz parte do Curso PRF', 'Adquira o curso ou ative sua assinatura para liberar as aulas completas.', btn('Ver planos', 'pricing.html'));
+  } else if (res.status === 200) {
+    box.innerHTML = kbAvisoHTML('Aula ainda não publicada para este tópico', 'O conteúdo de <b>' + topic + '</b> está sendo preparado. Enquanto isso, use as questões, os flashcards e o chat da Athena.', '');
   } else {
-    box.innerHTML = '';
-    if (fb) fb.hidden = false;
+    box.innerHTML = kbAvisoHTML('Não consegui carregar esta aula', 'Verifique sua conexão e tente novamente.', '<p style="margin:12px 0 0"><button class="btn-secondary" onclick="carregarConteudoKB()">Tentar de novo</button></p>');
   }
 }
+
 
 function renderPane() {
   const p = document.getElementById('pane');
