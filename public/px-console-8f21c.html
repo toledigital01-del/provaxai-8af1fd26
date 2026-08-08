@@ -834,7 +834,9 @@ function kbPaintPreview(){
       '<div style="padding:9px 11px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:0.8rem">' +
         '<b>Revisão do curso — ' + esc(kbDisc) + '</b>' +
         '<span class="muted">' + sel + ' de ' + KB_GERADAS.length + ' aula(s) marcadas</span>' +
+        '<span style="font-size:0.72rem;font-weight:700;padding:1px 8px;border-radius:99px;background:' + (semTopico.length?'#FEE2E2':'#DCFCE7') + ';color:' + (semTopico.length?'#B91C1C':'#047857') + '">Cobertura: ' + (kbTopicList(kbDisc).length - semTopico.length) + ' de ' + kbTopicList(kbDisc).length + ' tópicos</span>' +
         '<span style="flex:1"></span>' +
+        (semTopico.length ? '<button class="act" onclick="kbGerarFaltantes()">Gerar os que faltam</button>' : '') +
         '<button class="act" onclick="kbPreviewTodas(true)">Marcar todas</button>' +
         '<button class="act" onclick="kbPreviewTodas(false)">Desmarcar todas</button>' +
       '</div>' +
