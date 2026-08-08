@@ -142,18 +142,45 @@ export const Route = createFileRoute('/api/public/kb-ingest')({
         }
 
         try {
+          const nome = body.nome || ''
+          const mime = body.mime || ''
+
           if (body.tipo === 'texto') {
             return Response.json({ texto: (body.texto || '').trim(), origem: 'texto' })
           }
-          if (body.tipo === 'txt') {
-            const raw = body.texto ?? (body.arquivo_base64 ? new TextDecoder().decode(base64ToBytes(body.arquivo_base64)) : '')
-            return Response.json({ texto: raw.trim(), origem: body.nome || 'arquivo.txt' })
+          if (body.tipo === 'imagem') {
+            if (!body.arquivo_base64) return Response.json({ error: 'Imagem ausente.' }, { status: 400 })
+            const texto = await extractImagem(body.arquivo_base64, mime)
+            if (!texto) return Response.json({ error: 'Não encontrei texto legível nesta imagem.' }, { status: 422 })
+            return Response.json({ texto, origem: nome || 'imagem' })
           }
-          if (body.tipo === 'pdf') {
+          if (body.tipo === 'txt') {
+            const raw = body.texto ?? (body.arquivo_base64 ? lerTextoDireto(base64ToBytes(body.arquivo_base64), nome) : '')
+            return Response.json({ texto: raw.trim(), origem: nome || 'arquivo.txt' })
+          }
+          if (body.tipo === 'pdf' || body.tipo === 'auto') {
             if (!body.arquivo_base64) return Response.json({ error: 'Arquivo ausente.' }, { status: 400 })
-            const texto = await extractPdf(base64ToBytes(body.arquivo_base64))
-            if (!texto) return Response.json({ error: 'Não consegui ler texto deste PDF (pode ser digitalizado/imagem).' }, { status: 422 })
-            return Response.json({ texto, origem: body.nome || 'arquivo.pdf' })
+            const bytes = base64ToBytes(body.arquivo_base64)
+
+            if (body.tipo === 'auto' && ehImagem(nome, mime)) {
+              const texto = await extractImagem(body.arquivo_base64, mime)
+              if (!texto) return Response.json({ error: 'Não encontrei texto legível nesta imagem.' }, { status: 422 })
+              return Response.json({ texto, origem: nome || 'imagem' })
+            }
+
+            const ehPdf = body.tipo === 'pdf' || /pdf/i.test(mime) || /\.pdf$/i.test(nome)
+            if (ehPdf) {
+              const texto = await extractPdf(bytes)
+              if (texto) return Response.json({ texto, origem: nome || 'arquivo.pdf' })
+              return Response.json(
+                { error: 'Não consegui ler texto deste PDF (parece digitalizado). Envie as páginas como imagem que eu transcrevo.' },
+                { status: 422 },
+              )
+            }
+
+            const direto = lerTextoDireto(bytes, nome)
+            if (direto) return Response.json({ texto: direto, origem: nome || 'arquivo' })
+            return Response.json({ error: 'Não consegui ler este tipo de arquivo. Envie PDF, texto ou imagem.' }, { status: 422 })
           }
           if (body.tipo === 'url') {
             if (!body.url) return Response.json({ error: 'Informe o endereço do site.' }, { status: 400 })
