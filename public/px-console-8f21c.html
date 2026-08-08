@@ -575,10 +575,10 @@ async function kbPost(path, payload){
 }
 function kbApplyText(texto, origem){
   const ta = document.getElementById('kb-txt');
+  if(!ta) return;
   const modo = (document.querySelector('input[name="kb-mode"]:checked')||{}).value || 'append';
   const bloco = (origem ? `\n\n## Fonte: ${origem}\n` : '\n\n') + texto;
   ta.value = modo === 'replace' ? texto : (ta.value.trim() ? ta.value + bloco : texto);
-  kbIngMsg('Material extraído (' + texto.length.toLocaleString('pt-BR') + ' caracteres). Revise e clique em "Salvar conteúdo".');
 }
 function kbEhTextoSimples(f){
   return /^text\//i.test(f.type || '') || /\.(txt|md|markdown|csv|json|srt|vtt|log|tsv)$/i.test(f.name || '');
@@ -586,15 +586,111 @@ function kbEhTextoSimples(f){
 function kbEhImagem(f){
   return /^image\//i.test(f.type || '') || /\.(png|jpe?g|webp|gif|bmp|heic|heif|tiff?)$/i.test(f.name || '');
 }
-window.kbIngestFile = async function(){
+function kbEhVideoUrl(u){
+  return /(youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com)/i.test(u || '');
+}
+
+/* ---- Fontes carregadas + progresso do carregamento ---- */
+let KB_FONTES = [];
+let KB_ING_ATIVO = false;
+function kbIngProg(feito, total, texto){
+  const wrap = document.getElementById('kb-ing-prog-wrap');
+  const bar = document.getElementById('kb-ing-prog-bar');
+  const txt = document.getElementById('kb-ing-prog-txt');
+  if(!wrap) return;
+  if(total <= 0){ wrap.style.display = 'none'; return; }
+  const pct = Math.max(0, Math.min(100, Math.round((feito / total) * 100)));
+  wrap.style.display = 'block';
+  if(bar) bar.style.width = pct + '%';
+  if(txt) txt.textContent = (texto || 'Carregando') + ' — ' + pct + '%';
+}
+function kbIngProgHide(){ const w = document.getElementById('kb-ing-prog-wrap'); if(w) w.style.display = 'none'; }
+function kbPaintFontes(){
+  const box = document.getElementById('kb-fontes');
+  if(!box) return;
+  if(!KB_FONTES.length){ box.innerHTML = ''; return; }
+  const total = KB_FONTES.reduce(function(a,f){ return a + f.chars; }, 0);
+  box.innerHTML = '<div style="border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;font-size:0.78rem">' +
+    '<div style="padding:7px 10px;background:#F8FAFC;border-bottom:1px solid #E2E8F0"><b>' + KB_FONTES.length + ' fonte(s) carregada(s)</b> <span class="muted">· ' + total.toLocaleString('pt-BR') + ' caracteres</span></div>' +
+    KB_FONTES.map(function(f,i){
+      return '<div style="padding:6px 10px;display:flex;gap:8px;align-items:center;border-bottom:1px solid #F1F5F9">' +
+        '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(f.nome) + '</span>' +
+        '<span class="muted">' + f.chars.toLocaleString('pt-BR') + ' car.</span>' +
+        '<button class="act" onclick="kbFonteRemover(' + i + ')">Remover</button>' +
+      '</div>';
+    }).join('') + '</div>';
+}
+window.kbFonteRemover = function(i){
+  const f = KB_FONTES[i];
+  if(!f) return;
+  KB_FONTES.splice(i,1);
+  const ta = document.getElementById('kb-txt');
+  if(ta && f.bloco) ta.value = ta.value.split(f.bloco).join('').replace(/\n{4,}/g,'\n\n');
+  kbPaintFontes();
+  kbMontarEstado();
+  kbIngMsg('Fonte "' + f.nome + '" removida do material.');
+};
+function kbRegistrarFonte(nome, texto){
+  const ta = document.getElementById('kb-txt');
+  const antes = ta ? ta.value : '';
+  kbApplyText(texto, nome);
+  const depois = ta ? ta.value : '';
+  const bloco = depois.startsWith(antes) ? depois.slice(antes.length) : '';
+  KB_FONTES.push({ nome: nome, chars: texto.length, bloco: bloco });
+  kbPaintFontes();
+}
+function kbMontarEstado(){
+  const btn = document.getElementById('kb-btn-montar');
+  if(!btn) return;
+  const ta = document.getElementById('kb-txt');
+  const pronto = !KB_ING_ATIVO && !!ta && ta.value.trim().length >= 200 && !!kbValidDisc(kbDisc);
+  btn.disabled = !pronto;
+  btn.textContent = KB_ING_ATIVO ? 'Aguardando leitura do material…' : 'Montar curso desta matéria';
+}
+function kbBindIngest(){
+  const inp = document.getElementById('kb-file');
+  if(inp && !inp.dataset.bound){
+    inp.dataset.bound = '1';
+    inp.addEventListener('change', function(){ kbIngestFiles(Array.from(inp.files || [])); });
+  }
+  const drop = document.getElementById('kb-drop');
+  if(drop && !drop.dataset.bound){
+    drop.dataset.bound = '1';
+    ['dragenter','dragover'].forEach(function(ev){
+      drop.addEventListener(ev, function(e){ e.preventDefault(); drop.style.borderColor = '#2563EB'; drop.style.background = '#EFF6FF'; });
+    });
+    ['dragleave','drop'].forEach(function(ev){
+      drop.addEventListener(ev, function(e){ e.preventDefault(); drop.style.borderColor = '#CBD5E1'; drop.style.background = '#F8FAFC'; });
+    });
+    drop.addEventListener('drop', function(e){
+      const fs = Array.from((e.dataTransfer && e.dataTransfer.files) || []);
+      if(fs.length) kbIngestFiles(fs);
+    });
+  }
+  const url = document.getElementById('kb-url');
+  if(url && !url.dataset.bound){
+    url.dataset.bound = '1';
+    const go = function(){ const v = url.value.trim(); if(v && v !== url.dataset.ultimo){ url.dataset.ultimo = v; kbIngestUrlAuto(v); } };
+    url.addEventListener('blur', go);
+    url.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); go(); } });
+  }
+  const ta = document.getElementById('kb-txt');
+  if(ta && !ta.dataset.boundMontar){ ta.dataset.boundMontar = '1'; ta.addEventListener('input', kbMontarEstado); }
+  kbMontarEstado();
+}
+
+/* Lê os arquivos assim que são escolhidos/soltos — sem etapa manual de extração. */
+window.kbIngestFiles = async function(files){
+  if(!files || !files.length) return;
   if(!kbValidDisc(kbDisc)) return kbIngMsg('Selecione uma matéria válida antes de carregar material.');
-  const files = Array.from((document.getElementById('kb-file')||{}).files || []);
-  if(!files.length) return kbIngMsg('Escolha um ou mais arquivos (PDF, texto ou imagem).');
+  KB_ING_ATIVO = true;
   kbSetBusy(true, 'Lendo ' + files.length + ' arquivo(s)…');
-  try{
-    let n = 0;
-    for(const f of files){
-      kbSetBusy(true, 'Lendo ' + f.name + ' (' + (n+1) + '/' + files.length + ')…');
+  kbMontarEstado();
+  let n = 0, i = 0;
+  for(const f of files){
+    try{
+      kbIngProg(i, files.length, 'Lendo ' + f.name + ' (' + (i+1) + '/' + files.length + ')');
+      kbSetBusy(true, 'Lendo ' + f.name + ' (' + (i+1) + '/' + files.length + ')…');
       let texto = '', origem = f.name;
       if(kbEhTextoSimples(f)){
         texto = (await f.text()).trim();
@@ -604,47 +700,121 @@ window.kbIngestFile = async function(){
         const j = await kbPost('/api/public/kb-ingest', { tipo, nome:f.name, mime:f.type || '', arquivo_base64:b64 });
         texto = j.texto; origem = j.origem || f.name;
       }
-      if(texto){ kbApplyText(texto, origem); n++; }
+      if(texto){ kbRegistrarFonte(origem, texto); n++; }
+    }catch(e){
+      kbIngMsg('Erro ao ler "' + f.name + '": ' + e.message);
     }
-    kbSetBusy(false);
-    kbIngMsg(n + ' arquivo(s) lido(s) e adicionado(s) ao conteúdo. Revise e clique em "Salvar conteúdo".');
-  }catch(e){ kbSetBusy(false); kbIngMsg('Erro: ' + e.message); }
+    i++;
+    kbIngProg(i, files.length, 'Carregando material');
+  }
+  KB_ING_ATIVO = false;
+  kbSetBusy(false);
+  kbIngProg(files.length, files.length, 'Leitura concluída');
+  setTimeout(kbIngProgHide, 1200);
+  kbMontarEstado();
+  kbIngMsg(n + ' arquivo(s) lido(s) direto para o material. Já dá para montar o curso.');
 };
-window.kbIngestUrl = async function(tipo){
+window.kbIngestUrlAuto = async function(url){
   if(!kbValidDisc(kbDisc)) return kbIngMsg('Selecione uma matéria válida antes de carregar material.');
-  const url = (document.getElementById('kb-url')||{}).value.trim();
-  if(!url) return kbIngMsg('Cole o endereço primeiro.');
-  kbSetBusy(true, 'Buscando conteúdo…');
-  try{ const j = await kbPost('/api/public/kb-ingest', { tipo, url }); kbSetBusy(false); kbApplyText(j.texto, j.origem); }
-  catch(e){ kbSetBusy(false); kbIngMsg('Erro: ' + e.message); }
+  const tipo = kbEhVideoUrl(url) ? 'video' : 'url';
+  KB_ING_ATIVO = true;
+  kbSetBusy(true, 'Lendo ' + (tipo === 'video' ? 'vídeo' : 'site') + '…');
+  kbIngProg(0.4, 1, 'Buscando conteúdo do ' + (tipo === 'video' ? 'vídeo' : 'site'));
+  kbMontarEstado();
+  try{
+    const j = await kbPost('/api/public/kb-ingest', { tipo, url });
+    kbRegistrarFonte(j.origem || url, j.texto || '');
+    kbIngMsg('Conteúdo do link carregado (' + String(j.texto || '').length.toLocaleString('pt-BR') + ' caracteres).');
+  }catch(e){ kbIngMsg('Erro: ' + e.message); }
+  KB_ING_ATIVO = false;
+  kbSetBusy(false);
+  kbIngProg(1, 1, 'Leitura concluída');
+  setTimeout(kbIngProgHide, 1200);
+  kbMontarEstado();
 };
+
+/* ---- Montagem do curso em lotes, cobrindo todos os tópicos ---- */
+function kbLotes(arr, tam){
+  const out = [];
+  for(let i = 0; i < arr.length; i += tam) out.push(arr.slice(i, i + tam));
+  return out;
+}
+async function kbGerarLotes(disciplina, topicos, prefs, material){
+  const lotes = kbLotes(topicos, 6);
+  let feitos = 0;
+  for(const lote of lotes){
+    kbIngProg(feitos, topicos.length, 'Gerando aulas (' + Math.min(feitos + lote.length, topicos.length) + ' de ' + topicos.length + ')');
+    kbSetBusy(true, 'Montando aulas de ' + disciplina + ' — ' + (feitos + 1) + ' a ' + Math.min(feitos + lote.length, topicos.length) + ' de ' + topicos.length + '…');
+    try{
+      const j = await kbPost('/api/public/kb-autocourse', {
+        disciplina, topicos: lote, material: material.slice(0, 300000),
+        modelo: prefs.modelo, banca: prefs.banca, cargo: prefs.cargo,
+        profundidade: prefs.prof, modo_aprovacao: prefs.aprov
+      });
+      (j.aulas || []).forEach(function(a){
+        if(!a || !a.topico) return;
+        if(KB_GERADAS.some(function(x){ return x.topico === a.topico; })) return;
+        KB_GERADAS.push({ disciplina: disciplina, topico: a.topico, titulo: a.titulo || a.topico,
+          incidencia: a.incidencia || 'media', conteudo: String(a.conteudo || ''), incluir: true });
+      });
+    }catch(e){
+      kbIngMsg('Falha em um lote (' + e.message + '). Continuando com os demais…');
+    }
+    feitos += lote.length;
+    kbIngProg(feitos, topicos.length, 'Gerando aulas');
+    kbPaintPreview();
+  }
+}
 window.kbMontarCurso = async function(){
   const disciplinaSelecionada = kbValidDisc(kbDisc);
   if(!disciplinaSelecionada) return kbIngMsg('Selecione uma matéria válida antes de montar o curso.');
+  if(KB_ING_ATIVO) return kbIngMsg('Aguarde a leitura do material terminar.');
   const material = document.getElementById('kb-txt').value.trim();
-
-  if(material.length < 200) return kbIngMsg('Coloque primeiro o material na caixa de conteúdo (arquivo, site, vídeo ou texto).');
+  if(material.length < 200) return kbIngMsg('Carregue primeiro o material (arquivo, link ou texto).');
   const topicos = kbTopicList(disciplinaSelecionada);
   if(!topicos.length) return kbIngMsg('Esta matéria não tem tópicos cadastrados.');
   const val = id => (document.getElementById(id)||{}).value;
   const prefs = { modelo: val('kb-modelo'), banca: val('kb-banca'), cargo: val('kb-cargo'), prof: val('kb-prof') || 'completo',
     aprov: (document.getElementById('kb-aprov')||{}).checked !== false };
   kbPrefsSave();
-  kbSetBusy(true, 'A IA está montando o curso de ' + disciplinaSelecionada + '… pode levar alguns minutos, não feche a página.');
+  KB_GERADAS = []; KB_ABERTA = -1;
   document.getElementById('kb-preview').innerHTML = '';
+  kbSetBusy(true, 'A IA está montando o curso completo de ' + disciplinaSelecionada + '… pode levar alguns minutos, não feche a página.');
   try{
-    const j = await kbPost('/api/public/kb-autocourse', {
-      disciplina:disciplinaSelecionada, topicos, material: material.slice(0,300000),
-      modelo: prefs.modelo, banca: prefs.banca, cargo: prefs.cargo,
-      profundidade: prefs.prof,
-      modo_aprovacao: prefs.aprov
-    });
-    KB_GERADAS = (j.aulas || []).map(function(a){ return { disciplina:disciplinaSelecionada, topico:a.topico, titulo:a.titulo, incidencia:a.incidencia||'media', conteudo:String(a.conteudo||''), incluir:true }; });
-    kbSetBusy(false);
-    kbIngMsg(KB_GERADAS.length + ' aula(s) geradas para ' + disciplinaSelecionada + '. Revise abaixo antes de publicar.');
-    kbPaintPreview();
-  }catch(e){ kbSetBusy(false); kbIngMsg('Erro: ' + e.message); }
-  finally{ if(btn){ btn.disabled = false; btn.textContent = 'Montar curso desta matéria'; } }
+    await kbGerarLotes(disciplinaSelecionada, topicos, prefs, material);
+    // Segunda passada: regera apenas os tópicos que ficaram sem aula.
+    for(let tentativa = 0; tentativa < 2; tentativa++){
+      const faltando = topicos.filter(function(t){ return !KB_GERADAS.some(function(a){ return a.topico === t; }); });
+      if(!faltando.length) break;
+      kbSetBusy(true, 'Completando ' + faltando.length + ' tópico(s) que faltaram…');
+      await kbGerarLotes(disciplinaSelecionada, faltando, prefs, material);
+    }
+  }catch(e){ kbIngMsg('Erro: ' + e.message); }
+  kbSetBusy(false);
+  kbIngProgHide();
+  kbMontarEstado();
+  const cobertos = topicos.filter(function(t){ return KB_GERADAS.some(function(a){ return a.topico === t; }); }).length;
+  kbIngMsg('Curso montado: ' + cobertos + ' de ' + topicos.length + ' tópico(s) com aula. Revise abaixo antes de publicar.');
+  kbPaintPreview();
+};
+window.kbGerarFaltantes = async function(){
+  const disciplina = kbValidDisc(kbDisc);
+  if(!disciplina) return kbIngMsg('Selecione uma matéria válida.');
+  const material = document.getElementById('kb-txt').value.trim();
+  if(material.length < 200) return kbIngMsg('Carregue o material antes de completar as aulas.');
+  const topicos = kbTopicList(disciplina);
+  const faltando = topicos.filter(function(t){ return !KB_GERADAS.some(function(a){ return a.topico === t; }); });
+  if(!faltando.length) return kbIngMsg('Todos os tópicos já têm aula.');
+  const val = id => (document.getElementById(id)||{}).value;
+  const prefs = { modelo: val('kb-modelo'), banca: val('kb-banca'), cargo: val('kb-cargo'), prof: val('kb-prof') || 'completo',
+    aprov: (document.getElementById('kb-aprov')||{}).checked !== false };
+  kbSetBusy(true, 'Gerando ' + faltando.length + ' aula(s) que faltam…');
+  await kbGerarLotes(disciplina, faltando, prefs, material);
+  kbSetBusy(false);
+  kbIngProgHide();
+  kbMontarEstado();
+  kbPaintPreview();
+  kbIngMsg('Completado. Revise as aulas antes de publicar.');
 };
 
 let KB_GERADAS = [];
