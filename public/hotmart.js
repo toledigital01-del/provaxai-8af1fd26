@@ -1,9 +1,11 @@
 /* Checkout Hotmart do Prova X — popup (checkoutMode=2) com fallback para redirect. */
 window.PX_HOTMART = {
-  mensal: "https://pay.hotmart.com/I107044926Q",
-  // Enquanto a oferta anual não existir, cai no mesmo checkout.
-  // Basta trocar por "https://pay.hotmart.com/I107044926Q?off=CODIGO_DA_OFERTA_ANUAL".
-  anual: "https://pay.hotmart.com/I107044926Q",
+  // Plano mensal — link de pagamento oficial
+  mensal: "https://pay.hotmart.com/I107044926Q?off=MENSAL_OFF",
+  // Plano anual — mesma página de pagamento, oferta anual
+  anual: "https://pay.hotmart.com/I107044926Q?off=ANUAL_OFF",
+  // Fallback usado enquanto os códigos de oferta acima não forem preenchidos
+  base: "https://pay.hotmart.com/I107044926Q",
 };
 
 (function () {
@@ -28,6 +30,8 @@ window.PX_HOTMART = {
   function buildUrl(ciclo) {
     var cfg = window.PX_HOTMART || {};
     var url = ciclo === "anual" ? cfg.anual : cfg.mensal;
+    // Enquanto o código de oferta não for configurado, usa a página base.
+    if (!url || /_OFF$/.test(url)) url = cfg.base || "";
     if (!url) return "";
     return withParams(url, { checkoutMode: "2", email: userEmail() });
   }
