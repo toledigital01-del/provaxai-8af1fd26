@@ -14,8 +14,9 @@
     } catch (e) { return ''; }
   };
 
-  /* Busca o conteúdo teórico publicado de uma disciplina (todos os tópicos) */
-  PX.kbDisciplina = async function (disciplina, curso) {
+  /* Busca o conteúdo teórico publicado de uma disciplina (todos os tópicos).
+     Devolve { status, docs }: status é o código HTTP (0 = falha de rede, 401 = sem login). */
+  PX.kbFetch = async function (disciplina, curso) {
     var key = (curso || 'prf-2021') + '|' + disciplina;
     if (cache[key]) return cache[key];
     var qs =
@@ -26,22 +27,44 @@
     try {
       var h = { apikey: SB_KEY };
       var tk = await PX.token();
-      if (tk) h.Authorization = 'Bearer ' + tk;
+      if (!tk) return { status: 401, docs: [] };
+      h.Authorization = 'Bearer ' + tk;
       var r = await fetch(SB_URL + '/rest/v1/knowledge_docs?' + qs, { headers: h });
-      cache[key] = r.ok ? await r.json() : [];
-    } catch (e) { cache[key] = []; }
-    return cache[key];
+      var docs = r.ok ? await r.json() : [];
+      var res = { status: r.status, docs: Array.isArray(docs) ? docs : [] };
+      if (r.ok) cache[key] = res;
+      return res;
+    } catch (e) {
+      return { status: 0, docs: [] };
+    }
+  };
+
+  PX.kbDisciplina = async function (disciplina, curso) {
+    return (await PX.kbFetch(disciplina, curso)).docs;
   };
 
   /* Conteúdo de um tópico específico (com fallback para a visão geral da matéria) */
   PX.kbTopico = async function (disciplina, topico, curso) {
-    var docs = await PX.kbDisciplina(disciplina, curso);
+    var res = await PX.kbFetch(disciplina, curso);
+    var docs = res.docs;
     return (
       docs.find(function (d) { return d.topico === topico; }) ||
       docs.find(function (d) { return !d.topico; }) ||
       null
     );
   };
+
+  /* Igual ao anterior, mas informando também o status da consulta */
+  PX.kbTopicoDetalhe = async function (disciplina, topico, curso) {
+    var res = await PX.kbFetch(disciplina, curso);
+    var docs = res.docs;
+    var doc =
+      docs.find(function (d) { return d.topico === topico; }) ||
+      docs.find(function (d) { return !d.topico; }) ||
+      null;
+    return { status: res.status, doc: doc, total: docs.length };
+  };
+
 
   /* Markdown simples -> HTML seguro */
   PX.kbHTML = function (md) {
