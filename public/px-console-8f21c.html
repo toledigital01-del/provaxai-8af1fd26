@@ -673,6 +673,221 @@ async function viewConhecimento(){
 
 }
 
+/* =========================================================
+   Carregar edital → IA extrai matérias, tópicos e subtópicos
+   ========================================================= */
+let ED_GRADE = [];
+const edEl = id => document.getElementById(id);
+function edMsg(t){ const el = edEl('ed-msg'); if(el) el.textContent = t; }
+function edProg(feito, total, texto){
+  const wrap = edEl('ed-prog-wrap'), bar = edEl('ed-prog-bar'), txt = edEl('ed-prog-txt');
+  if(!wrap) return;
+  if(total <= 0){ wrap.style.display = 'none'; return; }
+  const pct = Math.max(0, Math.min(100, Math.round((feito/total)*100)));
+  wrap.style.display = 'block';
+  if(bar) bar.style.width = pct + '%';
+  if(txt) txt.textContent = (texto || 'Processando') + ' — ' + pct + '%';
+}
+function edProgHide(){ const w = edEl('ed-prog-wrap'); if(w) w.style.display = 'none'; }
+
+async function edInit(){
+  const sel = edEl('ed-curso');
+  if(sel && !sel.dataset.loaded){
+    sel.dataset.loaded = '1';
+    const { data: cs } = await PX.sb.from('courses').select('id,nome,slug').order('ordem');
+    sel.innerHTML = (cs||[]).map(c=>`<option value="${c.id}" data-slug="${esc(c.slug)}" ${c.slug==='prf-2021'?'selected':''}>${esc(c.nome)} (${esc(c.slug)})</option>`).join('')
+      || '<option value="">Cadastre um curso primeiro</option>';
+  }
+  const inp = edEl('ed-file');
+  if(inp && !inp.dataset.bound){
+    inp.dataset.bound = '1';
+    inp.addEventListener('change', ()=> edLerArquivos(Array.from(inp.files||[])));
+  }
+  const drop = edEl('ed-drop');
+  if(drop && !drop.dataset.bound){
+    drop.dataset.bound = '1';
+    ['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.style.borderColor='#2563EB'; drop.style.background='#EFF6FF'; }));
+    ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.style.borderColor='#CBD5E1'; drop.style.background='#F8FAFC'; }));
+    drop.addEventListener('drop', e => { const fs = Array.from((e.dataTransfer&&e.dataTransfer.files)||[]); if(fs.length) edLerArquivos(fs); });
+  }
+  if(ED_GRADE.length) edPaint();
+}
+
+window.edLimpar = function(){
+  ED_GRADE = [];
+  const ta = edEl('ed-txt'); if(ta) ta.value = '';
+  const pv = edEl('ed-preview'); if(pv) pv.innerHTML = '';
+  edProgHide(); edMsg('');
+};
+
+async function edLerArquivos(files){
+  const ta = edEl('ed-txt');
+  if(!ta) return;
+  let i = 0;
+  for(const f of files){
+    try{
+      edProg(i, files.length, 'Lendo ' + f.name);
+      let texto = '';
+      if(kbEhTextoSimples(f)){
+        texto = (await f.text()).trim();
+      }else{
+        const b64 = await new Promise((res,rej)=>{ const r = new FileReader(); r.onload=()=>res(String(r.result)); r.onerror=rej; r.readAsDataURL(f); });
+        const j = await kbPost('/api/public/kb-ingest', { tipo: kbEhImagem(f) ? 'imagem' : 'auto', nome:f.name, mime:f.type||'', arquivo_base64:b64 });
+        texto = j.texto || '';
+      }
+      if(texto) ta.value = (ta.value.trim() ? ta.value + '\n\n' : '') + texto;
+    }catch(e){ edMsg('Erro ao ler "' + f.name + '": ' + e.message); }
+    i++;
+    edProg(i, files.length, 'Lendo edital');
+  }
+  edProgHide();
+  edMsg(ta.value.length.toLocaleString('pt-BR') + ' caracteres carregados. Agora clique em “Extrair grade do edital”.');
+}
+
+function edPedacos(texto, tam){
+  const out = [];
+  for(let i=0;i<texto.length;i+=tam) out.push(texto.slice(i, i+tam));
+  return out;
+}
+function edMesclar(disciplinas){
+  disciplinas.forEach(function(d){
+    const chave = d.nome.toLowerCase();
+    let alvo = ED_GRADE.find(function(x){ return x.nome.toLowerCase() === chave; });
+    if(!alvo){ alvo = { nome:d.nome, area:d.area||'especifica', incluir:true, topicos:[] }; ED_GRADE.push(alvo); }
+    (d.topicos||[]).forEach(function(t){
+      const tk = t.nome.toLowerCase();
+      let tt = alvo.topicos.find(function(x){ return x.nome.toLowerCase() === tk; });
+      if(!tt){ tt = { nome:t.nome, incluir:true, subtopicos:[] }; alvo.topicos.push(tt); }
+      (t.subtopicos||[]).forEach(function(s){
+        if(!tt.subtopicos.some(function(x){ return x.toLowerCase() === s.toLowerCase(); })) tt.subtopicos.push(s);
+      });
+    });
+  });
+}
+
+window.edAnalisar = async function(){
+  const ta = edEl('ed-txt');
+  const material = (ta ? ta.value : '').trim();
+  if(material.length < 200) return edMsg('Carregue o edital (arquivo) ou cole o conteúdo programático antes de extrair.');
+  const btn = edEl('ed-btn');
+  if(btn){ btn.disabled = true; btn.textContent = 'A IA está lendo o edital…'; }
+  ED_GRADE = [];
+  const pedacos = edPedacos(material, 90000);
+  const modelo = (edEl('ed-modelo')||{}).value || '';
+  const cargo = (edEl('ed-cargo')||{}).value || '';
+  let erros = 0;
+  for(let i=0;i<pedacos.length;i++){
+    edProg(i, pedacos.length, 'Extraindo grade (parte ' + (i+1) + ' de ' + pedacos.length + ')');
+    try{
+      const payload = { material: pedacos[i], parte: i+1, total_partes: pedacos.length };
+      if(modelo) payload.modelo = modelo;
+      if(cargo) payload.cargo = cargo;
+      const j = await kbPost('/api/public/kb-edital', payload);
+      edMesclar(j.disciplinas || []);
+      edPaint();
+    }catch(e){ erros++; edMsg('Parte ' + (i+1) + ': ' + e.message); }
+    edProg(i+1, pedacos.length, 'Extraindo grade');
+  }
+  if(btn){ btn.disabled = false; btn.textContent = 'Extrair grade do edital'; }
+  setTimeout(edProgHide, 1200);
+  edPaint();
+  if(!ED_GRADE.length) return edMsg('Não consegui identificar o conteúdo programático. Confira se o texto do edital foi carregado corretamente.');
+  const tot = edTotais();
+  edMsg('Grade extraída: ' + tot.d + ' matéria(s), ' + tot.t + ' tópico(s) e ' + tot.s + ' subtópico(s).'
+    + (erros ? ' ' + erros + ' parte(s) falharam — você pode extrair de novo.' : '')
+    + ' Confira abaixo e grave no curso.');
+};
+
+function edTotais(){
+  const sel = ED_GRADE.filter(d=>d.incluir);
+  const t = sel.reduce((a,d)=>a+d.topicos.filter(x=>x.incluir).length,0);
+  const s = sel.reduce((a,d)=>a+d.topicos.filter(x=>x.incluir).reduce((b,x)=>b+x.subtopicos.length,0),0);
+  return { d: sel.length, t, s };
+}
+window.edToggleDisc = function(i, v){ if(ED_GRADE[i]){ ED_GRADE[i].incluir = v; ED_GRADE[i].topicos.forEach(t=>t.incluir=v); edPaint(); } };
+window.edToggleTop = function(i, j, v){ if(ED_GRADE[i] && ED_GRADE[i].topicos[j]){ ED_GRADE[i].topicos[j].incluir = v; edPaint(); } };
+window.edRemoverDisc = function(i){ ED_GRADE.splice(i,1); edPaint(); };
+
+function edPaint(){
+  const box = edEl('ed-preview');
+  if(!box) return;
+  if(!ED_GRADE.length){ box.innerHTML = ''; return; }
+  const tot = edTotais();
+  box.innerHTML = '<div style="border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;background:#fff">'
+    + '<div style="padding:8px 11px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
+    + '<b style="font-size:0.85rem">' + tot.d + ' matérias · ' + tot.t + ' tópicos · ' + tot.s + ' subtópicos</b>'
+    + '<span style="flex:1"></span>'
+    + '<button class="act primary" id="ed-aplicar" onclick="edAplicar()">Gravar no curso</button></div>'
+    + '<div style="max-height:52vh;overflow:auto">'
+    + ED_GRADE.map(function(d,i){
+        return '<div style="border-bottom:1px solid #F1F5F9;padding:8px 11px">'
+          + '<div style="display:flex;gap:8px;align-items:center">'
+          + '<input type="checkbox" ' + (d.incluir?'checked':'') + ' onchange="edToggleDisc(' + i + ',this.checked)" style="width:auto">'
+          + '<b style="flex:1;font-size:0.86rem">' + esc(d.nome) + '</b>'
+          + '<span class="pill n">' + esc(d.area) + '</span>'
+          + '<span class="muted" style="font-size:0.75rem">' + d.topicos.length + ' tópicos</span>'
+          + '<button class="act" onclick="edRemoverDisc(' + i + ')">Remover</button></div>'
+          + '<div style="margin:6px 0 0 24px">'
+          + d.topicos.map(function(t,j){
+              return '<div style="padding:2px 0;font-size:0.79rem">'
+                + '<label style="display:flex;gap:7px;align-items:flex-start">'
+                + '<input type="checkbox" ' + (t.incluir?'checked':'') + ' onchange="edToggleTop(' + i + ',' + j + ',this.checked)" style="width:auto;margin-top:3px">'
+                + '<span>' + esc(t.nome)
+                + (t.subtopicos.length ? '<span class="muted"> — ' + t.subtopicos.map(esc).join(' · ') + '</span>' : '')
+                + '</span></label></div>';
+            }).join('')
+          + '</div></div>';
+      }).join('')
+    + '</div></div>';
+}
+
+window.edAplicar = async function(){
+  const sel = edEl('ed-curso');
+  const courseId = sel ? sel.value : '';
+  if(!courseId) return edMsg('Selecione (ou cadastre) o curso de destino.');
+  const escolhidas = ED_GRADE.filter(d=>d.incluir && d.topicos.some(t=>t.incluir));
+  if(!escolhidas.length) return edMsg('Marque ao menos uma matéria para gravar.');
+  const btn = edEl('ed-aplicar');
+  if(btn){ btn.disabled = true; btn.textContent = 'Gravando…'; }
+  let nd = 0, nt = 0;
+  try{
+    for(let i=0;i<escolhidas.length;i++){
+      const d = escolhidas[i];
+      edProg(i, escolhidas.length, 'Gravando ' + d.nome);
+      let { data: row } = await PX.sb.from('disciplines').select('id').eq('course_id', courseId).eq('nome', d.nome).maybeSingle();
+      if(!row){
+        const ins = await PX.sb.from('disciplines').insert({ course_id: courseId, nome: d.nome, area: d.area || 'especifica', ordem: i }).select('id').single();
+        if(ins.error) throw ins.error;
+        row = ins.data; nd++;
+      }
+      const { data: exist } = await PX.sb.from('topics').select('nome').eq('discipline_id', row.id);
+      const jaTem = new Set((exist||[]).map(t=>t.nome));
+      const linhas = [];
+      d.topicos.filter(t=>t.incluir).forEach(function(t){
+        linhas.push(t.nome);
+        t.subtopicos.forEach(function(s){ linhas.push(t.nome + ' — ' + s); });
+      });
+      const novos = linhas.filter(function(n){ return !jaTem.has(n); })
+        .map(function(n, j){ return { discipline_id: row.id, nome: n, ordem: (exist||[]).length + j }; });
+      for(let k=0;k<novos.length;k+=200){
+        const r = await PX.sb.from('topics').insert(novos.slice(k, k+200));
+        if(r.error) throw r.error;
+      }
+      nt += novos.length;
+      edProg(i+1, escolhidas.length, 'Gravando matérias');
+    }
+    await logAdmin('importar_edital','courses',courseId,{ disciplinas: escolhidas.length, novas: nd, topicos: nt });
+    edMsg('Pronto: ' + nd + ' matéria(s) nova(s) e ' + nt + ' tópico(s)/subtópico(s) gravados. Já aparecem na base de conhecimento e para os alunos.');
+    setTimeout(edProgHide, 1200);
+    await loadKB();
+    kbPaint();
+  }catch(e){
+    edMsg('Erro ao gravar: ' + (e.message || e));
+  }
+  if(btn){ btn.disabled = false; btn.textContent = 'Gravar no curso'; }
+};
+
+
 let kbQd = '', kbQt = '', KB_PANE = 'conteudo';
 function kbListHTML(items, id){
   return `<div id="${id}" style="border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;max-height:56vh;overflow-y:auto;background:#fff">${items}</div>`;
