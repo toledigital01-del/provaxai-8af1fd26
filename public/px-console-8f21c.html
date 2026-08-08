@@ -529,7 +529,9 @@ window.kbIngestUrl = async function(tipo){
   catch(e){ kbIngMsg('Erro: ' + e.message); }
 };
 window.kbMontarCurso = async function(){
+  if(!kbDisc) return kbIngMsg('Selecione uma matéria antes de montar o curso.');
   const material = document.getElementById('kb-txt').value.trim();
+
   if(material.length < 200) return kbIngMsg('Coloque primeiro o material na caixa de conteúdo (arquivo, site, vídeo ou texto).');
   const topicos = kbTopicList(kbDisc);
   if(!topicos.length) return kbIngMsg('Esta matéria não tem tópicos cadastrados.');
