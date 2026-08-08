@@ -331,8 +331,25 @@ function kbGlobalDiscs(){
   try { return (typeof DISCIPLINAS_POR_CONCURSO !== 'undefined') ? DISCIPLINAS_POR_CONCURSO : {}; } catch(e){ return {}; }
 }
 function kbValidDisc(value){
-  const disc = typeof value === 'string' ? value.trim() : '';
-  return disc && kbDiscList().includes(disc) ? disc : '';
+  return PXKB.validarDisciplina(value, kbDiscList());
+}
+/* Trava única durante geração/prévia/publicação: impede troca de matéria e edição de campos. */
+let KB_BUSY = false;
+function kbSetBusy(on, msg){
+  KB_BUSY = !!on;
+  const grid = document.getElementById('kb-grid');
+  if(grid){
+    grid.querySelectorAll('button,input,select,textarea').forEach(function(el){
+      if(el.id === 'kb-busy-nada') return;
+      el.disabled = KB_BUSY;
+    });
+  }
+  const bar = document.getElementById('kb-busy');
+  if(bar){
+    bar.style.display = KB_BUSY ? 'flex' : 'none';
+    bar.querySelector('span[data-msg]').textContent = msg || 'Processando…';
+  }
+  if(msg) kbIngMsg(msg);
 }
 const kbDiscList = () => {
   const list = (kbGlobalDiscs()['prf-2021'] || Object.keys(kbGlobalTopics()) || []).filter(Boolean);
