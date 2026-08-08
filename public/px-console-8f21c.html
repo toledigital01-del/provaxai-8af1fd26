@@ -628,6 +628,38 @@ async function viewConhecimento(){
       <div class="kpi"><b>${discs.length}</b><span>Matérias do edital</span></div>
       <div class="kpi"><b>${(totalChars/1000).toFixed(1)} mil</b><span>Caracteres na base da IA</span></div>
     </div>
+    <div class="card">
+      <h2>Carregar edital (a IA monta matérias, tópicos e subtópicos)</h2>
+      <p class="muted" style="margin-bottom:10px">Solte o PDF do edital (ou cole o conteúdo programático). A IA lê tudo, copia os nomes exatamente como estão e devolve a grade para você conferir antes de gravar.</p>
+      <div class="row" style="align-items:flex-end;gap:10px">
+        <div><label class="muted">Curso de destino</label><select id="ed-curso" style="max-width:280px"></select></div>
+        <div><label class="muted">Inteligência artificial</label>
+          <select id="ed-modelo" style="max-width:280px">
+            <option value="">Usar a IA do sistema (Configurações)</option>
+            <option value="google/gemini-3.1-pro-preview">Edital gigante (Gemini Pro)</option>
+            <option value="google/gemini-3-flash-preview">Rápido (Gemini Flash)</option>
+            <option value="openai/gpt-5.6-sol">Máxima precisão (GPT-5.6 Sol)</option>
+          </select></div>
+        <div><label class="muted">Cargo / concurso</label><input id="ed-cargo" placeholder="Polícia Rodoviária Federal" style="max-width:280px"></div>
+      </div>
+      <div id="ed-drop" style="border:2px dashed #CBD5E1;border-radius:12px;padding:14px;text-align:center;background:#F8FAFC;margin-top:10px">
+        <p class="muted" style="margin:0 0 8px">Arraste o edital aqui ou escolha o arquivo (PDF, texto ou imagens das páginas)</p>
+        <input type="file" id="ed-file" multiple accept=".pdf,.txt,.md,.html,image/*,application/pdf,text/*" style="width:auto;max-width:100%">
+      </div>
+      <textarea id="ed-txt" rows="6" placeholder="Ou cole aqui o conteúdo programático do edital" style="margin-top:10px"></textarea>
+      <div id="ed-prog-wrap" style="display:none;margin-top:10px">
+        <div style="height:8px;border-radius:99px;background:#E2E8F0;overflow:hidden">
+          <div id="ed-prog-bar" style="height:100%;width:0%;background:#2563EB;border-radius:99px;transition:width .2s"></div>
+        </div>
+        <p class="muted" id="ed-prog-txt" style="margin:4px 0 0"></p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+        <button class="act primary" id="ed-btn" onclick="edAnalisar()">Extrair grade do edital</button>
+        <button class="act" onclick="edLimpar()">Limpar</button>
+      </div>
+      <p class="muted" id="ed-msg" style="margin-top:8px"></p>
+      <div id="ed-preview" style="margin-top:8px"></div>
+    </div>
     <div class="card"><h2>Base de conhecimento da Athena IA</h2>
       <p class="muted" style="margin-bottom:12px">Tudo que você escrever aqui vira a fonte de verdade da IA e é exibido para o aluno na aula do tópico correspondente.</p>
       <div style="display:grid;grid-template-columns:minmax(180px,240px) minmax(200px,280px) 1fr;gap:14px;align-items:start" id="kb-grid">
@@ -636,7 +668,9 @@ async function viewConhecimento(){
     </div>`;
   if (window.matchMedia('(max-width:820px)').matches)
     document.getElementById('kb-grid').style.gridTemplateColumns = '1fr';
+  edInit();
   kbPaint();
+
 }
 
 let kbQd = '', kbQt = '', KB_PANE = 'conteudo';
