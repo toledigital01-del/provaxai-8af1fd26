@@ -5,8 +5,9 @@ const SUPABASE_URL = 'https://rdokrryisfkhmevcxlws.supabase.co'
 const SUPABASE_KEY = 'sb_publishable_9ILwlXJNPJ5ZzpALdbmfBA_gRAtH4Qr'
 
 const Body = z.object({
-  tipo: z.enum(['pdf', 'txt', 'url', 'texto', 'video']),
+  tipo: z.enum(['pdf', 'txt', 'url', 'texto', 'video', 'imagem', 'auto']),
   nome: z.string().max(300).optional(),
+  mime: z.string().max(120).optional(),
   url: z.string().max(2000).optional(),
   texto: z.string().max(400000).optional(),
   arquivo_base64: z.string().max(30_000_000).optional(),
@@ -86,6 +87,46 @@ async function extractVideo(url: string): Promise<string> {
   return ''
 }
 
+/* Lê imagens (foto de apostila, print, slide) transcrevendo com IA de visão. */
+async function extractImagem(b64: string, mime: string): Promise<string> {
+  const apiKey = process.env['LOVABLE_API_KEY']
+  if (!apiKey) throw new Error('IA indisponível para ler imagens no momento.')
+  const dataUrl = b64.startsWith('data:') ? b64 : `data:${mime || 'image/png'};base64,${b64}`
+  const r = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'google/gemini-3-flash-preview',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: 'Transcreva fielmente TODO o conteúdo textual desta imagem (apostila, slide, prova ou anotação) em Markdown simples, preservando títulos, listas, tabelas e fórmulas. Não resuma, não comente, não invente. Se não houver texto, responda apenas: SEM_TEXTO.',
+            },
+            { type: 'image_url', image_url: { url: dataUrl } },
+          ],
+        },
+      ],
+    }),
+  })
+  if (!r.ok) throw new Error('Não consegui ler a imagem agora. Tente novamente.')
+  const data = (await r.json()) as any
+  const texto = String(data?.choices?.[0]?.message?.content || '').trim()
+  return /^SEM_TEXTO/i.test(texto) ? '' : texto
+}
+
+/* Lê qualquer arquivo de texto (txt, md, csv, json, html, srt, código…) sem etapa extra. */
+function lerTextoDireto(bytes: Uint8Array, nome: string): string {
+  const raw = new TextDecoder('utf-8', { fatal: false }).decode(bytes)
+  return /\.html?$/i.test(nome) ? stripHtml(raw) : raw.replace(/\u0000/g, '').trim()
+}
+
+function ehImagem(nome: string, mime: string): boolean {
+  return /^image\//i.test(mime || '') || /\.(png|jpe?g|webp|gif|bmp|heic|heif|tiff?)$/i.test(nome || '')
+}
+
 export const Route = createFileRoute('/api/public/kb-ingest')({
   server: {
     handlers: {
@@ -101,18 +142,45 @@ export const Route = createFileRoute('/api/public/kb-ingest')({
         }
 
         try {
+          const nome = body.nome || ''
+          const mime = body.mime || ''
+
           if (body.tipo === 'texto') {
             return Response.json({ texto: (body.texto || '').trim(), origem: 'texto' })
           }
-          if (body.tipo === 'txt') {
-            const raw = body.texto ?? (body.arquivo_base64 ? new TextDecoder().decode(base64ToBytes(body.arquivo_base64)) : '')
-            return Response.json({ texto: raw.trim(), origem: body.nome || 'arquivo.txt' })
+          if (body.tipo === 'imagem') {
+            if (!body.arquivo_base64) return Response.json({ error: 'Imagem ausente.' }, { status: 400 })
+            const texto = await extractImagem(body.arquivo_base64, mime)
+            if (!texto) return Response.json({ error: 'Não encontrei texto legível nesta imagem.' }, { status: 422 })
+            return Response.json({ texto, origem: nome || 'imagem' })
           }
-          if (body.tipo === 'pdf') {
+          if (body.tipo === 'txt') {
+            const raw = body.texto ?? (body.arquivo_base64 ? lerTextoDireto(base64ToBytes(body.arquivo_base64), nome) : '')
+            return Response.json({ texto: raw.trim(), origem: nome || 'arquivo.txt' })
+          }
+          if (body.tipo === 'pdf' || body.tipo === 'auto') {
             if (!body.arquivo_base64) return Response.json({ error: 'Arquivo ausente.' }, { status: 400 })
-            const texto = await extractPdf(base64ToBytes(body.arquivo_base64))
-            if (!texto) return Response.json({ error: 'Não consegui ler texto deste PDF (pode ser digitalizado/imagem).' }, { status: 422 })
-            return Response.json({ texto, origem: body.nome || 'arquivo.pdf' })
+            const bytes = base64ToBytes(body.arquivo_base64)
+
+            if (body.tipo === 'auto' && ehImagem(nome, mime)) {
+              const texto = await extractImagem(body.arquivo_base64, mime)
+              if (!texto) return Response.json({ error: 'Não encontrei texto legível nesta imagem.' }, { status: 422 })
+              return Response.json({ texto, origem: nome || 'imagem' })
+            }
+
+            const ehPdf = body.tipo === 'pdf' || /pdf/i.test(mime) || /\.pdf$/i.test(nome)
+            if (ehPdf) {
+              const texto = await extractPdf(bytes)
+              if (texto) return Response.json({ texto, origem: nome || 'arquivo.pdf' })
+              return Response.json(
+                { error: 'Não consegui ler texto deste PDF (parece digitalizado). Envie as páginas como imagem que eu transcrevo.' },
+                { status: 422 },
+              )
+            }
+
+            const direto = lerTextoDireto(bytes, nome)
+            if (direto) return Response.json({ texto: direto, origem: nome || 'arquivo' })
+            return Response.json({ error: 'Não consegui ler este tipo de arquivo. Envie PDF, texto ou imagem.' }, { status: 422 })
           }
           if (body.tipo === 'url') {
             if (!body.url) return Response.json({ error: 'Informe o endereço do site.' }, { status: 400 })
