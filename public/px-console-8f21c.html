@@ -409,14 +409,56 @@ function kbEditor(){
       <hr style="border:none;border-top:1px solid #F1F5F9;margin:12px 0">
       <b style="font-size:0.9rem">Montar curso com IA</b>
       <p class="muted" style="margin:4px 0 10px">A IA lê o material da caixa acima e cria as aulas já distribuídas nos tópicos oficiais de <b>${esc(kbDisc)}</b>, prontas para o aluno.</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="act primary" onclick="kbMontarCurso()">Montar curso desta matéria</button>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px">
+        <div><label class="muted">Inteligência artificial</label>
+          <select id="kb-modelo">
+            <option value="google/gemini-3-flash-preview">Rápido e econômico — padrão (Gemini Flash)</option>
+            <option value="google/gemini-3.1-pro-preview">Material gigante e raciocínio profundo (Gemini Pro)</option>
+            <option value="openai/gpt-5.6-sol">Máxima qualidade (GPT-5.6 Sol)</option>
+            <option value="openai/gpt-5.6-terra">Equilibrado (GPT-5.6 Terra)</option>
+          </select></div>
+        <div><label class="muted">Banca</label>
+          <select id="kb-banca">
+            <option>Cebraspe</option><option>FGV</option><option>FCC</option>
+            <option>Vunesp</option><option>Cesgranrio</option><option>IBFC</option><option>Outra</option>
+          </select></div>
+        <div><label class="muted">Cargo / concurso</label>
+          <input id="kb-cargo" value="Polícia Rodoviária Federal"></div>
+        <div><label class="muted">Profundidade</label>
+          <select id="kb-prof">
+            <option value="essencial">Essencial — aula enxuta</option>
+            <option value="completo" selected>Completo — padrão</option>
+            <option value="aprofundado">Aprofundado — aula longa</option>
+          </select></div>
       </div>
+      <label class="muted" style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" id="kb-aprov" checked style="width:auto"> Modo aprovação (prioriza o que mais cai, pegadinhas e treino no estilo da banca)</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+        <button class="act primary" id="kb-btn-montar" onclick="kbMontarCurso()">Montar curso desta matéria</button>
+      </div>
+
       <p class="muted" id="kb-ing" style="margin-top:8px"></p>
       <div id="kb-preview" style="margin-top:8px"></div>
     </div>`;
+  kbPrefsLoad();
+}
+const KB_PREFS_KEY = 'px.kb.prefs';
+function kbPrefsGet(){ try{ return JSON.parse(localStorage.getItem(KB_PREFS_KEY) || '{}'); }catch(e){ return {}; } }
+function kbPrefsLoad(){
+  const p = kbPrefsGet();
+  const set = (id, v) => { const el = document.getElementById(id); if(el && v != null && v !== '') el.value = v; };
+  set('kb-modelo', p.modelo); set('kb-banca', p.banca); set('kb-cargo', p.cargo); set('kb-prof', p.prof);
+  const ap = document.getElementById('kb-aprov'); if(ap && typeof p.aprov === 'boolean') ap.checked = p.aprov;
+  ['kb-modelo','kb-banca','kb-cargo','kb-prof','kb-aprov'].forEach(function(id){
+    const el = document.getElementById(id); if(el) el.addEventListener('change', kbPrefsSave);
+  });
+}
+function kbPrefsSave(){
+  const v = id => (document.getElementById(id)||{}).value;
+  const ap = document.getElementById('kb-aprov');
+  try{ localStorage.setItem(KB_PREFS_KEY, JSON.stringify({ modelo:v('kb-modelo'), banca:v('kb-banca'), cargo:v('kb-cargo'), prof:v('kb-prof'), aprov: ap ? ap.checked : true })); }catch(e){}
 }
 function kbIngMsg(t){ const el = document.getElementById('kb-ing'); if(el) el.textContent = t; }
+
 async function kbToken(){ const { data } = await PX.sb.auth.getSession(); return data.session ? data.session.access_token : ''; }
 async function kbPost(path, payload){
   const r = await fetch(path, { method:'POST', headers:{ 'Content-Type':'application/json', Authorization:'Bearer ' + (await kbToken()) }, body: JSON.stringify(payload) });
@@ -457,15 +499,26 @@ window.kbMontarCurso = async function(){
   if(material.length < 200) return kbIngMsg('Coloque primeiro o material na caixa de conteúdo (arquivo, site, vídeo ou texto).');
   const topicos = kbTopicList(kbDisc);
   if(!topicos.length) return kbIngMsg('Esta matéria não tem tópicos cadastrados.');
-  kbIngMsg('A IA está montando o curso de ' + kbDisc + '… isso pode levar até 1 minuto.');
+  const val = id => (document.getElementById(id)||{}).value;
+  const btn = document.getElementById('kb-btn-montar');
+  kbPrefsSave();
+  if(btn){ btn.disabled = true; btn.textContent = 'Montando curso…'; }
+  kbIngMsg('A IA está montando o curso de ' + kbDisc + '… pode levar alguns minutos, não feche a página.');
   document.getElementById('kb-preview').innerHTML = '';
   try{
-    const j = await kbPost('/api/public/kb-autocourse', { disciplina:kbDisc, topicos, material: material.slice(0,300000) });
-    KB_GERADAS = (j.aulas || []).map(function(a){ return { topico:a.topico, titulo:a.titulo, conteudo:String(a.conteudo||''), incluir:true }; });
+    const j = await kbPost('/api/public/kb-autocourse', {
+      disciplina:kbDisc, topicos, material: material.slice(0,300000),
+      modelo: val('kb-modelo'), banca: val('kb-banca'), cargo: val('kb-cargo'),
+      profundidade: val('kb-prof') || 'completo',
+      modo_aprovacao: (document.getElementById('kb-aprov')||{}).checked !== false
+    });
+    KB_GERADAS = (j.aulas || []).map(function(a){ return { topico:a.topico, titulo:a.titulo, incidencia:a.incidencia||'media', conteudo:String(a.conteudo||''), incluir:true }; });
     kbIngMsg(KB_GERADAS.length + ' aula(s) geradas. Revise abaixo antes de publicar.');
     kbPaintPreview();
   }catch(e){ kbIngMsg('Erro: ' + e.message); }
+  finally{ if(btn){ btn.disabled = false; btn.textContent = 'Montar curso desta matéria'; } }
 };
+
 let KB_GERADAS = [];
 let KB_ABERTA = -1;
 function kbPaintPreview(){
@@ -492,8 +545,10 @@ function kbPaintPreview(){
             '<input type="checkbox" ' + (a.incluir?'checked':'') + ' onchange="kbPreviewToggle(' + i + ',this.checked)" style="width:auto;margin-top:3px">' +
             '<div style="flex:1;min-width:0;cursor:pointer" onclick="kbPreviewAbrir(' + i + ')">' +
               '<b>' + esc(a.topico) + '</b>' +
+              ' <span style="font-size:0.68rem;font-weight:700;padding:1px 7px;border-radius:99px;background:' + (a.incidencia==='alta'?'#FEF3C7':a.incidencia==='baixa'?'#F1F5F9':'#DBEAFE') + ';color:' + (a.incidencia==='alta'?'#B45309':a.incidencia==='baixa'?'#64748B':'#1D4ED8') + '">incidência ' + esc(a.incidencia||'media') + '</span>' +
               (existe ? ' <span class="muted" style="color:#B45309">· sobrescreve conteúdo atual</span>' : ' <span class="muted" style="color:#047857">· novo</span>') +
               '<br><span class="muted">' + esc(a.titulo || '') + ' — ' + String(a.conteudo.length).replace(/\B(?=(\d{3})+(?!\d))/g,'.') + ' caracteres</span>' +
+
             '</div>' +
             '<button class="act" onclick="kbPreviewAbrir(' + i + ')">' + (aberta ? 'Fechar' : 'Revisar') + '</button>' +
           '</div>' +
