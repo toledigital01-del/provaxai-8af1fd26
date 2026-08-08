@@ -389,6 +389,13 @@ function kbRow(label, active, ok, onclick){
 }
 function kbPaint(){
   const discs = kbDiscList();
+  if(!discs.length){
+    document.getElementById('kb-discs').innerHTML = '<label class="muted">Matérias</label>' + kbListHTML(
+      '<div style="padding:11px;font-size:0.8rem" class="muted">Não consegui carregar a lista de matérias. Atualize a página (Ctrl+F5) e tente de novo.</div>');
+    document.getElementById('kb-topics').innerHTML = '';
+    document.getElementById('kb-editor').innerHTML = '';
+    return;
+  }
   document.getElementById('kb-discs').innerHTML = '<label class="muted">Matérias</label>' + kbListHTML(
     discs.map(d => kbRow(d, d===kbDisc, KB_DOCS.some(x=>x.disciplina===d && (x.conteudo||'').trim()), `kbSelDisc('${escJs(d)}')`)).join(''));
   const tops = kbTopicList(kbDisc);
@@ -397,6 +404,7 @@ function kbPaint(){
     tops.map(t => kbRow(t, t===kbTopic, !!((kbFind(kbDisc,t)||{}).conteudo||'').trim(), `kbSelTopic('${escJs(t)}')`)).join(''));
   kbEditor();
 }
+
 function escJs(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 window.kbSelDisc = d => { kbDisc = d; kbTopic = null; kbPaint(); };
 window.kbSelTopic = t => { kbTopic = t; kbPaint(); };
