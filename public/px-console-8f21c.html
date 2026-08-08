@@ -461,21 +461,67 @@ window.kbMontarCurso = async function(){
   document.getElementById('kb-preview').innerHTML = '';
   try{
     const j = await kbPost('/api/public/kb-autocourse', { disciplina:kbDisc, topicos, material: material.slice(0,300000) });
-    KB_GERADAS = j.aulas || [];
-    kbIngMsg(KB_GERADAS.length + ' aula(s) geradas. Revise e publique.');
-    document.getElementById('kb-preview').innerHTML =
-      '<div style="border:1px solid #E2E8F0;border-radius:12px;max-height:40vh;overflow:auto">' +
-      KB_GERADAS.map(function(a,i){ return '<div style="padding:9px 11px;border-bottom:1px solid #F1F5F9;font-size:0.8rem"><b>'+esc(a.topico)+'</b><br><span class="muted">'+esc(String(a.conteudo).slice(0,150))+'…</span></div>'; }).join('') +
-      '</div><div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
-      '<button class="act primary" onclick="kbPublicarGeradas()">Publicar aulas nos tópicos</button>' +
-      '<button class="act" onclick="document.getElementById(\'kb-preview\').innerHTML=\'\'">Descartar</button></div>';
+    KB_GERADAS = (j.aulas || []).map(function(a){ return { topico:a.topico, titulo:a.titulo, conteudo:String(a.conteudo||''), incluir:true }; });
+    kbIngMsg(KB_GERADAS.length + ' aula(s) geradas. Revise abaixo antes de publicar.');
+    kbPaintPreview();
   }catch(e){ kbIngMsg('Erro: ' + e.message); }
 };
 let KB_GERADAS = [];
+let KB_ABERTA = -1;
+function kbPaintPreview(){
+  const box = document.getElementById('kb-preview');
+  if(!box) return;
+  if(!KB_GERADAS.length){ box.innerHTML = ''; return; }
+  const sel = KB_GERADAS.filter(function(a){ return a.incluir; }).length;
+  const semTopico = kbTopicList(kbDisc).filter(function(t){ return !KB_GERADAS.some(function(a){ return a.topico === t; }); });
+  box.innerHTML =
+    '<div style="border:1px solid #E2E8F0;border-radius:12px;overflow:hidden">' +
+      '<div style="padding:9px 11px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:0.8rem">' +
+        '<b>Revisão do curso — ' + esc(kbDisc) + '</b>' +
+        '<span class="muted">' + sel + ' de ' + KB_GERADAS.length + ' aula(s) marcadas</span>' +
+        '<span style="flex:1"></span>' +
+        '<button class="act" onclick="kbPreviewTodas(true)">Marcar todas</button>' +
+        '<button class="act" onclick="kbPreviewTodas(false)">Desmarcar todas</button>' +
+      '</div>' +
+      '<div style="max-height:52vh;overflow:auto">' +
+      KB_GERADAS.map(function(a,i){
+        const existe = !!kbFind(kbDisc, a.topico);
+        const aberta = KB_ABERTA === i;
+        return '<div style="border-bottom:1px solid #F1F5F9">' +
+          '<div style="padding:9px 11px;display:flex;gap:8px;align-items:flex-start;font-size:0.8rem">' +
+            '<input type="checkbox" ' + (a.incluir?'checked':'') + ' onchange="kbPreviewToggle(' + i + ',this.checked)" style="width:auto;margin-top:3px">' +
+            '<div style="flex:1;min-width:0;cursor:pointer" onclick="kbPreviewAbrir(' + i + ')">' +
+              '<b>' + esc(a.topico) + '</b>' +
+              (existe ? ' <span class="muted" style="color:#B45309">· sobrescreve conteúdo atual</span>' : ' <span class="muted" style="color:#047857">· novo</span>') +
+              '<br><span class="muted">' + esc(a.titulo || '') + ' — ' + String(a.conteudo.length).replace(/\B(?=(\d{3})+(?!\d))/g,'.') + ' caracteres</span>' +
+            '</div>' +
+            '<button class="act" onclick="kbPreviewAbrir(' + i + ')">' + (aberta ? 'Fechar' : 'Revisar') + '</button>' +
+          '</div>' +
+          (aberta ?
+            '<div style="padding:0 11px 11px">' +
+              '<input value="' + esc(a.titulo || '') + '" oninput="kbPreviewCampo(' + i + ',\'titulo\',this.value)" placeholder="Título da aula" style="margin-bottom:6px">' +
+              '<textarea rows="14" oninput="kbPreviewCampo(' + i + ',\'conteudo\',this.value)" style="font-family:ui-monospace,monospace;font-size:0.78rem">' + esc(a.conteudo) + '</textarea>' +
+            '</div>' : '') +
+        '</div>';
+      }).join('') +
+      '</div>' +
+    '</div>' +
+    (semTopico.length ? '<p class="muted" style="margin-top:8px;font-size:0.78rem">Sem aula gerada (' + semTopico.length + '): ' + esc(semTopico.slice(0,8).join(' · ')) + (semTopico.length>8?' …':'') + '</p>' : '') +
+    '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
+      '<button class="act primary" onclick="kbPublicarGeradas()">Publicar ' + sel + ' aula(s) nos tópicos</button>' +
+      '<button class="act" onclick="kbPreviewDescartar()">Descartar</button>' +
+    '</div>';
+}
+window.kbPreviewToggle = function(i, v){ KB_GERADAS[i].incluir = v; kbPaintPreview(); };
+window.kbPreviewTodas = function(v){ KB_GERADAS.forEach(function(a){ a.incluir = v; }); kbPaintPreview(); };
+window.kbPreviewAbrir = function(i){ KB_ABERTA = (KB_ABERTA === i ? -1 : i); kbPaintPreview(); };
+window.kbPreviewCampo = function(i, campo, v){ KB_GERADAS[i][campo] = v; };
+window.kbPreviewDescartar = function(){ KB_GERADAS = []; KB_ABERTA = -1; kbPaintPreview(); kbIngMsg('Curso gerado descartado.'); };
 window.kbPublicarGeradas = async function(){
-  if(!KB_GERADAS.length) return;
-  kbIngMsg('Publicando…');
-  for(const a of KB_GERADAS){
+  const lista = KB_GERADAS.filter(function(a){ return a.incluir && a.conteudo.trim(); });
+  if(!lista.length) return kbIngMsg('Marque ao menos uma aula para publicar.');
+  kbIngMsg('Publicando ' + lista.length + ' aula(s)…');
+  for(const a of lista){
     const doc = kbFind(kbDisc, a.topico);
     const payload = { course_slug:'prf-2021', disciplina:kbDisc, topico:a.topico, titulo:a.titulo, conteudo:a.conteudo, publicado:true, updated_by:PX.user.id };
     const { error } = doc
@@ -484,11 +530,12 @@ window.kbPublicarGeradas = async function(){
     if(error){ kbIngMsg('Erro ao salvar "' + a.topico + '": ' + error.message); return; }
     if(!doc) await loadKB();
   }
-  await logAdmin('montar_curso_ia','knowledge_docs', null, { disciplina:kbDisc, aulas:KB_GERADAS.length });
-  const n = KB_GERADAS.length; KB_GERADAS = [];
+  await logAdmin('montar_curso_ia','knowledge_docs', null, { disciplina:kbDisc, aulas:lista.length });
+  const n = lista.length; KB_GERADAS = []; KB_ABERTA = -1;
   await loadKB(); kbPaint();
   kbIngMsg(n + ' aula(s) publicadas para os alunos.');
 };
+
 
 window.kbSave = async function(){
   const conteudo = document.getElementById('kb-txt').value;
