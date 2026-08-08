@@ -351,6 +351,10 @@ function kbSetBusy(on, msg){
     bar.querySelector('span[data-msg]').textContent = msg || 'Processando…';
   }
   if(msg) kbIngMsg(msg);
+  if(!KB_BUSY){
+    try{ kbRenderLog(); }catch(e){}
+    try{ kbMontarEstado(); }catch(e){}
+  }
 }
 const kbDiscList = () => {
   const list = (kbGlobalDiscs()['prf-2021'] || Object.keys(kbGlobalTopics()) || []).filter(Boolean);
@@ -473,6 +477,9 @@ function kbEditor(){
         <button class="act" onclick="kbReindexar(false)">Reindexar base</button>
         <button class="act" onclick="kbCorrigirOrfaos('mover')" ${orfaos.length&&discOk?'':'disabled'}>Mover órfãos para ${esc(discOk||'—')}</button>
         <button class="act danger" onclick="kbCorrigirOrfaos('excluir')" ${orfaos.length?'':'disabled'}>Excluir órfãos</button>
+        <span style="flex:1"></span>
+        <button class="act" id="kb-exp-csv" onclick="kbExportLog('csv')" disabled>Baixar CSV</button>
+        <button class="act" id="kb-exp-pdf" onclick="kbExportLog('pdf')" disabled>Baixar PDF</button>
       </div>
       <div id="kb-prog-wrap" style="display:none;margin-top:8px">
         <div style="height:8px;border-radius:99px;background:#E2E8F0;overflow:hidden">
@@ -487,16 +494,21 @@ function kbEditor(){
 
     <div style="margin-top:16px;border:1px solid #E2E8F0;border-radius:12px;padding:12px">
       <b style="font-size:0.9rem">Alimentar a IA com material</b>
-      <p class="muted" style="margin:4px 0 10px">Envie PDF, TXT, imagens (foto de apostila, print, slide) ou qualquer arquivo de texto — vários de uma vez. Também dá para colar o endereço de um site, um link de vídeo (com legendas) ou texto solto.</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <input type="file" id="kb-file" multiple accept=".pdf,.txt,.md,.csv,.json,.html,.srt,.vtt,.png,.jpg,.jpeg,.webp,.gif,.bmp,.heic,image/*,application/pdf,text/*" style="width:auto;flex:1;min-width:200px">
-        <button class="act" onclick="kbIngestFile()">Ler arquivos</button>
+      <p class="muted" style="margin:4px 0 10px">Solte os arquivos aqui (PDF, textos, imagens de apostila/slide/print — vários de uma vez) ou cole um endereço de site/vídeo. A leitura começa sozinha, sem etapa de extração.</p>
+      <div id="kb-drop" style="border:2px dashed #CBD5E1;border-radius:12px;padding:14px;text-align:center;background:#F8FAFC">
+        <p class="muted" style="margin:0 0 8px">Arraste e solte os arquivos aqui ou escolha abaixo</p>
+        <input type="file" id="kb-file" multiple accept=".pdf,.txt,.md,.csv,.json,.html,.srt,.vtt,.png,.jpg,.jpeg,.webp,.gif,.bmp,.heic,image/*,application/pdf,text/*" style="width:auto;max-width:100%">
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px">
-        <input id="kb-url" placeholder="https://site-ou-video…" style="flex:1;min-width:220px">
-        <button class="act" onclick="kbIngestUrl('url')">Extrair site</button>
-        <button class="act" onclick="kbIngestUrl('video')">Extrair vídeo</button>
+        <input id="kb-url" placeholder="Cole o link do site ou do vídeo e aperte Enter" style="flex:1;min-width:220px">
       </div>
+      <div id="kb-ing-prog-wrap" style="display:none;margin-top:10px">
+        <div style="height:8px;border-radius:99px;background:#E2E8F0;overflow:hidden">
+          <div id="kb-ing-prog-bar" style="height:100%;width:0%;background:#2563EB;border-radius:99px;transition:width .2s"></div>
+        </div>
+        <p class="muted" id="kb-ing-prog-txt" style="margin:4px 0 0"></p>
+      </div>
+      <div id="kb-fontes" style="margin-top:8px"></div>
       <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
         <label class="muted" style="display:flex;gap:6px;align-items:center"><input type="radio" name="kb-mode" value="append" checked style="width:auto"> Somar ao conteúdo</label>
         <label class="muted" style="display:flex;gap:6px;align-items:center"><input type="radio" name="kb-mode" value="replace" style="width:auto"> Substituir</label>
@@ -536,6 +548,8 @@ function kbEditor(){
     </div>`;
   kbPrefsLoad();
   kbRenderLog();
+  kbBindIngest();
+  kbPaintFontes();
 }
 
 const KB_PREFS_KEY = 'px.kb.prefs';
@@ -565,10 +579,10 @@ async function kbPost(path, payload){
 }
 function kbApplyText(texto, origem){
   const ta = document.getElementById('kb-txt');
+  if(!ta) return;
   const modo = (document.querySelector('input[name="kb-mode"]:checked')||{}).value || 'append';
   const bloco = (origem ? `\n\n## Fonte: ${origem}\n` : '\n\n') + texto;
   ta.value = modo === 'replace' ? texto : (ta.value.trim() ? ta.value + bloco : texto);
-  kbIngMsg('Material extraído (' + texto.length.toLocaleString('pt-BR') + ' caracteres). Revise e clique em "Salvar conteúdo".');
 }
 function kbEhTextoSimples(f){
   return /^text\//i.test(f.type || '') || /\.(txt|md|markdown|csv|json|srt|vtt|log|tsv)$/i.test(f.name || '');
@@ -576,15 +590,111 @@ function kbEhTextoSimples(f){
 function kbEhImagem(f){
   return /^image\//i.test(f.type || '') || /\.(png|jpe?g|webp|gif|bmp|heic|heif|tiff?)$/i.test(f.name || '');
 }
-window.kbIngestFile = async function(){
+function kbEhVideoUrl(u){
+  return /(youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com)/i.test(u || '');
+}
+
+/* ---- Fontes carregadas + progresso do carregamento ---- */
+let KB_FONTES = [];
+let KB_ING_ATIVO = false;
+function kbIngProg(feito, total, texto){
+  const wrap = document.getElementById('kb-ing-prog-wrap');
+  const bar = document.getElementById('kb-ing-prog-bar');
+  const txt = document.getElementById('kb-ing-prog-txt');
+  if(!wrap) return;
+  if(total <= 0){ wrap.style.display = 'none'; return; }
+  const pct = Math.max(0, Math.min(100, Math.round((feito / total) * 100)));
+  wrap.style.display = 'block';
+  if(bar) bar.style.width = pct + '%';
+  if(txt) txt.textContent = (texto || 'Carregando') + ' — ' + pct + '%';
+}
+function kbIngProgHide(){ const w = document.getElementById('kb-ing-prog-wrap'); if(w) w.style.display = 'none'; }
+function kbPaintFontes(){
+  const box = document.getElementById('kb-fontes');
+  if(!box) return;
+  if(!KB_FONTES.length){ box.innerHTML = ''; return; }
+  const total = KB_FONTES.reduce(function(a,f){ return a + f.chars; }, 0);
+  box.innerHTML = '<div style="border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;font-size:0.78rem">' +
+    '<div style="padding:7px 10px;background:#F8FAFC;border-bottom:1px solid #E2E8F0"><b>' + KB_FONTES.length + ' fonte(s) carregada(s)</b> <span class="muted">· ' + total.toLocaleString('pt-BR') + ' caracteres</span></div>' +
+    KB_FONTES.map(function(f,i){
+      return '<div style="padding:6px 10px;display:flex;gap:8px;align-items:center;border-bottom:1px solid #F1F5F9">' +
+        '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(f.nome) + '</span>' +
+        '<span class="muted">' + f.chars.toLocaleString('pt-BR') + ' car.</span>' +
+        '<button class="act" onclick="kbFonteRemover(' + i + ')">Remover</button>' +
+      '</div>';
+    }).join('') + '</div>';
+}
+window.kbFonteRemover = function(i){
+  const f = KB_FONTES[i];
+  if(!f) return;
+  KB_FONTES.splice(i,1);
+  const ta = document.getElementById('kb-txt');
+  if(ta && f.bloco) ta.value = ta.value.split(f.bloco).join('').replace(/\n{4,}/g,'\n\n');
+  kbPaintFontes();
+  kbMontarEstado();
+  kbIngMsg('Fonte "' + f.nome + '" removida do material.');
+};
+function kbRegistrarFonte(nome, texto){
+  const ta = document.getElementById('kb-txt');
+  const antes = ta ? ta.value : '';
+  kbApplyText(texto, nome);
+  const depois = ta ? ta.value : '';
+  const bloco = depois.startsWith(antes) ? depois.slice(antes.length) : '';
+  KB_FONTES.push({ nome: nome, chars: texto.length, bloco: bloco });
+  kbPaintFontes();
+}
+function kbMontarEstado(){
+  const btn = document.getElementById('kb-btn-montar');
+  if(!btn) return;
+  const ta = document.getElementById('kb-txt');
+  const pronto = !KB_ING_ATIVO && !!ta && ta.value.trim().length >= 200 && !!kbValidDisc(kbDisc);
+  btn.disabled = !pronto;
+  btn.textContent = KB_ING_ATIVO ? 'Aguardando leitura do material…' : 'Montar curso desta matéria';
+}
+function kbBindIngest(){
+  const inp = document.getElementById('kb-file');
+  if(inp && !inp.dataset.bound){
+    inp.dataset.bound = '1';
+    inp.addEventListener('change', function(){ kbIngestFiles(Array.from(inp.files || [])); });
+  }
+  const drop = document.getElementById('kb-drop');
+  if(drop && !drop.dataset.bound){
+    drop.dataset.bound = '1';
+    ['dragenter','dragover'].forEach(function(ev){
+      drop.addEventListener(ev, function(e){ e.preventDefault(); drop.style.borderColor = '#2563EB'; drop.style.background = '#EFF6FF'; });
+    });
+    ['dragleave','drop'].forEach(function(ev){
+      drop.addEventListener(ev, function(e){ e.preventDefault(); drop.style.borderColor = '#CBD5E1'; drop.style.background = '#F8FAFC'; });
+    });
+    drop.addEventListener('drop', function(e){
+      const fs = Array.from((e.dataTransfer && e.dataTransfer.files) || []);
+      if(fs.length) kbIngestFiles(fs);
+    });
+  }
+  const url = document.getElementById('kb-url');
+  if(url && !url.dataset.bound){
+    url.dataset.bound = '1';
+    const go = function(){ const v = url.value.trim(); if(v && v !== url.dataset.ultimo){ url.dataset.ultimo = v; kbIngestUrlAuto(v); } };
+    url.addEventListener('blur', go);
+    url.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); go(); } });
+  }
+  const ta = document.getElementById('kb-txt');
+  if(ta && !ta.dataset.boundMontar){ ta.dataset.boundMontar = '1'; ta.addEventListener('input', kbMontarEstado); }
+  kbMontarEstado();
+}
+
+/* Lê os arquivos assim que são escolhidos/soltos — sem etapa manual de extração. */
+window.kbIngestFiles = async function(files){
+  if(!files || !files.length) return;
   if(!kbValidDisc(kbDisc)) return kbIngMsg('Selecione uma matéria válida antes de carregar material.');
-  const files = Array.from((document.getElementById('kb-file')||{}).files || []);
-  if(!files.length) return kbIngMsg('Escolha um ou mais arquivos (PDF, texto ou imagem).');
+  KB_ING_ATIVO = true;
   kbSetBusy(true, 'Lendo ' + files.length + ' arquivo(s)…');
-  try{
-    let n = 0;
-    for(const f of files){
-      kbSetBusy(true, 'Lendo ' + f.name + ' (' + (n+1) + '/' + files.length + ')…');
+  kbMontarEstado();
+  let n = 0, i = 0;
+  for(const f of files){
+    try{
+      kbIngProg(i, files.length, 'Lendo ' + f.name + ' (' + (i+1) + '/' + files.length + ')');
+      kbSetBusy(true, 'Lendo ' + f.name + ' (' + (i+1) + '/' + files.length + ')…');
       let texto = '', origem = f.name;
       if(kbEhTextoSimples(f)){
         texto = (await f.text()).trim();
@@ -594,47 +704,121 @@ window.kbIngestFile = async function(){
         const j = await kbPost('/api/public/kb-ingest', { tipo, nome:f.name, mime:f.type || '', arquivo_base64:b64 });
         texto = j.texto; origem = j.origem || f.name;
       }
-      if(texto){ kbApplyText(texto, origem); n++; }
+      if(texto){ kbRegistrarFonte(origem, texto); n++; }
+    }catch(e){
+      kbIngMsg('Erro ao ler "' + f.name + '": ' + e.message);
     }
-    kbSetBusy(false);
-    kbIngMsg(n + ' arquivo(s) lido(s) e adicionado(s) ao conteúdo. Revise e clique em "Salvar conteúdo".');
-  }catch(e){ kbSetBusy(false); kbIngMsg('Erro: ' + e.message); }
+    i++;
+    kbIngProg(i, files.length, 'Carregando material');
+  }
+  KB_ING_ATIVO = false;
+  kbSetBusy(false);
+  kbIngProg(files.length, files.length, 'Leitura concluída');
+  setTimeout(kbIngProgHide, 1200);
+  kbMontarEstado();
+  kbIngMsg(n + ' arquivo(s) lido(s) direto para o material. Já dá para montar o curso.');
 };
-window.kbIngestUrl = async function(tipo){
+window.kbIngestUrlAuto = async function(url){
   if(!kbValidDisc(kbDisc)) return kbIngMsg('Selecione uma matéria válida antes de carregar material.');
-  const url = (document.getElementById('kb-url')||{}).value.trim();
-  if(!url) return kbIngMsg('Cole o endereço primeiro.');
-  kbSetBusy(true, 'Buscando conteúdo…');
-  try{ const j = await kbPost('/api/public/kb-ingest', { tipo, url }); kbSetBusy(false); kbApplyText(j.texto, j.origem); }
-  catch(e){ kbSetBusy(false); kbIngMsg('Erro: ' + e.message); }
+  const tipo = kbEhVideoUrl(url) ? 'video' : 'url';
+  KB_ING_ATIVO = true;
+  kbSetBusy(true, 'Lendo ' + (tipo === 'video' ? 'vídeo' : 'site') + '…');
+  kbIngProg(0.4, 1, 'Buscando conteúdo do ' + (tipo === 'video' ? 'vídeo' : 'site'));
+  kbMontarEstado();
+  try{
+    const j = await kbPost('/api/public/kb-ingest', { tipo, url });
+    kbRegistrarFonte(j.origem || url, j.texto || '');
+    kbIngMsg('Conteúdo do link carregado (' + String(j.texto || '').length.toLocaleString('pt-BR') + ' caracteres).');
+  }catch(e){ kbIngMsg('Erro: ' + e.message); }
+  KB_ING_ATIVO = false;
+  kbSetBusy(false);
+  kbIngProg(1, 1, 'Leitura concluída');
+  setTimeout(kbIngProgHide, 1200);
+  kbMontarEstado();
 };
+
+/* ---- Montagem do curso em lotes, cobrindo todos os tópicos ---- */
+function kbLotes(arr, tam){
+  const out = [];
+  for(let i = 0; i < arr.length; i += tam) out.push(arr.slice(i, i + tam));
+  return out;
+}
+async function kbGerarLotes(disciplina, topicos, prefs, material){
+  const lotes = kbLotes(topicos, 6);
+  let feitos = 0;
+  for(const lote of lotes){
+    kbIngProg(feitos, topicos.length, 'Gerando aulas (' + Math.min(feitos + lote.length, topicos.length) + ' de ' + topicos.length + ')');
+    kbSetBusy(true, 'Montando aulas de ' + disciplina + ' — ' + (feitos + 1) + ' a ' + Math.min(feitos + lote.length, topicos.length) + ' de ' + topicos.length + '…');
+    try{
+      const j = await kbPost('/api/public/kb-autocourse', {
+        disciplina, topicos: lote, material: material.slice(0, 300000),
+        modelo: prefs.modelo, banca: prefs.banca, cargo: prefs.cargo,
+        profundidade: prefs.prof, modo_aprovacao: prefs.aprov
+      });
+      (j.aulas || []).forEach(function(a){
+        if(!a || !a.topico) return;
+        if(KB_GERADAS.some(function(x){ return x.topico === a.topico; })) return;
+        KB_GERADAS.push({ disciplina: disciplina, topico: a.topico, titulo: a.titulo || a.topico,
+          incidencia: a.incidencia || 'media', conteudo: String(a.conteudo || ''), incluir: true });
+      });
+    }catch(e){
+      kbIngMsg('Falha em um lote (' + e.message + '). Continuando com os demais…');
+    }
+    feitos += lote.length;
+    kbIngProg(feitos, topicos.length, 'Gerando aulas');
+    kbPaintPreview();
+  }
+}
 window.kbMontarCurso = async function(){
   const disciplinaSelecionada = kbValidDisc(kbDisc);
   if(!disciplinaSelecionada) return kbIngMsg('Selecione uma matéria válida antes de montar o curso.');
+  if(KB_ING_ATIVO) return kbIngMsg('Aguarde a leitura do material terminar.');
   const material = document.getElementById('kb-txt').value.trim();
-
-  if(material.length < 200) return kbIngMsg('Coloque primeiro o material na caixa de conteúdo (arquivo, site, vídeo ou texto).');
+  if(material.length < 200) return kbIngMsg('Carregue primeiro o material (arquivo, link ou texto).');
   const topicos = kbTopicList(disciplinaSelecionada);
   if(!topicos.length) return kbIngMsg('Esta matéria não tem tópicos cadastrados.');
   const val = id => (document.getElementById(id)||{}).value;
   const prefs = { modelo: val('kb-modelo'), banca: val('kb-banca'), cargo: val('kb-cargo'), prof: val('kb-prof') || 'completo',
     aprov: (document.getElementById('kb-aprov')||{}).checked !== false };
   kbPrefsSave();
-  kbSetBusy(true, 'A IA está montando o curso de ' + disciplinaSelecionada + '… pode levar alguns minutos, não feche a página.');
+  KB_GERADAS = []; KB_ABERTA = -1;
   document.getElementById('kb-preview').innerHTML = '';
+  kbSetBusy(true, 'A IA está montando o curso completo de ' + disciplinaSelecionada + '… pode levar alguns minutos, não feche a página.');
   try{
-    const j = await kbPost('/api/public/kb-autocourse', {
-      disciplina:disciplinaSelecionada, topicos, material: material.slice(0,300000),
-      modelo: prefs.modelo, banca: prefs.banca, cargo: prefs.cargo,
-      profundidade: prefs.prof,
-      modo_aprovacao: prefs.aprov
-    });
-    KB_GERADAS = (j.aulas || []).map(function(a){ return { disciplina:disciplinaSelecionada, topico:a.topico, titulo:a.titulo, incidencia:a.incidencia||'media', conteudo:String(a.conteudo||''), incluir:true }; });
-    kbSetBusy(false);
-    kbIngMsg(KB_GERADAS.length + ' aula(s) geradas para ' + disciplinaSelecionada + '. Revise abaixo antes de publicar.');
-    kbPaintPreview();
-  }catch(e){ kbSetBusy(false); kbIngMsg('Erro: ' + e.message); }
-  finally{ if(btn){ btn.disabled = false; btn.textContent = 'Montar curso desta matéria'; } }
+    await kbGerarLotes(disciplinaSelecionada, topicos, prefs, material);
+    // Segunda passada: regera apenas os tópicos que ficaram sem aula.
+    for(let tentativa = 0; tentativa < 2; tentativa++){
+      const faltando = topicos.filter(function(t){ return !KB_GERADAS.some(function(a){ return a.topico === t; }); });
+      if(!faltando.length) break;
+      kbSetBusy(true, 'Completando ' + faltando.length + ' tópico(s) que faltaram…');
+      await kbGerarLotes(disciplinaSelecionada, faltando, prefs, material);
+    }
+  }catch(e){ kbIngMsg('Erro: ' + e.message); }
+  kbSetBusy(false);
+  kbIngProgHide();
+  kbMontarEstado();
+  const cobertos = topicos.filter(function(t){ return KB_GERADAS.some(function(a){ return a.topico === t; }); }).length;
+  kbIngMsg('Curso montado: ' + cobertos + ' de ' + topicos.length + ' tópico(s) com aula. Revise abaixo antes de publicar.');
+  kbPaintPreview();
+};
+window.kbGerarFaltantes = async function(){
+  const disciplina = kbValidDisc(kbDisc);
+  if(!disciplina) return kbIngMsg('Selecione uma matéria válida.');
+  const material = document.getElementById('kb-txt').value.trim();
+  if(material.length < 200) return kbIngMsg('Carregue o material antes de completar as aulas.');
+  const topicos = kbTopicList(disciplina);
+  const faltando = topicos.filter(function(t){ return !KB_GERADAS.some(function(a){ return a.topico === t; }); });
+  if(!faltando.length) return kbIngMsg('Todos os tópicos já têm aula.');
+  const val = id => (document.getElementById(id)||{}).value;
+  const prefs = { modelo: val('kb-modelo'), banca: val('kb-banca'), cargo: val('kb-cargo'), prof: val('kb-prof') || 'completo',
+    aprov: (document.getElementById('kb-aprov')||{}).checked !== false };
+  kbSetBusy(true, 'Gerando ' + faltando.length + ' aula(s) que faltam…');
+  await kbGerarLotes(disciplina, faltando, prefs, material);
+  kbSetBusy(false);
+  kbIngProgHide();
+  kbMontarEstado();
+  kbPaintPreview();
+  kbIngMsg('Completado. Revise as aulas antes de publicar.');
 };
 
 let KB_GERADAS = [];
@@ -650,7 +834,9 @@ function kbPaintPreview(){
       '<div style="padding:9px 11px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:0.8rem">' +
         '<b>Revisão do curso — ' + esc(kbDisc) + '</b>' +
         '<span class="muted">' + sel + ' de ' + KB_GERADAS.length + ' aula(s) marcadas</span>' +
+        '<span style="font-size:0.72rem;font-weight:700;padding:1px 8px;border-radius:99px;background:' + (semTopico.length?'#FEE2E2':'#DCFCE7') + ';color:' + (semTopico.length?'#B91C1C':'#047857') + '">Cobertura: ' + (kbTopicList(kbDisc).length - semTopico.length) + ' de ' + kbTopicList(kbDisc).length + ' tópicos</span>' +
         '<span style="flex:1"></span>' +
+        (semTopico.length ? '<button class="act" onclick="kbGerarFaltantes()">Gerar os que faltam</button>' : '') +
         '<button class="act" onclick="kbPreviewTodas(true)">Marcar todas</button>' +
         '<button class="act" onclick="kbPreviewTodas(false)">Desmarcar todas</button>' +
       '</div>' +
@@ -679,7 +865,7 @@ function kbPaintPreview(){
       }).join('') +
       '</div>' +
     '</div>' +
-    (semTopico.length ? '<p class="muted" style="margin-top:8px;font-size:0.78rem">Sem aula gerada (' + semTopico.length + '): ' + esc(semTopico.slice(0,8).join(' · ')) + (semTopico.length>8?' …':'') + '</p>' : '') +
+    (semTopico.length ? '<p class="muted" style="margin-top:8px;font-size:0.78rem;color:#B91C1C">Sem aula gerada (' + semTopico.length + '): ' + esc(semTopico.slice(0,8).join(' · ')) + (semTopico.length>8?' …':'') + '</p>' : '') +
     '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
       '<button class="act primary" onclick="kbPublicarGeradas()">Publicar ' + sel + ' aula(s) nos tópicos</button>' +
       '<button class="act" onclick="kbPreviewDescartar()">Descartar</button>' +
@@ -719,15 +905,94 @@ window.kbPublicarGeradas = async function(){
 
 /* Manutenção: reindexar a base e tratar conteúdos órfãos (matéria vazia ou fora do edital). */
 let KB_LOG = [];
+let KB_LOG_ROWS = [];
+let KB_LOG_META = { titulo:'', acao:'', modo:'', quando:null, resumo:{} };
 function kbRenderLog(){
   const pre = document.getElementById('kb-log');
+  const csv = document.getElementById('kb-exp-csv');
+  const pdf = document.getElementById('kb-exp-pdf');
+  if(csv) csv.disabled = !KB_LOG.length || KB_BUSY;
+  if(pdf) pdf.disabled = !KB_LOG.length || KB_BUSY;
   if(!pre) return;
   pre.style.display = KB_LOG.length ? 'block' : 'none';
   pre.textContent = KB_LOG.join('\n');
   pre.scrollTop = pre.scrollHeight;
 }
-function kbLogReset(titulo){ KB_LOG = titulo ? ['— ' + titulo + ' —'] : []; kbRenderLog(); }
+function kbLogReset(titulo, acao, modo){
+  KB_LOG = titulo ? ['— ' + titulo + ' —'] : [];
+  KB_LOG_ROWS = [];
+  KB_LOG_META = { titulo: titulo || '', acao: acao || '', modo: modo || '', quando: new Date(), resumo: {} };
+  kbRenderLog();
+}
 function kbLog(linha){ KB_LOG.push(linha); kbRenderLog(); }
+/* Registro estruturado para auditoria (CSV/PDF). */
+function kbLogRow(r){
+  KB_LOG_ROWS.push({
+    quando: new Date().toISOString(),
+    acao: KB_LOG_META.acao || '',
+    modo: KB_LOG_META.modo || '',
+    documento_id: r.id || '',
+    titulo: r.titulo || '',
+    disciplina_origem: r.origem || '',
+    disciplina_destino: r.destino || '',
+    resultado: r.resultado || '',
+    detalhe: r.detalhe || '',
+  });
+}
+function kbLogResumo(obj){ KB_LOG_META.resumo = Object.assign({}, KB_LOG_META.resumo, obj); }
+function kbCarimbo(d){
+  const p = n => String(n).padStart(2,'0');
+  return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes());
+}
+function kbBaixar(nome, conteudo, mime){
+  const blob = new Blob([conteudo], { type: mime });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = nome;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+window.kbExportLog = function(formato){
+  if(!KB_LOG.length) return kbOrfMsg('Não há log para exportar. Rode a prévia ou uma operação primeiro.');
+  const d = KB_LOG_META.quando || new Date();
+  const base = 'provax-reindex-' + (KB_LOG_META.modo === 'previa' ? 'previa' : 'execucao') + '-' + kbCarimbo(d);
+  const cols = ['quando','acao','modo','documento_id','titulo','disciplina_origem','disciplina_destino','resultado','detalhe'];
+  if(formato === 'csv'){
+    const q = v => '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"';
+    const linhas = [cols.map(q).join(';')].concat(KB_LOG_ROWS.map(function(r){ return cols.map(function(c){ return q(r[c]); }).join(';'); }));
+    kbBaixar(base + '.csv', '\uFEFF' + linhas.join('\r\n'), 'text/csv;charset=utf-8');
+    kbOrfMsg('CSV exportado com ' + KB_LOG_ROWS.length + ' registro(s).');
+    return;
+  }
+  const resumo = KB_LOG_META.resumo || {};
+  const html = '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>' + esc(base) + '</title>' +
+    '<style>body{font-family:system-ui,Segoe UI,Arial,sans-serif;color:#0F172A;padding:24px;font-size:12px}' +
+    'h1{font-size:18px;margin:0 0 4px}h2{font-size:13px;margin:18px 0 6px}' +
+    'table{width:100%;border-collapse:collapse;margin-top:6px}th,td{border:1px solid #CBD5E1;padding:4px 6px;text-align:left;vertical-align:top;word-break:break-word}' +
+    'th{background:#F1F5F9}pre{white-space:pre-wrap;background:#F8FAFC;border:1px solid #E2E8F0;padding:8px;border-radius:6px}' +
+    '@page{size:A4;margin:14mm}</style></head><body>' +
+    '<h1>Prova X — auditoria da base de conhecimento</h1>' +
+    '<p>Operação: <b>' + esc(KB_LOG_META.titulo || '—') + '</b><br>' +
+    'Curso: prf-2021 · Matéria selecionada: ' + esc(kbDisc || '—') + '<br>' +
+    'Administrador: ' + esc((PX.user && PX.user.email) || PX.user?.id || '—') + '<br>' +
+    'Data: ' + d.toLocaleString('pt-BR') + '</p>' +
+    '<h2>Resumo</h2><table><tbody>' +
+    Object.keys(resumo).map(function(k){ return '<tr><th style="width:40%">' + esc(k) + '</th><td>' + esc(String(resumo[k])) + '</td></tr>'; }).join('') +
+    '</tbody></table>' +
+    '<h2>Documentos processados (' + KB_LOG_ROWS.length + ')</h2>' +
+    (KB_LOG_ROWS.length ? '<table><thead><tr>' + cols.map(function(c){ return '<th>' + esc(c) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      KB_LOG_ROWS.map(function(r){ return '<tr>' + cols.map(function(c){ return '<td>' + esc(String(r[c] == null ? '' : r[c])) + '</td>'; }).join('') + '</tr>'; }).join('') +
+      '</tbody></table>' : '<p>Nenhum documento individual registrado nesta operação.</p>') +
+    '<h2>Log completo</h2><pre>' + esc(KB_LOG.join('\n')) + '</pre>' +
+    '</body></html>';
+  const w = window.open('', '_blank');
+  if(!w) return kbOrfMsg('Libere os pop-ups para gerar o PDF.');
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(function(){ w.print(); }, 400);
+  kbOrfMsg('Relatório aberto para salvar em PDF (escolha "Salvar como PDF").');
+};
 function kbProg(feito, total, texto){
   const wrap = document.getElementById('kb-prog-wrap');
   const bar = document.getElementById('kb-prog-bar');
@@ -755,7 +1020,7 @@ async function kbFetchDocs(){
 window.kbReindexar = async function(dryRun){
   const antes = KB_DOCS.slice();
   const lista = kbDiscList();
-  kbLogReset(dryRun ? 'Prévia da reindexação (nada foi alterado)' : 'Reindexação da base');
+  kbLogReset(dryRun ? 'Prévia da reindexação (nada foi alterado)' : 'Reindexação da base', 'reindexar', dryRun ? 'previa' : 'real');
   kbOrfMsg(dryRun ? 'Simulando…' : 'Reindexando…');
   kbProg(0, 1, 'Lendo banco');
   let docs;
@@ -770,9 +1035,13 @@ window.kbReindexar = async function(dryRun){
     const eraOrfao = antesMap[d.id] ? !PXKB.validarDisciplina(antesMap[d.id].disciplina, lista) : null;
     const ehOrfao = !PXKB.validarDisciplina(d.disciplina, lista);
     if(ehOrfao) orfaosAgora.push(d);
-    if(eraOrfao === null) novos.push(d);
-    else if(!eraOrfao && ehOrfao) virarOrfao.push(d);
-    else if(eraOrfao && !ehOrfao) recuperar.push(d);
+    let resultado = 'inalterado';
+    if(eraOrfao === null){ novos.push(d); resultado = 'novo'; }
+    else if(!eraOrfao && ehOrfao){ virarOrfao.push(d); resultado = 'virou órfão'; }
+    else if(eraOrfao && !ehOrfao){ recuperar.push(d); resultado = 'recuperou disciplina'; }
+    else if(ehOrfao) resultado = 'segue órfão';
+    kbLogRow({ id:d.id, titulo:d.titulo || d.topico || '', origem:(d.disciplina || '').trim() || '(sem matéria)',
+      destino:'', resultado:resultado, detalhe: dryRun ? 'prévia — nada aplicado' : '' });
     if(i % 25 === 0 || i === docs.length - 1) kbProg(i + 1, docs.length, 'Analisando documentos');
   });
   const idsNovos = {}; docs.forEach(function(d){ idsNovos[d.id] = 1; });
@@ -786,6 +1055,17 @@ window.kbReindexar = async function(dryRun){
   kbLog('Vão recuperar disciplina válida: ' + recuperar.length + (recuperar.length ? ' → ' + recuperar.slice(0,10).map(function(d){ return (d.titulo || d.topico || d.id) + ' [' + d.disciplina + ']'; }).join('; ') : ''));
   if(novos.length) kbLog('Novos desde a última leitura: ' + novos.length);
   if(removidos.length) kbLog('Sumiram do banco: ' + removidos.length);
+  kbLogResumo({
+    'Documentos lidos': docs.length,
+    'Órfãos após a análise': orfaosAgora.length,
+    'Viram órfãos': virarOrfao.length,
+    'Recuperam disciplina': recuperar.length,
+    'Novos desde a última leitura': novos.length,
+    'Sumiram do banco': removidos.length,
+    'Por disciplina': kbPorDisciplina(docs).join(' | '),
+  });
+
+
 
   if(dryRun){
     kbLog('Prévia — nenhuma alteração aplicada. Use "Reindexar base" para confirmar.');
@@ -807,7 +1087,7 @@ window.kbCorrigirOrfaos = async function(acao){
     ? 'Mover ' + orfaos.length + ' conteúdo(s) órfão(s) para "' + destino + '"?'
     : 'Excluir definitivamente ' + orfaos.length + ' conteúdo(s) órfão(s)?';
   if(!confirm(txt)) return;
-  kbLogReset(acao === 'mover' ? 'Movendo órfãos para ' + destino : 'Excluindo órfãos');
+  kbLogReset(acao === 'mover' ? 'Movendo órfãos para ' + destino : 'Excluindo órfãos', acao === 'mover' ? 'mover_orfaos' : 'excluir_orfaos', 'real');
   kbOrfMsg('Processando…');
   let feito = 0;
   const porOrigem = {};
@@ -819,16 +1099,26 @@ window.kbCorrigirOrfaos = async function(acao){
     const origem = (d.disciplina || '').trim() || '(sem matéria)';
     if(error){
       kbLog('✗ ' + (d.titulo || d.topico || d.id) + ' — erro: ' + error.message);
+      kbLogRow({ id:d.id, titulo:d.titulo || d.topico || '', origem:origem, destino: acao === 'mover' ? destino : '', resultado:'erro', detalhe:error.message });
+      kbLogResumo({ 'Processados antes do erro': feito - 1, 'Erro': error.message });
       kbProgHide();
       kbOrfMsg('Erro: ' + error.message);
       return;
     }
     porOrigem[origem] = (porOrigem[origem] || 0) + 1;
+    kbLogRow({ id:d.id, titulo:d.titulo || d.topico || '', origem:origem, destino: acao === 'mover' ? destino : '',
+      resultado: acao === 'mover' ? 'movido' : 'excluído', detalhe:'' });
     kbLog('✓ ' + (d.titulo || d.topico || d.id) + ' [' + origem + ']' + (acao === 'mover' ? ' → ' + destino : ' excluído'));
     kbProg(feito, orfaos.length, acao === 'mover' ? 'Movendo' : 'Excluindo');
   }
   kbLog('Resultado por disciplina de origem:');
   Object.keys(porOrigem).sort().forEach(function(k){ kbLog('  • ' + k + ': ' + porOrigem[k]); });
+  kbLogResumo({
+    'Ação': acao === 'mover' ? 'mover órfãos' : 'excluir órfãos',
+    'Documentos processados': orfaos.length,
+    'Disciplina de destino': acao === 'mover' ? destino : '—',
+    'Por disciplina de origem': Object.keys(porOrigem).sort().map(function(k){ return k + ': ' + porOrigem[k]; }).join(' | '),
+  });
   await logAdmin(acao === 'mover' ? 'reindexar_conhecimento' : 'limpar_orfaos_conhecimento','knowledge_docs', null, { total:orfaos.length, destino:destino||null });
   await loadKB(); kbPaint();
   kbProgHide();
