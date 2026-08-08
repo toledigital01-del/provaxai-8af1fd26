@@ -11,9 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ApiPublicAdminDeleteUserRouteImport } from './routes/api/public/admin-delete-user'
 import { Route as ApiPublicAiStatusRouteImport } from './routes/api/public/ai-status'
 import { Route as ApiPublicAthenaRouteImport } from './routes/api/public/athena'
 import { Route as ApiPublicKbAutocourseRouteImport } from './routes/api/public/kb-autocourse'
+import { Route as ApiPublicKbEditalRouteImport } from './routes/api/public/kb-edital'
 import { Route as ApiPublicKbIngestRouteImport } from './routes/api/public/kb-ingest'
 import { Route as ApiPublicTtsRouteImport } from './routes/api/public/tts'
 import { Route as ApiPublicHotmartWebhookRouteImport } from './routes/api/public/hotmart/webhook'
@@ -28,6 +30,12 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAdminDeleteUserRoute =
+  ApiPublicAdminDeleteUserRouteImport.update({
+    id: '/api/public/admin-delete-user',
+    path: '/api/public/admin-delete-user',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicAiStatusRoute = ApiPublicAiStatusRouteImport.update({
   id: '/api/public/ai-status',
   path: '/api/public/ai-status',
@@ -41,6 +49,11 @@ const ApiPublicAthenaRoute = ApiPublicAthenaRouteImport.update({
 const ApiPublicKbAutocourseRoute = ApiPublicKbAutocourseRouteImport.update({
   id: '/api/public/kb-autocourse',
   path: '/api/public/kb-autocourse',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicKbEditalRoute = ApiPublicKbEditalRouteImport.update({
+  id: '/api/public/kb-edital',
+  path: '/api/public/kb-edital',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicKbIngestRoute = ApiPublicKbIngestRouteImport.update({
@@ -62,9 +75,11 @@ const ApiPublicHotmartWebhookRoute = ApiPublicHotmartWebhookRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/public/admin-delete-user': typeof ApiPublicAdminDeleteUserRoute
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
+  '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
   '/api/public/tts': typeof ApiPublicTtsRoute
   '/api/public/hotmart/webhook': typeof ApiPublicHotmartWebhookRoute
@@ -72,9 +87,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/public/admin-delete-user': typeof ApiPublicAdminDeleteUserRoute
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
+  '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
   '/api/public/tts': typeof ApiPublicTtsRoute
   '/api/public/hotmart/webhook': typeof ApiPublicHotmartWebhookRoute
@@ -83,9 +100,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/public/admin-delete-user': typeof ApiPublicAdminDeleteUserRoute
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
+  '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
   '/api/public/tts': typeof ApiPublicTtsRoute
   '/api/public/hotmart/webhook': typeof ApiPublicHotmartWebhookRoute
@@ -95,9 +114,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/sitemap.xml'
+    | '/api/public/admin-delete-user'
     | '/api/public/ai-status'
     | '/api/public/athena'
     | '/api/public/kb-autocourse'
+    | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
     | '/api/public/tts'
     | '/api/public/hotmart/webhook'
@@ -105,9 +126,11 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/sitemap.xml'
+    | '/api/public/admin-delete-user'
     | '/api/public/ai-status'
     | '/api/public/athena'
     | '/api/public/kb-autocourse'
+    | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
     | '/api/public/tts'
     | '/api/public/hotmart/webhook'
@@ -115,9 +138,11 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/sitemap.xml'
+    | '/api/public/admin-delete-user'
     | '/api/public/ai-status'
     | '/api/public/athena'
     | '/api/public/kb-autocourse'
+    | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
     | '/api/public/tts'
     | '/api/public/hotmart/webhook'
@@ -126,9 +151,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiPublicAdminDeleteUserRoute: typeof ApiPublicAdminDeleteUserRoute
   ApiPublicAiStatusRoute: typeof ApiPublicAiStatusRoute
   ApiPublicAthenaRoute: typeof ApiPublicAthenaRoute
   ApiPublicKbAutocourseRoute: typeof ApiPublicKbAutocourseRoute
+  ApiPublicKbEditalRoute: typeof ApiPublicKbEditalRoute
   ApiPublicKbIngestRoute: typeof ApiPublicKbIngestRoute
   ApiPublicTtsRoute: typeof ApiPublicTtsRoute
   ApiPublicHotmartWebhookRoute: typeof ApiPublicHotmartWebhookRoute
@@ -150,6 +177,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/admin-delete-user': {
+      id: '/api/public/admin-delete-user'
+      path: '/api/public/admin-delete-user'
+      fullPath: '/api/public/admin-delete-user'
+      preLoaderRoute: typeof ApiPublicAdminDeleteUserRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/ai-status': {
       id: '/api/public/ai-status'
       path: '/api/public/ai-status'
@@ -169,6 +203,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/kb-autocourse'
       fullPath: '/api/public/kb-autocourse'
       preLoaderRoute: typeof ApiPublicKbAutocourseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/kb-edital': {
+      id: '/api/public/kb-edital'
+      path: '/api/public/kb-edital'
+      fullPath: '/api/public/kb-edital'
+      preLoaderRoute: typeof ApiPublicKbEditalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/kb-ingest': {
@@ -198,9 +239,11 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiPublicAdminDeleteUserRoute: ApiPublicAdminDeleteUserRoute,
   ApiPublicAiStatusRoute: ApiPublicAiStatusRoute,
   ApiPublicAthenaRoute: ApiPublicAthenaRoute,
   ApiPublicKbAutocourseRoute: ApiPublicKbAutocourseRoute,
+  ApiPublicKbEditalRoute: ApiPublicKbEditalRoute,
   ApiPublicKbIngestRoute: ApiPublicKbIngestRoute,
   ApiPublicTtsRoute: ApiPublicTtsRoute,
   ApiPublicHotmartWebhookRoute: ApiPublicHotmartWebhookRoute,
