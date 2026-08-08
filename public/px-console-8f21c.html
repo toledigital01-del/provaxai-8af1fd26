@@ -320,20 +320,46 @@ async function salvarConfig(id){
 let KB_DOCS = [];
 let kbDisc = null, kbTopic = null;
 const kbKey = (d,t) => d + '||' + (t || '');
-const kbDiscList = () => (window.DISCIPLINAS_POR_CONCURSO && DISCIPLINAS_POR_CONCURSO['prf-2021']) || Object.keys(window.TOPICS || {});
-const kbTopicList = d => (window.TOPICS && TOPICS[d]) || [];
+let KB_DISCS_DB = [];
+function kbGlobalTopics(){
+  if (window.TOPICS) return window.TOPICS;
+  try { return (typeof TOPICS !== 'undefined') ? TOPICS : {}; } catch(e){ return {}; }
+}
+function kbGlobalDiscs(){
+  if (window.DISCIPLINAS_POR_CONCURSO) return window.DISCIPLINAS_POR_CONCURSO;
+  try { return (typeof DISCIPLINAS_POR_CONCURSO !== 'undefined') ? DISCIPLINAS_POR_CONCURSO : {}; } catch(e){ return {}; }
+}
+const kbDiscList = () => {
+  const list = (kbGlobalDiscs()['prf-2021'] || Object.keys(kbGlobalTopics()) || []).filter(Boolean);
+  if (list.length) return list;
+  return KB_DISCS_DB.slice();
+};
+const kbTopicList = d => (d && kbGlobalTopics()[d]) || [];
+
 
 async function loadKB(){
   const { data, error } = await PX.sb.from('knowledge_docs').select('*').eq('course_slug','prf-2021').order('disciplina');
   if(error) throw error;
   KB_DOCS = data || [];
+  // Rede de segurança: se os dados locais não carregarem, monta a lista de matérias pelo banco.
+  const nomes = {};
+  KB_DOCS.forEach(x => { if(x.disciplina) nomes[x.disciplina] = 1; });
+  try{
+    const curso = await PX.sb.from('courses').select('id').eq('slug','prf-2021').maybeSingle();
+    if(curso.data){
+      const d = await PX.sb.from('disciplines').select('nome').eq('course_id', curso.data.id).order('ordem');
+      (d.data || []).forEach(x => { if(x.nome) nomes[x.nome] = 1; });
+    }
+  }catch(e){ /* mantém apenas as matérias já presentes na base */ }
+  KB_DISCS_DB = Object.keys(nomes);
 }
 function kbFind(d,t){ return KB_DOCS.find(x => x.disciplina === d && (x.topico || '') === (t || '')); }
 
 async function viewConhecimento(){
   await loadKB();
   const discs = kbDiscList();
-  if(!kbDisc || !discs.includes(kbDisc)) { kbDisc = discs[0]; kbTopic = null; }
+  if(!kbDisc || !discs.includes(kbDisc)) { kbDisc = discs[0] || null; kbTopic = null; }
+
   const count = d => KB_DOCS.filter(x => x.disciplina === d && (x.conteudo||'').trim()).length;
   const totalChars = KB_DOCS.reduce((a,x)=>a+(x.conteudo||'').length,0);
   view.innerHTML = `
@@ -363,6 +389,13 @@ function kbRow(label, active, ok, onclick){
 }
 function kbPaint(){
   const discs = kbDiscList();
+  if(!discs.length){
+    document.getElementById('kb-discs').innerHTML = '<label class="muted">Matérias</label>' + kbListHTML(
+      '<div style="padding:11px;font-size:0.8rem" class="muted">Não consegui carregar a lista de matérias. Atualize a página (Ctrl+F5) e tente de novo.</div>');
+    document.getElementById('kb-topics').innerHTML = '';
+    document.getElementById('kb-editor').innerHTML = '';
+    return;
+  }
   document.getElementById('kb-discs').innerHTML = '<label class="muted">Matérias</label>' + kbListHTML(
     discs.map(d => kbRow(d, d===kbDisc, KB_DOCS.some(x=>x.disciplina===d && (x.conteudo||'').trim()), `kbSelDisc('${escJs(d)}')`)).join(''));
   const tops = kbTopicList(kbDisc);
@@ -371,6 +404,7 @@ function kbPaint(){
     tops.map(t => kbRow(t, t===kbTopic, !!((kbFind(kbDisc,t)||{}).conteudo||'').trim(), `kbSelTopic('${escJs(t)}')`)).join(''));
   kbEditor();
 }
+
 function escJs(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 window.kbSelDisc = d => { kbDisc = d; kbTopic = null; kbPaint(); };
 window.kbSelTopic = t => { kbTopic = t; kbPaint(); };
@@ -495,7 +529,9 @@ window.kbIngestUrl = async function(tipo){
   catch(e){ kbIngMsg('Erro: ' + e.message); }
 };
 window.kbMontarCurso = async function(){
+  if(!kbDisc) return kbIngMsg('Selecione uma matéria antes de montar o curso.');
   const material = document.getElementById('kb-txt').value.trim();
+
   if(material.length < 200) return kbIngMsg('Coloque primeiro o material na caixa de conteúdo (arquivo, site, vídeo ou texto).');
   const topicos = kbTopicList(kbDisc);
   if(!topicos.length) return kbIngMsg('Esta matéria não tem tópicos cadastrados.');
@@ -573,8 +609,10 @@ window.kbPreviewAbrir = function(i){ KB_ABERTA = (KB_ABERTA === i ? -1 : i); kbP
 window.kbPreviewCampo = function(i, campo, v){ KB_GERADAS[i][campo] = v; };
 window.kbPreviewDescartar = function(){ KB_GERADAS = []; KB_ABERTA = -1; kbPaintPreview(); kbIngMsg('Curso gerado descartado.'); };
 window.kbPublicarGeradas = async function(){
-  const lista = KB_GERADAS.filter(function(a){ return a.incluir && a.conteudo.trim(); });
+  if(!kbDisc) return kbIngMsg('Selecione uma matéria antes de publicar.');
+  const lista = KB_GERADAS.filter(function(a){ return a.incluir && a.conteudo.trim() && a.topico; });
   if(!lista.length) return kbIngMsg('Marque ao menos uma aula para publicar.');
+
   kbIngMsg('Publicando ' + lista.length + ' aula(s)…');
   for(const a of lista){
     const doc = kbFind(kbDisc, a.topico);
@@ -593,10 +631,13 @@ window.kbPublicarGeradas = async function(){
 
 
 window.kbSave = async function(){
+  const msg = document.getElementById('kb-msg');
+  if(!kbDisc){ if(msg) msg.textContent = 'Selecione uma matéria antes de salvar.'; return; }
   const conteudo = document.getElementById('kb-txt').value;
   const titulo = document.getElementById('kb-tit').value.trim() || null;
   const publicado = document.getElementById('kb-pub').checked;
-  const msg = document.getElementById('kb-msg'); msg.textContent = 'Salvando…';
+  msg.textContent = 'Salvando…';
+
   const doc = kbFind(kbDisc, kbTopic);
   const payload = { course_slug:'prf-2021', disciplina:kbDisc, topico:kbTopic, titulo, conteudo, publicado, updated_by:PX.user.id };
   const { error } = doc
