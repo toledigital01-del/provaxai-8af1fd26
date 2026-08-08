@@ -12,5 +12,6 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /px-console-8f21c.html
 
 Sitemap: https://provaxai.lovable.app/sitemap.xml
