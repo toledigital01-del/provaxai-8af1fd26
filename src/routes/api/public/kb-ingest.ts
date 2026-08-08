@@ -5,8 +5,9 @@ const SUPABASE_URL = 'https://rdokrryisfkhmevcxlws.supabase.co'
 const SUPABASE_KEY = 'sb_publishable_9ILwlXJNPJ5ZzpALdbmfBA_gRAtH4Qr'
 
 const Body = z.object({
-  tipo: z.enum(['pdf', 'txt', 'url', 'texto', 'video']),
+  tipo: z.enum(['pdf', 'txt', 'url', 'texto', 'video', 'imagem', 'auto']),
   nome: z.string().max(300).optional(),
+  mime: z.string().max(120).optional(),
   url: z.string().max(2000).optional(),
   texto: z.string().max(400000).optional(),
   arquivo_base64: z.string().max(30_000_000).optional(),
