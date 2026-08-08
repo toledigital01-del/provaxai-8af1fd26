@@ -607,8 +607,10 @@ window.kbPreviewAbrir = function(i){ KB_ABERTA = (KB_ABERTA === i ? -1 : i); kbP
 window.kbPreviewCampo = function(i, campo, v){ KB_GERADAS[i][campo] = v; };
 window.kbPreviewDescartar = function(){ KB_GERADAS = []; KB_ABERTA = -1; kbPaintPreview(); kbIngMsg('Curso gerado descartado.'); };
 window.kbPublicarGeradas = async function(){
-  const lista = KB_GERADAS.filter(function(a){ return a.incluir && a.conteudo.trim(); });
+  if(!kbDisc) return kbIngMsg('Selecione uma matéria antes de publicar.');
+  const lista = KB_GERADAS.filter(function(a){ return a.incluir && a.conteudo.trim() && a.topico; });
   if(!lista.length) return kbIngMsg('Marque ao menos uma aula para publicar.');
+
   kbIngMsg('Publicando ' + lista.length + ' aula(s)…');
   for(const a of lista){
     const doc = kbFind(kbDisc, a.topico);
