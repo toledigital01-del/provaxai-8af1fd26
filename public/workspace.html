@@ -376,6 +376,22 @@ function goTab(t) {
   document.querySelector('.ws-center').scrollTop = 0;
 }
 
+async function carregarConteudoKB() {
+  const box = document.getElementById('kb-conteudo');
+  const fb = document.getElementById('kb-fallback');
+  if (!box) return;
+  let doc = null;
+  try { doc = await PX.kbTopico(disc, topic, id); } catch (e) {}
+  if (!document.getElementById('kb-conteudo')) return;
+  if (doc && (doc.conteudo || '').trim()) {
+    box.innerHTML = (doc.titulo ? '<h3>' + doc.titulo + '</h3>' : '') + PX.kbHTML(doc.conteudo);
+    if (fb) fb.remove();
+  } else {
+    box.innerHTML = '';
+    if (fb) fb.hidden = false;
+  }
+}
+
 function renderPane() {
   const p = document.getElementById('pane');
   if (tab === 'tutor') {
@@ -693,10 +709,13 @@ document.getElementById('side-form').onsubmit = e => {
   history_.push({ role: 'me', text: v, ctx });
   saveChat(history_); renderChat();
   i.value = '';
-  setTimeout(() => {
-    history_.push({ role: 'ai', ctx, text: `Sobre "${v}" em ${ctx}: comece pela regra geral, observe as exceções e depois treine com itens certo/errado.` });
+  history_.push({ role: 'ai', ctx, text: 'Athena está consultando o material…', pending: true });
+  saveChat(history_); renderChat();
+  PX.athenaAsk(disc, scope === 'topico' ? topic : null, v, id).then(resp => {
+    const i2 = history_.findIndex(m => m.pending);
+    if (i2 >= 0) history_[i2] = { role: 'ai', ctx, text: resp };
     saveChat(history_); renderChat();
-  }, 300);
+  });
 };
 </script>
 
