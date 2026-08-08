@@ -413,7 +413,7 @@ async function cfgSalvarVoz(){
 }
 async function cfgSincronizar(){
   const btn = document.getElementById('cfg-sync'); const msg = document.getElementById('cfg-sync-msg');
-  const topics = kbTopics(); const porCurso = kbDisciplinasPorConcurso();
+  const topics = kbGlobalTopics(); const porCurso = kbGlobalDiscs();
   btn.disabled = true; msg.textContent = 'Sincronizando…';
   try {
     const { data: cursos } = await PX.sb.from('courses').select('id,slug');
