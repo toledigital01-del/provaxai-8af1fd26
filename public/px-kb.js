@@ -14,6 +14,21 @@
     } catch (e) { return ''; }
   };
 
+  /* O aluno logado tem acesso ativo a este curso? (compra, assinatura ou admin) */
+  PX.temAcesso = async function (curso) {
+    try {
+      var tk = await PX.token();
+      if (!tk) return false;
+      var r = await fetch(SB_URL + '/rest/v1/rpc/has_course_access', {
+        method: 'POST',
+        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tk, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ _slug: curso || 'prf-2021' }),
+      });
+      return r.ok ? (await r.json()) === true : false;
+    } catch (e) { return false; }
+  };
+
+
   /* Busca o conteúdo teórico publicado de uma disciplina (todos os tópicos).
      Devolve { status, docs }: status é o código HTTP (0 = falha de rede, 401 = sem login). */
   PX.kbFetch = async function (disciplina, curso) {
