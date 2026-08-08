@@ -124,27 +124,62 @@ async function viewAlunos(){
   view.innerHTML = `<div class="card">
     <h2>Alunos</h2>
     <div class="row"><input id="busca" placeholder="Buscar por nome ou e-mail"><button class="act primary" onclick="viewAlunos()">Atualizar</button></div>
+    <div class="row" style="align-items:center;gap:10px">
+      <label class="muted">Curso para liberar/remover acesso</label>
+      <select id="ac-curso" style="max-width:280px"></select>
+      <button class="act" onclick="liberarParaMim()">Liberar para mim (testar como aluno)</button>
+    </div>
+    <p class="muted" id="ac-msg"></p>
     <div id="lista" class="muted">Carregando…</div></div>`;
-  const termo = '';
-  const { data: ps } = await PX.sb.from('profiles').select('*').order('created_at',{ascending:false}).limit(200);
-  const { data: rs } = await PX.sb.from('user_roles').select('user_id,role');
+  const [{ data: ps }, { data: rs }, { data: cs }, { data: acs }] = await Promise.all([
+    PX.sb.from('profiles').select('*').order('created_at',{ascending:false}).limit(200),
+    PX.sb.from('user_roles').select('user_id,role'),
+    PX.sb.from('courses').select('id,nome,slug').order('ordem'),
+    PX.sb.from('course_access').select('user_id,course_id,expira_em'),
+  ]);
   const roleMap = {}; (rs||[]).forEach(r=>{ (roleMap[r.user_id]=roleMap[r.user_id]||[]).push(r.role); });
+  const sel = document.getElementById('ac-curso');
+  sel.innerHTML = (cs||[]).map(c=>`<option value="${c.id}">${esc(c.nome)} (${esc(c.slug)})</option>`).join('') || '<option value="">Nenhum curso</option>';
+  const cursoAtual = () => sel.value;
+  const temAcesso = (uid) => (acs||[]).some(a => a.user_id===uid && a.course_id===cursoAtual()
+    && (!a.expira_em || new Date(a.expira_em).getTime() > Date.now()));
   const paint = (filtro) => {
     const list = (ps||[]).filter(p => !filtro ||
       (p.email||'').toLowerCase().includes(filtro) || (p.full_name||'').toLowerCase().includes(filtro));
-    document.getElementById('lista').innerHTML = tabela(['Nome','E-mail','Papéis','Último acesso','Status','Ações'],
+    document.getElementById('lista').innerHTML = tabela(['Nome','E-mail','Papéis','Último acesso','Status','Acesso ao curso','Ações'],
       list.map(p=>[
         esc(p.full_name||'—'), esc(p.email),
         (roleMap[p.id]||['student']).map(r=>`<span class="pill n">${r}</span>`).join(' '),
         dt(p.last_login_at),
         p.suspended?'<span class="pill off">Suspenso</span>':'<span class="pill ok">Ativo</span>',
-        `<button class="act" onclick="toggleAdmin('${p.id}',${(roleMap[p.id]||[]).includes('admin')})">${(roleMap[p.id]||[]).includes('admin')?'Remover admin':'Tornar admin'}</button>
+        temAcesso(p.id)?'<span class="pill ok">Liberado</span>':'<span class="pill off">Sem acesso</span>',
+        `<button class="act ${temAcesso(p.id)?'danger':'primary'}" onclick="acessoCurso('${p.id}',${!temAcesso(p.id)})">${temAcesso(p.id)?'Remover acesso':'Liberar acesso'}</button>
+         <button class="act" onclick="toggleAdmin('${p.id}',${(roleMap[p.id]||[]).includes('admin')})">${(roleMap[p.id]||[]).includes('admin')?'Remover admin':'Tornar admin'}</button>
          <button class="act ${p.suspended?'':'danger'}" onclick="suspender('${p.id}',${!p.suspended})">${p.suspended?'Reativar':'Suspender'}</button>`
       ]));
   };
   paint('');
+  sel.onchange = () => paint((document.getElementById('busca').value||'').toLowerCase().trim());
   document.getElementById('busca').oninput = e => paint(e.target.value.toLowerCase().trim());
 }
+async function acessoCurso(userId, liberar){
+  const courseId = document.getElementById('ac-curso').value;
+  const msg = document.getElementById('ac-msg');
+  if(!courseId){ msg.textContent = 'Cadastre um curso antes de liberar acesso.'; return; }
+  msg.textContent = liberar ? 'Liberando acesso…' : 'Removendo acesso…';
+  const q = liberar
+    ? await PX.sb.from('course_access').insert({ user_id:userId, course_id:courseId, origem:'manual' })
+    : await PX.sb.from('course_access').delete().eq('user_id',userId).eq('course_id',courseId);
+  if(q.error){ msg.textContent = 'Não deu certo: ' + q.error.message; return; }
+  await logAdmin(liberar?'liberar_acesso':'remover_acesso','course_access', userId + '|' + courseId);
+  viewAlunos();
+}
+async function liberarParaMim(){
+  const u = await PX.sb.auth.getUser();
+  const uid = u && u.data && u.data.user && u.data.user.id;
+  if(uid) await acessoCurso(uid, true);
+}
+
 async function toggleAdmin(id, isAdm){
   if(isAdm) await PX.sb.from('user_roles').delete().eq('user_id',id).eq('role','admin');
   else await PX.sb.from('user_roles').insert({user_id:id, role:'admin'});
