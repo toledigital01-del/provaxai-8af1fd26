@@ -343,12 +343,22 @@ async function viewConfig(){
   view.innerHTML = `
   <div class="card">
     <h2>Integrações de IA</h2>
-    <p class="muted">As chaves ficam guardadas em segredo no servidor. Aqui você só escolhe quem faz o quê.</p>
+    <p class="muted">Cole aqui as chaves de cada serviço. Elas ficam gravadas em área restrita a administradores e nunca aparecem para os alunos.</p>
     <div class="grid">
-      ${CFG_PROVEDORES.map(p=>`<div class="row"><div><b>${esc(p.nome)}</b> ${cfgPill(!!conect[p.id])}<div class="muted">${esc(p.dica)}</div></div></div>`).join('')}
-      <div class="row"><div><b>ElevenLabs (voz)</b> ${cfgPill(!!conect.elevenlabs)}<div class="muted">Narração das aulas e podcasts. Requer a chave ELEVENLABS_API_KEY.</div></div></div>
+      ${CFG_CHAVES.map(c=>`<div class="row">
+        <div>
+          <label class="muted"><b>${esc(c.nome)}</b> ${cfgPill(!!conect[c.id])} ${salvas[c.env]?'<span class="tag">chave salva no painel</span>':''}</label>
+          <input id="key-${c.env}" type="password" autocomplete="new-password" placeholder="${salvas[c.env]?'•••••••••• (cole uma nova para trocar)':esc(c.exemplo)}">
+          <div class="muted">${esc(c.dica)}</div>
+        </div>
+        <div>
+          <button class="act primary" onclick="cfgSalvarChave('${c.env}')">Salvar</button>
+          ${salvas[c.env]?`<button class="act" onclick="cfgApagarChave('${c.env}')">Remover</button>`:''}
+        </div>
+      </div>`).join('')}
     </div>
   </div>
+
 
   <div class="card">
     <h2>IA do curso — Athena</h2>
