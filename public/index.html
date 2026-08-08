@@ -1,754 +1,692 @@
 <!DOCTYPE html>
-<html lang="pt-BR" style="background:#fff;color:initial;">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prova X – A Ferramenta de Estudo com IA #1 | Mande nas Provas</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['-apple-system','BlinkMacSystemFont','"SF Pro Display"','"Segoe UI"','Roboto','sans-serif'],
-          },
-          colors: {
-            orange: { primary: '#2563EB', light: '#3B82F6' }
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap');
-    * { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; }
-    .font-satoshi { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; }
-    .btn-orange {
-      background: linear-gradient(to bottom, #3B82F6, #2563EB);
-      box-shadow: 0 4px 14px 0 rgba(37,99,235,0.39);
-      border-top: 1px solid rgba(255,255,255,0.2);
-      position: relative;
-      overflow: hidden;
-    }
-    .btn-orange:hover {
-      box-shadow: 0 6px 20px rgba(37,99,235,0.23);
-      filter: brightness(1.1);
-    }
-    .btn-orange::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      box-shadow: inset 0 1px 1px rgba(255,255,255,0.3);
-      pointer-events: none;
-    }
-    .btn-orange-inner-glow {
-      position: absolute;
-      inset-x: 0;
-      top: 0;
-      height: 50%;
-      border-radius: inherit;
-      background: linear-gradient(to bottom, rgba(255,255,255,0.2), transparent);
-      opacity: 0.5;
-      pointer-events: none;
-    }
-    .grad-text {
-      background: linear-gradient(to right, #3B82F6, #2563EB);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .underline-hover:hover { text-decoration: underline; }
-    @keyframes shimmer-badge {
-      0%,100% { transform: translateX(-200%); }
-      50% { transform: translateX(300%); }
-    }
-    .animate-shimmer-badge { animation: shimmer-badge 3s ease-in-out infinite; }
-    @keyframes subtle-flow {
-      0% { left: -100%; opacity: 0; }
-      50% { opacity: 0.5; }
-      100% { left: 200%; opacity: 0; }
-    }
-    .animate-flow { animation: subtle-flow 3s ease-in-out infinite; }
-    .accordion-content { display: none; }
-    .accordion-item.open .accordion-content { display: block; }
-    .accordion-item.open .accordion-arrow { transform: rotate(180deg); }
-    .accordion-arrow { transition: transform 0.2s; }
-    .faq-content { display: none; }
-    .faq-item.open .faq-content { display: block; }
-    .faq-item.open .faq-arrow { transform: rotate(180deg); }
-    .faq-arrow { transition: transform 0.2s; }
-    .card-hover { transition: transform 0.2s, box-shadow 0.2s; }
-    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
-    .logo-text { font-weight: 800; font-size: 1.5rem; letter-spacing: -0.03em; }
-    .progress-bar-fill { height: 100%; border-radius: 9999px; background-color: #1754D8; transition: width 0.3s; }
-    .section-max { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prova X — Curso PRF com IA: edital completo, questões e revisão</title>
+<meta name="description" content="Estude para a Polícia Rodoviária Federal com a Athena IA: 15 disciplinas, 303 tópicos do edital, questões no padrão Cebraspe, revisão inteligente e cronograma adaptativo.">
+<link rel="canonical" href="https://provaxai.lovable.app/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Prova X — Curso PRF com IA: edital completo, questões e revisão">
+<meta property="og:description" content="15 disciplinas, 303 tópicos do edital da PRF, questões no padrão Cebraspe e uma IA que estuda junto com você.">
+<meta property="og:image" content="https://provaxai.lovable.app/curso-prf.jpg">
+<meta property="og:url" content="https://provaxai.lovable.app/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Prova X — Curso PRF com IA">
+<meta name="twitter:description" content="O edital da PRF inteiro, com uma IA que estuda junto com você.">
+<meta name="twitter:image" content="https://provaxai.lovable.app/curso-prf.jpg">
+<meta name="theme-color" content="#2563EB">
+<link rel="icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F7F8FB; --bg-soft:#FFFFFF; --surface:#FFFFFF; --surface-2:#F1F4F9;
+  --text:#0B1120; --muted:#5A6577; --faint:#8A94A6; --line:#E4E8EF;
+  --brand:#2563EB; --brand-2:#3B82F6; --brand-soft:#EFF4FF;
+  --amber:#F59E0B; --emerald:#10B981; --violet:#8B5CF6; --rose:#F43F5E;
+  --shadow-s:0 1px 2px rgba(11,17,32,.05), 0 1px 3px rgba(11,17,32,.06);
+  --shadow-m:0 4px 12px rgba(11,17,32,.06), 0 12px 32px -12px rgba(11,17,32,.14);
+  --shadow-l:0 12px 28px rgba(11,17,32,.08), 0 40px 80px -32px rgba(11,17,32,.28);
+  --r-s:10px; --r-m:16px; --r-l:24px;
+}
+body.dark{
+  --bg:#080C15; --bg-soft:#0B1120; --surface:#0F172A; --surface-2:#131C2F;
+  --text:#F3F6FB; --muted:#9AA6B8; --faint:#6B7688; --line:#1E293B;
+  --brand:#3B82F6; --brand-2:#60A5FA; --brand-soft:#122murky;
+  --brand-soft:#111E38;
+  --shadow-s:0 1px 2px rgba(0,0,0,.4);
+  --shadow-m:0 6px 18px rgba(0,0,0,.45);
+  --shadow-l:0 20px 60px rgba(0,0,0,.6);
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  -webkit-font-smoothing:antialiased; line-height:1.6; overflow-x:hidden;
+}
+h1,h2,h3,h4,.font-d{font-family:Sora,Inter,sans-serif;letter-spacing:-.03em;line-height:1.08;font-weight:700}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+.wrap{width:100%;max-width:1160px;margin:0 auto;padding:0 20px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--brand)}
+.lead{color:var(--muted);font-size:17px}
+section{position:relative}
+.sec{padding:96px 0}
+@media(max-width:768px){.sec{padding:64px 0}}
+
+/* ---------- header ---------- */
+.hdr{position:fixed;inset:0 0 auto 0;height:66px;z-index:60;
+  background:color-mix(in srgb,var(--bg) 78%,transparent);
+  backdrop-filter:saturate(180%) blur(14px);border-bottom:1px solid transparent;transition:border-color .25s,background .25s}
+.hdr.scrolled{border-bottom-color:var(--line)}
+.hdr .wrap{height:100%;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{display:flex;align-items:center;gap:9px;font-family:Sora;font-weight:800;font-size:20px;letter-spacing:-.04em}
+.brand .mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--brand-2),var(--brand));
+  display:grid;place-items:center;color:#fff;font-size:15px;font-weight:800;box-shadow:0 4px 12px rgba(37,99,235,.35)}
+.nav{display:flex;align-items:center;gap:28px}
+.nav a{font-size:14.5px;font-weight:500;color:var(--muted);transition:color .18s}
+.nav a:hover{color:var(--text)}
+.hdr-act{display:flex;align-items:center;gap:10px}
+.icon-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface);
+  color:var(--muted);display:grid;place-items:center;cursor:pointer;transition:.18s}
+.icon-btn:hover{color:var(--text);border-color:var(--brand);}
+.icon-btn svg{width:17px;height:17px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:15px;
+  border-radius:12px;padding:11px 20px;cursor:pointer;border:1px solid transparent;transition:transform .16s,box-shadow .2s,background .2s;white-space:nowrap}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:linear-gradient(180deg,var(--brand-2),var(--brand));color:#fff;
+  box-shadow:0 1px 0 rgba(255,255,255,.25) inset,0 6px 18px -4px rgba(37,99,235,.5)}
+.btn-primary:hover{box-shadow:0 1px 0 rgba(255,255,255,.3) inset,0 12px 28px -6px rgba(37,99,235,.6);transform:translateY(-1px)}
+.btn-ghost{background:var(--surface);border-color:var(--line);color:var(--text);box-shadow:var(--shadow-s)}
+.btn-ghost:hover{border-color:var(--brand);color:var(--brand)}
+.btn-lg{padding:15px 28px;font-size:16.5px;border-radius:14px}
+.only-desk{display:flex}
+@media(max-width:900px){.only-desk{display:none}}
+
+/* ---------- hero ---------- */
+.hero{padding:132px 0 72px;overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
+@media(max-width:980px){.hero-grid{grid-template-columns:1fr;gap:44px}.hero{padding:104px 0 48px}}
+.glow{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;pointer-events:none;z-index:0}
+.glow-a{width:520px;height:520px;top:-180px;right:-140px;background:radial-gradient(circle,rgba(59,130,246,.30),transparent 65%)}
+.glow-b{width:420px;height:420px;bottom:-200px;left:-160px;background:radial-gradient(circle,rgba(139,92,246,.20),transparent 65%)}
+.hero .wrap{position:relative;z-index:1}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 13px 6px 7px;border-radius:999px;
+  background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-s);font-size:13px;font-weight:500;color:var(--muted)}
+.pill b{background:var(--brand-soft);color:var(--brand);font-weight:700;font-size:11.5px;padding:3px 8px;border-radius:999px;letter-spacing:.02em}
+h1.hero-t{font-size:clamp(38px,5.4vw,66px);font-weight:800;margin:22px 0 18px}
+h1.hero-t .hl{position:relative;background:linear-gradient(100deg,var(--brand-2),var(--brand));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero-sub{font-size:18.5px;color:var(--muted);max-width:520px}
+.hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin:30px 0 18px}
+.hero-note{font-size:13.5px;color:var(--faint);display:flex;align-items:center;gap:7px}
+.hero-note svg{width:15px;height:15px;color:var(--emerald)}
+
+/* app preview */
+.shot{position:relative;border-radius:var(--r-l);background:var(--surface);border:1px solid var(--line);
+  box-shadow:var(--shadow-l);overflow:hidden;transform:perspective(1400px) rotateY(-7deg) rotateX(3deg);transition:transform .6s cubic-bezier(.22,1,.36,1)}
+.shot:hover{transform:perspective(1400px) rotateY(-2deg) rotateX(1deg) translateY(-4px)}
+@media(max-width:980px){.shot{transform:none}.shot:hover{transform:translateY(-3px)}}
+.shot-bar{display:flex;align-items:center;gap:6px;padding:11px 14px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.dot{width:9px;height:9px;border-radius:50%}
+.shot-url{margin-left:10px;font-size:11.5px;color:var(--faint);font-family:ui-monospace,monospace}
+.shot-body{display:grid;grid-template-columns:150px 1fr;min-height:330px}
+.shot-side{border-right:1px solid var(--line);padding:14px 10px;background:var(--surface-2)}
+.si{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);padding:7px 9px;border-radius:8px;margin-bottom:2px}
+.si.on{background:var(--brand-soft);color:var(--brand);font-weight:600}
+.si i{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.55;flex:none}
+.shot-main{padding:18px}
+.chip{display:inline-block;font-size:11px;font-weight:600;padding:4px 9px;border-radius:999px;background:var(--brand-soft);color:var(--brand)}
+.bubble{border:1px solid var(--line);border-radius:14px;padding:11px 13px;font-size:12.7px;color:var(--muted);margin-top:10px;background:var(--bg-soft)}
+.bubble.me{background:var(--brand);color:#fff;border-color:transparent;margin-left:32px}
+.bar{height:7px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-top:7px}
+.bar span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand-2),var(--brand));animation:grow 1.6s cubic-bezier(.22,1,.36,1) both}
+@keyframes grow{from{width:0}}
+
+/* ---------- stats ---------- */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:var(--r-m);overflow:hidden;box-shadow:var(--shadow-s)}
+.stats div{background:var(--surface);padding:26px 20px;text-align:center}
+.stats b{display:block;font-family:Sora;font-size:30px;font-weight:800;letter-spacing:-.04em}
+.stats small{font-size:12.5px;color:var(--muted)}
+@media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}}
+
+/* ---------- generic cards ---------- */
+.head{max-width:660px;margin-bottom:48px}
+.head.mid{margin-left:auto;margin-right:auto;text-align:center}
+.head h2{font-size:clamp(28px,3.6vw,44px);margin:14px 0 14px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+@media(max-width:900px){.grid-3,.grid-2{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:26px;
+  box-shadow:var(--shadow-s);transition:transform .22s,box-shadow .22s,border-color .22s;position:relative;overflow:hidden}
+.card:hover{transform:translateY(-3px);box-shadow:var(--shadow-m);border-color:color-mix(in srgb,var(--brand) 35%,var(--line))}
+.card h3{font-size:19px;margin-bottom:9px}
+.card p{color:var(--muted);font-size:15px}
+.ico{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;margin-bottom:16px;background:var(--brand-soft);color:var(--brand)}
+.ico svg{width:21px;height:21px}
+.edge{position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:var(--r-m) 0 0 var(--r-m)}
+
+/* pillars */
+.pillar{display:grid;grid-template-columns:1fr 1fr;gap:52px;align-items:center;padding:52px 0}
+.pillar:nth-child(even) .p-media{order:-1}
+@media(max-width:900px){.pillar{grid-template-columns:1fr;gap:28px;padding:34px 0}.pillar:nth-child(even) .p-media{order:0}}
+.pillar h3{font-size:clamp(24px,2.8vw,32px);margin:12px 0 14px}
+.pillar ul{list-style:none;margin-top:18px;display:grid;gap:9px}
+.pillar li{display:flex;gap:10px;font-size:15px;color:var(--muted)}
+.pillar li svg{width:18px;height:18px;color:var(--emerald);flex:none;margin-top:3px}
+.p-media{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);padding:22px;box-shadow:var(--shadow-m)}
+.q{border:1px solid var(--line);border-radius:12px;padding:13px;font-size:14px;background:var(--bg-soft)}
+.q + .q{margin-top:10px}
+.qbtn{display:inline-flex;gap:8px;margin-top:12px}
+.qbtn span{font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:9px;border:1px solid var(--line);color:var(--muted)}
+.qbtn span.ok{border-color:var(--emerald);color:var(--emerald);background:color-mix(in srgb,var(--emerald) 10%,transparent)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal i{aspect-ratio:1;border-radius:7px;background:var(--surface-2);display:block}
+.cal i.l1{background:color-mix(in srgb,var(--brand) 25%,transparent)}
+.cal i.l2{background:color-mix(in srgb,var(--brand) 55%,transparent)}
+.cal i.l3{background:var(--brand)}
+
+/* disciplinas */
+.disc{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:820px){.disc{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.disc{grid-template-columns:1fr}}
+.d{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px 14px 18px;position:relative;
+  overflow:hidden;box-shadow:var(--shadow-s);transition:transform .2s,box-shadow .2s}
+.d:hover{transform:translateY(-2px);box-shadow:var(--shadow-m)}
+.d b{display:block;font-size:14.5px;font-weight:600}
+.d small{color:var(--faint);font-size:12.5px}
+
+/* course */
+.course{display:grid;grid-template-columns:.9fr 1.1fr;gap:0;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r-l);overflow:hidden;box-shadow:var(--shadow-l)}
+@media(max-width:900px){.course{grid-template-columns:1fr}}
+.course img{height:100%;min-height:280px;object-fit:cover;width:100%}
+.course-in{padding:38px}
+@media(max-width:520px){.course-in{padding:26px}}
+
+/* pricing */
+.plans{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;max-width:880px;margin:0 auto}
+@media(max-width:760px){.plans{grid-template-columns:1fr}}
+.plan{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);padding:32px;box-shadow:var(--shadow-s);position:relative}
+.plan.best{border-color:var(--brand);box-shadow:var(--shadow-l)}
+.plan .tag{position:absolute;top:-12px;right:24px;background:var(--brand);color:#fff;font-size:11.5px;font-weight:700;
+  padding:5px 12px;border-radius:999px;letter-spacing:.02em}
+.price{font-family:Sora;font-size:46px;font-weight:800;letter-spacing:-.04em;line-height:1}
+.price small{font-size:15px;font-weight:500;color:var(--muted);letter-spacing:0}
+.plan ul{list-style:none;margin:22px 0;display:grid;gap:11px}
+.plan li{display:flex;gap:10px;font-size:14.7px;color:var(--muted)}
+.plan li svg{width:18px;height:18px;color:var(--brand);flex:none;margin-top:3px}
+.plan .btn{width:100%}
+
+/* faq */
+.faq{max-width:760px;margin:0 auto;display:grid;gap:10px}
+.fq{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;transition:border-color .2s}
+.fq[open]{border-color:var(--brand)}
+.fq summary{list-style:none;cursor:pointer;padding:18px 22px;font-weight:600;font-size:15.5px;display:flex;
+  align-items:center;justify-content:space-between;gap:16px}
+.fq summary::-webkit-details-marker{display:none}
+.fq summary::after{content:"";width:9px;height:9px;border-right:2px solid var(--faint);border-bottom:2px solid var(--faint);
+  transform:rotate(45deg);flex:none;transition:transform .2s;margin-top:-4px}
+.fq[open] summary::after{transform:rotate(-135deg);margin-top:2px}
+.fq p{padding:0 22px 20px;color:var(--muted);font-size:15px}
+
+/* cta + footer */
+.cta{border-radius:var(--r-l);padding:60px 32px;text-align:center;position:relative;overflow:hidden;
+  background:linear-gradient(135deg,#1D4ED8,#2563EB 45%,#3B82F6);box-shadow:var(--shadow-l)}
+.cta::after{content:"";position:absolute;inset:0;background:radial-gradient(600px 240px at 50% -20%,rgba(255,255,255,.28),transparent 70%)}
+.cta > *{position:relative;z-index:1;color:#fff}
+.cta h2{font-size:clamp(27px,3.6vw,40px);margin-bottom:14px}
+.cta p{color:rgba(255,255,255,.85);max-width:520px;margin:0 auto 26px}
+.cta .btn{background:#fff;color:#1D4ED8;box-shadow:0 10px 30px -8px rgba(0,0,0,.4)}
+footer{border-top:1px solid var(--line);padding:52px 0 34px;margin-top:96px;background:var(--bg-soft)}
+.fgrid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:32px}
+@media(max-width:760px){.fgrid{grid-template-columns:1fr 1fr}}
+footer h4{font-size:13px;font-weight:700;margin-bottom:12px}
+footer ul{list-style:none;display:grid;gap:9px}
+footer li a{font-size:14px;color:var(--muted)}
+footer li a:hover{color:var(--brand)}
+.fbot{border-top:1px solid var(--line);margin-top:36px;padding-top:22px;font-size:13px;color:var(--faint);
+  display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.22,1,.36,1),transform .7s cubic-bezier(.22,1,.36,1)}
+.rv.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}.shot{transform:none}}
+
+/* mobile menu */
+.mob{position:fixed;inset:66px 0 auto 0;background:var(--bg-soft);border-bottom:1px solid var(--line);
+  padding:16px 20px 22px;display:none;z-index:55;box-shadow:var(--shadow-m)}
+.mob.open{display:block}
+.mob a{display:block;padding:12px 0;font-weight:600;border-bottom:1px solid var(--line)}
+.mob .btn{width:100%;margin-top:16px}
+</style>
 </head>
-<body class="bg-white text-gray-900">
+<body>
 
-<!-- FIXED HEADER -->
-<header class="fixed left-0 top-0 h-16 w-full bg-white z-50 border-b border-gray-100">
-  <div class="mx-auto h-full w-full max-w-[1500px] px-5 md:w-[85%] lg:w-[75%]">
-    <div class="flex h-full w-full items-center justify-between gap-4">
-      <!-- Logo -->
-      <a href="index.html" class="flex items-center gap-1.5">
-        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="28" height="28" rx="8" fill="url(#logo-grad)"/>
-          <path d="M8 10h12M8 14h8M8 18h10" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-          <defs>
-            <linearGradient id="logo-grad" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-              <stop stop-color="#3B82F6"/>
-              <stop offset="1" stop-color="#2563EB"/>
-            </linearGradient>
-          </defs>
-        </svg>
-        <span class="logo-text" style="background:linear-gradient(to right,#3B82F6,#2563EB);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Prova X</span>
-      </a>
-
-      <!-- Nav -->
-      <nav class="hidden md:flex items-center gap-8">
-        <a class="underline-hover flex items-center gap-1.5 text-base font-medium text-gray-900" href="#">
-          Vagas
-          <span class="rounded-md px-2 py-[3px] text-[10px] font-semibold leading-none border border-green-200 bg-green-50 text-green-600">Contratando</span>
-        </a>
-        <a class="underline-hover text-base font-medium text-gray-900" href="#cursos">Cursos</a>
-        <a class="underline-hover text-base font-medium text-gray-900" href="blog.html">Blog</a>
-        <a class="underline-hover text-base font-medium text-gray-900" href="home.html">Explorar</a>
-
-        <a class="underline-hover text-base font-medium text-gray-900" href="pricing.html">Preços</a>
-      </nav>
-
-      <!-- Dashboard button -->
-      <div class="hidden md:block">
-        <a href="home.html" class="btn-orange text-white font-medium px-5 py-2 text-sm rounded-xl transition-all duration-200 active:scale-[0.98] inline-block">
-          <div class="btn-orange-inner-glow"></div>
-          <span class="relative z-10">Dashboard</span>
-        </a>
-      </div>
-
-      <!-- Mobile hamburger -->
-      <button class="md:hidden flex flex-col gap-1.5 p-1" aria-label="Menu">
-        <span class="block h-0.5 w-6 bg-black"></span>
-        <span class="block h-0.5 w-6 bg-black"></span>
-        <span class="block h-0.5 w-6 bg-black"></span>
+<header class="hdr" id="hdr">
+  <div class="wrap">
+    <a class="brand" href="index.html"><span class="mark">X</span> Prova X</a>
+    <nav class="nav only-desk">
+      <a href="#curso">Curso PRF</a>
+      <a href="#recursos">Recursos</a>
+      <a href="#como">Como funciona</a>
+      <a href="#planos">Planos</a>
+      <a href="#faq">Dúvidas</a>
+    </nav>
+    <div class="hdr-act">
+      <button class="icon-btn" id="px-theme-btn" onclick="pxToggleTheme()" aria-label="Alternar tema"></button>
+      <a class="btn btn-ghost only-desk" id="loginBtn" href="login.html">Entrar</a>
+      <a class="btn btn-primary" href="#planos">Começar agora</a>
+      <button class="icon-btn" id="mobBtn" aria-label="Menu" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
       </button>
     </div>
   </div>
 </header>
+<div class="mob" id="mob">
+  <a href="#curso">Curso PRF</a>
+  <a href="#recursos">Recursos</a>
+  <a href="#como">Como funciona</a>
+  <a href="#planos">Planos</a>
+  <a href="#faq">Dúvidas</a>
+  <a class="btn btn-ghost" href="login.html">Entrar</a>
+</div>
 
 <main>
-  <!-- HERO -->
-  <section class="relative flex min-h-screen flex-col lg:h-screen" style="background: linear-gradient(to bottom, #ffffff, #EFF6FF, #DBEAFE);">
-    <div class="relative z-10 mx-auto flex h-full w-full max-w-[1500px] flex-col justify-end px-5 pb-16 pt-20 md:w-[85%] lg:w-[75%] lg:justify-center lg:pb-0 lg:pt-0">
 
-      <!-- Mobile hero -->
-      <div class="py-8 lg:hidden">
-        <div class="text-center">
-          <!-- Badge -->
-          <div class="mb-4 flex items-center justify-center gap-2">
-            <a class="relative flex items-center gap-2.5 overflow-hidden rounded-full px-5 py-2 shadow-sm transition-all duration-300 hover:scale-[1.02] border border-blue-300/60 bg-blue-50 hover:bg-blue-100/80" href="#">
-              <span class="animate-shimmer-badge absolute inset-0 pointer-events-none" style="background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.7) 50%,transparent 100%);width:40%;"></span>
-              <span class="relative z-10 text-lg">🎉</span>
-              <span class="relative z-10 text-[15px] font-semibold text-blue-800">Acabamos de atingir 2 milhões de usuários!</span>
-              <svg class="relative z-10 h-4 w-4 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-            </a>
-          </div>
-          <h1 class="font-satoshi mb-6 text-[10vw] font-bold leading-[1.1] tracking-[-0.03em] text-gray-900 mx-auto w-[100%] text-center">
-            Aprenda Mais Rápido...<br>
-            <span class="grad-text">Muito Mais Rápido</span>
-          </h1>
-          <p class="text-base text-gray-900 mb-6 font-medium">Prova X é a ferramenta de estudo com IA #1 e Anotador com IA — Mande nas provas e elimine as tarefas 10x mais rápido.</p>
-          <div class="flex flex-col items-center gap-4">
-            <a href="home.html" class="btn-orange text-white font-medium px-8 py-3.5 text-lg rounded-xl transition-all duration-200 active:scale-[0.98] inline-block">
-              <div class="btn-orange-inner-glow"></div>
-              <span class="relative z-10">Comece a aprender mais rápido →</span>
-            </a>
-            <div class="flex flex-col items-center">
-              <div class="flex -space-x-1.5">
-                <div class="w-8 h-8 rounded-full bg-blue-300 border-2 border-white flex items-center justify-center text-xs font-bold text-white">J</div>
-                <div class="w-8 h-8 rounded-full bg-blue-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white">Y</div>
-                <div class="w-8 h-8 rounded-full bg-green-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white">K</div>
-                <div class="w-8 h-8 rounded-full bg-purple-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white">R</div>
-                <div class="w-8 h-8 rounded-full bg-pink-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white">S</div>
-                <div class="w-8 h-8 rounded-full bg-yellow-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white">E</div>
-              </div>
-              <p class="mt-2 font-medium text-gray-900">Amado por mais de 2.000.000 de estudantes</p>
-            </div>
-          </div>
+<!-- HERO -->
+<section class="hero">
+  <div class="glow glow-a"></div><div class="glow glow-b"></div>
+  <div class="wrap">
+    <div class="hero-grid">
+      <div class="rv">
+        <span class="pill"><b>NOVO</b> Athena IA responde sobre qualquer tópico do edital</span>
+        <h1 class="hero-t">O edital da PRF inteiro, com uma <span class="hl">IA que estuda junto</span> com você.</h1>
+        <p class="hero-sub">Aula, questões no padrão Cebraspe, revisão espaçada e cronograma adaptativo — tudo dentro de um único ambiente, organizado tópico a tópico.</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary btn-lg" href="#planos">Garantir meu acesso</a>
+          <a class="btn btn-ghost btn-lg" href="#curso">Ver o curso PRF</a>
         </div>
+        <p class="hero-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          7 dias de garantia · cancele quando quiser
+        </p>
       </div>
 
-      <!-- Desktop hero: 2 columns -->
-      <div class="hidden h-full items-center justify-center lg:flex">
-        <div class="grid w-full items-center lg:grid-cols-2 gap-12">
-          <!-- Left col -->
-          <div>
-            <!-- Badge -->
-            <div class="flex items-center mb-5">
-              <a class="relative flex items-center gap-2.5 overflow-hidden rounded-full px-5 py-2 shadow-sm transition-all duration-300 hover:scale-[1.02] border border-blue-300/60 bg-blue-50 hover:bg-blue-100/80" href="#">
-                <span class="animate-shimmer-badge absolute inset-0 pointer-events-none" style="background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.7) 50%,transparent 100%);width:40%;"></span>
-                <span class="relative z-10 text-lg">🎉</span>
-                <span class="relative z-10 font-semibold text-blue-800">Acabamos de atingir 2 milhões de usuários!</span>
-                <svg class="relative z-10 h-4 w-4 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-              </a>
-            </div>
-
-            <h1 class="font-satoshi text-[clamp(40px,4.5vw,76px)] font-bold text-gray-900 leading-[0.9] tracking-[-0.03em] mb-6">
-              Learn Faster...<br>
-              <span class="grad-text">Like, a Lot Faster</span>
-            </h1>
-
-            <p class="text-[clamp(16px,1.4vw,20px)] text-gray-700 mb-8">
-              Prova X é a ferramenta de estudo com IA #1 e Anotador com IA — Mande nas provas e elimine as tarefas 10x mais rápido.
-            </p>
-
-            <div class="flex items-center gap-4 mb-8">
-              <a href="home.html" class="btn-orange text-white font-medium px-8 py-4 text-xl rounded-xl transition-all duration-200 active:scale-[0.98] inline-block">
-                <div class="btn-orange-inner-glow"></div>
-                <span class="relative z-10">Comece a aprender mais rápido →</span>
-              </a>
-            </div>
-
-            <div class="flex items-center gap-3">
-              <div class="flex -space-x-1.5">
-                <div class="w-8 h-8 rounded-full bg-blue-300 border-2 border-white flex items-center justify-center text-xs font-bold text-white">J</div>
-                <div class="w-8 h-8 rounded-full bg-blue-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white">Y</div>
-                <div class="w-8 h-8 rounded-full bg-green-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white">K</div>
-                <div class="w-8 h-8 rounded-full bg-purple-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white">R</div>
-                <div class="w-8 h-8 rounded-full bg-pink-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white">S</div>
-                <div class="w-8 h-8 rounded-full bg-yellow-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white">E</div>
-              </div>
-              <p class="font-medium text-gray-900">Amado por mais de 2.000.000 de estudantes</p>
-            </div>
+      <div class="rv">
+        <div class="shot">
+          <div class="shot-bar">
+            <span class="dot" style="background:#FF5F57"></span>
+            <span class="dot" style="background:#FEBC2E"></span>
+            <span class="dot" style="background:#28C840"></span>
+            <span class="shot-url">provax.app/workspace/legislacao-de-transito</span>
           </div>
-
-          <!-- Right col: Curso PRF em destaque -->
-          <div id="cursos" class="flex justify-center scroll-mt-24">
-            <div class="w-full max-w-[460px] border border-[#E5E5E5] bg-white rounded-2xl shadow-xl overflow-hidden">
-              <div class="h-[190px] bg-gray-900">
-                <img src="curso-prf.jpg" alt="Viatura da Polícia Rodoviária Federal em rodovia ao entardecer" class="h-full w-full object-cover" style="object-position:35% 60%;" width="1600" height="912">
+          <div class="shot-body">
+            <div class="shot-side">
+              <div class="si on"><i></i>Aula com Athena</div>
+              <div class="si"><i></i>Questões</div>
+              <div class="si"><i></i>Simulado</div>
+              <div class="si"><i></i>Flashcards</div>
+              <div class="si"><i></i>Revisão</div>
+              <div class="si"><i></i>Cronograma</div>
+              <div style="margin-top:16px;font-size:11px;color:var(--faint);padding:0 9px">PROGRESSO</div>
+              <div style="padding:0 9px">
+                <div class="bar"><span style="width:68%"></span></div>
+                <div style="font-size:11px;color:var(--faint);margin-top:5px">68% · 16/23 tópicos</div>
               </div>
-              <div class="border-b border-[#E5E5E5] bg-white px-5 py-4">
-                <span class="inline-block rounded-full bg-blue-50 px-3 py-1 text-[11px] font-bold tracking-wider text-[#2563EB]">CURSO COMPLETO</span>
-                <h3 class="mt-2 text-lg font-semibold text-gray-900">Curso Polícia Rodoviária Federal</h3>
-                <p class="mt-1 text-sm text-gray-500">Aulas com a Athena IA, flashcards, questões e simulados no padrão Cebraspe.</p>
-              </div>
-              <div class="bg-white px-5 py-4 grid gap-2 text-[15px] text-gray-700">
-                <div>✓ 15 disciplinas do edital</div>
-                <div>✓ 96 tópicos com trilha guiada</div>
-                <div>✓ Questões e simulados Certo/Errado</div>
-                <div>✓ Revisão espaçada e inteligente</div>
-              </div>
-              <div class="border-t border-[#E5E5E5] bg-white px-5 py-4">
-                <div class="text-sm text-gray-600 mb-2 font-medium">Seu caminho para o domínio</div>
-                <div class="mb-4 flex items-center gap-3">
-                  <div class="h-2.5 w-full rounded-full bg-gray-200 overflow-hidden">
-                    <div class="progress-bar-fill" style="width:44%"></div>
-                  </div>
-                  <div class="text-sm font-semibold text-gray-900 whitespace-nowrap">44%</div>
-                </div>
-                <a href="login.html?curso=Curso%20Pol%C3%ADcia%20Rodovi%C3%A1ria%20Federal&next=disciplinas.html%3Fid%3Dprf-2021%26type%3DEdital%26title%3DConcurso%2520PRF" class="btn-orange text-white font-medium w-full text-center px-6 py-3 text-base rounded-xl transition-all duration-200 active:scale-[0.98] inline-block">
-                  <div class="btn-orange-inner-glow"></div>
-                  <span class="relative z-10">Acessar o curso →</span>
-                </a>
+            </div>
+            <div class="shot-main">
+              <span class="chip">Legislação de Trânsito</span>
+              <h4 style="font-size:16px;margin:10px 0 2px">Medidas administrativas x penalidades</h4>
+              <div class="bubble me">Qual a diferença entre penalidade e medida administrativa?</div>
+              <div class="bubble"><b style="color:var(--brand)">Athena</b> — Penalidade é a sanção aplicada ao infrator (multa, suspensão, cassação). A medida administrativa é providência imediata de caráter preventivo, como retenção do veículo ou recolhimento da CNH…</div>
+              <div class="bubble" style="display:flex;gap:8px;align-items:center;justify-content:space-between">
+                <span>Fixação imediata</span>
+                <span class="chip">10 questões →</span>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </section>
 
+    <div class="stats rv" style="margin-top:64px">
+      <div><b>15</b><small>disciplinas do edital</small></div>
+      <div><b>303</b><small>tópicos mapeados</small></div>
+      <div><b>8</b><small>ferramentas por tópico</small></div>
+      <div><b>24/7</b><small>Athena disponível</small></div>
+    </div>
+  </div>
+</section>
 
-  <!-- UNIVERSITY LOGOS -->
-  <section class="py-12 bg-white border-t border-gray-100">
-    <div class="section-max">
-      <p class="text-center text-gray-500 font-medium mb-8 text-sm uppercase tracking-wide">Estudantes das principais universidades confiam na nossa poderosa ferramenta de estudo com IA</p>
-      <div class="flex flex-wrap items-center justify-center gap-8 opacity-60 grayscale">
-        <!-- MIT -->
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 bg-gray-800 rounded flex items-center justify-center">
-            <span class="text-white text-[10px] font-black">MIT</span>
-          </div>
+<!-- PROBLEMA -->
+<section class="sec" id="problema">
+  <div class="wrap">
+    <div class="head mid rv">
+      <span class="eyebrow">Por que a maioria trava</span>
+      <h2>Não falta conteúdo. Falta método.</h2>
+      <p class="lead">Quem estuda para a PRF tem 15 disciplinas, milhares de páginas e nenhum sinal claro de progresso. O Prova X ataca os três pontos onde a preparação quebra.</p>
+    </div>
+    <div class="grid-3">
+      <div class="card rv"><span class="edge" style="background:var(--rose)"></span>
+        <div class="ico" style="background:color-mix(in srgb,var(--rose) 12%,transparent);color:var(--rose)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></div>
+        <h3>Edital gigante, zero direção</h3>
+        <p>Você abre o PDF do edital e não sabe por onde começar nem quanto pesa cada disciplina na prova.</p>
+      </div>
+      <div class="card rv"><span class="edge" style="background:var(--amber)"></span>
+        <div class="ico" style="background:color-mix(in srgb,var(--amber) 14%,transparent);color:var(--amber)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="9"/></svg></div>
+        <h3>Esquece o que estudou</h3>
+        <p>Sem revisão programada, o conteúdo de duas semanas atrás evapora bem na hora da prova.</p>
+      </div>
+      <div class="card rv"><span class="edge" style="background:var(--violet)"></span>
+        <div class="ico" style="background:color-mix(in srgb,var(--violet) 12%,transparent);color:var(--violet)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18M7 15l4-4 3 3 5-6"/></svg></div>
+        <h3>Estuda sem medir</h3>
+        <p>Horas acumuladas não são desempenho. Sem dados por capítulo, você não sabe qual ponto ainda derruba você.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PILARES -->
+<section class="sec" id="recursos" style="background:var(--bg-soft);border-block:1px solid var(--line)">
+  <div class="wrap">
+    <div class="head mid rv">
+      <span class="eyebrow">A plataforma</span>
+      <h2>Quatro pilares, um só lugar</h2>
+      <p class="lead">Cada tópico do edital abre um workspace completo. Você não troca de aba, não procura material, não perde o fio.</p>
+    </div>
+
+    <div class="pillar rv">
+      <div>
+        <span class="eyebrow">01 · Aprender</span>
+        <h3>Aula com a Athena IA</h3>
+        <p class="lead">Uma explicação escrita para o tópico exato do edital, com exemplos aplicados à realidade da PRF. Ficou dúvida? Pergunte ali mesmo, sem sair da aula.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Explicação e resumo inteligente por tópico</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Chat contextual que conhece o que você está lendo</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Versão em podcast para ouvir no deslocamento</li>
+        </ul>
+      </div>
+      <div class="p-media">
+        <span class="chip">Direito Constitucional</span>
+        <div class="bubble me">Explica o art. 144 focando na PRF</div>
+        <div class="bubble">O art. 144 lista os órgãos de segurança pública. A PRF aparece no inciso II e tem por função o patrulhamento ostensivo das rodovias federais…</div>
+        <div class="bubble" style="border-style:dashed">Quer que eu monte 5 questões sobre isso?</div>
+      </div>
+    </div>
+
+    <div class="pillar rv">
+      <div>
+        <span class="eyebrow">02 · Praticar</span>
+        <h3>Questões no padrão Cebraspe</h3>
+        <p class="lead">Certo ou errado, com a regra real da banca: item errado anula item certo. Você treina exatamente o cálculo de risco que a prova cobra.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Pontuação líquida idêntica à do Cebraspe</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Comentário da Athena em cada item</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Simulados por disciplina ou gerais</li>
+        </ul>
+      </div>
+      <div class="p-media">
+        <div class="q">A medida administrativa de recolhimento da CNH constitui espécie de penalidade prevista no CTB.
+          <div class="qbtn"><span>Certo</span><span class="ok">Errado ✓</span></div>
         </div>
-        <!-- Yale -->
-        <div class="flex items-center">
-          <span class="text-2xl font-bold text-gray-800 tracking-tight">Yale</span>
+        <div class="q" style="color:var(--muted);font-size:13.5px">A Athena explica: recolhimento da CNH é medida administrativa (art. 269), não penalidade (art. 256).</div>
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--faint);margin-top:14px"><span>Placar líquido</span><b style="color:var(--emerald)">+7 de 10</b></div>
+        <div class="bar"><span style="width:70%"></span></div>
+      </div>
+    </div>
+
+    <div class="pillar rv">
+      <div>
+        <span class="eyebrow">03 · Revisar</span>
+        <h3>Revisão inteligente e flashcards</h3>
+        <p class="lead">O sistema devolve o conteúdo para você na hora certa — antes que ele suma. Modo lacunas para completar trechos e fixar redação de lei.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Repetição espaçada por tópico</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Flashcards gerados do próprio conteúdo</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Modo lacunas para letra de lei</li>
+        </ul>
+      </div>
+      <div class="p-media">
+        <div class="q"><b>Hoje · 12 cartões</b><div class="bar" style="margin-top:9px"><span style="width:45%"></span></div></div>
+        <div class="q">Constituem crimes de trânsito os previstos nos arts. <b style="color:var(--brand)">302 a 312</b> do CTB.</div>
+        <div class="q" style="border-style:dashed;color:var(--faint)">Modo lacunas: “A prescrição da pretensão punitiva regula-se pelo ______ da pena.”</div>
+      </div>
+    </div>
+
+    <div class="pillar rv">
+      <div>
+        <span class="eyebrow">04 · Evoluir</span>
+        <h3>Cronograma adaptativo e estatísticas</h3>
+        <p class="lead">O plano de estudo se reorganiza pelo peso da disciplina no edital e pelo seu domínio real. As estatísticas mostram desempenho por capítulo, não só um número solto.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Blocos diários com meta e vistas de semana/mês</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Prioriza o que pesa mais e o que você erra mais</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Desempenho por disciplina, capítulo e tópico</li>
+        </ul>
+      </div>
+      <div class="p-media">
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--faint);margin-bottom:10px"><span>Últimas 4 semanas</span><span>meta 3h/dia</span></div>
+        <div class="cal">
+          <i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l2"></i><i class="l3"></i><i></i><i class="l1"></i>
+          <i class="l2"></i><i class="l3"></i><i class="l1"></i><i class="l3"></i><i class="l2"></i><i class="l1"></i><i></i>
+          <i class="l3"></i><i class="l2"></i><i class="l3"></i><i class="l3"></i><i class="l1"></i><i class="l2"></i><i class="l1"></i>
+          <i class="l2"></i><i class="l3"></i><i class="l3"></i><i class="l2"></i><i class="l3"></i><i class="l1"></i><i class="l2"></i>
         </div>
-        <!-- UT Austin -->
-        <div class="flex items-center gap-1">
-          <div class="w-7 h-7 bg-gray-700 rounded-full flex items-center justify-center">
-            <span class="text-white text-[9px] font-bold">UT</span>
-          </div>
-          <span class="text-sm font-bold text-gray-700">AUSTIN</span>
-        </div>
-        <!-- Cornell -->
-        <div class="flex items-center">
-          <span class="text-xl font-bold text-gray-800">Cornell</span>
-        </div>
-        <!-- Stanford -->
-        <div class="flex items-center">
-          <span class="text-xl font-bold text-gray-800">Stanford</span>
-        </div>
-        <!-- Harvard -->
-        <div class="flex items-center">
-          <span class="text-xl font-bold text-gray-800">Harvard</span>
-        </div>
-        <!-- Princeton -->
-        <div class="flex items-center">
-          <span class="text-xl font-bold text-gray-800">Princeton</span>
+        <div style="margin-top:16px;font-size:13px;color:var(--muted)">Legislação de Trânsito <b style="float:right;color:var(--emerald)">82%</b></div>
+        <div class="bar"><span style="width:82%"></span></div>
+        <div style="margin-top:10px;font-size:13px;color:var(--muted)">Direito Penal <b style="float:right;color:var(--amber)">54%</b></div>
+        <div class="bar"><span style="width:54%;background:linear-gradient(90deg,#FBBF24,#F59E0B)"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMO FUNCIONA -->
+<section class="sec" id="como">
+  <div class="wrap">
+    <div class="head mid rv">
+      <span class="eyebrow">Em 3 passos</span>
+      <h2>Do edital ao domínio do tópico</h2>
+    </div>
+    <div class="grid-3">
+      <div class="card rv"><span class="edge" style="background:var(--brand)"></span>
+        <div class="ico">1</div><h3>Escolha a disciplina</h3>
+        <p>Abra o Curso PRF e navegue pelos 303 tópicos já organizados na ordem do edital.</p></div>
+      <div class="card rv"><span class="edge" style="background:var(--brand)"></span>
+        <div class="ico">2</div><h3>Estude com a Athena</h3>
+        <p>Leia a aula, tire dúvidas no chat e ouça o resumo em podcast quando estiver na rua.</p></div>
+      <div class="card rv"><span class="edge" style="background:var(--brand)"></span>
+        <div class="ico">3</div><h3>Fixe e acompanhe</h3>
+        <p>Resolva questões, marque o tópico como dominado e deixe a revisão trabalhar por você.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CURSO PRF -->
+<section class="sec" id="curso" style="background:var(--bg-soft);border-block:1px solid var(--line)">
+  <div class="wrap">
+    <div class="head mid rv">
+      <span class="eyebrow">Conteúdo</span>
+      <h2>Curso Polícia Rodoviária Federal</h2>
+      <p class="lead">O edital completo, disciplina por disciplina, com todos os capítulos e tópicos já mapeados dentro da plataforma.</p>
+    </div>
+
+    <div class="course rv" style="margin-bottom:26px">
+      <img src="curso-prf.jpg" alt="Viatura da Polícia Rodoviária Federal em rodovia" loading="lazy">
+      <div class="course-in">
+        <span class="chip">15 disciplinas · 303 tópicos</span>
+        <h3 style="font-size:clamp(24px,3vw,32px);margin:14px 0 12px">Tudo o que a PRF cobra, pronto para estudar hoje</h3>
+        <p class="lead">Do básico (Português, Raciocínio Lógico, Informática) às específicas mais pesadas (Legislação de Trânsito, Direito Penal, Direito Constitucional). Cada tópico já vem com aula, questões, flashcards e revisão.</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:26px">
+          <a class="btn btn-primary" href="#planos">Acessar o curso</a>
+          <a class="btn btn-ghost" href="login.html?next=study-sets.html">Já sou aluno</a>
         </div>
       </div>
     </div>
-  </section>
 
-  <!-- HOW IT WORKS -->
-  <section class="py-20 bg-white">
-    <div class="section-max">
-      <h2 class="text-center text-3xl font-bold text-gray-900 mb-4">Como funciona</h2>
-      <p class="text-center text-gray-500 mb-12">Faça upload de qualquer material de estudo e o Prova X transforma em poderosas ferramentas de aprendizagem</p>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Card 1: Notes -->
-        <div class="card-hover border border-[#E5E5E5] rounded-2xl overflow-hidden bg-white p-6">
-          <div class="mb-4 w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-            <svg width="20" height="20" fill="none" stroke="#2563EB" stroke-width="2.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          </div>
-          <h3 class="font-bold text-lg text-gray-900 mb-2">Notas Interativas com IA</h3>
-          <p class="text-gray-500 text-sm mb-4">Faça upload de qualquer PDF, vídeo ou áudio e obtenha notas interativas e bem estruturadas em segundos.</p>
-          <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
-            <div class="space-y-2">
-              <div class="h-3 bg-gray-200 rounded-full w-full"></div>
-              <div class="h-3 bg-gray-200 rounded-full w-4/5"></div>
-              <div class="h-3 bg-blue-100 rounded-full w-3/5"></div>
-              <div class="h-3 bg-gray-200 rounded-full w-full"></div>
-              <div class="h-3 bg-gray-200 rounded-full w-2/3"></div>
-            </div>
-          </div>
-        </div>
-        <!-- Card 2: Flashcards -->
-        <div class="card-hover border border-[#E5E5E5] rounded-2xl overflow-hidden bg-white p-6">
-          <div class="mb-4 w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-            <svg width="20" height="20" fill="none" stroke="#3B82F6" stroke-width="2.5" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-          </div>
-          <h3 class="font-bold text-lg text-gray-900 mb-2">Flashcards Inteligentes</h3>
-          <p class="text-gray-500 text-sm mb-4">Flashcards gerados por IA com repetição espaçada para maximizar a retenção e o desempenho nas provas.</p>
-          <div class="bg-blue-50 rounded-xl p-4 border border-blue-100 text-center">
-            <div class="text-sm font-medium text-blue-700 mb-2">Qual é a usina de energia da célula?</div>
-            <div class="bg-white rounded-lg p-2 text-sm text-gray-700 font-medium shadow-sm">Mitocôndria</div>
-          </div>
-        </div>
-        <!-- Card 3: Quiz -->
-        <div class="card-hover border border-[#E5E5E5] rounded-2xl overflow-hidden bg-white p-6">
-          <div class="mb-4 w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
-            <svg width="20" height="20" fill="none" stroke="#22C55E" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-          </div>
-          <h3 class="font-bold text-lg text-gray-900 mb-2">Gerador de Quiz com IA</h3>
-          <p class="text-gray-500 text-sm mb-4">Pratique com questões de múltipla escolha, lacunas e testes escritos adaptados ao seu nível.</p>
-          <div class="bg-green-50 rounded-xl p-4 border border-green-100 space-y-2">
-            <div class="bg-white rounded-lg px-3 py-2 text-sm text-gray-700 border border-green-200">A) Mitocôndria ✓</div>
-            <div class="bg-white rounded-lg px-3 py-2 text-sm text-gray-400 border border-gray-100">B) Núcleo</div>
-          </div>
-        </div>
-        <!-- Card 4: Podcast -->
-        <div class="card-hover border border-[#E5E5E5] rounded-2xl overflow-hidden bg-white p-6">
-          <div class="mb-4 w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
-            <svg width="20" height="20" fill="none" stroke="#A855F7" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-          </div>
-          <h3 class="font-bold text-lg text-gray-900 mb-2">Podcasts de Estudo</h3>
-          <p class="text-gray-500 text-sm mb-4">Transforme suas notas em podcasts de áudio envolventes — estude em movimento, em qualquer lugar, a qualquer hora.</p>
-          <div class="bg-purple-50 rounded-xl p-4 border border-purple-100">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full bg-purple-200 flex items-center justify-center">
-                <svg width="16" height="16" fill="#A855F7" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              </div>
-              <div class="flex-1">
-                <div class="h-2 bg-purple-200 rounded-full w-full mb-1"><div class="h-full w-1/3 bg-purple-500 rounded-full"></div></div>
-                <div class="flex justify-between text-xs text-purple-400"><span>1:24</span><span>4:30</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div class="disc rv">
+      <div class="d"><span class="edge" style="background:#3B82F6"></span><b>Língua Portuguesa</b><small>21 tópicos</small></div>
+      <div class="d"><span class="edge" style="background:#8B5CF6"></span><b>Raciocínio Lógico-Matemático</b><small>20 tópicos</small></div>
+      <div class="d"><span class="edge" style="background:#0EA5E9"></span><b>Informática</b><small>20 tópicos</small></div>
+      <div class="d"><span class="edge" style="background:#14B8A6"></span><b>Física</b><small>19 tópicos</small></div>
+      <div class="d"><span class="edge" style="background:#F59E0B"></span><b>Ética no Serviço Público</b><small>14 tópicos</small></div>
+      <div class="d"><span class="edge" style="background:#10B981"></span><b>Geopolítica Brasileira</b><small>19 tópicos</small></div>
+      <div class="d"><span class="edge" style="background:#6366F1"></span><b>Língua Inglesa</b><small>15 tópicos</small></div>
+      <div class="d"><span class="edge" style="background:#EC4899"></span><b>Língua Espanhola</b><small>14 tópicos</small></div>
+      <div class="d"><span class="edge" style="background:#EF4444"></span><b>Legislação de Trânsito</b><small>23 tópicos</small></div>
+      <div class="d"><span class="edge" style="background:#2563EB"></span><b>Direito Administrativo</b><small>27 tópicos</small></div>
+      <div class="d"><span class="edge" style="background:#7C3AED"></span><b>Direito Constitucional</b><small>26 tópicos</small></div>
+      <div class="d"><span class="edge" style="background:#DC2626"></span><b>Direito Penal</b><small>25 tópicos</small></div>
+      <div class="d"><span class="edge" style="background:#0891B2"></span><b>Direito Processual Penal</b><small>23 tópicos</small></div>
+      <div class="d"><span class="edge" style="background:#B45309"></span><b>Legislação Penal Especial</b><small>17 tópicos</small></div>
+      <div class="d"><span class="edge" style="background:#059669"></span><b>Direitos Humanos e Cidadania</b><small>20 tópicos</small></div>
+    </div>
+  </div>
+</section>
+
+<!-- PLANOS -->
+<section class="sec" id="planos">
+  <div class="wrap">
+    <div class="head mid rv">
+      <span class="eyebrow">Planos</span>
+      <h2>Um preço, acesso completo</h2>
+      <p class="lead">Sem módulo extra, sem upsell. Todo aluno tem a plataforma inteira e o Curso PRF completo.</p>
+    </div>
+    <div class="plans">
+      <div class="plan rv">
+        <h3 style="font-size:18px">Mensal</h3>
+        <p style="font-size:14px;color:var(--muted);margin-bottom:18px">Flexível, para testar no seu ritmo</p>
+        <div class="price">R$47<small>/mês</small></div>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Curso PRF completo (15 disciplinas)</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Athena IA ilimitada</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Questões, simulados e flashcards</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Cronograma e estatísticas</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Cancele quando quiser</li>
+        </ul>
+        <button class="btn btn-ghost" onclick="pxHotmartCheckout('mensal')">Assinar mensal</button>
+      </div>
+      <div class="plan best rv">
+        <span class="tag">Melhor custo</span>
+        <h3 style="font-size:18px">Anual</h3>
+        <p style="font-size:14px;color:var(--muted);margin-bottom:18px">Para quem vai até a posse</p>
+        <div class="price">R$397<small>/ano</small></div>
+        <p style="font-size:13.5px;color:var(--emerald);font-weight:600;margin-top:6px">Equivale a R$33/mês · economia de ~30%</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Tudo do plano mensal</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>12 meses de acesso sem reajuste</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Novos conteúdos incluídos</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Materiais próprios e pastas ilimitadas</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Suporte prioritário</li>
+        </ul>
+        <button class="btn btn-primary" onclick="pxHotmartCheckout('anual')">Assinar anual</button>
       </div>
     </div>
-  </section>
+    <p style="text-align:center;font-size:13.5px;color:var(--faint);margin-top:22px">
+      Pagamento processado pela Hotmart · Pix, boleto e cartão · 7 dias de garantia incondicional
+    </p>
+  </div>
+</section>
 
-  <!-- TRUSTED BY -->
-  <section class="py-20 bg-gray-50">
-    <div class="section-max text-center">
-      <div class="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-full px-4 py-2 mb-6">
-        <svg width="16" height="16" fill="#2563EB" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-        <span class="text-sm font-semibold text-blue-800">Confiado por estudantes no mundo todo</span>
-      </div>
-      <h2 class="text-5xl font-bold text-gray-900 mb-4">1.000.000+</h2>
-      <p class="text-xl text-gray-500 mb-12">estudantes confiam no Prova X para mandar nas provas</p>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="card-hover bg-white border border-[#E5E5E5] rounded-2xl p-6 text-left">
-          <div class="flex items-center gap-1 mb-3">
-            <span class="text-yellow-400">★★★★★</span>
-          </div>
-          <p class="text-gray-700 text-sm mb-4">"O Prova X salvou meu semestre. Passei de reprovada para tirar nota máxima na prova de bioquímica em apenas duas semanas!"</p>
-          <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-full bg-blue-300 flex items-center justify-center text-white text-xs font-bold">S</div>
-            <div><p class="text-sm font-semibold text-gray-900">Sarah M.</p><p class="text-xs text-gray-500">Estudante de Medicina, Stanford</p></div>
-          </div>
-        </div>
-        <div class="card-hover bg-white border border-[#E5E5E5] rounded-2xl p-6 text-left">
-          <div class="flex items-center gap-1 mb-3">
-            <span class="text-yellow-400">★★★★★</span>
-          </div>
-          <p class="text-gray-700 text-sm mb-4">"Os flashcards gerados por IA são incríveis. Estudo em metade do tempo e lembro o dobro do conteúdo."</p>
-          <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-full bg-blue-400 flex items-center justify-center text-white text-xs font-bold">J</div>
-            <div><p class="text-sm font-semibold text-gray-900">James K.</p><p class="text-xs text-gray-500">Estudante de TI, MIT</p></div>
-          </div>
-        </div>
-        <div class="card-hover bg-white border border-[#E5E5E5] rounded-2xl p-6 text-left">
-          <div class="flex items-center gap-1 mb-3">
-            <span class="text-yellow-400">★★★★★</span>
-          </div>
-          <p class="text-gray-700 text-sm mb-4">"Ouço meus podcasts de estudo no trajeto do trabalho. Tirei nota máxima em todas as provas de direito este semestre!"</p>
-          <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-full bg-green-400 flex items-center justify-center text-white text-xs font-bold">A</div>
-            <div><p class="text-sm font-semibold text-gray-900">Amara T.</p><p class="text-xs text-gray-500">Estudante de Direito, Yale</p></div>
-          </div>
-        </div>
-      </div>
+<!-- FAQ -->
+<section class="sec" id="faq" style="background:var(--bg-soft);border-block:1px solid var(--line)">
+  <div class="wrap">
+    <div class="head mid rv"><span class="eyebrow">Dúvidas</span><h2>Perguntas frequentes</h2></div>
+    <div class="faq rv">
+      <details class="fq"><summary>O conteúdo serve só para a PRF?</summary>
+        <p>O curso pronto é o da Polícia Rodoviária Federal, com o edital mapeado tópico a tópico. Mas você também pode subir seu próprio material e montar disciplinas customizadas para qualquer outro concurso — a Athena, as questões e a revisão funcionam igual.</p></details>
+      <details class="fq"><summary>Como funciona a Athena IA?</summary>
+        <p>Ela explica o tópico que você está estudando, responde dúvidas no contexto da aula, gera questões, flashcards e resumos. É um chat dentro do próprio workspace, sem precisar abrir outra ferramenta.</p></details>
+      <details class="fq"><summary>As questões são no padrão da banca?</summary>
+        <p>Sim. O formato é certo/errado no padrão Cebraspe, incluindo a regra de que item errado anula item certo. O placar mostra a pontuação líquida, do mesmo jeito que a prova.</p></details>
+      <details class="fq"><summary>Quando meu acesso é liberado?</summary>
+        <p>Assim que a Hotmart confirma o pagamento, o acesso é liberado automaticamente na conta com o mesmo e-mail usado na compra. Cartão costuma levar segundos; Pix e boleto seguem o prazo de compensação.</p></details>
+      <details class="fq"><summary>Posso cancelar?</summary>
+        <p>Pode, a qualquer momento, direto na sua área da Hotmart. Nos primeiros 7 dias a devolução é integral, sem precisar justificar.</p></details>
+      <details class="fq"><summary>Funciona no celular?</summary>
+        <p>Funciona. A plataforma é web e responsiva — abre no navegador do celular, tablet ou computador, com o mesmo progresso sincronizado.</p></details>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- WHAT YOU CAN DO -->
-  <section class="py-20 bg-white">
-    <div class="section-max">
-      <div class="max-w-3xl mx-auto">
-        <h2 class="text-3xl font-bold text-gray-900 mb-4 text-center">O que você pode fazer com o Prova X</h2>
-        <p class="text-gray-500 text-center mb-12">Tudo o que você precisa para dominar qualquer matéria, em um só lugar</p>
-        <div class="space-y-3" id="accordion">
-          <!-- Item 1 -->
-          <div class="accordion-item open border border-[#E5E5E5] rounded-2xl overflow-hidden">
-            <button class="accordion-toggle w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleAccordion(this)">
-              <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
-                  <svg width="18" height="18" fill="none" stroke="#2563EB" stroke-width="2.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                </div>
-                <span class="font-semibold text-gray-900">Anotador com IA</span>
-              </div>
-              <svg class="accordion-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="accordion-content px-6 pb-4">
-              <p class="text-gray-500 text-sm">Faça upload de qualquer PDF, gravação de aula, vídeo do YouTube ou site e obtenha notas com IA bem estruturadas na hora. Inclui conceitos-chave, resumos e termos importantes em destaque.</p>
-            </div>
-          </div>
-          <!-- Item 2 -->
-          <div class="accordion-item border border-[#E5E5E5] rounded-2xl overflow-hidden">
-            <button class="accordion-toggle w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleAccordion(this)">
-              <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
-                  <svg width="18" height="18" fill="none" stroke="#3B82F6" stroke-width="2.5" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-                </div>
-                <span class="font-semibold text-gray-900">Flashcards &amp; Estudo Inteligente</span>
-              </div>
-              <svg class="accordion-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="accordion-content px-6 pb-4">
-              <p class="text-gray-500 text-sm">Flashcards gerados por IA com tecnologia de repetição espaçada. Acompanhe seu progresso com os estados Desconhecido, Aprendendo, Familiar e Dominado. Estude com mais inteligência, não com mais esforço.</p>
-            </div>
-          </div>
-          <!-- Item 3 -->
-          <div class="accordion-item border border-[#E5E5E5] rounded-2xl overflow-hidden">
-            <button class="accordion-toggle w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleAccordion(this)">
-              <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
-                  <svg width="18" height="18" fill="none" stroke="#22C55E" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-                </div>
-                <span class="font-semibold text-gray-900">Quiz com IA &amp; Simulados</span>
-              </div>
-              <svg class="accordion-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="accordion-content px-6 pb-4">
-              <p class="text-gray-500 text-sm">Gere simulados ilimitados: múltipla escolha, lacunas e testes escritos. Obtenha explicações detalhadas para cada resposta e aprofunde seu entendimento.</p>
-            </div>
-          </div>
-          <!-- Item 4 -->
-          <div class="accordion-item border border-[#E5E5E5] rounded-2xl overflow-hidden">
-            <button class="accordion-toggle w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleAccordion(this)">
-              <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
-                  <svg width="18" height="18" fill="none" stroke="#A855F7" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
-                </div>
-                <span class="font-semibold text-gray-900">Criador de Podcast de Estudo</span>
-              </div>
-              <svg class="accordion-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="accordion-content px-6 pb-4">
-              <p class="text-gray-500 text-sm">Transforme seus materiais de estudo em podcasts de áudio envolventes. Ouça no trajeto, durante exercícios ou relaxando — transforme qualquer tempo livre em tempo de estudo.</p>
-            </div>
-          </div>
-          <!-- Item 5 -->
-          <div class="accordion-item border border-[#E5E5E5] rounded-2xl overflow-hidden">
-            <button class="accordion-toggle w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleAccordion(this)">
-              <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-yellow-50 flex items-center justify-center flex-shrink-0">
-                  <svg width="18" height="18" fill="none" stroke="#EAB308" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                </div>
-                <span class="font-semibold text-gray-900">Apoio a Pesquisas &amp; Tarefas</span>
-              </div>
-              <svg class="accordion-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="accordion-content px-6 pb-4">
-              <p class="text-gray-500 text-sm">Obtenha ajuda instantânea com tarefas, trabalhos de pesquisa e resolução de problemas complexos. O tutor com IA do Prova X explica conceitos passo a passo de um jeito que faz sentido para você.</p>
-            </div>
-          </div>
-          <!-- Item 6 -->
-          <div class="accordion-item border border-[#E5E5E5] rounded-2xl overflow-hidden">
-            <button class="accordion-toggle w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleAccordion(this)">
-              <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
-                  <svg width="18" height="18" fill="none" stroke="#EF4444" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                </div>
-                <span class="font-semibold text-gray-900">Acompanhamento de Progresso &amp; Análises</span>
-              </div>
-              <svg class="accordion-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="accordion-content px-6 pb-4">
-              <p class="text-gray-500 text-sm">Acompanhe seu progresso de aprendizagem com análises detalhadas. Veja quais tópicos precisam de mais atenção e receba recomendações personalizadas para otimizar suas sessões de estudo.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+<!-- CTA -->
+<section class="wrap" style="padding-bottom:0">
+  <div class="cta rv">
+    <h2>Sua aprovação começa por um tópico</h2>
+    <p>Comece hoje pelo que mais pesa no edital e deixe a plataforma cuidar do resto: revisão, cronograma e desempenho.</p>
+    <a class="btn btn-lg" href="#planos">Garantir meu acesso</a>
+  </div>
+</section>
 
-  <!-- ACCESS ANYWHERE -->
-  <section class="py-20 bg-gray-50">
-    <div class="section-max">
-      <div class="text-center mb-12">
-        <div class="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-full px-4 py-2 mb-4">
-          <span class="text-sm font-bold text-blue-700">24/7</span>
-          <span class="text-sm text-blue-600">Disponível sempre</span>
-        </div>
-        <h2 class="text-3xl font-bold text-gray-900 mb-4">Acesse o Prova X<br>Em Qualquer Lugar, A Qualquer Hora</h2>
-        <p class="text-gray-500">Web, iOS, Android — seu companheiro de estudo com IA está sempre com você</p>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="card-hover bg-white border border-[#E5E5E5] rounded-2xl p-6 text-center">
-          <div class="w-16 h-16 bg-gray-100 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-            <svg width="32" height="32" fill="none" stroke="#6B7280" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          </div>
-          <h3 class="font-bold text-gray-900 mb-2">App Web</h3>
-          <p class="text-sm text-gray-500">Acesse por qualquer navegador, sem precisar baixar</p>
-        </div>
-        <div class="card-hover bg-white border border-[#E5E5E5] rounded-2xl p-6 text-center">
-          <div class="w-16 h-16 bg-gray-100 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-            <svg width="32" height="32" fill="none" stroke="#6B7280" stroke-width="1.5" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18" stroke-width="2"/></svg>
-          </div>
-          <h3 class="font-bold text-gray-900 mb-2">App iOS</h3>
-          <p class="text-sm text-gray-500">Disponível para iPhone e iPad — estude em movimento</p>
-        </div>
-        <div class="card-hover bg-white border border-[#E5E5E5] rounded-2xl p-6 text-center">
-          <div class="w-16 h-16 bg-gray-100 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-            <svg width="32" height="32" fill="none" stroke="#6B7280" stroke-width="1.5" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6"/></svg>
-          </div>
-          <h3 class="font-bold text-gray-900 mb-2">App Android</h3>
-          <p class="text-sm text-gray-500">Disponível no Google Play para dispositivos Android</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- COMPARISON TABLE -->
-  <section class="py-20 bg-white">
-    <div class="section-max">
-      <h2 class="text-3xl font-bold text-gray-900 mb-4 text-center">Por que o Prova X Supera os Métodos Tradicionais</h2>
-      <p class="text-gray-500 text-center mb-12">Veja por que milhões de estudantes migraram para o Prova X</p>
-      <div class="overflow-x-auto">
-        <table class="w-full border-collapse">
-          <thead>
-            <tr class="border-b-2 border-gray-200">
-              <th class="text-left py-4 px-6 text-gray-500 font-medium w-1/3">Recurso</th>
-              <th class="text-center py-4 px-6">
-                <div class="inline-flex items-center gap-2 bg-blue-50 rounded-xl px-4 py-2">
-                  <span class="font-bold text-blue-700">Prova X</span>
-                </div>
-              </th>
-              <th class="text-center py-4 px-6 text-gray-400 font-medium">Métodos Tradicionais</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            <tr>
-              <td class="py-4 px-6 text-gray-700 font-medium">Notas instantâneas de qualquer conteúdo</td>
-              <td class="py-4 px-6 text-center"><span class="text-green-500 font-bold text-xl">✓</span></td>
-              <td class="py-4 px-6 text-center"><span class="text-red-400 text-xl">✗</span></td>
-            </tr>
-            <tr>
-              <td class="py-4 px-6 text-gray-700 font-medium">Flashcards gerados por IA</td>
-              <td class="py-4 px-6 text-center"><span class="text-green-500 font-bold text-xl">✓</span></td>
-              <td class="py-4 px-6 text-center"><span class="text-red-400 text-xl">✗</span></td>
-            </tr>
-            <tr>
-              <td class="py-4 px-6 text-gray-700 font-medium">Simulados personalizados</td>
-              <td class="py-4 px-6 text-center"><span class="text-green-500 font-bold text-xl">✓</span></td>
-              <td class="py-4 px-6 text-center"><span class="text-red-400 text-xl">✗</span></td>
-            </tr>
-            <tr>
-              <td class="py-4 px-6 text-gray-700 font-medium">Suporte de tutor com IA 24/7</td>
-              <td class="py-4 px-6 text-center"><span class="text-green-500 font-bold text-xl">✓</span></td>
-              <td class="py-4 px-6 text-center"><span class="text-red-400 text-xl">✗</span></td>
-            </tr>
-            <tr>
-              <td class="py-4 px-6 text-gray-700 font-medium">Podcasts de áudio a partir das notas</td>
-              <td class="py-4 px-6 text-center"><span class="text-green-500 font-bold text-xl">✓</span></td>
-              <td class="py-4 px-6 text-center"><span class="text-red-400 text-xl">✗</span></td>
-            </tr>
-            <tr>
-              <td class="py-4 px-6 text-gray-700 font-medium">Acompanhamento de progresso</td>
-              <td class="py-4 px-6 text-center"><span class="text-green-500 font-bold text-xl">✓</span></td>
-              <td class="py-4 px-6 text-center"><span class="text-blue-400 font-bold">~</span></td>
-            </tr>
-            <tr>
-              <td class="py-4 px-6 text-gray-700 font-medium">Funciona com qualquer formato (PDF, vídeo, áudio)</td>
-              <td class="py-4 px-6 text-center"><span class="text-green-500 font-bold text-xl">✓</span></td>
-              <td class="py-4 px-6 text-center"><span class="text-red-400 text-xl">✗</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <!-- FAQ -->
-  <section class="py-20 bg-gray-50">
-    <div class="section-max">
-      <div class="max-w-3xl mx-auto">
-        <h2 class="text-3xl font-bold text-gray-900 mb-12 text-center">Perguntas Frequentes</h2>
-        <div class="space-y-3" id="faq">
-          <div class="faq-item bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
-            <button class="w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleFaq(this)">
-              <span class="font-semibold text-gray-900">O que é o Prova X?</span>
-              <svg class="faq-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="faq-content px-6 pb-4"><p class="text-gray-500 text-sm">O Prova X é a ferramenta de estudo com IA #1 que ajuda estudantes a aprender mais rápido e com mais eficiência. Faça upload de qualquer material de estudo e obtenha notas interativas, flashcards, quizzes e podcasts instantaneamente.</p></div>
-          </div>
-          <div class="faq-item bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
-            <button class="w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleFaq(this)">
-              <span class="font-semibold text-gray-900">Quais formatos de arquivo o Prova X suporta?</span>
-              <svg class="faq-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="faq-content px-6 pb-4"><p class="text-gray-500 text-sm">O Prova X suporta PDFs, documentos Word, apresentações PowerPoint, imagens, arquivos de áudio, arquivos de vídeo, links do YouTube, sites e até gravações de aulas ao vivo.</p></div>
-          </div>
-          <div class="faq-item bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
-            <button class="w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleFaq(this)">
-              <span class="font-semibold text-gray-900">O Prova X é gratuito?</span>
-              <svg class="faq-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="faq-content px-6 pb-4"><p class="text-gray-500 text-sm">Sim! O Prova X oferece um plano gratuito com acesso aos recursos principais. Para uso ilimitado e recursos premium, oferecemos planos pagos com preços acessíveis para estudantes.</p></div>
-          </div>
-          <div class="faq-item bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
-            <button class="w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleFaq(this)">
-              <span class="font-semibold text-gray-900">Como o Prova X gera notas com IA?</span>
-              <svg class="faq-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="faq-content px-6 pb-4"><p class="text-gray-500 text-sm">O Prova X usa modelos de linguagem avançados para analisar seu conteúdo e extrair conceitos-chave, definições e resumos. A IA estrutura as informações de forma otimizada para aprendizagem e retenção.</p></div>
-          </div>
-          <div class="faq-item bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
-            <button class="w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleFaq(this)">
-              <span class="font-semibold text-gray-900">O Prova X está disponível no celular?</span>
-              <svg class="faq-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="faq-content px-6 pb-4"><p class="text-gray-500 text-sm">Sim! O Prova X está disponível no iOS (iPhone e iPad), Android e como app web acessível por qualquer navegador. Seu progresso sincroniza perfeitamente em todos os dispositivos.</p></div>
-          </div>
-          <div class="faq-item bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
-            <button class="w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleFaq(this)">
-              <span class="font-semibold text-gray-900">Posso usar o Prova X para qualquer matéria?</span>
-              <svg class="faq-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="faq-content px-6 pb-4"><p class="text-gray-500 text-sm">Com certeza! O Prova X funciona para qualquer matéria — de medicina, direito e engenharia a humanidades, idiomas e negócios. Nossa IA se adapta a qualquer conteúdo que você enviar.</p></div>
-          </div>
-          <div class="faq-item bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
-            <button class="w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleFaq(this)">
-              <span class="font-semibold text-gray-900">Qual é a diferença entre o Prova X e o ChatGPT?</span>
-              <svg class="faq-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="faq-content px-6 pb-4"><p class="text-gray-500 text-sm">Enquanto o ChatGPT é uma IA de uso geral, o Prova X foi desenvolvido especificamente para estudo. Oferecemos ferramentas especializadas como flashcards com repetição espaçada, acompanhamento de progresso, quizzes com IA e geração de podcasts — tudo baseado em ciência do aprendizado comprovada.</p></div>
-          </div>
-          <div class="faq-item bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
-            <button class="w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleFaq(this)">
-              <span class="font-semibold text-gray-900">Meus dados estão seguros com o Prova X?</span>
-              <svg class="faq-arrow w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="faq-content px-6 pb-4"><p class="text-gray-500 text-sm">Sim. Levamos a privacidade de dados a sério. Seus arquivos e materiais de estudo são criptografados, e nunca vendemos seus dados. Você pode excluir seus dados a qualquer momento.</p></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- FINAL CTA -->
-  <section class="py-20" style="background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);">
-    <div class="section-max text-center">
-      <h2 class="text-4xl font-bold text-white mb-4">Aprenda Melhor com o Prova X</h2>
-      <p class="text-xl text-blue-100 mb-8">A Ferramenta de Estudo com IA Definitiva</p>
-      <a href="home.html" class="bg-white text-[#2563EB] font-bold px-8 py-4 rounded-xl text-lg hover:bg-blue-50 transition-colors active:scale-[0.98] inline-block">
-        Comece Grátis →
-      </a>
-      <p class="text-blue-200 text-sm mt-4">Sem cartão de crédito · Junte-se a mais de 2.000.000 de estudantes</p>
-    </div>
-  </section>
 </main>
 
-<!-- FOOTER -->
-<footer class="bg-white border-t border-gray-100 py-12">
-  <div class="section-max">
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-8 mb-8">
-      <div class="col-span-2">
-        <a href="index.html" class="flex items-center gap-1.5 mb-4">
-          <svg width="24" height="24" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="8" fill="url(#ft-logo-grad)"/><path d="M8 10h12M8 14h8M8 18h10" stroke="white" stroke-width="2.5" stroke-linecap="round"/><defs><linearGradient id="ft-logo-grad" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse"><stop stop-color="#3B82F6"/><stop offset="1" stop-color="#2563EB"/></linearGradient></defs></svg>
-          <span class="font-black text-xl" style="background:linear-gradient(to right,#3B82F6,#2563EB);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Prova X</span>
-        </a>
-        <p class="text-sm text-gray-500 max-w-xs">A ferramenta de estudo com IA #1, confiada por mais de 2.000.000 de estudantes no mundo todo.</p>
-      </div>
+<footer>
+  <div class="wrap">
+    <div class="fgrid">
       <div>
-        <h4 class="font-semibold text-gray-900 mb-3 text-sm">Produto</h4>
-        <ul class="space-y-2 text-sm text-gray-500">
-          <li><a href="#" class="hover:text-gray-900">Recursos</a></li>
-          <li><a href="pricing.html" class="hover:text-gray-900">Preços</a></li>
-          <li><a href="#" class="hover:text-gray-900">App iOS</a></li>
-          <li><a href="#" class="hover:text-gray-900">App Android</a></li>
-        </ul>
+        <a class="brand" href="index.html" style="margin-bottom:14px"><span class="mark">X</span> Prova X</a>
+        <p style="font-size:14px;color:var(--muted);max-width:300px">Plataforma de estudo com IA para concursos públicos. Curso PRF com o edital completo, questões no padrão Cebraspe e revisão inteligente.</p>
       </div>
-      <div>
-        <h4 class="font-semibold text-gray-900 mb-3 text-sm">Empresa</h4>
-        <ul class="space-y-2 text-sm text-gray-500">
-          <li><a href="blog.html" class="hover:text-gray-900">Blog</a></li>
-          <li><a href="#" class="hover:text-gray-900">Vagas</a></li>
-          <li><a href="#" class="hover:text-gray-900">Explorar</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4 class="font-semibold text-gray-900 mb-3 text-sm">Jurídico</h4>
-        <ul class="space-y-2 text-sm text-gray-500">
-          <li><a href="privacidade.html" class="hover:text-gray-900">Política de Privacidade</a></li>
-          <li><a href="termos.html" class="hover:text-gray-900">Termos de Uso</a></li>
-        </ul>
-      </div>
+      <div><h4>Produto</h4><ul>
+        <li><a href="#curso">Curso PRF</a></li>
+        <li><a href="#recursos">Recursos</a></li>
+        <li><a href="pricing.html">Planos</a></li>
+        <li><a href="#faq">Dúvidas</a></li></ul></div>
+      <div><h4>Conta</h4><ul>
+        <li><a href="login.html">Entrar</a></li>
+        <li><a href="home.html">Minha área</a></li></ul></div>
+      <div><h4>Jurídico</h4><ul>
+        <li><a href="termos.html">Termos de Uso</a></li>
+        <li><a href="privacidade.html">Privacidade</a></li></ul></div>
     </div>
-    <div class="border-t border-gray-100 pt-6 text-center">
-      <p class="text-sm text-gray-400">© 2024 Prova X. Todos os direitos reservados.</p>
+    <div class="fbot">
+      <span>© <span id="yr">2026</span> Prova X. Todos os direitos reservados.</span>
+      <span>Feito para quem vai passar.</span>
     </div>
   </div>
 </footer>
 
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Course","name":"Curso Polícia Rodoviária Federal — Prova X",
+"description":"Curso preparatório para a PRF com 15 disciplinas e 303 tópicos do edital, aula com IA, questões no padrão Cebraspe, revisão espaçada e cronograma adaptativo.",
+"provider":{"@type":"Organization","name":"Prova X","url":"https://provaxai.lovable.app/"},
+"inLanguage":"pt-BR",
+"offers":[{"@type":"Offer","price":"47.00","priceCurrency":"BRL","category":"Assinatura mensal","url":"https://provaxai.lovable.app/pricing.html"},
+{"@type":"Offer","price":"397.00","priceCurrency":"BRL","category":"Assinatura anual","url":"https://provaxai.lovable.app/pricing.html"}],
+"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT300H"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"O conteúdo serve só para a PRF?","acceptedAnswer":{"@type":"Answer","text":"O curso pronto é o da Polícia Rodoviária Federal, com o edital mapeado tópico a tópico. Você também pode subir seu próprio material e montar disciplinas customizadas para outros concursos."}},
+{"@type":"Question","name":"As questões são no padrão da banca?","acceptedAnswer":{"@type":"Answer","text":"Sim. Formato certo/errado no padrão Cebraspe, incluindo a regra de que item errado anula item certo, com pontuação líquida."}},
+{"@type":"Question","name":"Quando meu acesso é liberado?","acceptedAnswer":{"@type":"Answer","text":"Assim que a Hotmart confirma o pagamento, o acesso é liberado automaticamente na conta com o mesmo e-mail usado na compra."}},
+{"@type":"Question","name":"Posso cancelar?","acceptedAnswer":{"@type":"Answer","text":"Sim, a qualquer momento pela área da Hotmart. Nos primeiros 7 dias a devolução é integral."}}]}
+</script>
+
+<script src="shell.js"></script>
+<script src="hotmart.js"></script>
+<script src="px-auth.js"></script>
 <script>
-  function toggleAccordion(btn) {
-    const item = btn.closest('.accordion-item');
-    item.classList.toggle('open');
-  }
-  function toggleFaq(btn) {
-    const item = btn.closest('.faq-item');
-    item.classList.toggle('open');
-  }
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+/* header state */
+var hdr = document.getElementById('hdr');
+addEventListener('scroll', function () { hdr.classList.toggle('scrolled', scrollY > 8); }, { passive: true });
+
+/* mobile menu */
+var mobBtn = document.getElementById('mobBtn'), mob = document.getElementById('mob');
+function syncMob() {
+  var small = innerWidth <= 900;
+  mobBtn.style.display = small ? 'grid' : 'none';
+  if (!small) mob.classList.remove('open');
+}
+syncMob(); addEventListener('resize', syncMob);
+mobBtn.addEventListener('click', function () { mob.classList.toggle('open'); });
+mob.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { mob.classList.remove('open'); }); });
+
+/* reveal on scroll */
+var io = new IntersectionObserver(function (es) {
+  es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+}, { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
+document.querySelectorAll('.rv').forEach(function (el, i) { el.style.transitionDelay = (i % 3) * 60 + 'ms'; io.observe(el); });
+
+/* sessão: troca "Entrar" por "Minha área" */
+(function () {
+  if (!window.PX || !PX.ready) return;
+  PX.ready.then(function () {
+    if (!PX.user) return;
+    var b = document.getElementById('loginBtn');
+    if (b) { b.textContent = 'Minha área'; b.href = 'home.html'; }
+  }).catch(function () {});
+})();
 </script>
 </body>
 </html>
