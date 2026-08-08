@@ -1055,6 +1055,17 @@ window.kbReindexar = async function(dryRun){
   kbLog('Vão recuperar disciplina válida: ' + recuperar.length + (recuperar.length ? ' → ' + recuperar.slice(0,10).map(function(d){ return (d.titulo || d.topico || d.id) + ' [' + d.disciplina + ']'; }).join('; ') : ''));
   if(novos.length) kbLog('Novos desde a última leitura: ' + novos.length);
   if(removidos.length) kbLog('Sumiram do banco: ' + removidos.length);
+  kbLogResumo({
+    'Documentos lidos': docs.length,
+    'Órfãos após a análise': orfaosAgora.length,
+    'Viram órfãos': virarOrfao.length,
+    'Recuperam disciplina': recuperar.length,
+    'Novos desde a última leitura': novos.length,
+    'Sumiram do banco': removidos.length,
+    'Por disciplina': kbPorDisciplina(docs).join(' | '),
+  });
+
+
 
   if(dryRun){
     kbLog('Prévia — nenhuma alteração aplicada. Use "Reindexar base" para confirmar.');
