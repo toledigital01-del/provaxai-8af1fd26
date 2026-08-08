@@ -351,6 +351,10 @@ function kbSetBusy(on, msg){
     bar.querySelector('span[data-msg]').textContent = msg || 'Processando…';
   }
   if(msg) kbIngMsg(msg);
+  if(!KB_BUSY){
+    try{ kbRenderLog(); }catch(e){}
+    try{ kbMontarEstado(); }catch(e){}
+  }
 }
 const kbDiscList = () => {
   const list = (kbGlobalDiscs()['prf-2021'] || Object.keys(kbGlobalTopics()) || []).filter(Boolean);
