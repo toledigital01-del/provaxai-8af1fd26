@@ -329,6 +329,10 @@ function kbGlobalDiscs(){
   if (window.DISCIPLINAS_POR_CONCURSO) return window.DISCIPLINAS_POR_CONCURSO;
   try { return (typeof DISCIPLINAS_POR_CONCURSO !== 'undefined') ? DISCIPLINAS_POR_CONCURSO : {}; } catch(e){ return {}; }
 }
+function kbValidDisc(value){
+  const disc = typeof value === 'string' ? value.trim() : '';
+  return disc && kbDiscList().includes(disc) ? disc : '';
+}
 const kbDiscList = () => {
   const list = (kbGlobalDiscs()['prf-2021'] || Object.keys(kbGlobalTopics()) || []).filter(Boolean);
   if (list.length) return list;
@@ -406,7 +410,15 @@ function kbPaint(){
 }
 
 function escJs(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
-window.kbSelDisc = d => { kbDisc = d; kbTopic = null; kbPaint(); };
+window.kbSelDisc = d => {
+  const disc = typeof d === 'string' ? d.trim() : '';
+  if(!disc || !kbDiscList().includes(disc)) return;
+  kbDisc = disc;
+  kbTopic = null;
+  KB_GERADAS = [];
+  KB_ABERTA = -1;
+  kbPaint();
+};
 window.kbSelTopic = t => { kbTopic = t; kbPaint(); };
 
 function kbEditor(){
@@ -529,26 +541,28 @@ window.kbIngestUrl = async function(tipo){
   catch(e){ kbIngMsg('Erro: ' + e.message); }
 };
 window.kbMontarCurso = async function(){
-  if(!kbDisc) return kbIngMsg('Selecione uma matéria antes de montar o curso.');
+  const disciplinaSelecionada = kbValidDisc(kbDisc);
+  if(!disciplinaSelecionada) return kbIngMsg('Selecione uma matéria válida antes de montar o curso.');
   const material = document.getElementById('kb-txt').value.trim();
 
   if(material.length < 200) return kbIngMsg('Coloque primeiro o material na caixa de conteúdo (arquivo, site, vídeo ou texto).');
-  const topicos = kbTopicList(kbDisc);
+  const topicos = kbTopicList(disciplinaSelecionada);
   if(!topicos.length) return kbIngMsg('Esta matéria não tem tópicos cadastrados.');
   const val = id => (document.getElementById(id)||{}).value;
   const btn = document.getElementById('kb-btn-montar');
   kbPrefsSave();
   if(btn){ btn.disabled = true; btn.textContent = 'Montando curso…'; }
-  kbIngMsg('A IA está montando o curso de ' + kbDisc + '… pode levar alguns minutos, não feche a página.');
+  kbIngMsg('A IA está montando o curso de ' + disciplinaSelecionada + '… pode levar alguns minutos, não feche a página.');
   document.getElementById('kb-preview').innerHTML = '';
   try{
     const j = await kbPost('/api/public/kb-autocourse', {
-      disciplina:kbDisc, topicos, material: material.slice(0,300000),
+      disciplina:disciplinaSelecionada, topicos, material: material.slice(0,300000),
       modelo: val('kb-modelo'), banca: val('kb-banca'), cargo: val('kb-cargo'),
       profundidade: val('kb-prof') || 'completo',
       modo_aprovacao: (document.getElementById('kb-aprov')||{}).checked !== false
     });
-    KB_GERADAS = (j.aulas || []).map(function(a){ return { topico:a.topico, titulo:a.titulo, incidencia:a.incidencia||'media', conteudo:String(a.conteudo||''), incluir:true }; });
+    if(kbDisc !== disciplinaSelecionada) throw new Error('A matéria foi alterada durante a geração. Gere novamente para evitar publicar no local errado.');
+    KB_GERADAS = (j.aulas || []).map(function(a){ return { disciplina:disciplinaSelecionada, topico:a.topico, titulo:a.titulo, incidencia:a.incidencia||'media', conteudo:String(a.conteudo||''), incluir:true }; });
     kbIngMsg(KB_GERADAS.length + ' aula(s) geradas. Revise abaixo antes de publicar.');
     kbPaintPreview();
   }catch(e){ kbIngMsg('Erro: ' + e.message); }
@@ -609,21 +623,22 @@ window.kbPreviewAbrir = function(i){ KB_ABERTA = (KB_ABERTA === i ? -1 : i); kbP
 window.kbPreviewCampo = function(i, campo, v){ KB_GERADAS[i][campo] = v; };
 window.kbPreviewDescartar = function(){ KB_GERADAS = []; KB_ABERTA = -1; kbPaintPreview(); kbIngMsg('Curso gerado descartado.'); };
 window.kbPublicarGeradas = async function(){
-  if(!kbDisc) return kbIngMsg('Selecione uma matéria antes de publicar.');
-  const lista = KB_GERADAS.filter(function(a){ return a.incluir && a.conteudo.trim() && a.topico; });
+  const disciplinaSelecionada = kbValidDisc(kbDisc);
+  if(!disciplinaSelecionada) return kbIngMsg('Selecione uma matéria válida antes de publicar.');
+  const lista = KB_GERADAS.filter(function(a){ return a.incluir && a.disciplina === disciplinaSelecionada && a.conteudo.trim() && a.topico; });
   if(!lista.length) return kbIngMsg('Marque ao menos uma aula para publicar.');
 
   kbIngMsg('Publicando ' + lista.length + ' aula(s)…');
   for(const a of lista){
-    const doc = kbFind(kbDisc, a.topico);
-    const payload = { course_slug:'prf-2021', disciplina:kbDisc, topico:a.topico, titulo:a.titulo, conteudo:a.conteudo, publicado:true, updated_by:PX.user.id };
+    const doc = kbFind(disciplinaSelecionada, a.topico);
+    const payload = { course_slug:'prf-2021', disciplina:disciplinaSelecionada, topico:String(a.topico).trim(), titulo:String(a.titulo||a.topico).trim(), conteudo:String(a.conteudo).trim(), publicado:true, updated_by:PX.user.id };
     const { error } = doc
       ? await PX.sb.from('knowledge_docs').update(payload).eq('id', doc.id)
       : await PX.sb.from('knowledge_docs').insert(payload);
     if(error){ kbIngMsg('Erro ao salvar "' + a.topico + '": ' + error.message); return; }
     if(!doc) await loadKB();
   }
-  await logAdmin('montar_curso_ia','knowledge_docs', null, { disciplina:kbDisc, aulas:lista.length });
+  await logAdmin('montar_curso_ia','knowledge_docs', null, { disciplina:disciplinaSelecionada, aulas:lista.length });
   const n = lista.length; KB_GERADAS = []; KB_ABERTA = -1;
   await loadKB(); kbPaint();
   kbIngMsg(n + ' aula(s) publicadas para os alunos.');
@@ -632,19 +647,20 @@ window.kbPublicarGeradas = async function(){
 
 window.kbSave = async function(){
   const msg = document.getElementById('kb-msg');
-  if(!kbDisc){ if(msg) msg.textContent = 'Selecione uma matéria antes de salvar.'; return; }
+  const disciplinaSelecionada = kbValidDisc(kbDisc);
+  if(!disciplinaSelecionada){ if(msg) msg.textContent = 'Selecione uma matéria válida antes de salvar.'; return; }
   const conteudo = document.getElementById('kb-txt').value;
   const titulo = document.getElementById('kb-tit').value.trim() || null;
   const publicado = document.getElementById('kb-pub').checked;
   msg.textContent = 'Salvando…';
 
-  const doc = kbFind(kbDisc, kbTopic);
-  const payload = { course_slug:'prf-2021', disciplina:kbDisc, topico:kbTopic, titulo, conteudo, publicado, updated_by:PX.user.id };
+  const doc = kbFind(disciplinaSelecionada, kbTopic);
+  const payload = { course_slug:'prf-2021', disciplina:disciplinaSelecionada, topico:kbTopic, titulo, conteudo, publicado, updated_by:PX.user.id };
   const { error } = doc
     ? await PX.sb.from('knowledge_docs').update(payload).eq('id', doc.id)
     : await PX.sb.from('knowledge_docs').insert(payload);
   if(error){ msg.textContent = 'Erro: ' + error.message; return; }
-  await logAdmin('salvar_conhecimento','knowledge_docs', doc?doc.id:null, { disciplina:kbDisc, topico:kbTopic });
+  await logAdmin('salvar_conhecimento','knowledge_docs', doc?doc.id:null, { disciplina:disciplinaSelecionada, topico:kbTopic });
   await loadKB(); kbPaint();
   document.getElementById('kb-msg').textContent = 'Conteúdo salvo. A Athena já usa este material.';
 };
