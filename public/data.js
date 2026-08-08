@@ -56,12 +56,28 @@ const MATERIALS = [
 
 /* contadores reais dos cards de concurso */
 (function atualizarContadores(){
+  let prog = {};
+  try { prog = JSON.parse(localStorage.getItem('px_prog_cache_v1')) || {}; } catch(e) {}
+  let seg = 0, ultimo = null;
+  Object.keys(prog).forEach(k => {
+    seg += prog[k].tempo_segundos || 0;
+    const la = prog[k].last_access_at;
+    if (la && (!ultimo || la > ultimo)) ultimo = la;
+  });
   MATERIALS.forEach(m => {
     const discs = DISCIPLINAS_POR_CONCURSO[m.id] || [];
     m.disc = discs.length;
     m.top = discs.reduce((a, d) => a + ((TOPICS[d] || []).length), 0);
+    if (m.soon) return;
+    const tops = discs.reduce((acc, d) => acc.concat(TOPICS[d] || []), []);
+    const soma = tops.reduce((a, t) => a + Math.min(100, (prog[t] && prog[t].dominio) || 0), 0);
+    m.pct = tops.length ? Math.round(soma / tops.length) : 0;
+    const h = Math.floor(seg / 3600), mi = Math.floor((seg % 3600) / 60);
+    m.tempo = seg ? (h ? h + 'h' + String(mi).padStart(2, '0') : mi + 'min') : '—';
+    m.acesso = ultimo ? (Math.floor((Date.now() - new Date(ultimo).getTime()) / 86400000) <= 0 ? 'hoje' : new Date(ultimo).toLocaleDateString('pt-BR')) : '—';
   });
 })();
+
 
 
 /* Indicadores visuais de status */
