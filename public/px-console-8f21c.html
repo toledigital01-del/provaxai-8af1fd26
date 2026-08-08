@@ -629,10 +629,13 @@ window.kbPublicarGeradas = async function(){
 
 
 window.kbSave = async function(){
+  const msg = document.getElementById('kb-msg');
+  if(!kbDisc){ if(msg) msg.textContent = 'Selecione uma matéria antes de salvar.'; return; }
   const conteudo = document.getElementById('kb-txt').value;
   const titulo = document.getElementById('kb-tit').value.trim() || null;
   const publicado = document.getElementById('kb-pub').checked;
-  const msg = document.getElementById('kb-msg'); msg.textContent = 'Salvando…';
+  msg.textContent = 'Salvando…';
+
   const doc = kbFind(kbDisc, kbTopic);
   const payload = { course_slug:'prf-2021', disciplina:kbDisc, topico:kbTopic, titulo, conteudo, publicado, updated_by:PX.user.id };
   const { error } = doc
