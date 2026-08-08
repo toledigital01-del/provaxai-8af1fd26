@@ -420,6 +420,8 @@ function renderPane() {
     document.getElementById('fx-q').onclick = () => goTab('questoes');
     document.getElementById('fx-f').onclick = () => goTab('flashcards');
     document.getElementById('fx-r').onclick = () => { rzOn = true; goTab('resumo'); };
+    carregarConteudoKB();
+
   } else if (tab === 'resumo') {
     renderResumo(p);
   } else if (tab === 'flashcards') {
