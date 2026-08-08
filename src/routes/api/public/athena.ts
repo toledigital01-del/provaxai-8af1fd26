@@ -1,6 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { SUPABASE_URL, SUPABASE_KEY, getSetting, aiKeys } from '@/lib/px-server'
+import {
+  SUPABASE_URL,
+  getSetting,
+  aiKeys,
+  currentUser,
+  hasCourseAccess,
+  usosHoje,
+  registrarUsoIA,
+  serviceHeaders,
+} from '@/lib/px-server'
 import { chat, normalizar, AIError } from '@/lib/ai-gateway'
 
 const Body = z.object({
@@ -19,7 +28,7 @@ async function fetchKnowledge(curso: string, disciplina: string, topico?: string
     limit: '12',
   })
   const res = await fetch(`${SUPABASE_URL}/rest/v1/knowledge_docs?${params}`, {
-    headers: { apikey: SUPABASE_KEY },
+    headers: serviceHeaders(),
   })
   if (!res.ok) return [] as Array<{ titulo?: string; topico?: string; conteudo: string }>
   const rows = (await res.json()) as Array<{ titulo?: string; topico?: string; conteudo: string }>
@@ -33,6 +42,9 @@ export const Route = createFileRoute('/api/public/athena')({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const userId = await currentUser(request)
+        if (!userId) return Response.json({ error: 'Faça login para falar com a Athena.' }, { status: 401 })
+
         let body: z.infer<typeof Body>
         try {
           body = Body.parse(await request.json())
@@ -41,12 +53,23 @@ export const Route = createFileRoute('/api/public/athena')({
         }
 
         const curso = body.curso || 'prf-2021'
+        if (!(await hasCourseAccess(userId, curso)))
+          return Response.json({ error: 'Seu acesso ao curso não está ativo.' }, { status: 403 })
+
+        const cfgLimite = normalizar(await getSetting('ia_athena'))
+        const limite = cfgLimite.limiteDiario ?? 0
+        if (limite > 0 && (await usosHoje(userId, 'athena')) >= limite)
+          return Response.json(
+            { error: `Você atingiu o limite de ${limite} perguntas para a Athena hoje. Volte amanhã.` },
+            { status: 429 },
+          )
+
         const docs = await fetchKnowledge(curso, body.disciplina, body.topico)
         const base = docs
           .map((d) => `### ${d.titulo || d.topico || body.disciplina}\n${(d.conteudo || '').slice(0, 12000)}`)
           .join('\n\n')
 
-        const cfg = normalizar(await getSetting('ia_athena'))
+        const cfg = cfgLimite
 
         const system = [
           'Você é a Athena, professora de concursos da plataforma Prova X.',
@@ -63,6 +86,15 @@ export const Route = createFileRoute('/api/public/athena')({
             system,
             user: `Disciplina: ${body.disciplina}${body.topico ? ` | Tópico: ${body.topico}` : ''}\n\nPergunta: ${body.pergunta}`,
             keys: await aiKeys(),
+          })
+          await registrarUsoIA({
+            user_id: userId,
+            ferramenta: 'athena',
+            modelo: cfg.model,
+            discipline_nome: body.disciplina,
+            topic_nome: body.topico ?? null,
+            pergunta: body.pergunta,
+            resposta: resposta || '',
           })
           return Response.json({
             resposta: resposta || 'Não consegui responder agora.',
