@@ -905,15 +905,94 @@ window.kbPublicarGeradas = async function(){
 
 /* Manutenção: reindexar a base e tratar conteúdos órfãos (matéria vazia ou fora do edital). */
 let KB_LOG = [];
+let KB_LOG_ROWS = [];
+let KB_LOG_META = { titulo:'', acao:'', modo:'', quando:null, resumo:{} };
 function kbRenderLog(){
   const pre = document.getElementById('kb-log');
+  const csv = document.getElementById('kb-exp-csv');
+  const pdf = document.getElementById('kb-exp-pdf');
+  if(csv) csv.disabled = !KB_LOG.length || KB_BUSY;
+  if(pdf) pdf.disabled = !KB_LOG.length || KB_BUSY;
   if(!pre) return;
   pre.style.display = KB_LOG.length ? 'block' : 'none';
   pre.textContent = KB_LOG.join('\n');
   pre.scrollTop = pre.scrollHeight;
 }
-function kbLogReset(titulo){ KB_LOG = titulo ? ['— ' + titulo + ' —'] : []; kbRenderLog(); }
+function kbLogReset(titulo, acao, modo){
+  KB_LOG = titulo ? ['— ' + titulo + ' —'] : [];
+  KB_LOG_ROWS = [];
+  KB_LOG_META = { titulo: titulo || '', acao: acao || '', modo: modo || '', quando: new Date(), resumo: {} };
+  kbRenderLog();
+}
 function kbLog(linha){ KB_LOG.push(linha); kbRenderLog(); }
+/* Registro estruturado para auditoria (CSV/PDF). */
+function kbLogRow(r){
+  KB_LOG_ROWS.push({
+    quando: new Date().toISOString(),
+    acao: KB_LOG_META.acao || '',
+    modo: KB_LOG_META.modo || '',
+    documento_id: r.id || '',
+    titulo: r.titulo || '',
+    disciplina_origem: r.origem || '',
+    disciplina_destino: r.destino || '',
+    resultado: r.resultado || '',
+    detalhe: r.detalhe || '',
+  });
+}
+function kbLogResumo(obj){ KB_LOG_META.resumo = Object.assign({}, KB_LOG_META.resumo, obj); }
+function kbCarimbo(d){
+  const p = n => String(n).padStart(2,'0');
+  return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes());
+}
+function kbBaixar(nome, conteudo, mime){
+  const blob = new Blob([conteudo], { type: mime });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = nome;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+window.kbExportLog = function(formato){
+  if(!KB_LOG.length) return kbOrfMsg('Não há log para exportar. Rode a prévia ou uma operação primeiro.');
+  const d = KB_LOG_META.quando || new Date();
+  const base = 'provax-reindex-' + (KB_LOG_META.modo === 'previa' ? 'previa' : 'execucao') + '-' + kbCarimbo(d);
+  const cols = ['quando','acao','modo','documento_id','titulo','disciplina_origem','disciplina_destino','resultado','detalhe'];
+  if(formato === 'csv'){
+    const q = v => '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"';
+    const linhas = [cols.map(q).join(';')].concat(KB_LOG_ROWS.map(function(r){ return cols.map(function(c){ return q(r[c]); }).join(';'); }));
+    kbBaixar(base + '.csv', '\uFEFF' + linhas.join('\r\n'), 'text/csv;charset=utf-8');
+    kbOrfMsg('CSV exportado com ' + KB_LOG_ROWS.length + ' registro(s).');
+    return;
+  }
+  const resumo = KB_LOG_META.resumo || {};
+  const html = '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>' + esc(base) + '</title>' +
+    '<style>body{font-family:system-ui,Segoe UI,Arial,sans-serif;color:#0F172A;padding:24px;font-size:12px}' +
+    'h1{font-size:18px;margin:0 0 4px}h2{font-size:13px;margin:18px 0 6px}' +
+    'table{width:100%;border-collapse:collapse;margin-top:6px}th,td{border:1px solid #CBD5E1;padding:4px 6px;text-align:left;vertical-align:top;word-break:break-word}' +
+    'th{background:#F1F5F9}pre{white-space:pre-wrap;background:#F8FAFC;border:1px solid #E2E8F0;padding:8px;border-radius:6px}' +
+    '@page{size:A4;margin:14mm}</style></head><body>' +
+    '<h1>Prova X — auditoria da base de conhecimento</h1>' +
+    '<p>Operação: <b>' + esc(KB_LOG_META.titulo || '—') + '</b><br>' +
+    'Curso: prf-2021 · Matéria selecionada: ' + esc(kbDisc || '—') + '<br>' +
+    'Administrador: ' + esc((PX.user && PX.user.email) || PX.user?.id || '—') + '<br>' +
+    'Data: ' + d.toLocaleString('pt-BR') + '</p>' +
+    '<h2>Resumo</h2><table><tbody>' +
+    Object.keys(resumo).map(function(k){ return '<tr><th style="width:40%">' + esc(k) + '</th><td>' + esc(String(resumo[k])) + '</td></tr>'; }).join('') +
+    '</tbody></table>' +
+    '<h2>Documentos processados (' + KB_LOG_ROWS.length + ')</h2>' +
+    (KB_LOG_ROWS.length ? '<table><thead><tr>' + cols.map(function(c){ return '<th>' + esc(c) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      KB_LOG_ROWS.map(function(r){ return '<tr>' + cols.map(function(c){ return '<td>' + esc(String(r[c] == null ? '' : r[c])) + '</td>'; }).join('') + '</tr>'; }).join('') +
+      '</tbody></table>' : '<p>Nenhum documento individual registrado nesta operação.</p>') +
+    '<h2>Log completo</h2><pre>' + esc(KB_LOG.join('\n')) + '</pre>' +
+    '</body></html>';
+  const w = window.open('', '_blank');
+  if(!w) return kbOrfMsg('Libere os pop-ups para gerar o PDF.');
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(function(){ w.print(); }, 400);
+  kbOrfMsg('Relatório aberto para salvar em PDF (escolha "Salvar como PDF").');
+};
 function kbProg(feito, total, texto){
   const wrap = document.getElementById('kb-prog-wrap');
   const bar = document.getElementById('kb-prog-bar');
