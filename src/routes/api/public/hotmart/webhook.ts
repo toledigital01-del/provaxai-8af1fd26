@@ -119,30 +119,62 @@ export const Route = createFileRoute("/api/public/hotmart/webhook")({
 
           if (GRANT_EVENTS.has(event)) {
             if (transaction) {
-              await db.from("purchases").insert({
-                user_id: userId,
-                course_id: courseId,
-                valor_cents: valorCents,
-                status: "pago",
-                provider: "hotmart",
-                provider_payment_id: transaction,
-              });
+              const { data: existing } = await db
+                .from("purchases")
+                .select("id")
+                .eq("provider_payment_id", transaction)
+                .limit(1);
+              if (!existing?.length) {
+                await db.from("purchases").insert({
+                  user_id: userId,
+                  course_id: courseId,
+                  valor_cents: valorCents,
+                  status: "pago",
+                  provider: "hotmart",
+                  provider_payment_id: transaction,
+                });
+              } else {
+                await db
+                  .from("purchases")
+                  .update({ status: "pago", reembolsado_em: null })
+                  .eq("provider_payment_id", transaction);
+              }
             }
             if (courseId) {
-              await db.from("course_access").insert({
-                user_id: userId,
-                course_id: courseId,
-                origem: "hotmart",
-              });
+              const { data: acc } = await db
+                .from("course_access")
+                .select("id")
+                .eq("user_id", userId)
+                .eq("course_id", courseId)
+                .limit(1);
+              if (!acc?.length) {
+                await db.from("course_access").insert({
+                  user_id: userId,
+                  course_id: courseId,
+                  origem: "hotmart",
+                });
+              }
             }
             const subscriberCode = payload.data?.subscription?.subscriber?.code;
             if (subscriberCode) {
-              await db.from("subscriptions").insert({
-                user_id: userId,
-                status: "ativa",
-                provider: "hotmart",
-                provider_subscription_id: subscriberCode,
-              });
+              const { data: sub } = await db
+                .from("subscriptions")
+                .select("id")
+                .eq("provider_subscription_id", subscriberCode)
+                .limit(1);
+              if (!sub?.length) {
+                await db.from("subscriptions").insert({
+                  user_id: userId,
+                  status: "ativa",
+                  provider: "hotmart",
+                  provider_subscription_id: subscriberCode,
+                });
+              } else {
+                await db
+                  .from("subscriptions")
+                  .update({ status: "ativa" })
+                  .eq("provider_subscription_id", subscriberCode);
+              }
             }
           } else if (REVOKE_EVENTS.has(event)) {
             if (courseId) {

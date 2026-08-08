@@ -258,13 +258,13 @@
     await PX.ready;
     if (!PX.user) return false;
     if (PX.isAdmin()) return true;
-    const { data: sub } = await PX.sb.from('subscriptions').select('status').eq('user_id', PX.user.id).eq('status', 'ativa').maybeSingle();
-    if (sub) return true;
+    const { data: subs } = await PX.sb.from('subscriptions').select('status').eq('user_id', PX.user.id).eq('status', 'ativa').limit(1);
+    if (subs && subs.length) return true;
     if (courseSlug) {
       const { data: course } = await PX.sb.from('courses').select('id').eq('slug', courseSlug).maybeSingle();
       if (course) {
-        const { data: acc } = await PX.sb.from('course_access').select('id').eq('user_id', PX.user.id).eq('course_id', course.id).maybeSingle();
-        if (acc) return true;
+        const { data: acc } = await PX.sb.from('course_access').select('id').eq('user_id', PX.user.id).eq('course_id', course.id).limit(1);
+        if (acc && acc.length) return true;
       }
     }
     return false;
