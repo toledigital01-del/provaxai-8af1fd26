@@ -195,8 +195,19 @@
     };
     if (p.status) row.status = p.status;
     if (typeof p.dominio === 'number') row.dominio = p.dominio;
-    return PX.sb.from('topic_progress').upsert(row, { onConflict: 'user_id,course_slug,discipline_nome,topic_nome' });
+    const res = await PX.sb.from('topic_progress').upsert(row, { onConflict: 'user_id,course_slug,discipline_nome,topic_nome' });
+    try {
+      const map = JSON.parse(localStorage.getItem('px_prog_cache_v1')) || {};
+      map[p.topic] = Object.assign({}, map[p.topic], {
+        status: row.status || (map[p.topic] && map[p.topic].status) || 'apr',
+        dominio: typeof row.dominio === 'number' ? row.dominio : (map[p.topic] && map[p.topic].dominio) || 0,
+        last_access_at: row.last_access_at,
+      });
+      localStorage.setItem('px_prog_cache_v1', JSON.stringify(map));
+    } catch (e) {}
+    return res;
   };
+
 
   PX.getProgress = async function (disc) {
     await PX.ready;
