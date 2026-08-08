@@ -193,6 +193,25 @@ async function suspender(id, val){
   await logAdmin(val?'suspender_aluno':'reativar_aluno','profile',id);
   viewAlunos();
 }
+async function excluirAluno(id, quem){
+  const msg = document.getElementById('ac-msg');
+  if(!confirm('Excluir definitivamente a conta de ' + (quem || 'este aluno') + '?\n\nTodo o histórico (progresso, anotações, flashcards, acessos e compras) será apagado. Não dá para desfazer.')) return;
+  if(msg) msg.textContent = 'Excluindo conta…';
+  try{
+    const r = await fetch('/api/public/admin-delete-user', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', Authorization:'Bearer ' + (await kbToken()) },
+      body: JSON.stringify({ user_id: id })
+    });
+    const j = await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(j.error || 'Falha ao excluir.');
+    await viewAlunos();
+    const m2 = document.getElementById('ac-msg'); if(m2) m2.textContent = 'Conta excluída.';
+  }catch(e){
+    if(msg) msg.textContent = 'Não deu certo: ' + e.message;
+  }
+}
+
 
 async function viewCursos(){
   const { data: cs } = await PX.sb.from('courses').select('*').order('ordem');
