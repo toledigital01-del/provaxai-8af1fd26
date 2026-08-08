@@ -1035,9 +1035,13 @@ window.kbReindexar = async function(dryRun){
     const eraOrfao = antesMap[d.id] ? !PXKB.validarDisciplina(antesMap[d.id].disciplina, lista) : null;
     const ehOrfao = !PXKB.validarDisciplina(d.disciplina, lista);
     if(ehOrfao) orfaosAgora.push(d);
-    if(eraOrfao === null) novos.push(d);
-    else if(!eraOrfao && ehOrfao) virarOrfao.push(d);
-    else if(eraOrfao && !ehOrfao) recuperar.push(d);
+    let resultado = 'inalterado';
+    if(eraOrfao === null){ novos.push(d); resultado = 'novo'; }
+    else if(!eraOrfao && ehOrfao){ virarOrfao.push(d); resultado = 'virou órfão'; }
+    else if(eraOrfao && !ehOrfao){ recuperar.push(d); resultado = 'recuperou disciplina'; }
+    else if(ehOrfao) resultado = 'segue órfão';
+    kbLogRow({ id:d.id, titulo:d.titulo || d.topico || '', origem:(d.disciplina || '').trim() || '(sem matéria)',
+      destino:'', resultado:resultado, detalhe: dryRun ? 'prévia — nada aplicado' : '' });
     if(i % 25 === 0 || i === docs.length - 1) kbProg(i + 1, docs.length, 'Analisando documentos');
   });
   const idsNovos = {}; docs.forEach(function(d){ idsNovos[d.id] = 1; });
