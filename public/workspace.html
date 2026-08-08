@@ -400,7 +400,13 @@ async function carregarConteudoKB() {
   } else if (res.status === 403) {
     box.innerHTML = kbAvisoHTML('Este conteúdo faz parte do Curso PRF', 'Adquira o curso ou ative sua assinatura para liberar as aulas completas.', btn('Ver planos', 'pricing.html'));
   } else if (res.status === 200) {
-    box.innerHTML = kbAvisoHTML('Aula ainda não publicada para este tópico', 'O conteúdo de <b>' + topic + '</b> está sendo preparado. Enquanto isso, use as questões, os flashcards e o chat da Athena.', '');
+    const acesso = await PX.temAcesso(id);
+    if (!acesso) {
+      box.innerHTML = kbAvisoHTML('Este conteúdo faz parte do Curso PRF', 'Adquira o curso ou ative sua assinatura para liberar as aulas completas.', btn('Ver planos', 'pricing.html'));
+    } else {
+      box.innerHTML = kbAvisoHTML('Aula ainda não publicada para este tópico', 'O conteúdo de <b>' + topic + '</b> está sendo preparado. Enquanto isso, use as questões, os flashcards e o chat da Athena.', '');
+    }
+
   } else {
     box.innerHTML = kbAvisoHTML('Não consegui carregar esta aula', 'Verifique sua conexão e tente novamente.', '<p style="margin:12px 0 0"><button class="btn-secondary" onclick="carregarConteudoKB()">Tentar de novo</button></p>');
   }
