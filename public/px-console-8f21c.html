@@ -712,7 +712,9 @@ function kbEditor(){
     <div style="position:sticky;top:0;z-index:5;background:#fff;padding-bottom:8px">
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:${discOk?'#ECFDF5':'#FEF2F2'};border:1px solid ${discOk?'#A7F3D0':'#FECACA'};color:${discOk?'#047857':'#B91C1C'};border-radius:10px;padding:8px 11px;font-size:0.8rem;font-weight:600">
         ${discOk ? esc(discOk) + (kbTopic ? ' › ' + esc(kbTopic) : ' › visão geral') : 'Nenhuma matéria válida selecionada — escolha uma matéria na coluna à esquerda para salvar ou gerar conteúdo.'}
+        ${discOk && kbTopic ? `<a href="workspace.html?id=prf-2021&disc=${encodeURIComponent(discOk)}&topic=${encodeURIComponent(kbTopic)}&tab=tutor" target="_blank" rel="noopener" style="margin-left:auto;color:#1D4ED8;text-decoration:none">Ver como aluno ↗</a>` : ''}
       </div>
+
       <div style="display:flex;gap:6px;margin-top:8px;background:#F1F5F9;border-radius:10px;padding:4px;flex-wrap:wrap">
         <button class="act" data-panebtn="conteudo" onclick="kbPane('conteudo')" style="border:none;border-radius:8px;font-size:0.78rem;font-weight:700">Conteúdo da aula</button>
         <button class="act" data-panebtn="ia" onclick="kbPane('ia')" style="border:none;border-radius:8px;font-size:0.78rem;font-weight:700">Material e curso com IA</button>
