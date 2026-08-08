@@ -39,6 +39,31 @@ const MATERIALS = [
   { id:'pf-2026', title:'Concurso PF', type:'Edital', folder:'Concursos', disc:0, top:0, pag:0, envio:'—', acesso:'—', tempo:'—', pct:0, soon:true },
 ];
 
+/* ---- Currículo vindo do banco (sincronizado pelo painel administrativo) ----
+   px-auth.js grava o cache; aqui ele sobrescreve o currículo local. */
+(function aplicarCurriculoDoBanco(){
+  let cache = null;
+  try { cache = JSON.parse(localStorage.getItem('px_curriculo_v1')); } catch(e) {}
+  if (!cache || !cache.cursos) return;
+  Object.keys(cache.cursos).forEach(slug => {
+    const discs = cache.cursos[slug] || {};
+    const nomes = Object.keys(discs);
+    if (!nomes.length) return;
+    DISCIPLINAS_POR_CONCURSO[slug] = nomes;
+    nomes.forEach(d => { if ((discs[d] || []).length) TOPICS[d] = discs[d]; });
+  });
+})();
+
+/* contadores reais dos cards de concurso */
+(function atualizarContadores(){
+  MATERIALS.forEach(m => {
+    const discs = DISCIPLINAS_POR_CONCURSO[m.id] || [];
+    m.disc = discs.length;
+    m.top = discs.reduce((a, d) => a + ((TOPICS[d] || []).length), 0);
+  });
+})();
+
+
 /* Indicadores visuais de status */
 const STATUS_META = {
   nao: { dot: '🔴', label: 'Não Familiar', color: '#EF4444' },
@@ -89,19 +114,31 @@ function pxStudyToggle(topic) {
   return pxStudySet(topic, { done: !cur.done });
 }
 
-/* status pseudo-determinístico por tópico (com override do aluno) */
+/* ---- Progresso real do aluno (cache do banco, preenchido por px-auth.js) ---- */
+const PX_PROG_KEY = 'px_prog_cache_v1';
+function pxProgAll() {
+  try { return JSON.parse(localStorage.getItem(PX_PROG_KEY)) || {}; } catch (e) { return {}; }
+}
+function pxProgGet(topic) { return pxProgAll()[topic] || null; }
+function pxProgSaveAll(map) {
+  try { localStorage.setItem(PX_PROG_KEY, JSON.stringify(map || {})); } catch (e) {}
+}
+
+/* status real do tópico (banco) com override local de "estudado" */
 function statusOf(name) {
+  const p = pxProgGet(name);
+  if (p && p.status) return p.status;
   if (pxStudyGet(name).done) return 'dom';
-  const r = _hash(name) % 100;
-  return r < 30 ? 'nao' : r < 58 ? 'apr' : r < 84 ? 'fam' : 'dom';
+  return 'nao';
 }
 
 function progressOf(name) {
+  const p = pxProgGet(name);
+  if (p && typeof p.dominio === 'number' && p.dominio > 0) return Math.min(100, p.dominio);
   if (pxStudyGet(name).done) return 100;
-  const st = statusOf(name);
-  const base = { nao: 5, apr: 35, fam: 65, dom: 90 }[st];
-  return Math.min(99, base + (_hash(name) % 10));
+  return 0;
 }
+
 
 /* ---- Validação de cobertura do edital ----
    EDITAL_REF é a referência oficial por disciplina (capítulo do edital).
@@ -129,22 +166,35 @@ function disciplinaInfo(nome) {
   return { name: nome, topics, pct };
 }
 
-/* estatísticas do painel inteligente do workspace */
+/* estatísticas reais do painel inteligente do workspace */
+function _fmtTempo(seg) {
+  const s = Math.max(0, seg || 0);
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+  return h ? `${h}h${String(m).padStart(2, '0')}` : `${m}min`;
+}
+function _fmtQuando(iso) {
+  if (!iso) return '—';
+  const dias = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  return dias <= 0 ? 'Hoje' : dias === 1 ? 'Ontem' : `Há ${dias} dias`;
+}
 function topicStats(name) {
-  const h = _hash(name);
-  const st = statusOf(name);
+  const p = pxProgGet(name) || {};
+  const q = p.questoes_respondidas || 0;
+  const c = p.questoes_certas || 0;
+  const dom = progressOf(name);
   return {
-    dominio: progressOf(name),
-    tempo: `${1 + (h % 6)}h${String(h % 60).padStart(2, '0')}`,
-    questoes: 12 + (h % 80),
-    acertos: 55 + (h % 40),
-    flashcards: 8 + (h % 30),
-    revisao: ['Hoje', 'Amanhã', 'Em 3 dias', 'Em 1 semana'][h % 4],
-    dificuldade: ['Fácil', 'Média', 'Alta'][h % 3],
-    acesso: ['Hoje', 'Ontem', 'Há 3 dias'][h % 3],
-    status: st,
+    dominio: dom,
+    tempo: _fmtTempo(p.tempo_segundos),
+    questoes: q,
+    acertos: q ? Math.round((c / q) * 100) : 0,
+    flashcards: p.flashcards || 0,
+    revisao: p.revisao || (dom >= 70 ? 'Em 1 semana' : dom > 0 ? 'Amanhã' : 'Hoje'),
+    dificuldade: dom >= 70 ? 'Fácil' : dom >= 40 ? 'Média' : 'Alta',
+    acesso: _fmtQuando(p.last_access_at),
+    status: statusOf(name),
   };
 }
+
 
 /* Índice para a pesquisa global */
 function searchIndex() {
