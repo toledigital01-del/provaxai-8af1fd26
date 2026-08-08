@@ -490,16 +490,21 @@ function kbEditor(){
 
     <div style="margin-top:16px;border:1px solid #E2E8F0;border-radius:12px;padding:12px">
       <b style="font-size:0.9rem">Alimentar a IA com material</b>
-      <p class="muted" style="margin:4px 0 10px">Envie PDF, TXT, imagens (foto de apostila, print, slide) ou qualquer arquivo de texto — vários de uma vez. Também dá para colar o endereço de um site, um link de vídeo (com legendas) ou texto solto.</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <input type="file" id="kb-file" multiple accept=".pdf,.txt,.md,.csv,.json,.html,.srt,.vtt,.png,.jpg,.jpeg,.webp,.gif,.bmp,.heic,image/*,application/pdf,text/*" style="width:auto;flex:1;min-width:200px">
-        <button class="act" onclick="kbIngestFile()">Ler arquivos</button>
+      <p class="muted" style="margin:4px 0 10px">Solte os arquivos aqui (PDF, textos, imagens de apostila/slide/print — vários de uma vez) ou cole um endereço de site/vídeo. A leitura começa sozinha, sem etapa de extração.</p>
+      <div id="kb-drop" style="border:2px dashed #CBD5E1;border-radius:12px;padding:14px;text-align:center;background:#F8FAFC">
+        <p class="muted" style="margin:0 0 8px">Arraste e solte os arquivos aqui ou escolha abaixo</p>
+        <input type="file" id="kb-file" multiple accept=".pdf,.txt,.md,.csv,.json,.html,.srt,.vtt,.png,.jpg,.jpeg,.webp,.gif,.bmp,.heic,image/*,application/pdf,text/*" style="width:auto;max-width:100%">
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px">
-        <input id="kb-url" placeholder="https://site-ou-video…" style="flex:1;min-width:220px">
-        <button class="act" onclick="kbIngestUrl('url')">Extrair site</button>
-        <button class="act" onclick="kbIngestUrl('video')">Extrair vídeo</button>
+        <input id="kb-url" placeholder="Cole o link do site ou do vídeo e aperte Enter" style="flex:1;min-width:220px">
       </div>
+      <div id="kb-ing-prog-wrap" style="display:none;margin-top:10px">
+        <div style="height:8px;border-radius:99px;background:#E2E8F0;overflow:hidden">
+          <div id="kb-ing-prog-bar" style="height:100%;width:0%;background:#2563EB;border-radius:99px;transition:width .2s"></div>
+        </div>
+        <p class="muted" id="kb-ing-prog-txt" style="margin:4px 0 0"></p>
+      </div>
+      <div id="kb-fontes" style="margin-top:8px"></div>
       <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
         <label class="muted" style="display:flex;gap:6px;align-items:center"><input type="radio" name="kb-mode" value="append" checked style="width:auto"> Somar ao conteúdo</label>
         <label class="muted" style="display:flex;gap:6px;align-items:center"><input type="radio" name="kb-mode" value="replace" style="width:auto"> Substituir</label>
