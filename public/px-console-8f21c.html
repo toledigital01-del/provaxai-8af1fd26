@@ -696,8 +696,10 @@ function kbEditor(){
       <button class="act primary" onclick="kbSave()" ${discOk?'':'disabled'}>Salvar conteúdo</button>
     </div>
     <p class="muted" id="kb-msg" style="margin-top:8px">${doc.updated_at?'Atualizado em '+dt(doc.updated_at):'Sem conteúdo cadastrado.'}</p>
+    </div>
 
-    <div style="margin-top:12px;border:1px dashed #E2E8F0;border-radius:12px;padding:10px;font-size:0.8rem">
+    <div data-pane="manut" style="display:none;margin-top:4px;border:1px dashed #E2E8F0;border-radius:12px;padding:10px;font-size:0.8rem">
+
       <b>Manutenção da base</b>
       <p class="muted" style="margin:4px 0 8px">${orfaos.length ? orfaos.length + ' conteúdo(s) órfão(s) — matéria vazia ou fora do edital.' : 'Nenhum conteúdo órfão encontrado.'}</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
