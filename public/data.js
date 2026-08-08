@@ -336,3 +336,8 @@ function pxLastGet(disc) {
     m.top = ds.reduce((a, d) => a + (TOPICS[d] || []).length, 0);
   }
 })();
+
+/* Exposição global explícita: declarações `const` de topo não entram em `window`,
+   e várias telas (inclusive o console administrativo) leem por `window.X`. */
+window.TOPICS = TOPICS;
+window.DISCIPLINAS_POR_CONCURSO = DISCIPLINAS_POR_CONCURSO;
