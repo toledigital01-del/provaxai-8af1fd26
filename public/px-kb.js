@@ -5,6 +5,15 @@
   var SB_KEY = 'sb_publishable_9ILwlXJNPJ5ZzpALdbmfBA_gRAtH4Qr';
   var cache = {};
 
+  /* Token da sessão atual (o conteúdo é restrito a alunos com acesso ativo) */
+  PX.token = PX.token || async function () {
+    try {
+      if (!PX.sb) return '';
+      var s = await PX.sb.auth.getSession();
+      return (s && s.data && s.data.session && s.data.session.access_token) || '';
+    } catch (e) { return ''; }
+  };
+
   /* Busca o conteúdo teórico publicado de uma disciplina (todos os tópicos) */
   PX.kbDisciplina = async function (disciplina, curso) {
     var key = (curso || 'prf-2021') + '|' + disciplina;
@@ -15,7 +24,10 @@
       '&disciplina=eq.' + encodeURIComponent(disciplina) +
       '&publicado=is.true';
     try {
-      var r = await fetch(SB_URL + '/rest/v1/knowledge_docs?' + qs, { headers: { apikey: SB_KEY } });
+      var h = { apikey: SB_KEY };
+      var tk = await PX.token();
+      if (tk) h.Authorization = 'Bearer ' + tk;
+      var r = await fetch(SB_URL + '/rest/v1/knowledge_docs?' + qs, { headers: h });
       cache[key] = r.ok ? await r.json() : [];
     } catch (e) { cache[key] = []; }
     return cache[key];
@@ -58,9 +70,14 @@
   /* Pergunta à Athena usando a base de conhecimento como fonte */
   PX.athenaAsk = async function (disciplina, topico, pergunta, curso) {
     try {
+      var tk = await PX.token();
       var r = await fetch('/api/public/athena', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: (function () {
+          var h = { 'Content-Type': 'application/json' };
+          if (tk) h.Authorization = 'Bearer ' + tk;
+          return h;
+        })(),
         body: JSON.stringify({ disciplina: disciplina, topico: topico || null, pergunta: pergunta, curso: curso || 'prf-2021' }),
       });
       var j = await r.json();
