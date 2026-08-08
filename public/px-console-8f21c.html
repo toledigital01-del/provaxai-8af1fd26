@@ -409,9 +409,33 @@ function kbEditor(){
       <hr style="border:none;border-top:1px solid #F1F5F9;margin:12px 0">
       <b style="font-size:0.9rem">Montar curso com IA</b>
       <p class="muted" style="margin:4px 0 10px">A IA lê o material da caixa acima e cria as aulas já distribuídas nos tópicos oficiais de <b>${esc(kbDisc)}</b>, prontas para o aluno.</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="act primary" onclick="kbMontarCurso()">Montar curso desta matéria</button>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px">
+        <div><label class="muted">Inteligência artificial</label>
+          <select id="kb-modelo">
+            <option value="google/gemini-3-flash-preview">Rápido e econômico — padrão (Gemini Flash)</option>
+            <option value="google/gemini-3.1-pro-preview">Material gigante e raciocínio profundo (Gemini Pro)</option>
+            <option value="openai/gpt-5.6-sol">Máxima qualidade (GPT-5.6 Sol)</option>
+            <option value="openai/gpt-5.6-terra">Equilibrado (GPT-5.6 Terra)</option>
+          </select></div>
+        <div><label class="muted">Banca</label>
+          <select id="kb-banca">
+            <option>Cebraspe</option><option>FGV</option><option>FCC</option>
+            <option>Vunesp</option><option>Cesgranrio</option><option>IBFC</option><option>Outra</option>
+          </select></div>
+        <div><label class="muted">Cargo / concurso</label>
+          <input id="kb-cargo" value="Polícia Rodoviária Federal"></div>
+        <div><label class="muted">Profundidade</label>
+          <select id="kb-prof">
+            <option value="essencial">Essencial — aula enxuta</option>
+            <option value="completo" selected>Completo — padrão</option>
+            <option value="aprofundado">Aprofundado — aula longa</option>
+          </select></div>
       </div>
+      <label class="muted" style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" id="kb-aprov" checked style="width:auto"> Modo aprovação (prioriza o que mais cai, pegadinhas e treino no estilo da banca)</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+        <button class="act primary" id="kb-btn-montar" onclick="kbMontarCurso()">Montar curso desta matéria</button>
+      </div>
+
       <p class="muted" id="kb-ing" style="margin-top:8px"></p>
       <div id="kb-preview" style="margin-top:8px"></div>
     </div>`;
