@@ -388,8 +388,108 @@ function kbEditor(){
       ${doc.id?`<button class="act danger" onclick="kbDelete('${doc.id}')">Excluir</button>`:''}
       <button class="act primary" onclick="kbSave()">Salvar conteúdo</button>
     </div>
-    <p class="muted" id="kb-msg" style="margin-top:8px">${doc.updated_at?'Atualizado em '+dt(doc.updated_at):'Sem conteúdo cadastrado.'}</p>`;
+    <p class="muted" id="kb-msg" style="margin-top:8px">${doc.updated_at?'Atualizado em '+dt(doc.updated_at):'Sem conteúdo cadastrado.'}</p>
+
+    <div style="margin-top:16px;border:1px solid #E2E8F0;border-radius:12px;padding:12px">
+      <b style="font-size:0.9rem">Alimentar a IA com material</b>
+      <p class="muted" style="margin:4px 0 10px">Envie PDF ou TXT, cole o endereço de um site, um link de vídeo (com legendas) ou texto solto. O conteúdo é extraído e vai para a caixa acima.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <input type="file" id="kb-file" accept=".pdf,.txt,application/pdf,text/plain" style="width:auto;flex:1;min-width:200px">
+        <button class="act" onclick="kbIngestFile()">Extrair arquivo</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px">
+        <input id="kb-url" placeholder="https://site-ou-video…" style="flex:1;min-width:220px">
+        <button class="act" onclick="kbIngestUrl('url')">Extrair site</button>
+        <button class="act" onclick="kbIngestUrl('video')">Extrair vídeo</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
+        <label class="muted" style="display:flex;gap:6px;align-items:center"><input type="radio" name="kb-mode" value="append" checked style="width:auto"> Somar ao conteúdo</label>
+        <label class="muted" style="display:flex;gap:6px;align-items:center"><input type="radio" name="kb-mode" value="replace" style="width:auto"> Substituir</label>
+      </div>
+      <hr style="border:none;border-top:1px solid #F1F5F9;margin:12px 0">
+      <b style="font-size:0.9rem">Montar curso com IA</b>
+      <p class="muted" style="margin:4px 0 10px">A IA lê o material da caixa acima e cria as aulas já distribuídas nos tópicos oficiais de <b>${esc(kbDisc)}</b>, prontas para o aluno.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="act primary" onclick="kbMontarCurso()">Montar curso desta matéria</button>
+      </div>
+      <p class="muted" id="kb-ing" style="margin-top:8px"></p>
+      <div id="kb-preview" style="margin-top:8px"></div>
+    </div>`;
 }
+function kbIngMsg(t){ const el = document.getElementById('kb-ing'); if(el) el.textContent = t; }
+async function kbToken(){ const { data } = await PX.sb.auth.getSession(); return data.session ? data.session.access_token : ''; }
+async function kbPost(path, payload){
+  const r = await fetch(path, { method:'POST', headers:{ 'Content-Type':'application/json', Authorization:'Bearer ' + (await kbToken()) }, body: JSON.stringify(payload) });
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j.error || 'Falha na requisição.');
+  return j;
+}
+function kbApplyText(texto, origem){
+  const ta = document.getElementById('kb-txt');
+  const modo = (document.querySelector('input[name="kb-mode"]:checked')||{}).value || 'append';
+  const bloco = (origem ? `\n\n## Fonte: ${origem}\n` : '\n\n') + texto;
+  ta.value = modo === 'replace' ? texto : (ta.value.trim() ? ta.value + bloco : texto);
+  kbIngMsg('Material extraído (' + texto.length.toLocaleString('pt-BR') + ' caracteres). Revise e clique em "Salvar conteúdo".');
+}
+window.kbIngestFile = async function(){
+  const f = (document.getElementById('kb-file').files || [])[0];
+  if(!f) return kbIngMsg('Escolha um arquivo PDF ou TXT.');
+  kbIngMsg('Lendo ' + f.name + '…');
+  try{
+    if(/\.txt$/i.test(f.name) || f.type === 'text/plain'){
+      const texto = await f.text();
+      return kbApplyText(texto.trim(), f.name);
+    }
+    const b64 = await new Promise((res,rej)=>{ const r = new FileReader(); r.onload=()=>res(String(r.result)); r.onerror=rej; r.readAsDataURL(f); });
+    const j = await kbPost('/api/public/kb-ingest', { tipo:'pdf', nome:f.name, arquivo_base64:b64 });
+    kbApplyText(j.texto, j.origem);
+  }catch(e){ kbIngMsg('Erro: ' + e.message); }
+};
+window.kbIngestUrl = async function(tipo){
+  const url = document.getElementById('kb-url').value.trim();
+  if(!url) return kbIngMsg('Cole o endereço primeiro.');
+  kbIngMsg('Buscando conteúdo…');
+  try{ const j = await kbPost('/api/public/kb-ingest', { tipo, url }); kbApplyText(j.texto, j.origem); }
+  catch(e){ kbIngMsg('Erro: ' + e.message); }
+};
+window.kbMontarCurso = async function(){
+  const material = document.getElementById('kb-txt').value.trim();
+  if(material.length < 200) return kbIngMsg('Coloque primeiro o material na caixa de conteúdo (arquivo, site, vídeo ou texto).');
+  const topicos = kbTopicList(kbDisc);
+  if(!topicos.length) return kbIngMsg('Esta matéria não tem tópicos cadastrados.');
+  kbIngMsg('A IA está montando o curso de ' + kbDisc + '… isso pode levar até 1 minuto.');
+  document.getElementById('kb-preview').innerHTML = '';
+  try{
+    const j = await kbPost('/api/public/kb-autocourse', { disciplina:kbDisc, topicos, material: material.slice(0,300000) });
+    KB_GERADAS = j.aulas || [];
+    kbIngMsg(KB_GERADAS.length + ' aula(s) geradas. Revise e publique.');
+    document.getElementById('kb-preview').innerHTML =
+      '<div style="border:1px solid #E2E8F0;border-radius:12px;max-height:40vh;overflow:auto">' +
+      KB_GERADAS.map(function(a,i){ return '<div style="padding:9px 11px;border-bottom:1px solid #F1F5F9;font-size:0.8rem"><b>'+esc(a.topico)+'</b><br><span class="muted">'+esc(String(a.conteudo).slice(0,150))+'…</span></div>'; }).join('') +
+      '</div><div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
+      '<button class="act primary" onclick="kbPublicarGeradas()">Publicar aulas nos tópicos</button>' +
+      '<button class="act" onclick="document.getElementById(\'kb-preview\').innerHTML=\'\'">Descartar</button></div>';
+  }catch(e){ kbIngMsg('Erro: ' + e.message); }
+};
+let KB_GERADAS = [];
+window.kbPublicarGeradas = async function(){
+  if(!KB_GERADAS.length) return;
+  kbIngMsg('Publicando…');
+  for(const a of KB_GERADAS){
+    const doc = kbFind(kbDisc, a.topico);
+    const payload = { course_slug:'prf-2021', disciplina:kbDisc, topico:a.topico, titulo:a.titulo, conteudo:a.conteudo, publicado:true, updated_by:PX.user.id };
+    const { error } = doc
+      ? await PX.sb.from('knowledge_docs').update(payload).eq('id', doc.id)
+      : await PX.sb.from('knowledge_docs').insert(payload);
+    if(error){ kbIngMsg('Erro ao salvar "' + a.topico + '": ' + error.message); return; }
+    if(!doc) await loadKB();
+  }
+  await logAdmin('montar_curso_ia','knowledge_docs', null, { disciplina:kbDisc, aulas:KB_GERADAS.length });
+  const n = KB_GERADAS.length; KB_GERADAS = [];
+  await loadKB(); kbPaint();
+  kbIngMsg(n + ' aula(s) publicadas para os alunos.');
+};
+
 window.kbSave = async function(){
   const conteudo = document.getElementById('kb-txt').value;
   const titulo = document.getElementById('kb-tit').value.trim() || null;
