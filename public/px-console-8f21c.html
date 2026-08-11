@@ -715,6 +715,7 @@ async function edInit(){
 
 window.edLimpar = function(){
   ED_GRADE = [];
+  ED_EXIST = null; ED_REVISADO = false; ED_SOMENTE_NOVOS = false;
   const ta = edEl('ed-txt'); if(ta) ta.value = '';
   const pv = edEl('ed-preview'); if(pv) pv.innerHTML = '';
   edProgHide(); edMsg('');
@@ -771,7 +772,7 @@ window.edAnalisar = async function(){
   if(material.length < 200) return edMsg('Carregue o edital (arquivo) ou cole o conteúdo programático antes de extrair.');
   const btn = edEl('ed-btn');
   if(btn){ btn.disabled = true; btn.textContent = 'A IA está lendo o edital…'; }
-  ED_GRADE = [];
+  ED_GRADE = []; ED_EXIST = null; ED_REVISADO = false;
   const pedacos = edPedacos(material, 90000);
   const modelo = (edEl('ed-modelo')||{}).value || '';
   const cargo = (edEl('ed-cargo')||{}).value || '';
@@ -962,6 +963,7 @@ window.edAplicar = async function(){
   if(!courseId) return edMsg('Selecione (ou cadastre) o curso de destino.');
   const escolhidas = ED_GRADE.filter(d=>d.incluir && d.topicos.some(t=>t.incluir));
   if(!escolhidas.length) return edMsg('Marque ao menos uma matéria para gravar.');
+  if(!ED_REVISADO) return edMsg('Clique em “Comparar com o curso” e revise a grade antes de gravar.');
   const btn = edEl('ed-aplicar');
   if(btn){ btn.disabled = true; btn.textContent = 'Gravando…'; }
   let nd = 0, nt = 0;
@@ -994,6 +996,7 @@ window.edAplicar = async function(){
     await logAdmin('importar_edital','courses',courseId,{ disciplinas: escolhidas.length, novas: nd, topicos: nt });
     edMsg('Pronto: ' + nd + ' matéria(s) nova(s) e ' + nt + ' tópico(s)/subtópico(s) gravados. Já aparecem na base de conhecimento e para os alunos.');
     setTimeout(edProgHide, 1200);
+    ED_REVISADO = false; ED_EXIST = null;
     await loadKB();
     kbPaint();
   }catch(e){
