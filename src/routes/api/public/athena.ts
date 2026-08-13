@@ -53,8 +53,9 @@ export const Route = createFileRoute('/api/public/athena')({
         }
 
         const curso = body.curso || 'prf-2021'
-        if (!(await hasCourseAccess(userId, curso)))
-          return Response.json({ error: 'Seu acesso ao curso não está ativo.' }, { status: 403 })
+        // Trava de acesso pago desativada por enquanto (fase de testes): qualquer
+        // aluno logado pode falar com a Athena. Reativar: `if (!(await hasCourseAccess(userId, curso))) return Response.json({ error: 'Seu acesso ao curso não está ativo.' }, { status: 403 })`
+        void hasCourseAccess
 
         const cfgLimite = normalizar(await getSetting('ia_athena'))
         const limite = cfgLimite.limiteDiario ?? 0

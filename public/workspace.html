@@ -391,6 +391,11 @@ async function carregarConteudoKB() {
   if (!box) return;
   let res = { status: 0, doc: null };
   try { res = await PX.kbTopicoDetalhe(disc, topic, id); } catch (e) {}
+  // Se veio "sem login" mas a sessão pode só ainda não ter carregado, espera e tenta mais uma vez
+  // antes de mostrar qualquer aviso — evita o falso "entre para ver esta aula" pra quem já está logado.
+  if (res.status === 401 && window.PX && PX.ready) {
+    try { await PX.ready; res = await PX.kbTopicoDetalhe(disc, topic, id); } catch (e) {}
+  }
   if (!document.getElementById('kb-conteudo')) return;
   const doc = res.doc;
   if (doc && (doc.conteudo || '').trim()) {
@@ -398,18 +403,12 @@ async function carregarConteudoKB() {
     return;
   }
   const btn = (txt, href) => '<p style="margin:12px 0 0"><a class="btn-primary" style="display:inline-block;text-decoration:none;padding:9px 16px;border-radius:10px" href="' + href + '">' + txt + '</a></p>';
+  // Trava de acesso pago desativada por enquanto (fase de testes): qualquer aluno
+  // logado vê o material liberado; só falta login mesmo é que ainda bloqueia.
   if (res.status === 401) {
-    box.innerHTML = kbAvisoHTML('Entre para ver esta aula', 'O conteúdo completo é liberado para alunos com acesso ativo.', btn('Entrar na minha conta', 'login.html?next=' + encodeURIComponent(location.pathname + location.search)));
-  } else if (res.status === 403) {
-    box.innerHTML = kbAvisoHTML('Este conteúdo faz parte do Curso PRF', 'Adquira o curso ou ative sua assinatura para liberar as aulas completas.', btn('Ver planos', 'pricing.html'));
-  } else if (res.status === 200) {
-    const acesso = await PX.temAcesso(id);
-    if (!acesso) {
-      box.innerHTML = kbAvisoHTML('Este conteúdo faz parte do Curso PRF', 'Adquira o curso ou ative sua assinatura para liberar as aulas completas.', btn('Ver planos', 'pricing.html'));
-    } else {
-      box.innerHTML = kbAvisoHTML('Aula ainda não publicada para este tópico', 'O conteúdo de <b>' + topic + '</b> está sendo preparado. Enquanto isso, use as questões, os flashcards e o chat da Athena.', '');
-    }
-
+    box.innerHTML = kbAvisoHTML('Entre para ver esta aula', 'O conteúdo completo é liberado para alunos logados.', btn('Entrar na minha conta', 'login.html?next=' + encodeURIComponent(location.pathname + location.search)));
+  } else if (res.status === 200 || res.status === 403) {
+    box.innerHTML = kbAvisoHTML('Aula ainda não publicada para este tópico', 'O conteúdo de <b>' + topic + '</b> está sendo preparado. Enquanto isso, use as questões, os flashcards e o chat da Athena.', '');
   } else {
     box.innerHTML = kbAvisoHTML('Não consegui carregar esta aula', 'Verifique sua conexão e tente novamente.', '<p style="margin:12px 0 0"><button class="btn-secondary" onclick="carregarConteudoKB()">Tentar de novo</button></p>');
   }
