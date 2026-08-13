@@ -47,8 +47,44 @@ export class AIError extends Error {
   }
 }
 
-/** Uma chamada de chat, com a mesma assinatura para todos os provedores. */
+// Ordem de fallback quando o provedor configurado falha (sem crédito, fora do
+// ar, sem chave). Só entra em jogo quando existe uma chave salva pra ele.
+const FALLBACK_ORDER: Provider[] = ['gemini', 'anthropic', 'openai', 'lovable']
+
+/** Uma chamada de chat, com a mesma assinatura para todos os provedores.
+ *  Se o provedor configurado falhar por falta de crédito/disponibilidade,
+ *  tenta automaticamente o próximo provedor que tiver chave salva. */
 export async function chat(opts: {
+  provider: Provider
+  model: string
+  system: string
+  user: string
+  keys: Keys
+  maxTokens?: number
+}): Promise<string> {
+  const tentar = async (provider: Provider, model: string) =>
+    callProvider({ ...opts, provider, model })
+
+  try {
+    return await tentar(opts.provider, opts.model)
+  } catch (e) {
+    const err = e as AIError
+    if (!(err instanceof AIError) || ![402, 429, 503].includes(err.status)) throw err
+
+    for (const fallback of FALLBACK_ORDER) {
+      if (fallback === opts.provider) continue
+      if (!keyDe(fallback, opts.keys)) continue
+      try {
+        return await tentar(fallback, MODELOS[fallback][0]!)
+      } catch {
+        continue
+      }
+    }
+    throw err
+  }
+}
+
+async function callProvider(opts: {
   provider: Provider
   model: string
   system: string
