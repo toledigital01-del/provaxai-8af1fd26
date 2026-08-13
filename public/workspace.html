@@ -6,8 +6,10 @@
 <title>Workspace – Prova X</title>
 <link rel="stylesheet" href="shell.css">
 <style>
-  .ws { display:grid; grid-template-columns: minmax(0,1fr) 360px; height:100%; }
-  @media (max-width: 1200px) { .ws { grid-template-columns: minmax(0,1fr); height:auto; } .ws-right { border-left:none; border-top:1px solid var(--line); } }
+  .ws { display:grid; grid-template-columns: minmax(0,1fr) var(--ws-right-w,360px); height:100%; position:relative; }
+  .ws-resize { position:absolute; top:0; bottom:0; left:calc(100% - var(--ws-right-w,360px) - 4px); width:8px; cursor:col-resize; z-index:6; touch-action:none; }
+  .ws-resize:hover, .ws-resize.dragging { background:rgba(37,99,235,.18); }
+  @media (max-width: 1200px) { .ws { grid-template-columns: minmax(0,1fr); height:auto; } .ws-right { border-left:none; border-top:1px solid var(--line); } .ws-resize { display:none; } }
   .fixa { margin-top:26px; padding-top:18px; border-top:1px solid var(--line); }
   .fixa .lbl { font-size:0.95rem; font-weight:600; }
   .fixa .btns { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
@@ -176,6 +178,7 @@
         <div id="pane"></div>
       </section>
 
+      <div class="ws-resize" id="ws-resize" title="Arraste para redimensionar"></div>
       <aside class="ws-right" id="ws-right"></aside>
     </div>
   </div>
@@ -617,6 +620,57 @@ function renderPane() {
   }
 }
 renderPane();
+
+/* ---------- Redimensionar a coluna do chat (arrastar / clique duplo reseta) ---------- */
+(function () {
+  const wsEl = document.querySelector('.ws');
+  const handle = document.getElementById('ws-resize');
+  if (!wsEl || !handle) return;
+  const MIN = 280, MAX = 560, PADRAO = 360;
+  const salva = parseInt(localStorage.getItem('ws:rightWidth') || '', 10);
+  const inicial = Math.min(MAX, Math.max(MIN, Number.isFinite(salva) ? salva : PADRAO));
+  wsEl.style.setProperty('--ws-right-w', inicial + 'px');
+
+  let dragging = false, startX = 0, startW = inicial;
+  function larguraAtual() {
+    return parseInt(getComputedStyle(wsEl).getPropertyValue('--ws-right-w'), 10) || PADRAO;
+  }
+  function onMove(e) {
+    if (!dragging) return;
+    const x = e.touches ? e.touches[0].clientX : e.clientX;
+    const w = Math.min(MAX, Math.max(MIN, startW + (startX - x)));
+    wsEl.style.setProperty('--ws-right-w', w + 'px');
+  }
+  function onUp() {
+    if (!dragging) return;
+    dragging = false;
+    handle.classList.remove('dragging');
+    document.body.style.userSelect = '';
+    localStorage.setItem('ws:rightWidth', String(larguraAtual()));
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('touchend', onUp);
+  }
+  function onDown(e) {
+    dragging = true;
+    startX = e.touches ? e.touches[0].clientX : e.clientX;
+    startW = larguraAtual();
+    handle.classList.add('dragging');
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onUp);
+    e.preventDefault();
+  }
+  handle.addEventListener('mousedown', onDown);
+  handle.addEventListener('touchstart', onDown, { passive: false });
+  handle.addEventListener('dblclick', () => {
+    wsEl.style.setProperty('--ws-right-w', PADRAO + 'px');
+    localStorage.setItem('ws:rightWidth', String(PADRAO));
+  });
+})();
 
 /* ---------- Coluna direita ---------- */
 const reco = (TOPICS[disc] || []).filter(t => t !== topic).slice(0, 3);

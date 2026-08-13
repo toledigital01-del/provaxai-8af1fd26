@@ -5,10 +5,26 @@
   var SB_KEY = 'sb_publishable_9ILwlXJNPJ5ZzpALdbmfBA_gRAtH4Qr';
   var cache = {};
 
+  /* Espera a sessão do aluno terminar de carregar antes de checar login/acesso.
+     Sem isso, uma checagem de acesso que roda antes da sessão hidratar sempre
+     via "não logado", mesmo com o aluno já autenticado (falso 401). */
+  function waitForSessao() {
+    return new Promise(function (resolve) {
+      if (window.PX && window.PX.ready) return resolve();
+      var tries = 0;
+      var t = setInterval(function () {
+        if (window.PX && window.PX.ready) { clearInterval(t); resolve(); }
+        else if (++tries > 200) { clearInterval(t); resolve(); }
+      }, 50);
+    });
+  }
+
   /* Token da sessão atual (o conteúdo é restrito a alunos com acesso ativo) */
   PX.token = PX.token || async function () {
     try {
+      await waitForSessao();
       if (!PX.sb) return '';
+      if (PX.ready) await PX.ready;
       var s = await PX.sb.auth.getSession();
       return (s && s.data && s.data.session && s.data.session.access_token) || '';
     } catch (e) { return ''; }
