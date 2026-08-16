@@ -8,21 +8,21 @@ export const Route = createFileRoute("/")({
     meta: [
       {
         title:
-          "Studley AI – A Ferramenta de Estudo com IA #1 | Mande nas Provas",
+          "Prova X — Curso PRF com IA: edital completo, questões e revisão",
       },
       {
         name: "description",
         content:
-          "Studley AI: resolva questões, crie flashcards, corrija redações e estude com tutor de IA para mandar bem nas provas.",
+          "Estude para a Polícia Rodoviária Federal com a Athena IA: 15 disciplinas, 303 tópicos do edital, questões no padrão Cebraspe, revisão inteligente e cronograma adaptativo.",
       },
       {
         property: "og:title",
-        content: "Studley AI – Ferramenta de Estudo com IA",
+        content: "Prova X — Curso PRF com IA: edital completo, questões e revisão",
       },
       {
         property: "og:description",
         content:
-          "Resolva questões, crie flashcards e estude com um tutor de IA. Mande nas provas com o Studley AI.",
+          "Estude para a PRF com a Athena IA: edital completo, questões no padrão Cebraspe e revisão inteligente.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
