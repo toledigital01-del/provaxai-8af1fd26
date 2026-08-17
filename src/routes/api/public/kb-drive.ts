@@ -80,7 +80,7 @@ export const Route = createFileRoute('/api/public/kb-drive')({
         }
 
         const lovable = process.env['LOVABLE_API_KEY']
-        const conn = process.env['GOOGLE_DRIVE_API_KEY']
+        const conn = process.env['GOOGLE_DRIVE_API_KEY_1'] || process.env['GOOGLE_DRIVE_API_KEY']
         if (!lovable || !conn) {
           return Response.json(
             { error: 'O Google Drive ainda não está conectado. Conecte a conta do Google nas configurações para importar pastas.' },
