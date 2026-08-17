@@ -42,7 +42,53 @@
   .hide{display:none;}
   @media(max-width:640px){ table{font-size:0.78rem;} th,td{padding:7px 6px;} }
 @keyframes pxspin{to{transform:rotate(360deg)}}
-</style>
+
+  /* ===== Base de conhecimento (IA) — camada visual minimalista ===== */
+  .kb-scope{font-size:0.875rem;color:#0F172A;}
+  .kb-scope .muted{color:#7C8798;font-size:0.8125rem;line-height:1.55;}
+  .kb-scope label.muted{display:block;font-size:0.75rem;font-weight:600;color:#64748B;margin-bottom:5px;}
+  .kb-scope input,.kb-scope select,.kb-scope textarea{background:#fff;border-color:#E4E8EE;border-radius:10px;padding:9px 12px;font-size:0.84rem;}
+  .kb-scope input:focus,.kb-scope select:focus,.kb-scope textarea:focus{outline:none;border-color:#94A9C9;box-shadow:0 0 0 3px rgba(37,99,235,.10);}
+  .kb-scope button.act{border-radius:10px;padding:7px 13px;font-size:0.8rem;border-color:#E4E8EE;}
+  .kb-scope button.act:hover:not(:disabled){background:#F6F8FB;}
+  .kb-scope button.act.primary:hover:not(:disabled){background:#1D4ED8;}
+  .kb-scope button.act:disabled{opacity:.45;cursor:not-allowed;}
+
+  /* estatísticas discretas, sem cartões concorrendo */
+  .kb-stats{display:flex;flex-wrap:wrap;gap:26px 40px;padding:4px 4px 20px;margin-bottom:4px;}
+  .kb-stat b{display:block;font-size:1.45rem;font-weight:700;letter-spacing:-0.03em;line-height:1.15;}
+  .kb-stat span{display:block;font-size:0.75rem;color:#8A94A6;margin-top:2px;}
+
+  /* navegação por passos: segmented control calmo */
+  .kb-nav{display:flex;gap:4px;flex-wrap:wrap;background:#F1F4F9;border-radius:12px;padding:4px;}
+  .kb-nav button{border:none;background:transparent;border-radius:9px;padding:8px 15px;font-size:0.8125rem;font-weight:600;
+    color:#64748B;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px;}
+  .kb-nav button:hover{color:#0F172A;}
+  .kb-nav button.on{background:#fff;color:#0F172A;box-shadow:0 1px 2px rgba(15,23,42,.08);}
+  .kb-nav .kb-count{background:#E7ECF4;color:#64748B;border-radius:99px;padding:1px 7px;font-size:0.68rem;font-weight:700;}
+  .kb-nav button.on .kb-count{background:#EFF3FA;color:#334155;}
+
+  /* blocos/cards de seção */
+  .kb-block{background:#fff;border:1px solid #E9EDF3;border-radius:16px;padding:22px 24px;margin-bottom:16px;}
+  .kb-block > h3{font-size:1rem;font-weight:700;letter-spacing:-0.01em;margin:0;}
+  .kb-block > .kb-sub{color:#8A94A6;font-size:0.8125rem;line-height:1.55;margin:5px 0 18px;max-width:70ch;}
+  .kb-block h4{font-size:0.85rem;font-weight:700;margin:0 0 4px;}
+  .kb-hr{border:none;border-top:1px solid #F0F3F7;margin:22px 0;}
+  @media(max-width:640px){ .kb-block{padding:18px 16px;} .kb-stats{gap:18px 26px;} }
+
+  /* selo neutro único, no lugar de badges coloridos concorrentes */
+  .kb-tag{display:inline-block;font-size:0.6875rem;font-weight:600;letter-spacing:.01em;padding:2px 9px;border-radius:99px;
+    background:#F1F4F9;color:#64748B;white-space:nowrap;}
+  .kb-tag.is-on{background:#ECFDF5;color:#047857;}
+  .kb-tag.is-wait{background:#FFFBEB;color:#B45309;}
+
+  /* listas e superfícies suaves */
+  .kb-surface{border:1px solid #E9EDF3;border-radius:12px;background:#fff;overflow:hidden;}
+  .kb-drop{border:1.5px dashed #DDE3EC;border-radius:14px;padding:22px 16px;text-align:center;background:#FBFCFE;transition:.15s;}
+  .kb-soft{background:#FBFCFE;border:1px solid #EDF1F6;border-radius:14px;padding:16px;}
+  .kb-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;}
+  .kb-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:16px;}
+
 </head>
 <body>
 <div class="wrap">
