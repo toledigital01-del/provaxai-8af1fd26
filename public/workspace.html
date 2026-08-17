@@ -774,6 +774,7 @@ function renderPane() {
     document.getElementById('pod-next').onclick = () => { t = Math.min(dur, t + 15); paint(); };
     document.getElementById('pod-rate').onclick = e => { rate = rate === 1 ? 1.5 : rate === 1.5 ? 2 : 1; e.target.textContent = rate + 'x'; };
     document.getElementById('pod-hand').onclick = () => { stop(); document.getElementById('side-msg') && document.getElementById('side-msg').focus(); };
+    document.getElementById('pod-new').onclick = () => { stop(); podState = { state: 'idle', roteiro: [], erro: '' }; renderPane(); };
     paint();
 
   } else if (tab === 'evolucao') {
