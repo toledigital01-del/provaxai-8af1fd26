@@ -61,6 +61,7 @@
 
   return {
     validarDisciplina: validarDisciplina,
+    validarStatus: validarStatus,
     montarDoc: montarDoc,
     filtrarAulasPublicaveis: filtrarAulasPublicaveis,
     encontrarOrfaos: encontrarOrfaos,
