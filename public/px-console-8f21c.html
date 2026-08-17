@@ -1644,7 +1644,7 @@ function kbBindIngest(){
   if(drop && !drop.dataset.bound){
     drop.dataset.bound = '1';
     ['dragenter','dragover'].forEach(function(ev){
-      drop.addEventListener(ev, function(e){ e.preventDefault(); drop.style.borderColor = '#2563EB'; drop.style.background = '#EFF6FF'; });
+      drop.addEventListener(ev, function(e){ e.preventDefault(); drop.style.borderColor = '#94A9C9'; drop.style.background = '#F5F8FE'; });
     });
     ['dragleave','drop'].forEach(function(ev){
       drop.addEventListener(ev, function(e){ e.preventDefault(); drop.style.borderColor = '#DDE3EC'; drop.style.background = '#FBFCFE'; });
