@@ -296,6 +296,7 @@
     PX.sb.from('study_sessions').insert({
       user_id: PX.user.id, discipline_nome: disc, topic_nome: topic, ferramenta, segundos: segundos || 0,
     }).then(() => {});
+    PX.saveSnapshot();
   };
 
   PX.logAttempt = async function (a) {
@@ -305,6 +306,7 @@
       user_id: PX.user.id, discipline_nome: a.disc, topic_nome: a.topic,
       resposta: a.resposta, correta: !!a.correta, segundos: a.segundos || 0,
     }).then(() => {});
+    PX.saveSnapshot();
   };
 
   /* ---------- Pastas e material próprio ---------- */
