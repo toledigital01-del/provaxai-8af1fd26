@@ -440,3 +440,132 @@ body.dark .card:hover, body.dark .pcard:hover {
 }
 body.dark .gres-box, body.dark .fmenu, body.dark .dropdown { box-shadow: 0 24px 70px rgba(0,0,0,.6); }
 body.dark .track { box-shadow: inset 0 1px 2px rgba(0,0,0,.45); }
+
+/* ============================================================
+   Paleta institucional PRF (mesma da landing page)
+   azul-marinho + dourado — claro e escuro
+   ============================================================ */
+:root {
+  --brand: #0B2A5B;
+  --brand-2: #154C9B;
+  --brand-soft: #E8EEF9;
+  --gold: #F2B705;
+  --gold-2: #D99B00;
+  --gold-soft: #FFF6DF;
+  --bg: #FFFFFF;
+  --bg-soft: #F5F7FA;
+  --surface-2: #EEF2F8;
+  --line: #DFE5EF;
+  --line-strong: #CBD5E6;
+  --text: #0A1730;
+  --muted: #54617A;
+  --accent: var(--brand);
+  --accent-soft: var(--brand-soft);
+}
+
+body.dark {
+  --brand: #2E6BC6;
+  --brand-2: #4A8AE0;
+  --brand-soft: #0F2951;
+  --gold: #F5C22C;
+  --gold-2: #E0A800;
+  --gold-soft: #2A2208;
+  --bg: #050B18;
+  --bg-soft: #081227;
+  --surface: #0B1B36;
+  --surface-2: #0F2447;
+  --line: #17304F;
+  --line-strong: #1E3D63;
+  --text: #F1F5FB;
+  --muted: #9DABC2;
+}
+
+/* superfícies base */
+.shell-body { background: var(--bg-soft); }
+.shell-sidebar, .shell-topbar { background: var(--surface-2, #EEF2F8); border-color: var(--line); }
+.ws-right, .folders { background: var(--surface-2, #EEF2F8) !important; border-color: var(--line) !important; }
+.card, .set-card, .pcard, .kpi, .chap, .page-back, .shell-burger, .gsearch-input, .theme-toggle { border-color: var(--line); }
+
+/* navegação */
+.nav-item, .ws-item, .shell-back { color: #3C4A63; }
+.nav-item:hover, .ws-item:hover { background: var(--brand-soft); color: var(--brand); }
+.nav-item.active, .ws-item.active, .shell-back:hover { background: var(--brand-soft); color: var(--brand); }
+.nav-item.active { box-shadow: inset 2px 0 0 var(--gold); }
+.avatar { background: linear-gradient(135deg, var(--brand), var(--brand-2)); }
+
+/* foco / hover institucional */
+.gsearch-input:focus-within { border-color: var(--brand-2); box-shadow: 0 0 0 3px rgba(21,76,155,.14); }
+.card:hover, .set-card:hover { border-color: var(--brand-2); box-shadow: 0 8px 24px rgba(11,42,91,.10); }
+.page-back:hover, .theme-toggle:hover { border-color: var(--brand-2); color: var(--brand); }
+a:focus-visible, button:focus-visible, input:focus-visible,
+textarea:focus-visible, select:focus-visible, [tabindex]:focus-visible {
+  box-shadow: 0 0 0 3px rgba(242,183,5,.35);
+}
+
+/* selos e destaques */
+.tag { color: var(--gold-2); border-color: rgba(242,183,5,.45); background: var(--gold-soft); }
+.soon-badge { background: var(--brand-soft); color: var(--brand); }
+.seg button.on, .tabs button.on { background: var(--brand-soft) !important; color: var(--brand) !important; }
+
+/* progresso */
+.fill, .fill.lvl-mid { background: linear-gradient(90deg, var(--brand-2), var(--brand)); }
+.fill.lvl-low { background: linear-gradient(90deg, var(--gold), var(--gold-2)); }
+.fill.lvl-high { background: linear-gradient(90deg, #17A673, #0F8F5F); }
+
+/* bordas por área */
+.card.area-transito, .set-card.area-transito { border-left-color: var(--brand); }
+.card.area-direito, .set-card.area-direito { border-left-color: var(--brand-2); }
+.card.area-basica, .set-card.area-basica { border-left-color: var(--gold-2); }
+
+/* ---- modo escuro ---- */
+body.dark .shell-body { background: var(--bg); }
+body.dark .shell-sidebar, body.dark .shell-topbar,
+body.dark .ws-right, body.dark .folders { background: var(--surface-2) !important; border-color: var(--line) !important; }
+body.dark .card, body.dark .set-card, body.dark .kpi, body.dark .chap,
+body.dark .page-back, body.dark .shell-burger, body.dark .pcard {
+  background: var(--surface) !important; border-color: var(--line) !important; color: var(--text);
+}
+body.dark .nav-item, body.dark .ws-item, body.dark .shell-back { color: #C3D0E4; }
+body.dark .nav-item:hover, body.dark .ws-item:hover { background: var(--brand-soft); color: #EAF1FC; }
+body.dark .nav-item.active, body.dark .ws-item.active,
+body.dark .seg button.on, body.dark .tabs button.on,
+body.dark .shell-back:hover { background: var(--brand-soft) !important; color: var(--brand-2) !important; }
+body.dark .card:hover, body.dark .set-card:hover { border-color: var(--brand-2) !important; box-shadow: 0 14px 34px rgba(0,0,0,.5); }
+body.dark .gsearch-input { background: var(--surface) !important; border-color: var(--line) !important; }
+body.dark .gsearch-input:focus-within { border-color: var(--brand-2); box-shadow: 0 0 0 3px rgba(74,138,224,.20); }
+body.dark .gresults, body.dark .fmenu, body.dark .dropdown { background: var(--surface) !important; border-color: var(--line) !important; }
+body.dark .kbd { background: var(--surface) !important; border-color: var(--line); color: var(--muted); }
+body.dark .track { background: #10203A; }
+body.dark .tag { background: rgba(245,194,44,.10); border-color: rgba(245,194,44,.35); color: var(--gold); }
+body.dark .soon-badge { background: var(--brand-soft); color: #9EC2F5; }
+body.dark .topic-row:hover, body.dark .trow:hover { background: #0E2242; }
+body.dark input, body.dark textarea, body.dark select {
+  background-color: var(--surface) !important; border-color: var(--line) !important; color: var(--text) !important;
+}
+body.dark [style*="#fff"], body.dark [style*="#FFF"],
+body.dark [style*="#ffffff"], body.dark [style*="#FFFFFF"],
+body.dark [style*="#F8FAFC"], body.dark [style*="#f8fafc"],
+body.dark [style*="#F1F5F9"], body.dark [style*="#f1f5f9"],
+body.dark [style*="#EEF2F7"], body.dark [style*="#F9FAFB"],
+body.dark [style*="#FAFAFA"], body.dark [style*="#F4F4F5"] {
+  background-color: var(--surface) !important; border-color: var(--line) !important;
+}
+body.dark .box, body.dark .box2, body.dark .panel, body.dark .stat, body.dark .chip,
+body.dark .mcard, body.dark .fold, body.dark .fmenu, body.dark .action, body.dark .course,
+body.dark .cont, body.dark .modal, body.dark .card2, body.dark .btn-ghost, body.dark .btn-secondary,
+body.dark .day, body.dark .mday, body.dark .task, body.dark .nav-week button, body.dark .pill.rest,
+body.dark .ask, body.dark .answer, body.dark .rtabs, body.dark .fc, body.dark .gap, body.dark .gap .gbtn,
+body.dark .mini button, body.dark .ce-btn, body.dark .ws-chat .b, body.dark .pod-hand,
+body.dark .pod-script, body.dark .pod-msg, body.dark .pod-foot button, body.dark .scope-pick select,
+body.dark .action-box, body.dark .view-toggle, body.dark .shortcut, body.dark .file-row,
+body.dark .dashed, body.dark .rec-area, body.dark .type-badge, body.dark .tabs, body.dark .pill.n {
+  background-color: var(--surface) !important; border-color: var(--line) !important; color: var(--text);
+}
+body.dark .day:hover, body.dark .task:hover, body.dark .mcard:hover, body.dark .fold:hover { border-color: var(--brand-2) !important; }
+body.dark .fold.active { background: var(--brand-soft) !important; border-left-color: var(--gold) !important; }
+body.dark .fold.active svg { color: var(--gold) !important; }
+body.dark .note-save { background: var(--brand-2) !important; }
+body.dark .theme-toggle { background: var(--surface) !important; border-color: var(--line) !important; color: var(--text) !important; }
+body.dark .theme-toggle:hover { border-color: var(--gold) !important; color: var(--gold) !important; }
+body.dark ::-webkit-scrollbar-thumb { background: #1B3859; }
+body.dark ::-webkit-scrollbar-thumb:hover { background: #274C77; }
