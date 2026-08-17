@@ -3,9 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Desempenho geral – Prova X</title>
+<title>Desempenho – Prova X</title>
 <link rel="stylesheet" href="shell.css">
 <style>
+  .seg { display:inline-flex; gap:4px; background:#EEF2F7; border:1px solid #E2E8F0; border-radius:10px; padding:4px; margin-top:18px; flex-wrap:wrap; }
+  .seg button { border:none; background:transparent; font-family:inherit; font-size:.82rem; font-weight:600; color:#64748B; padding:7px 14px; border-radius:7px; cursor:pointer; }
+  .seg button.on { background:#fff; color:#154C9B; box-shadow:0 1px 3px rgba(16,18,24,.08); }
   .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-top:20px; }
   .kpi { background:#fff; border:1px solid #E2E8F0; border-radius:12px; padding:16px 18px; }
   .kpi .k { font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; color:#94A3B8; font-weight:600; }
@@ -20,13 +23,29 @@
   .drow .dn { flex:1; min-width:0; font-size:.87rem; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .drow .qn { font-size:.75rem; color:#64748B; width:118px; text-align:right; font-variant-numeric:tabular-nums; }
   .drow .track { width:130px; }
-  .stack { display:flex; height:22px; border-radius:8px; overflow:hidden; border:1px solid #E2E8F0; }
-  .stack i { display:block; }
-  .legend { display:flex; gap:16px; flex-wrap:wrap; margin-top:12px; font-size:.78rem; color:#64748B; }
-  .legend span.i { display:inline-flex; align-items:center; gap:6px; }
   .empty { padding:26px 18px; text-align:center; color:#64748B; font-size:.86rem; }
-  @media (max-width:640px){ .drow .qn{display:none} .drow .track{width:84px} }
-  body.dark .kpi, body.dark .panel { background:#12203A; border-color:rgba(255,255,255,.10); }
+  .chap { background:#fff; border:1px solid #E2E8F0; border-radius:12px; margin-top:12px; overflow:hidden; }
+  .chap-h { display:flex; align-items:center; gap:12px; padding:14px 16px; cursor:pointer; }
+  .chap-h .cn { font-size:.92rem; font-weight:600; flex:1; min-width:0; }
+  .chap-h .track { width:120px; }
+  .chap-h .chev { color:#94A3B8; font-size:.8rem; }
+  .chap-b { display:none; border-top:1px solid #F1F5F9; }
+  .chap.open .chap-b { display:block; }
+  .trow { display:flex; align-items:center; gap:10px; padding:10px 16px; border-bottom:1px solid #F8FAFC; cursor:pointer; }
+  .trow:hover { background:#F8FAFC; }
+  .trow .tn { flex:1; min-width:0; font-size:.85rem; }
+  .trow .mini { font-size:.74rem; color:#64748B; width:78px; text-align:right; font-variant-numeric:tabular-nums; }
+  .trow .track { width:100px; }
+  .tdet { padding:2px 16px 16px; background:#F8FAFC; border-bottom:1px solid #EEF2F7; }
+  .stat-row { display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid #E9EEF5; font-size:.84rem; }
+  .stat-row:last-child { border-bottom:none; }
+  .stat-row span { color:#64748B; }
+  .tdet a.open { display:inline-block; margin-top:10px; font-size:.78rem; font-weight:600; color:#154C9B; text-decoration:none; }
+  @media (max-width:640px){ .drow .qn{display:none} .drow .track{width:84px} .trow .mini:nth-child(3){display:none} .chap-h .track{width:70px} }
+  body.dark .kpi, body.dark .panel, body.dark .chap { background:#12203A; border-color:rgba(255,255,255,.10); }
+  body.dark .seg { background:#16233C; border-color:rgba(255,255,255,.10); }
+  body.dark .seg button.on { background:#0B1A31; color:#93C5FD; }
+  body.dark .tdet { background:#0F1C33; }
 </style>
 <script src="px-guard.js"></script>
 </head>
@@ -36,37 +55,16 @@
   <header id="shell-topbar"></header>
   <div class="shell-body">
     <div class="page">
-      <h1 class="title">Desempenho geral</h1>
-      <p class="subtitle">Visão consolidada de toda a sua preparação no Concurso PRF</p>
+      <h1 class="title">Desempenho</h1>
+      <p class="subtitle">O quão bem você está indo no Concurso PRF — em geral, por disciplina e por tópico</p>
 
-      <div class="kpis" id="kpis"></div>
-
-      <div class="sec">
-        <h2>Aproveitamento</h2>
-        <p class="h">Percentual de acertos por disciplina, do maior para o menor</p>
-        <div class="panel" id="aprov"></div>
+      <div class="seg" id="seg">
+        <button data-t="geral" class="on">Geral</button>
+        <button data-t="disciplinas">Por disciplina</button>
+        <button data-t="topicos">Por tópico</button>
       </div>
 
-      <div class="sec">
-        <h2>Questões</h2>
-        <p class="h">Somando todos os tópicos do edital</p>
-        <div class="kpis" id="questoes"></div>
-      </div>
-
-      <div class="sec">
-        <h2>Cobertura do edital</h2>
-        <p class="h" id="cobh">Situação dos tópicos mapeados</p>
-        <div class="panel" style="padding:16px">
-          <div class="stack" id="stack"></div>
-          <div class="legend" id="coblegend"></div>
-        </div>
-      </div>
-
-      <div class="sec">
-        <h2>Evolução</h2>
-        <p class="h">Índice de domínio geral ao longo das últimas semanas</p>
-        <div class="panel" id="evol"></div>
-      </div>
+      <div id="out"></div>
     </div>
   </div>
 </div>
@@ -77,71 +75,57 @@
 <script>
   renderShell({ active: 'desempenho' });
 
-  const DISCS = disciplinasDe('prf-2021').map(d => disciplinaInfo(d));
-  const ALLT = DISCS.flatMap(d => d.topics.map(t => ({ ...t, disc: d.name })));
+  const MAT = materialById('prf-2021');
+  const AGG = desempenhoAgregado('prf-2021');
+  const T = AGG.totals;
 
-  function fmtTempo(seg) {
-    const h = Math.floor(seg / 3600), m = Math.floor((seg % 3600) / 60);
-    return seg ? (h ? h + 'h' + String(m).padStart(2, '0') : m + 'min') : '0min';
+  function href(disc, topic) {
+    const base = `id=prf-2021&title=${encodeURIComponent(MAT.title)}&type=${encodeURIComponent(MAT.type)}&disc=${encodeURIComponent(disc)}`;
+    return topic ? `workspace.html?${base}&topic=${encodeURIComponent(topic)}` : `disciplina.html?${base}`;
   }
 
-  /* --- 1. Resumo --- */
-  const domMedio = DISCS.length ? Math.round(DISCS.reduce((a, d) => a + d.pct, 0) / DISCS.length) : 0;
-  const tempoTotal = ALLT.reduce((a, t) => a + ((pxProgGet(t.name) || {}).tempo_segundos || 0), 0);
+  /* ---------- Aba: Geral ---------- */
+  function viewGeral() {
+    const rank = AGG.discs.slice().sort((a, b) => b.acertoPct - a.acertoPct || b.questoes - a.questoes);
+    return `
+      <div class="kpis">
+        <div class="kpi"><div class="k">Índice de domínio médio</div><div class="v">${T.dominioMedio}%</div><div class="s">média entre as ${AGG.discs.length} disciplinas</div></div>
+        <div class="kpi"><div class="k">Tempo total estudado</div><div class="v">${T.tempo}</div><div class="s">soma de todos os tópicos</div></div>
+        <div class="kpi"><div class="k">Aproveitamento geral</div><div class="v">${T.acertoPct}%</div><div class="s">${T.certas} acertos em ${T.questoes} questões</div></div>
+      </div>
 
-  /* --- 3. Questões --- */
-  let qTot = 0, cTot = 0;
-  ALLT.forEach(t => {
-    const p = pxProgGet(t.name) || {};
-    qTot += p.questoes_respondidas || 0;
-    cTot += p.questoes_certas || 0;
-  });
-  const eTot = qTot - cTot;
-  const acertoGeral = qTot ? Math.round((cTot / qTot) * 100) : 0;
+      <div class="sec">
+        <h2>Aproveitamento</h2>
+        <p class="h">Percentual de acertos por disciplina, do maior para o menor</p>
+        <div class="panel">${rank.map(d => `
+          <div class="drow ${areaClass(d.name)}">
+            <div class="dn">${d.name}</div>
+            <div class="qn">${d.questoes ? d.certas + '/' + d.questoes + ' questões' : 'sem questões'}</div>
+            <div class="track"><div class="fill ${fillClass(d.acertoPct)}" style="width:${d.acertoPct}%"></div></div>
+            <div class="pct">${d.acertoPct}%</div>
+          </div>`).join('')}</div>
+      </div>
 
-  document.getElementById('kpis').innerHTML = `
-    <div class="kpi"><div class="k">Índice de domínio médio</div><div class="v">${domMedio}%</div><div class="s">média entre as ${DISCS.length} disciplinas</div></div>
-    <div class="kpi"><div class="k">Tempo total estudado</div><div class="v">${fmtTempo(tempoTotal)}</div><div class="s">soma de todos os tópicos</div></div>
-    <div class="kpi"><div class="k">Aproveitamento geral</div><div class="v">${acertoGeral}%</div><div class="s">${cTot} acertos em ${qTot} questões</div></div>`;
+      <div class="sec">
+        <h2>Questões</h2>
+        <p class="h">Somando todos os tópicos do edital</p>
+        <div class="kpis">
+          <div class="kpi"><div class="k">Resolvidas</div><div class="v">${T.questoes}</div></div>
+          <div class="kpi"><div class="k">Acertos</div><div class="v" style="color:#16A34A">${T.certas}</div></div>
+          <div class="kpi"><div class="k">Erros</div><div class="v" style="color:#DC2626">${T.erros}</div></div>
+          <div class="kpi"><div class="k">Saldo líquido (Cebraspe)</div><div class="v">${T.saldo > 0 ? '+' : ''}${T.saldo}</div><div class="s">acertos − erros</div></div>
+        </div>
+      </div>
 
-  /* --- 2. Aproveitamento por disciplina --- */
-  const linhas = DISCS.map(d => {
-    let q = 0, c = 0;
-    d.topics.forEach(t => { const p = pxProgGet(t.name) || {}; q += p.questoes_respondidas || 0; c += p.questoes_certas || 0; });
-    return { nome: d.name, q, c, pct: q ? Math.round((c / q) * 100) : 0 };
-  }).sort((a, b) => b.pct - a.pct || b.q - a.q);
+      <div class="sec">
+        <h2>Evolução</h2>
+        <p class="h">Índice de domínio geral ao longo das últimas semanas</p>
+        <div class="panel" id="evol"><div class="empty">Carregando seu histórico…</div></div>
+      </div>`;
+  }
 
-  document.getElementById('aprov').innerHTML = linhas.map(l => `
-    <div class="drow ${areaClass(l.nome)}">
-      <div class="dn">${l.nome}</div>
-      <div class="qn">${l.q ? l.c + '/' + l.q + ' questões' : 'sem questões'}</div>
-      <div class="track"><div class="fill ${fillClass(l.pct)}" style="width:${l.pct}%"></div></div>
-      <div class="pct">${l.pct}%</div>
-    </div>`).join('');
-
-  document.getElementById('questoes').innerHTML = `
-    <div class="kpi"><div class="k">Resolvidas</div><div class="v">${qTot}</div></div>
-    <div class="kpi"><div class="k">Acertos</div><div class="v" style="color:#16A34A">${cTot}</div></div>
-    <div class="kpi"><div class="k">Erros</div><div class="v" style="color:#DC2626">${eTot}</div></div>
-    <div class="kpi"><div class="k">Saldo líquido (Cebraspe)</div><div class="v">${cTot - eTot > 0 ? '+' : ''}${cTot - eTot}</div><div class="s">acertos − erros</div></div>`;
-
-  /* --- 4. Cobertura do edital --- */
-  const ordem = ['nao', 'fam', 'apr', 'dom'];
-  const conta = { nao: 0, apr: 0, fam: 0, dom: 0 };
-  ALLT.forEach(t => { conta[t.st] = (conta[t.st] || 0) + 1; });
-  const totalT = ALLT.length || 1;
-  document.getElementById('cobh').textContent = `${totalT} tópicos mapeados no edital da PRF`;
-  document.getElementById('stack').innerHTML = ordem.map(s => {
-    const w = (conta[s] / totalT) * 100;
-    return w ? `<i style="width:${w}%;background:${STATUS_META[s].color}" title="${STATUS_META[s].label}: ${conta[s]}"></i>` : '';
-  }).join('');
-  document.getElementById('coblegend').innerHTML = ordem.map(s =>
-    `<span class="i"><span class="sdot" style="background:${STATUS_META[s].color}"></span>${STATUS_META[s].label} · <b>${conta[s]}</b> (${Math.round(conta[s] / totalT * 100)}%)</span>`).join('');
-
-  /* --- 5. Evolução --- */
   function graficoLinha(pts) {
-    const W = 720, H = 200, pad = 28;
-    const max = 100;
+    const W = 720, H = 200, pad = 28, max = 100;
     const x = i => pad + (i * (W - pad * 2)) / Math.max(1, pts.length - 1);
     const y = v => H - pad - (v / max) * (H - pad * 2);
     const d = pts.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.dominio).toFixed(1)}`).join(' ');
@@ -154,11 +138,12 @@
       ${grid}<path d="${area}" fill="url(#g)"/><path d="${d}" fill="none" stroke="#0B2A5B" stroke-width="2.5" stroke-linejoin="round"/>${dots}${labels}</svg>`;
   }
 
-  (async function evolucao() {
+  async function carregarEvolucao() {
     const box = document.getElementById('evol');
-    box.innerHTML = '<div class="empty">Carregando seu histórico…</div>';
+    if (!box) return;
     let pts = [];
     try { pts = (await PX.getSnapshots(90)) || []; } catch (e) {}
+    if (!document.getElementById('evol')) return;
     if (pts.length < 3) {
       box.innerHTML = `<div class="empty">
         <div style="font-size:1.6rem">📈</div>
@@ -168,7 +153,98 @@
       return;
     }
     box.innerHTML = `<div style="padding:16px">${graficoLinha(pts)}</div>`;
-  })();
+  }
+
+  /* ---------- Aba: Por disciplina (mesmo card do grid de disciplinas) ---------- */
+  function viewDisciplinas() {
+    return `<div class="card-grid" style="margin-top:20px">` + AGG.discs.map(d => {
+      const cnt = st => d.conta[st] || 0;
+      return `
+      <a class="set-card ${areaClass(d.name)}" href="${href(d.name)}">
+        <div class="set-card-head"><h3>${d.name}</h3></div>
+        <div class="meta-grid">
+          <div class="meta-item">Tópicos<b>${d.topics.length}</b></div>
+          <div class="meta-item">Dominados<b>${cnt('dom')}</b></div>
+          <div class="meta-item">Familiar<b>${cnt('fam')}</b></div>
+          <div class="meta-item">Aprendendo<b>${cnt('apr')}</b></div>
+          <div class="meta-item">Não familiar<b>${cnt('nao')}</b></div>
+          <div class="meta-item">Acertos<b>${d.questoes ? d.acertoPct + '%' : '—'}</b></div>
+        </div>
+        <div class="set-card-foot">
+          <div class="lbl">Índice de domínio</div>
+          <div class="progress-line">
+            <div class="track"><div class="fill ${fillClass(d.pct)}" style="width:${d.pct}%"></div></div>
+            <div class="pct">${d.pct}%</div>
+          </div>
+        </div>
+      </a>`;
+    }).join('') + `</div>`;
+  }
+
+  /* ---------- Aba: Por tópico (padrão "Normas Gerais de Circulação") ---------- */
+  function viewTopicos() {
+    return `<div style="margin-top:18px">` + AGG.discs.map((d, i) => `
+      <div class="chap${i === 0 ? ' open' : ''}">
+        <div class="chap-h" onclick="this.parentNode.classList.toggle('open')">
+          <div class="cn">${d.name}</div>
+          <div class="track"><div class="fill ${fillClass(d.pct)}" style="width:${d.pct}%"></div></div>
+          <div class="pct">${d.pct}%</div>
+          <div class="chev">▾</div>
+        </div>
+        <div class="chap-b">
+          ${d.topics.map(t => {
+            const s = topicStats(t.name);
+            return `<div class="trow" onclick="toggleTopico(this)" data-disc="${encodeURIComponent(d.name)}" data-topic="${encodeURIComponent(t.name)}">
+              ${dotHTML(t.st)}
+              <div class="tn">${t.name}</div>
+              <div class="mini">${s.acertos}% acertos</div>
+              <div class="mini">${s.questoes} questões</div>
+              <div class="track"><div class="fill ${fillClass(t.prog)}" style="width:${t.prog}%"></div></div>
+              <div class="pct">${t.prog}%</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`).join('') + `</div>`;
+  }
+
+  window.toggleTopico = function (row) {
+    const next = row.nextElementSibling;
+    if (next && next.classList.contains('tdet')) { next.remove(); return; }
+    const disc = decodeURIComponent(row.dataset.disc);
+    const topic = decodeURIComponent(row.dataset.topic);
+    const s = topicStats(topic);
+    const div = document.createElement('div');
+    div.className = 'tdet';
+    div.innerHTML = `
+      <div class="stat-row" style="border-bottom:none;padding-bottom:6px"><span>Índice de domínio</span><b>${s.dominio}%</b></div>
+      <div class="track"><div class="fill ${fillClass(s.dominio)}" style="width:${s.dominio}%"></div></div>
+      <div class="stat-row"><span>Tempo estudado</span><b>${s.tempo}</b></div>
+      <div class="stat-row"><span>Questões resolvidas</span><b>${s.questoes}</b></div>
+      <div class="stat-row"><span>Acertos</span><b>${s.acertos}%</b></div>
+      <div class="stat-row"><span>Flashcards revisados</span><b>${s.flashcards}</b></div>
+      <div class="stat-row"><span>Próxima revisão</span><b>${s.revisao}</b></div>
+      <div class="stat-row"><span>Dificuldade</span><b>${s.dificuldade}</b></div>
+      <div class="stat-row"><span>Último acesso</span><b>${s.acesso}</b></div>
+      <a class="open" href="${href(disc, topic)}">Abrir tópico no workspace →</a>`;
+    row.after(div);
+  };
+
+  /* ---------- Roteamento das abas ---------- */
+  const VIEWS = { geral: viewGeral, disciplinas: viewDisciplinas, topicos: viewTopicos };
+  function render(tab) {
+    if (!VIEWS[tab]) tab = 'geral';
+    document.getElementById('out').innerHTML = VIEWS[tab]();
+    document.querySelectorAll('#seg button').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
+    if (tab === 'geral') carregarEvolucao();
+    const u = new URL(location.href);
+    u.searchParams.set('tab', tab);
+    history.replaceState(null, '', u);
+  }
+  render(new URLSearchParams(location.search).get('tab') || 'geral');
+  document.getElementById('seg').addEventListener('click', e => {
+    const b = e.target.closest('button[data-t]'); if (!b) return;
+    render(b.dataset.t);
+  });
 </script>
 </body>
 </html>
