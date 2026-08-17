@@ -569,3 +569,8 @@ body.dark .theme-toggle { background: var(--surface) !important; border-color: v
 body.dark .theme-toggle:hover { border-color: var(--gold) !important; color: var(--gold) !important; }
 body.dark ::-webkit-scrollbar-thumb { background: #1B3859; }
 body.dark ::-webkit-scrollbar-thumb:hover { background: #274C77; }
+
+/* contraste em botões de marca no escuro */
+body.dark [style*="#0B2A5B"] { background-color: var(--brand-2) !important; border-color: var(--brand-2) !important; }
+body.dark [style*="color:#0B2A5B"] { color: #9EC2F5 !important; background-color: transparent !important; }
+body.dark .btn-primary, body.dark .btn.primary { background: var(--brand-2) !important; color: #fff !important; border-color: var(--brand-2) !important; }
