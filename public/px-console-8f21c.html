@@ -1550,6 +1550,8 @@ function kbBindIngest(){
 window.kbIngestFiles = async function(files){
   if(!files || !files.length) return;
   if(!kbValidDisc(kbDisc)) return kbIngMsg('Selecione uma matéria válida antes de carregar material.');
+  const direitos = kbDireitosEscolhido();
+  if(!direitos) return kbIngMsg('Escolha antes a situação de direitos autorais deste material.');
   KB_ING_ATIVO = true;
   kbSetBusy(true, 'Lendo ' + files.length + ' arquivo(s)…');
   kbMontarEstado();
