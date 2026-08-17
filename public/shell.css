@@ -581,3 +581,14 @@ body.dark .btn-primary, body.dark .btn.primary { background: var(--brand-2) !imp
 .nav-group-h svg { width:15px; height:15px; opacity:.7; }
 .nav-item.nav-sub { margin-left:10px; }
 body.dark .nav-group-h { color:#64748B; }
+
+/* Cards de disciplina reutilizáveis (Meus Concursos / Desempenho por disciplina) */
+.set-card { background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden; text-decoration:none; color:inherit; display:block; transition:all .18s; }
+.set-card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 16px; border-bottom:1px solid var(--line); }
+.set-card-head h3 { font-size:1.02rem; font-weight:600; }
+.meta-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 12px; padding:14px 16px 6px; }
+.meta-item { font-size:0.76rem; color:#9CA3AF; }
+.meta-item b { display:block; font-size:0.88rem; font-weight:600; color:#374151; margin-top:2px; }
+.set-card-foot { padding:10px 16px 14px; }
+.set-card-foot .lbl { font-size:0.78rem; color:var(--muted); margin-bottom:8px; }
+body.dark .meta-item b { color:#E5E7EB; }
