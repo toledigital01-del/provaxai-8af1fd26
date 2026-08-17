@@ -810,10 +810,12 @@ window.kbAbrirDoc = function(d, t){
   if(disc){ kbDisc = disc; }
   kbTopic = t;
   KB_PANE = 'conteudo';
+  if(typeof kbSetStep === 'function') kbSetStep('conteudo');
   kbPaint();
   const el = document.getElementById('kb-editor');
   if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
 };
+
 
 /* =========================================================
    Carregar edital → IA extrai matérias, tópicos e subtópicos
