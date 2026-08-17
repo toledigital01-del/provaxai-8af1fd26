@@ -1483,15 +1483,16 @@ function kbPaintBiblioteca(){
   if(!box) return;
   const lista = KB_LIB.filter(function(d){ return d.discipline_nome === kbDisc; });
   if(!lista.length){ box.innerHTML = '<p class="muted" style="font-size:0.78rem">Nenhum documento-fonte guardado para esta matéria ainda.</p>'; return; }
-  box.innerHTML = '<div style="border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;font-size:0.78rem">' +
+  box.innerHTML = '<div class="kb-surface" style="font-size:0.8125rem">' +
     lista.map(function(d){
       const dir = KB_DIREITOS[d.status_direitos] || KB_DIREITOS.terceiro_verificar;
-      return '<div style="padding:7px 10px;border-bottom:1px solid #F1F5F9;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+      const cls = d.status_direitos === 'terceiro_verificar' ? ' is-wait' : d.status_direitos === 'dominio_publico' ? ' is-on' : '';
+      return '<div style="padding:11px 13px;border-bottom:1px solid #F5F7FA;display:flex;gap:10px;align-items:center;flex-wrap:wrap">' +
         '<span style="flex:1;min-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
-          (d.origem_url ? '<a href="' + esc(d.origem_url) + '" target="_blank" rel="noopener">' + esc(d.nome_arquivo) + '</a>' : esc(d.nome_arquivo)) +
+          (d.origem_url ? '<a href="' + esc(d.origem_url) + '" target="_blank" rel="noopener" style="color:#2563EB;text-decoration:none">' + esc(d.nome_arquivo) + '</a>' : esc(d.nome_arquivo)) +
         '</span>' +
-        '<span class="muted">' + esc(d.tipo) + (d.topic_nome ? ' · ' + esc(d.topic_nome) : '') + ' · ' + dt(d.criado_em) + '</span>' +
-        '<span style="font-size:0.68rem;font-weight:700;padding:1px 8px;border-radius:99px;background:' + dir.fundo + ';color:' + dir.cor + '">' + dir.rotulo + '</span>' +
+        '<span class="muted" style="font-size:0.75rem">' + esc(d.tipo) + (d.topic_nome ? ' · ' + esc(d.topic_nome) : '') + ' · ' + dt(d.criado_em) + '</span>' +
+        '<span class="kb-tag' + cls + '">' + dir.rotulo + '</span>' +
         '<button class="act" onclick="kbLibReprocessar(\'' + d.id + '\')">Reprocessar</button>' +
         '<button class="act danger" onclick="kbLibRemover(\'' + d.id + '\')">Remover</button>' +
       '</div>';
