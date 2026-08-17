@@ -104,8 +104,11 @@
         };
       });
       localStorage.setItem('px_prog_cache_v1', JSON.stringify(map));
+      bindExitSnapshot();
+      await PX.recuperarDiaPerdido();
       PX.saveSnapshot();
     } catch (e) {}
+
   };
 
   /* ---------- Histórico de evolução (snapshot diário do índice de domínio) ---------- */
@@ -150,24 +153,80 @@
   };
 
   let _snapTs = 0;
-  PX.saveSnapshot = async function (force) {
+
+  /* grava o snapshot; keepalive garante o envio mesmo quando a aba está fechando */
+  async function upsertSnapshot(row, keepalive) {
+    if (keepalive && typeof fetch === 'function') {
+      const token = (PX.session && PX.session.access_token) || SUPABASE_KEY;
+      try {
+        await fetch(SUPABASE_URL + '/rest/v1/dominio_snapshots?on_conflict=user_id,course_slug,dia', {
+          method: 'POST', keepalive: true,
+          headers: {
+            'Content-Type': 'application/json', apikey: SUPABASE_KEY,
+            Authorization: 'Bearer ' + token, Prefer: 'resolution=merge-duplicates',
+          },
+          body: JSON.stringify(row),
+        });
+        return;
+      } catch (e) { /* cai no caminho normal */ }
+    }
+    try {
+      await PX.sb.from('dominio_snapshots').upsert(row, { onConflict: 'user_id,course_slug,dia' });
+    } catch (e) {}
+  }
+
+  PX.saveSnapshot = async function (force, opts) {
     if (!PX.user) return;
+    const o = opts || {};
     const agora = Date.now();
     if (!force && agora - _snapTs < 30000) return;   /* no máximo 1 gravação a cada 30s */
     const r = PX.resumoDoDia();
     if (!r.tempo_segundos && !r.questoes && !r.dominio) return;
     _snapTs = agora;
     const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-    try {
-      await PX.sb.from('dominio_snapshots').upsert({
-        user_id: PX.user.id, course_slug: 'prf-2021', dia: hoje,
-        dominio: r.dominio, acertos_pct: r.acertos_pct,
-        questoes: r.questoes, tempo_segundos: r.tempo_segundos,
-        por_disciplina: r.por_disciplina || {},
-      }, { onConflict: 'user_id,course_slug,dia' });
-    } catch (e) {}
+    await upsertSnapshot({
+      user_id: PX.user.id, course_slug: 'prf-2021', dia: o.dia || hoje,
+      dominio: r.dominio, acertos_pct: r.acertos_pct,
+      questoes: r.questoes, tempo_segundos: r.tempo_segundos,
+      por_disciplina: r.por_disciplina || {},
+    }, !!o.keepalive);
   };
 
+  /* gatilho de segurança: última chance de gravar antes de a aba sumir */
+  let _exitBound = false;
+  function bindExitSnapshot() {
+    if (_exitBound || typeof window === 'undefined') return;
+    _exitBound = true;
+    const onExit = function () {
+      if (!PX.user) return;
+      PX.saveSnapshot(true, { keepalive: true });
+    };
+    window.addEventListener('pagehide', onExit);
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden') onExit();
+    });
+  }
+
+  /* recupera um dia de estudo que ficou sem registro (aba fechada antes de gravar) */
+  PX.recuperarDiaPerdido = async function () {
+    if (!PX.user) return;
+    try {
+      const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+      const [{ data: snaps }, { data: prog }] = await Promise.all([
+        PX.sb.from('dominio_snapshots').select('dia').eq('user_id', PX.user.id)
+          .eq('course_slug', 'prf-2021').order('dia', { ascending: false }).limit(1),
+        PX.sb.from('topic_progress').select('updated_at').eq('user_id', PX.user.id)
+          .order('updated_at', { ascending: false }).limit(1),
+      ]);
+      const ultimoSnap = snaps && snaps[0] ? snaps[0].dia : null;
+      if (!prog || !prog[0]) return;
+      const diaProg = new Date(prog[0].updated_at)
+        .toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+      if (diaProg === hoje) return;                      /* nada a recuperar */
+      if (ultimoSnap && ultimoSnap >= diaProg) return;   /* já registrado */
+      await PX.saveSnapshot(true, { dia: diaProg });
+    } catch (e) {}
+  };
 
   PX.getSnapshots = async function (dias) {
     await PX.ready;
@@ -177,6 +236,7 @@
       .eq('user_id', PX.user.id).gte('dia', desde).order('dia');
     return data || [];
   };
+
 
   PX.ready = boot();
 
