@@ -645,6 +645,8 @@ async function viewConhecimento(){
 
   const count = d => KB_DOCS.filter(x => x.disciplina === d && (x.conteudo||'').trim()).length;
   const totalChars = KB_DOCS.reduce((a,x)=>a+(x.conteudo||'').length,0);
+  const pendentes = KB_DOCS.filter(x => (x.conteudo||'').trim() && kbStatusDoc(x) !== 'publicado').length;
+  if(!KB_STEP) KB_STEP = discs.length ? 'conteudo' : 'edital';
   view.innerHTML = `
     <div class="kpis">
       <div class="kpi"><b>${KB_DOCS.filter(x=>(x.conteudo||'').trim()).length}</b><span>Conteúdos cadastrados</span></div>
@@ -652,58 +654,109 @@ async function viewConhecimento(){
       <div class="kpi"><b>${KB_LIB.length}</b><span>Documentos na biblioteca</span></div>
       <div class="kpi"><b>${(totalChars/1000).toFixed(1)} mil</b><span>Caracteres na base da IA</span></div>
     </div>
-    <div class="card">
-      <h2>Visão geral das matérias</h2>
-      <p class="muted" style="margin-bottom:10px">Cobertura de cada matéria do edital. Clique no cartão para abrir a matéria já selecionada abaixo.</p>
-      <div id="kb-visao"></div>
+
+    <div class="card" style="padding:12px 14px">
+      <div id="kb-steps" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+      <p class="muted" id="kb-step-help" style="margin:10px 0 0"></p>
     </div>
-    <div class="card">
-      <h2>Aulas aguardando revisão</h2>
-      <p class="muted" style="margin-bottom:10px">Tudo que a IA gerou e ainda não foi revisado/publicado. O aluno não vê nada desta lista.</p>
-      <div id="kb-fila"></div>
-    </div>
-    <div class="card">
-      <h2>Carregar edital (a IA monta matérias, tópicos e subtópicos)</h2>
-      <p class="muted" style="margin-bottom:10px">Solte o PDF do edital (ou cole o conteúdo programático). A IA lê tudo, copia os nomes exatamente como estão e devolve a grade para você conferir antes de gravar.</p>
-      <div class="row" style="align-items:flex-end;gap:10px">
-        <div><label class="muted">Curso de destino</label><select id="ed-curso" style="max-width:280px"></select></div>
-        <div><label class="muted">Inteligência artificial</label>
-          <select id="ed-modelo" style="max-width:280px">
-            <option value="">Usar a IA do sistema (Configurações)</option>
-            <option value="google/gemini-3.1-pro-preview">Edital gigante (Gemini Pro)</option>
-            <option value="google/gemini-3-flash-preview">Rápido (Gemini Flash)</option>
-            <option value="openai/gpt-5.6-sol">Máxima precisão (GPT-5.6 Sol)</option>
-          </select></div>
-        <div><label class="muted">Cargo / concurso</label><input id="ed-cargo" placeholder="Polícia Rodoviária Federal" style="max-width:280px"></div>
-      </div>
-      <div id="ed-drop" style="border:2px dashed #CBD5E1;border-radius:12px;padding:14px;text-align:center;background:#F8FAFC;margin-top:10px">
-        <p class="muted" style="margin:0 0 8px">Arraste o edital aqui ou escolha o arquivo (PDF, texto ou imagens das páginas)</p>
-        <input type="file" id="ed-file" multiple accept=".pdf,.txt,.md,.html,image/*,application/pdf,text/*" style="width:auto;max-width:100%">
-      </div>
-      <textarea id="ed-txt" rows="6" placeholder="Ou cole aqui o conteúdo programático do edital" style="margin-top:10px"></textarea>
-      <div id="ed-prog-wrap" style="display:none;margin-top:10px">
-        <div style="height:8px;border-radius:99px;background:#E2E8F0;overflow:hidden">
-          <div id="ed-prog-bar" style="height:100%;width:0%;background:#2563EB;border-radius:99px;transition:width .2s"></div>
+
+    <section data-step="edital">
+      <div class="card">
+        <h2>Passo 1 — Carregar o edital</h2>
+        <p class="muted" style="margin-bottom:10px">Solte o PDF do edital (ou cole o conteúdo programático). A IA lê tudo, copia os nomes exatamente como estão e devolve a grade para você conferir antes de gravar.</p>
+        <div class="row" style="align-items:flex-end;gap:10px">
+          <div><label class="muted">Curso de destino</label><select id="ed-curso" style="max-width:280px"></select></div>
+          <div><label class="muted">Inteligência artificial</label>
+            <select id="ed-modelo" style="max-width:280px">
+              <option value="">Usar a IA do sistema (Configurações)</option>
+              <option value="google/gemini-3.1-pro-preview">Edital gigante (Gemini Pro)</option>
+              <option value="google/gemini-3-flash-preview">Rápido (Gemini Flash)</option>
+              <option value="openai/gpt-5.6-sol">Máxima precisão (GPT-5.6 Sol)</option>
+            </select></div>
+          <div><label class="muted">Cargo / concurso</label><input id="ed-cargo" placeholder="Polícia Rodoviária Federal" style="max-width:280px"></div>
         </div>
-        <p class="muted" id="ed-prog-txt" style="margin:4px 0 0"></p>
+        <div id="ed-drop" style="border:2px dashed #CBD5E1;border-radius:12px;padding:14px;text-align:center;background:#F8FAFC;margin-top:10px">
+          <p class="muted" style="margin:0 0 8px">Arraste o edital aqui ou escolha o arquivo (PDF, texto ou imagens das páginas)</p>
+          <input type="file" id="ed-file" multiple accept=".pdf,.txt,.md,.html,image/*,application/pdf,text/*" style="width:auto;max-width:100%">
+        </div>
+        <textarea id="ed-txt" rows="6" placeholder="Ou cole aqui o conteúdo programático do edital" style="margin-top:10px"></textarea>
+        <div id="ed-prog-wrap" style="display:none;margin-top:10px">
+          <div style="height:8px;border-radius:99px;background:#E2E8F0;overflow:hidden">
+            <div id="ed-prog-bar" style="height:100%;width:0%;background:#2563EB;border-radius:99px;transition:width .2s"></div>
+          </div>
+          <p class="muted" id="ed-prog-txt" style="margin:4px 0 0"></p>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button class="act primary" id="ed-btn" onclick="edAnalisar()">Extrair grade do edital</button>
+          <button class="act" onclick="edLimpar()">Limpar</button>
+          <button class="act" onclick="kbSetStep('conteudo')">Já tenho a grade → ir para o conteúdo</button>
+        </div>
+        <p class="muted" id="ed-msg" style="margin-top:8px"></p>
+        <div id="ed-preview" style="margin-top:8px"></div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-        <button class="act primary" id="ed-btn" onclick="edAnalisar()">Extrair grade do edital</button>
-        <button class="act" onclick="edLimpar()">Limpar</button>
+    </section>
+
+    <section data-step="conteudo">
+      <div class="card"><h2>Passo 2 — Conteúdo das aulas</h2>
+        <p class="muted" style="margin-bottom:12px">Escolha a matéria, depois o tópico. Tudo que estiver aqui vira a fonte de verdade da Athena e aparece para o aluno quando a aula estiver publicada.</p>
+        <div style="display:grid;grid-template-columns:minmax(180px,240px) minmax(200px,280px) 1fr;gap:14px;align-items:start" id="kb-grid">
+          <div id="kb-discs"></div><div id="kb-topics"></div><div id="kb-editor"></div>
+        </div>
       </div>
-      <p class="muted" id="ed-msg" style="margin-top:8px"></p>
-      <div id="ed-preview" style="margin-top:8px"></div>
-    </div>
-    <div class="card"><h2>Base de conhecimento da Athena IA</h2>
-      <p class="muted" style="margin-bottom:12px">Tudo que você escrever aqui vira a fonte de verdade da IA e é exibido para o aluno na aula do tópico correspondente.</p>
-      <div style="display:grid;grid-template-columns:minmax(180px,240px) minmax(200px,280px) 1fr;gap:14px;align-items:start" id="kb-grid">
-        <div id="kb-discs"></div><div id="kb-topics"></div><div id="kb-editor"></div>
+    </section>
+
+    <section data-step="revisao">
+      <div class="card">
+        <h2>Passo 3 — Revisar e publicar</h2>
+        <p class="muted" style="margin-bottom:10px">Tudo que a IA gerou e ainda não foi revisado/publicado. O aluno não vê nada desta lista.</p>
+        <div id="kb-fila"></div>
       </div>
-    </div>`;
+    </section>
+
+    <section data-step="cobertura">
+      <div class="card">
+        <h2>Cobertura do edital</h2>
+        <p class="muted" style="margin-bottom:10px">Como está cada matéria. Clique num cartão para editar o conteúdo dela.</p>
+        <div id="kb-visao"></div>
+      </div>
+    </section>`;
   if (window.matchMedia('(max-width:820px)').matches)
     document.getElementById('kb-grid').style.gridTemplateColumns = '1fr';
+  kbPaintSteps(pendentes);
   edInit();
   kbPaint();
+}
+
+/* ---- Navegação em passos da base de conhecimento ---- */
+let KB_STEP = '';
+const KB_STEPS = [
+  ['edital', '1. Edital', 'Envie o PDF do edital e deixe a IA montar as matérias, tópicos e subtópicos do curso.'],
+  ['conteudo', '2. Conteúdo', 'Selecione a matéria e o tópico, envie o material e use a IA para montar as aulas.'],
+  ['revisao', '3. Revisar e publicar', 'Confira o que a IA escreveu e publique. Só o que estiver publicado chega ao aluno.'],
+  ['cobertura', 'Cobertura', 'Visão rápida do quanto de cada matéria já está publicado.'],
+];
+function kbPaintSteps(pendentes){
+  const nav = document.getElementById('kb-steps');
+  if(!nav) return;
+  nav.innerHTML = KB_STEPS.map(function(s){
+    const on = s[0] === KB_STEP;
+    const badge = s[0] === 'revisao' && pendentes ? ' <span style="background:#F59E0B;color:#3A2A00;border-radius:99px;padding:0 7px;font-size:.68rem;font-weight:800">' + pendentes + '</span>' : '';
+    return '<button class="act' + (on ? ' primary' : '') + '" onclick="kbSetStep(\'' + s[0] + '\')">' + s[1] + badge + '</button>';
+  }).join('');
+  const help = document.getElementById('kb-step-help');
+  const atual = KB_STEPS.find(function(s){ return s[0] === KB_STEP; });
+  if(help && atual) help.textContent = atual[2];
+  document.querySelectorAll('#view section[data-step]').forEach(function(sec){
+    sec.style.display = sec.dataset.step === KB_STEP ? '' : 'none';
+  });
+}
+window.kbSetStep = function(step){
+  KB_STEP = step;
+  const pendentes = KB_DOCS.filter(function(x){ return (x.conteudo||'').trim() && kbStatusDoc(x) !== 'publicado'; }).length;
+  kbPaintSteps(pendentes);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
 }
 
 /* ---- Painel com um cartão por matéria (cobertura do edital) ---- */
