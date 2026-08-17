@@ -17,6 +17,7 @@ import { Route as ApiPublicAthenaRouteImport } from './routes/api/public/athena'
 import { Route as ApiPublicKbAutocourseRouteImport } from './routes/api/public/kb-autocourse'
 import { Route as ApiPublicKbEditalRouteImport } from './routes/api/public/kb-edital'
 import { Route as ApiPublicKbIngestRouteImport } from './routes/api/public/kb-ingest'
+import { Route as ApiPublicLacunasRouteImport } from './routes/api/public/lacunas'
 import { Route as ApiPublicPodcastRouteImport } from './routes/api/public/podcast'
 import { Route as ApiPublicRedacaoRouteImport } from './routes/api/public/redacao'
 import { Route as ApiPublicResumoRouteImport } from './routes/api/public/resumo'
@@ -64,6 +65,11 @@ const ApiPublicKbIngestRoute = ApiPublicKbIngestRouteImport.update({
   path: '/api/public/kb-ingest',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicLacunasRoute = ApiPublicLacunasRouteImport.update({
+  id: '/api/public/lacunas',
+  path: '/api/public/lacunas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPodcastRoute = ApiPublicPodcastRouteImport.update({
   id: '/api/public/podcast',
   path: '/api/public/podcast',
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
+  '/api/public/lacunas': typeof ApiPublicLacunasRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
   '/api/public/redacao': typeof ApiPublicRedacaoRoute
   '/api/public/resumo': typeof ApiPublicResumoRoute
@@ -114,6 +121,7 @@ export interface FileRoutesByTo {
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
+  '/api/public/lacunas': typeof ApiPublicLacunasRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
   '/api/public/redacao': typeof ApiPublicRedacaoRoute
   '/api/public/resumo': typeof ApiPublicResumoRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
+  '/api/public/lacunas': typeof ApiPublicLacunasRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
   '/api/public/redacao': typeof ApiPublicRedacaoRoute
   '/api/public/resumo': typeof ApiPublicResumoRoute
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
     | '/api/public/kb-autocourse'
     | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
+    | '/api/public/lacunas'
     | '/api/public/podcast'
     | '/api/public/redacao'
     | '/api/public/resumo'
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
     | '/api/public/kb-autocourse'
     | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
+    | '/api/public/lacunas'
     | '/api/public/podcast'
     | '/api/public/redacao'
     | '/api/public/resumo'
@@ -177,6 +188,7 @@ export interface FileRouteTypes {
     | '/api/public/kb-autocourse'
     | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
+    | '/api/public/lacunas'
     | '/api/public/podcast'
     | '/api/public/redacao'
     | '/api/public/resumo'
@@ -193,6 +205,7 @@ export interface RootRouteChildren {
   ApiPublicKbAutocourseRoute: typeof ApiPublicKbAutocourseRoute
   ApiPublicKbEditalRoute: typeof ApiPublicKbEditalRoute
   ApiPublicKbIngestRoute: typeof ApiPublicKbIngestRoute
+  ApiPublicLacunasRoute: typeof ApiPublicLacunasRoute
   ApiPublicPodcastRoute: typeof ApiPublicPodcastRoute
   ApiPublicRedacaoRoute: typeof ApiPublicRedacaoRoute
   ApiPublicResumoRoute: typeof ApiPublicResumoRoute
@@ -258,6 +271,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicKbIngestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/lacunas': {
+      id: '/api/public/lacunas'
+      path: '/api/public/lacunas'
+      fullPath: '/api/public/lacunas'
+      preLoaderRoute: typeof ApiPublicLacunasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/podcast': {
       id: '/api/public/podcast'
       path: '/api/public/podcast'
@@ -305,6 +325,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicKbAutocourseRoute: ApiPublicKbAutocourseRoute,
   ApiPublicKbEditalRoute: ApiPublicKbEditalRoute,
   ApiPublicKbIngestRoute: ApiPublicKbIngestRoute,
+  ApiPublicLacunasRoute: ApiPublicLacunasRoute,
   ApiPublicPodcastRoute: ApiPublicPodcastRoute,
   ApiPublicRedacaoRoute: ApiPublicRedacaoRoute,
   ApiPublicResumoRoute: ApiPublicResumoRoute,

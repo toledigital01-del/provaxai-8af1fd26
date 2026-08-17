@@ -97,6 +97,59 @@
   };
 
 
+  /* Leitura autenticada genérica de uma tabela do banco (mesmo padrão do kbFetch) */
+  async function tabela(path) {
+    try {
+      var tk = await PX.token();
+      if (!tk) return { status: 401, rows: [] };
+      var r = await fetch(SB_URL + '/rest/v1/' + path, {
+        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tk },
+      });
+      var rows = r.ok ? await r.json() : [];
+      return { status: r.status, rows: Array.isArray(rows) ? rows : [] };
+    } catch (e) {
+      return { status: 0, rows: [] };
+    }
+  }
+
+  function filtroTopico(disciplina, topico, curso) {
+    var qs = 'discipline_nome=eq.' + encodeURIComponent(disciplina) +
+      '&course_slug=eq.' + encodeURIComponent(curso || 'prf-2021');
+    if (topico) qs += '&topic_nome=eq.' + encodeURIComponent(topico);
+    return qs;
+  }
+
+  /* Questões oficiais do tópico. Devolve { status, rows } */
+  PX.questoesTopico = async function (disciplina, topico, curso) {
+    return tabela('questions?select=enunciado,gabarito,comentario&' +
+      filtroTopico(disciplina, topico, curso) + '&ativa=is.true&limit=30');
+  };
+
+  /* Flashcards oficiais do tópico. Devolve { status, rows } */
+  PX.flashcardsTopico = async function (disciplina, topico, curso) {
+    return tabela('flashcards?select=frente,verso&' +
+      filtroTopico(disciplina, topico, curso) + '&is_oficial=is.true&limit=50');
+  };
+
+  /* Chamada autenticada aos endpoints de IA do Prova X (/api/public/...) */
+  PX.iaPost = async function (rota, dados) {
+    try {
+      var tk = await PX.token();
+      if (!tk) return { erro: 'Entre na sua conta para usar esta ferramenta.', status: 401 };
+      var r = await fetch('/api/public/' + rota, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tk },
+        body: JSON.stringify(dados || {}),
+      });
+      var j = await r.json();
+      if (!r.ok) return { erro: j.error || 'Não consegui responder agora.', status: r.status };
+      return j;
+    } catch (e) {
+      return { erro: 'Falha de conexão. Tente novamente.', status: 0 };
+    }
+  };
+
+
   /* Markdown simples -> HTML seguro */
   PX.kbHTML = function (md) {
     var esc = function (s) {
