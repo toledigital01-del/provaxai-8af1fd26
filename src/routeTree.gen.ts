@@ -15,6 +15,7 @@ import { Route as ApiPublicAdminDeleteUserRouteImport } from './routes/api/publi
 import { Route as ApiPublicAiStatusRouteImport } from './routes/api/public/ai-status'
 import { Route as ApiPublicAthenaRouteImport } from './routes/api/public/athena'
 import { Route as ApiPublicKbAutocourseRouteImport } from './routes/api/public/kb-autocourse'
+import { Route as ApiPublicKbDriveRouteImport } from './routes/api/public/kb-drive'
 import { Route as ApiPublicKbEditalRouteImport } from './routes/api/public/kb-edital'
 import { Route as ApiPublicKbIngestRouteImport } from './routes/api/public/kb-ingest'
 import { Route as ApiPublicLacunasRouteImport } from './routes/api/public/lacunas'
@@ -53,6 +54,11 @@ const ApiPublicAthenaRoute = ApiPublicAthenaRouteImport.update({
 const ApiPublicKbAutocourseRoute = ApiPublicKbAutocourseRouteImport.update({
   id: '/api/public/kb-autocourse',
   path: '/api/public/kb-autocourse',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicKbDriveRoute = ApiPublicKbDriveRouteImport.update({
+  id: '/api/public/kb-drive',
+  path: '/api/public/kb-drive',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicKbEditalRoute = ApiPublicKbEditalRouteImport.update({
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
+  '/api/public/kb-drive': typeof ApiPublicKbDriveRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
   '/api/public/lacunas': typeof ApiPublicLacunasRoute
@@ -119,6 +126,7 @@ export interface FileRoutesByTo {
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
+  '/api/public/kb-drive': typeof ApiPublicKbDriveRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
   '/api/public/lacunas': typeof ApiPublicLacunasRoute
@@ -136,6 +144,7 @@ export interface FileRoutesById {
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
+  '/api/public/kb-drive': typeof ApiPublicKbDriveRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
   '/api/public/lacunas': typeof ApiPublicLacunasRoute
@@ -154,6 +163,7 @@ export interface FileRouteTypes {
     | '/api/public/ai-status'
     | '/api/public/athena'
     | '/api/public/kb-autocourse'
+    | '/api/public/kb-drive'
     | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
     | '/api/public/lacunas'
@@ -170,6 +180,7 @@ export interface FileRouteTypes {
     | '/api/public/ai-status'
     | '/api/public/athena'
     | '/api/public/kb-autocourse'
+    | '/api/public/kb-drive'
     | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
     | '/api/public/lacunas'
@@ -186,6 +197,7 @@ export interface FileRouteTypes {
     | '/api/public/ai-status'
     | '/api/public/athena'
     | '/api/public/kb-autocourse'
+    | '/api/public/kb-drive'
     | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
     | '/api/public/lacunas'
@@ -203,6 +215,7 @@ export interface RootRouteChildren {
   ApiPublicAiStatusRoute: typeof ApiPublicAiStatusRoute
   ApiPublicAthenaRoute: typeof ApiPublicAthenaRoute
   ApiPublicKbAutocourseRoute: typeof ApiPublicKbAutocourseRoute
+  ApiPublicKbDriveRoute: typeof ApiPublicKbDriveRoute
   ApiPublicKbEditalRoute: typeof ApiPublicKbEditalRoute
   ApiPublicKbIngestRoute: typeof ApiPublicKbIngestRoute
   ApiPublicLacunasRoute: typeof ApiPublicLacunasRoute
@@ -255,6 +268,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/kb-autocourse'
       fullPath: '/api/public/kb-autocourse'
       preLoaderRoute: typeof ApiPublicKbAutocourseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/kb-drive': {
+      id: '/api/public/kb-drive'
+      path: '/api/public/kb-drive'
+      fullPath: '/api/public/kb-drive'
+      preLoaderRoute: typeof ApiPublicKbDriveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/kb-edital': {
@@ -323,6 +343,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAiStatusRoute: ApiPublicAiStatusRoute,
   ApiPublicAthenaRoute: ApiPublicAthenaRoute,
   ApiPublicKbAutocourseRoute: ApiPublicKbAutocourseRoute,
+  ApiPublicKbDriveRoute: ApiPublicKbDriveRoute,
   ApiPublicKbEditalRoute: ApiPublicKbEditalRoute,
   ApiPublicKbIngestRoute: ApiPublicKbIngestRoute,
   ApiPublicLacunasRoute: ApiPublicLacunasRoute,
