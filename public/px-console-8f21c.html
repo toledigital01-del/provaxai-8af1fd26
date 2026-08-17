@@ -1182,6 +1182,7 @@ function kbEditor(){
   const doc = kbFind(kbDisc, kbTopic) || {};
   const alvo = kbTopic ? `${kbDisc} › ${kbTopic}` : `${kbDisc} (visão geral)`;
   const orfaos = PXKB.encontrarOrfaos(KB_DOCS, kbDiscList());
+  const st = kbStatusDoc(doc.id ? doc : null);
   document.getElementById('kb-editor').innerHTML = `
     <div id="kb-busy" style="display:none;gap:8px;align-items:center;background:#EFF6FF;border:1px solid #BFDBFE;color:#1D4ED8;border-radius:10px;padding:8px 11px;margin-bottom:8px;font-size:0.8rem;font-weight:600">
       <span style="width:12px;height:12px;border-radius:99px;border:2px solid #93C5FD;border-top-color:#1D4ED8;display:inline-block;animation:pxspin .8s linear infinite"></span>
