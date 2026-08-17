@@ -306,6 +306,42 @@ export type Database = {
           },
         ]
       }
+      dominio_snapshots: {
+        Row: {
+          acertos_pct: number
+          course_slug: string
+          created_at: string
+          dia: string
+          dominio: number
+          id: string
+          questoes: number
+          tempo_segundos: number
+          user_id: string
+        }
+        Insert: {
+          acertos_pct?: number
+          course_slug?: string
+          created_at?: string
+          dia?: string
+          dominio?: number
+          id?: string
+          questoes?: number
+          tempo_segundos?: number
+          user_id: string
+        }
+        Update: {
+          acertos_pct?: number
+          course_slug?: string
+          created_at?: string
+          dia?: string
+          dominio?: number
+          id?: string
+          questoes?: number
+          tempo_segundos?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       flashcards: {
         Row: {
           course_slug: string | null
