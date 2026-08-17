@@ -185,8 +185,10 @@ async function viewGeral(){
   const custoIA = (ia||[]).reduce((a,l)=>a+(l.custo_cents||0),0);
 
   view.innerHTML = `
+    <div id="sync-alerta"></div>
     <div class="kpis">
       <div class="kpi"><b>${alunos}</b><span>Alunos cadastrados</span></div>
+
       <div class="kpi"><b>${ativos}</b><span>Logins nas últimas 24h</span></div>
       <div class="kpi"><b>${subs}</b><span>Assinaturas ativas</span></div>
       <div class="kpi"><b>${money(receita)}</b><span>Receita confirmada</span></div>
