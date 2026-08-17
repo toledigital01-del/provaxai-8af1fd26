@@ -299,10 +299,12 @@ function rzParse(md) {
   return blocks.filter(b => b.p.length);
 }
 
+let rzStatus = 0;
 async function rzCarregar() {
-  rzState = 'load'; rzData = null; rzErro = ''; renderPane();
-  const r = await PX.iaPost('resumo', { disciplina: rzSubject() === topic ? disc : rzSubject(), topico: scope === 'topico' ? topic : null, curso: id });
-  if (r.erro) { rzState = 'erro'; rzErro = r.erro; }
+  rzState = 'load'; rzData = null; rzErro = ''; rzStatus = 0; renderPane();
+  const alvo = scope === 'geral' && selDisc !== 'all' ? selDisc : disc;
+  const r = await PX.iaPost('resumo', { disciplina: alvo, topico: scope === 'topico' ? topic : null, curso: id });
+  if (r.erro) { rzState = 'erro'; rzErro = r.erro; rzStatus = r.status || 0; }
   else {
     const blocks = rzParse(r.resumo);
     if (!blocks.length) { rzState = 'erro'; rzErro = 'A Athena não retornou um resumo válido. Tente novamente.'; }
