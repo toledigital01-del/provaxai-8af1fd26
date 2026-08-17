@@ -57,7 +57,14 @@
         </nav>`
       : `<nav class="shell-nav">
           <div class="shell-sec">Workspace</div>
-          ${NAV.map(n => `<a href="${n.href}" class="nav-item${n.id === active ? ' active' : ''}">${icon(n.icon)}<span>${n.label}</span></a>`).join('')}
+          ${NAV.map(n => {
+            if (n.group) {
+              return `<div class="nav-group"><div class="nav-group-h">${icon(n.icon)}<span>${n.group}</span></div>` +
+                n.children.map(c => `<a href="${c.href}" class="nav-item nav-sub${c.id === active ? ' active' : ''}">${icon(c.icon)}<span>${c.label}</span></a>`).join('') +
+                `</div>`;
+            }
+            return `<a href="${n.href}" class="nav-item${n.id === active ? ' active' : ''}">${icon(n.icon)}<span>${n.label}</span></a>`;
+          }).join('')}
         </nav>`;
 
     return `
