@@ -407,3 +407,43 @@ function pxLastGet(disc) {
    e várias telas (inclusive o console administrativo) leem por `window.X`. */
 window.TOPICS = TOPICS;
 window.DISCIPLINAS_POR_CONCURSO = DISCIPLINAS_POR_CONCURSO;
+
+/* ===== Agregação única de desempenho =====
+   Fonte de verdade compartilhada por Desempenho (Geral / Por disciplina / Por tópico)
+   e Cobertura do edital. Não recalcular esses números em outro lugar. */
+function fmtTempoSeg(seg) { return _fmtTempo(seg); }
+
+function desempenhoAgregado(concursoId) {
+  const discs = disciplinasDe(concursoId || 'prf-2021').map(function (nome) {
+    const info = disciplinaInfo(nome);
+    let q = 0, c = 0, tempo = 0;
+    const conta = { nao: 0, apr: 0, fam: 0, dom: 0 };
+    info.topics.forEach(function (t) {
+      const p = pxProgGet(t.name) || {};
+      q += p.questoes_respondidas || 0;
+      c += p.questoes_certas || 0;
+      tempo += p.tempo_segundos || 0;
+      conta[t.st] = (conta[t.st] || 0) + 1;
+    });
+    return Object.assign({}, info, {
+      questoes: q, certas: c, erros: q - c, tempo_segundos: tempo,
+      acertoPct: q ? Math.round((c / q) * 100) : 0,
+      conta: conta, peso: pesoDe(nome),
+    });
+  });
+
+  const t = { topicos: 0, questoes: 0, certas: 0, erros: 0, tempo_segundos: 0, conta: { nao: 0, apr: 0, fam: 0, dom: 0 } };
+  discs.forEach(function (d) {
+    t.topicos += d.topics.length;
+    t.questoes += d.questoes;
+    t.certas += d.certas;
+    t.erros += d.erros;
+    t.tempo_segundos += d.tempo_segundos;
+    ['nao', 'apr', 'fam', 'dom'].forEach(function (s) { t.conta[s] += d.conta[s] || 0; });
+  });
+  t.saldo = t.certas - t.erros;
+  t.acertoPct = t.questoes ? Math.round((t.certas / t.questoes) * 100) : 0;
+  t.dominioMedio = discs.length ? Math.round(discs.reduce(function (a, d) { return a + d.pct; }, 0) / discs.length) : 0;
+  t.tempo = _fmtTempo(t.tempo_segundos);
+  return { discs: discs, totals: t };
+}

@@ -574,3 +574,21 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #274C77; }
 body.dark [style*="#0B2A5B"] { background-color: var(--brand-2) !important; border-color: var(--brand-2) !important; }
 body.dark [style*="color:#0B2A5B"] { color: #9EC2F5 !important; background-color: transparent !important; }
 body.dark .btn-primary, body.dark .btn.primary { background: var(--brand-2) !important; color: #fff !important; border-color: var(--brand-2) !important; }
+
+/* Grupo do menu lateral (rótulo não clicável) */
+.nav-group { margin-top: 2px; }
+.nav-group-h { display:flex; align-items:center; gap:10px; padding:10px 10px 6px; font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase; color:#A6ACBB; font-weight:600; }
+.nav-group-h svg { width:15px; height:15px; opacity:.7; }
+.nav-item.nav-sub { margin-left:10px; }
+body.dark .nav-group-h { color:#64748B; }
+
+/* Cards de disciplina reutilizáveis (Meus Concursos / Desempenho por disciplina) */
+.set-card { background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden; text-decoration:none; color:inherit; display:block; transition:all .18s; }
+.set-card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 16px; border-bottom:1px solid var(--line); }
+.set-card-head h3 { font-size:1.02rem; font-weight:600; }
+.meta-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 12px; padding:14px 16px 6px; }
+.meta-item { font-size:0.76rem; color:#9CA3AF; }
+.meta-item b { display:block; font-size:0.88rem; font-weight:600; color:#374151; margin-top:2px; }
+.set-card-foot { padding:10px 16px 14px; }
+.set-card-foot .lbl { font-size:0.78rem; color:var(--muted); margin-bottom:8px; }
+body.dark .meta-item b { color:#E5E7EB; }

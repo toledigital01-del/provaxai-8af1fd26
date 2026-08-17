@@ -3,28 +3,36 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cobertura do Edital – Prova X</title>
+<title>Cobertura do edital – Prova X</title>
 <link rel="stylesheet" href="shell.css">
 <style>
   .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-top:22px; }
   .kpi { background:#fff; border:1px solid #E2E8F0; border-radius:12px; padding:14px 16px; }
   .kpi .k { font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; color:#94A3B8; font-weight:600; }
-  .kpi .v { font-size:1.5rem; font-weight:700; letter-spacing:-.02em; margin-top:6px; }
+  .kpi .v { font-size:1.5rem; font-weight:700; letter-spacing:-.02em; margin-top:6px; font-variant-numeric:tabular-nums; }
+  .kpi .s { font-size:.75rem; color:#64748B; margin-top:2px; }
+  .panel { background:#fff; border:1px solid #E2E8F0; border-radius:12px; margin-top:16px; overflow:hidden; }
+  .stack { display:flex; height:24px; border-radius:8px; overflow:hidden; border:1px solid #E2E8F0; }
+  .stack i { display:block; }
+  .legend { display:flex; gap:16px; flex-wrap:wrap; margin-top:12px; font-size:.78rem; color:#64748B; }
+  .legend span.i { display:inline-flex; align-items:center; gap:6px; }
+  .filters { display:flex; gap:6px; flex-wrap:wrap; margin-top:22px; }
+  .chip { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line-strong); background:#fff; border-radius:999px; padding:5px 12px; font-size:.78rem; color:var(--muted); cursor:pointer; font-family:inherit; }
+  .chip.active { background:#0B2A5B; color:#fff; border-color:#0B2A5B; }
   .chap { background:#fff; border:1px solid #E2E8F0; border-radius:12px; margin-top:12px; overflow:hidden; }
-  .chap-h { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:12px; padding:14px 16px; cursor:pointer; }
-  .chap-h .cn { font-size:.95rem; font-weight:600; min-width:0; }
-  .chap-h .cs { font-size:.76rem; color:#64748B; margin-top:3px; }
-  .chap-h .right { display:flex; align-items:center; gap:10px; }
-  .chap-h .track { width:130px; }
+  .chap-h { display:flex; align-items:center; gap:12px; padding:14px 16px; cursor:pointer; }
+  .chap-h .cn { font-size:.95rem; font-weight:600; flex:1; min-width:0; }
+  .chap-h .cs { font-size:.75rem; color:#64748B; white-space:nowrap; }
   .chap-b { display:none; border-top:1px solid #F1F5F9; }
   .chap.open .chap-b { display:block; }
-  .trow { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:10px; padding:11px 16px; border-bottom:1px solid #F8FAFC; }
-  .trow .tn { font-size:.87rem; min-width:0; }
+  .trow { display:flex; align-items:center; gap:10px; padding:11px 16px; border-bottom:1px solid #F8FAFC; text-decoration:none; color:inherit; }
+  .trow:last-child { border-bottom:none; }
+  .trow:hover { background:#F8FAFC; }
+  .trow .tn { flex:1; min-width:0; font-size:.87rem; }
   .badge { font-size:.68rem; font-weight:700; border-radius:999px; padding:3px 9px; white-space:nowrap; }
-  .badge.ok { background:#ECFDF5; color:#047857; }
-  .badge.miss { background:#FEF2F2; color:#B91C1C; }
-  .badge.done { background:#E8EEF9; color:#154C9B; }
-  @media (max-width:640px){ .chap-h .track{width:70px} .trow{grid-template-columns:auto minmax(0,1fr)} }
+  .empty { padding:22px 16px; text-align:center; color:#64748B; font-size:.85rem; }
+  body.dark .kpi, body.dark .panel, body.dark .chap, body.dark .chip { background:#12203A; border-color:rgba(255,255,255,.10); }
+  @media (max-width:640px){ .chap-h .cs { display:none; } }
 </style>
   <script src="px-guard.js"></script>
 </head>
@@ -34,11 +42,25 @@
   <header id="shell-topbar"></header>
   <div class="shell-body">
     <div class="page">
-      <h1 class="title">Cobertura do Edital</h1>
-      <p class="subtitle">Validação capítulo a capítulo do edital do Concurso PRF: o que já está disponível no app, o que falta e o que você marcou como estudado.</p>
+      <h1 class="title">Cobertura do edital</h1>
+      <p class="subtitle">Quanto do edital da PRF você já tocou: o status de cada tópico mapeado, disciplina por disciplina.</p>
 
       <div class="kpis" id="kpis"></div>
-      <div id="out" style="margin-top:20px"></div>
+
+      <div class="panel" style="padding:16px">
+        <div class="stack" id="stack"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+
+      <div class="filters" id="filters">
+        <button class="chip active" data-f="all">Todos</button>
+        <button class="chip" data-f="nao"><span class="sdot" style="background:#EF4444"></span> Não familiar</button>
+        <button class="chip" data-f="apr"><span class="sdot" style="background:#F59E0B"></span> Aprendendo</button>
+        <button class="chip" data-f="fam"><span class="sdot" style="background:#22C55E"></span> Familiar</button>
+        <button class="chip" data-f="dom"><span class="sdot" style="background:#154C9B"></span> Dominado</button>
+      </div>
+
+      <div id="out" style="margin-top:6px"></div>
     </div>
   </div>
 </div>
@@ -49,50 +71,56 @@
 renderShell({ active: 'cobertura' });
 
 const MAT = materialById('prf-2021');
-const COB = coberturaEdital('prf-2021');
-
-const totRef = COB.reduce((a, c) => a + c.ref.length, 0);
-const totCob = COB.reduce((a, c) => a + c.cobertos.length, 0);
-const totFalta = COB.reduce((a, c) => a + c.faltando.length, 0);
-const totEst = COB.reduce((a, c) => a + c.estudados.length, 0);
-const pctGeral = totRef ? Math.round((totCob / totRef) * 100) : 100;
+const AGG = desempenhoAgregado('prf-2021');
+const T = AGG.totals;
+const ORDEM = ['nao', 'apr', 'fam', 'dom'];
+const tocados = T.topicos - (T.conta.nao || 0);
 
 document.getElementById('kpis').innerHTML = `
-  <div class="kpi"><div class="k">Cobertura do edital</div><div class="v">${pctGeral}%</div></div>
-  <div class="kpi"><div class="k">Capítulos</div><div class="v">${COB.length}</div></div>
-  <div class="kpi"><div class="k">Tópicos no app</div><div class="v">${totCob}/${totRef}</div></div>
-  <div class="kpi"><div class="k">Tópicos faltando</div><div class="v">${totFalta}</div></div>
-  <div class="kpi"><div class="k">Marcados como estudados</div><div class="v">${totEst}</div></div>`;
+  <div class="kpi"><div class="k">Tópicos mapeados</div><div class="v">${T.topicos}</div><div class="s">em ${AGG.discs.length} disciplinas</div></div>
+  <div class="kpi"><div class="k">Edital já tocado</div><div class="v">${T.topicos ? Math.round(tocados / T.topicos * 100) : 0}%</div><div class="s">${tocados} de ${T.topicos} tópicos iniciados</div></div>
+  <div class="kpi"><div class="k">Dominados</div><div class="v" style="color:#154C9B">${T.conta.dom}</div></div>
+  <div class="kpi"><div class="k">Ainda não familiar</div><div class="v" style="color:#DC2626">${T.conta.nao}</div></div>`;
+
+document.getElementById('stack').innerHTML = ORDEM.map(s => {
+  const w = (T.conta[s] / (T.topicos || 1)) * 100;
+  return w ? `<i style="width:${w}%;background:${STATUS_META[s].color}" title="${STATUS_META[s].label}: ${T.conta[s]}"></i>` : '';
+}).join('');
+document.getElementById('legend').innerHTML = ORDEM.map(s =>
+  `<span class="i"><span class="sdot" style="background:${STATUS_META[s].color}"></span>${STATUS_META[s].label} · <b>${T.conta[s]}</b> (${Math.round(T.conta[s] / (T.topicos || 1) * 100)}%)</span>`).join('');
 
 function href(disc, topic) {
   const base = `id=prf-2021&title=${encodeURIComponent(MAT.title)}&type=${encodeURIComponent(MAT.type)}&disc=${encodeURIComponent(disc)}`;
   return topic ? `workspace.html?${base}&topic=${encodeURIComponent(topic)}` : `disciplina.html?${base}`;
 }
 
-document.getElementById('out').innerHTML = COB.map((c, i) => `
-  <div class="chap${i === 0 ? ' open' : ''}">
-    <div class="chap-h" onclick="this.parentNode.classList.toggle('open')">
-      <div>
-        <div class="cn">${c.disc}</div>
-        <div class="cs">${c.cobertos.length} de ${c.ref.length} tópicos no app · ${c.estudados.length} estudados${c.faltando.length ? ` · ${c.faltando.length} faltando` : ''}</div>
+function render(f) {
+  const html = AGG.discs.map((d, i) => {
+    const tops = d.topics.filter(t => f === 'all' || t.st === f);
+    if (!tops.length) return '';
+    return `<div class="chap${i === 0 || f !== 'all' ? ' open' : ''}">
+      <div class="chap-h" onclick="this.parentNode.classList.toggle('open')">
+        <div class="cn">${d.name}</div>
+        <div class="cs">${d.conta.dom} dominados · ${d.conta.fam} familiar · ${d.conta.apr} aprendendo · ${d.conta.nao} não familiar</div>
+        <div class="track" style="width:110px"><div class="fill ${fillClass(d.pct)}" style="width:${d.pct}%"></div></div>
+        <div class="pct">${d.pct}%</div>
       </div>
-      <div class="right">
-        <div class="track"><div class="fill ${fillClass(c.pct)}" style="width:${c.pct}%"></div></div>
-        <div class="pct">${c.pct}%</div>
-      </div>
-    </div>
-    <div class="chap-b">
-      ${c.ref.map(t => {
-        const noApp = c.app.includes(t);
-        const est = noApp && pxStudyGet(t).done;
-        return `<div class="trow">
-          <span class="badge ${noApp ? 'ok' : 'miss'}">${noApp ? 'No app' : 'Faltando'}</span>
-          <span class="tn">${noApp ? `<a href="${href(c.disc, t)}" style="color:inherit;text-decoration:none">${t}</a>` : t}</span>
-          ${est ? '<span class="badge done">Estudado</span>' : '<span></span>'}
-        </div>`;
-      }).join('')}
-    </div>
-  </div>`).join('');
+      <div class="chap-b">${tops.map(t => `
+        <a class="trow" href="${href(d.name, t.name)}">
+          ${dotHTML(t.st)}
+          <span class="tn">${t.name}</span>
+          <span class="badge" style="background:${STATUS_META[t.st].color}1A;color:${STATUS_META[t.st].color}">${STATUS_META[t.st].label}</span>
+        </a>`).join('')}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('out').innerHTML = html || '<div class="panel"><div class="empty">Nenhum tópico neste status.</div></div>';
+}
+render('all');
+document.getElementById('filters').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  document.querySelectorAll('#filters .chip').forEach(c => c.classList.toggle('active', c === b));
+  render(b.dataset.f);
+});
 </script>
 </body>
 </html>
