@@ -649,7 +649,18 @@ async function viewConhecimento(){
     <div class="kpis">
       <div class="kpi"><b>${KB_DOCS.filter(x=>(x.conteudo||'').trim()).length}</b><span>Conteúdos cadastrados</span></div>
       <div class="kpi"><b>${discs.length}</b><span>Matérias do edital</span></div>
+      <div class="kpi"><b>${KB_LIB.length}</b><span>Documentos na biblioteca</span></div>
       <div class="kpi"><b>${(totalChars/1000).toFixed(1)} mil</b><span>Caracteres na base da IA</span></div>
+    </div>
+    <div class="card">
+      <h2>Visão geral das matérias</h2>
+      <p class="muted" style="margin-bottom:10px">Cobertura de cada matéria do edital. Clique no cartão para abrir a matéria já selecionada abaixo.</p>
+      <div id="kb-visao"></div>
+    </div>
+    <div class="card">
+      <h2>Aulas aguardando revisão</h2>
+      <p class="muted" style="margin-bottom:10px">Tudo que a IA gerou e ainda não foi revisado/publicado. O aluno não vê nada desta lista.</p>
+      <div id="kb-fila"></div>
     </div>
     <div class="card">
       <h2>Carregar edital (a IA monta matérias, tópicos e subtópicos)</h2>
