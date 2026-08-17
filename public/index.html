@@ -671,7 +671,45 @@ footer .brand{color:#fff;margin-bottom:12px}
   </div>
 </section>
 
+<!-- UM DIA DE ESTUDO -->
+<style>
+.day{position:relative;margin-top:40px;padding-left:26px}
+.day::before{content:"";position:absolute;left:7px;top:8px;bottom:8px;width:2px;background:linear-gradient(180deg,rgba(11,42,91,.10),rgba(242,183,5,.55),rgba(11,42,91,.10))}
+.day-item{position:relative;display:grid;grid-template-columns:88px 1fr;gap:18px;align-items:center;padding:14px 0}
+.day-item::before{content:"";position:absolute;left:-24px;top:50%;width:12px;height:12px;margin-top:-6px;border-radius:50%;background:#fff;border:2px solid #F2B705;box-shadow:0 0 0 4px rgba(242,183,5,.14)}
+.day-time{font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em;color:#0B2A5B}
+.day-card{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid rgba(11,42,91,.10);border-radius:16px;padding:14px 18px;box-shadow:0 1px 2px rgba(11,42,91,.05),0 12px 28px -20px rgba(11,42,91,.45);transition:transform .18s ease,box-shadow .18s ease}
+.day-card:hover{transform:translateY(-2px);box-shadow:0 1px 2px rgba(11,42,91,.06),0 18px 36px -20px rgba(11,42,91,.5)}
+.day-card b{display:block;font-size:15.5px;letter-spacing:-.01em}
+.day-card small{color:var(--muted);font-size:13px}
+.day-emoji{font-size:20px;line-height:1}
+@media(max-width:640px){
+  .day{padding-left:22px}
+  .day-item{grid-template-columns:1fr;gap:6px}
+  .day-time{font-size:13px;color:var(--muted)}
+}
+</style>
+<section class="soft" id="dia">
+  <div class="wrap">
+    <div class="sec-head center rv">
+      <span class="eyebrow">Rotina</span>
+      <h2>Como pode ser um dia de estudo<br><span class="grad">com o Prova X?</span></h2>
+      <p class="lead">Uma representação de rotina. Os horários são apenas exemplos — quem define o ritmo é você, e o cronograma se ajusta ao tempo que você tem.</p>
+    </div>
+    <div class="day">
+      <div class="day-item rv"><span class="day-time">07:00</span><div class="day-card"><span class="day-emoji">🎧</span><span><b>Podcast do tópico</b><small>No deslocamento, sem precisar olhar para a tela.</small></span></div></div>
+      <div class="day-item rv"><span class="day-time">19:00</span><div class="day-card"><span class="day-emoji">📚</span><span><b>Tópico prioritário da vez</b><small>O cronograma indica o que estudar agora.</small></span></div></div>
+      <div class="day-item rv"><span class="day-time">19:40</span><div class="day-card"><span class="day-emoji">📝</span><span><b>Questões do tópico</b><small>Certo/errado no padrão da banca, com correção na hora.</small></span></div></div>
+      <div class="day-item rv"><span class="day-time">20:10</span><div class="day-card"><span class="day-emoji">🤖</span><span><b>Athena IA</b><small>Tirar as dúvidas que apareceram nas questões.</small></span></div></div>
+      <div class="day-item rv"><span class="day-time">20:30</span><div class="day-card"><span class="day-emoji">🔄</span><span><b>Revisão e flashcards</b><small>Fixar antes de fechar o dia.</small></span></div></div>
+      <div class="day-item rv"><span class="day-time">Depois</span><div class="day-card"><span class="day-emoji">📈</span><span><b>Desempenho atualizado</b><small>O painel mostra o que evoluiu e o que ficou para trás.</small></span></div></div>
+    </div>
+    <p class="quote rv" style="display:inline-block;text-align:left;margin-top:36px">Você não precisa conquistar o edital inteiro hoje.<br>Precisa conquistar o próximo tópico.</p>
+  </div>
+</section>
+
 <!-- ANTES E DEPOIS -->
+
 <section>
   <div class="wrap">
     <div class="sec-head center rv"><span class="eyebrow">Antes e depois</span><h2>Menos abas. Mais direção.</h2></div>
