@@ -115,6 +115,11 @@ nav.main a:hover{color:var(--navy);background:var(--bg)}
 .pt-dot{width:9px;height:9px;border-radius:50%;background:#E2E8F0}
 .pt-title{font-size:12.5px;font-weight:650;color:var(--muted);margin-left:6px}
 .mk-body{padding:16px}
+.shot{margin:clamp(26px,3.4vw,44px) 0 0;border-radius:var(--r-l);overflow:hidden;border:1px solid var(--line);background:#fff;box-shadow:var(--sh-l)}
+.shot img{display:block;width:100%;height:auto}
+.shot figcaption{font-size:12.5px;font-weight:600;color:var(--muted);padding:11px 16px;border-top:1px solid var(--line-2);background:#FCFDFF}
+.dark-sec .shot{border-color:rgba(255,255,255,.14);box-shadow:0 30px 70px -40px rgba(0,0,0,.75)}
+.dark-sec .shot figcaption{background:rgba(255,255,255,.05);border-top-color:rgba(255,255,255,.10);color:#CBD5E1}
 .mk-row{display:flex;align-items:center;gap:10px;padding:10px;border-radius:11px;border:1px solid var(--line-2);margin-bottom:8px;background:#fff}
 .mk-row b{font-size:14px;font-weight:600}
 .mk-row small{margin-left:auto;font-size:12px;color:var(--muted)}
@@ -378,20 +383,13 @@ footer .brand{color:#fff;margin-bottom:12px}
     <div class="mock rv in" id="mock">
       <div class="panel">
         <div class="panel-top"><span class="pt-dot"></span><span class="pt-dot"></span><span class="pt-dot"></span><span class="pt-title">Prova X · Curso PRF · Legislação de Trânsito</span></div>
-        <div class="mk-body">
-          <div class="mk-row"><span class="edge" style="background:#14418B"></span><b>Sinalização de Trânsito</b><small>Aula + questões</small></div>
-          <div class="mk-row"><span class="edge" style="background:#F2B705"></span><b>Infrações e Penalidades</b><small>Revisar hoje</small></div>
-          <div class="mk-row"><span class="edge" style="background:#64748B"></span><b>Crimes de Trânsito</b><small>Não iniciado</small></div>
-          <div style="margin-top:14px;display:flex;align-items:center;gap:10px">
-            <div class="bar" style="flex:1"><i data-w="62%"></i></div>
-            <small style="font-size:12.5px;color:var(--muted);font-weight:650">62%</small>
-          </div>
-          <div class="kpis">
+        <div class="mk-body" style="padding:0">
+          <img src="shots/dashboard.webp" width="1600" height="955" alt="Painel de estatísticas do Prova X mostrando domínio geral, disciplinas e desempenho por disciplina" style="display:block;width:100%;height:auto;border-bottom:1px solid rgba(11,42,91,.08)">
+          <div class="kpis" style="padding:16px 18px 18px">
             <div class="kpi"><b class="count" data-to="15">15</b><small>disciplinas</small></div>
             <div class="kpi"><b class="count" data-to="91">91</b><small>tópicos</small></div>
             <div class="kpi"><b class="count" data-to="7" data-suffix="d">7d</b><small>de garantia</small></div>
           </div>
-
         </div>
       </div>
       <div class="float float-a">
@@ -507,6 +505,9 @@ footer .brand{color:#fff;margin-bottom:12px}
       </div>
     </div>
   </div>
+  <div class="wrap">
+    <figure class="shot rv"><img src="shots/athena.webp" width="1600" height="955" loading="lazy" decoding="async" alt="Tela real da aula com a Athena IA dentro do Prova X"><figcaption>Tela real: aula com a Athena IA, com o chat de dúvidas ao lado do conteúdo.</figcaption></figure>
+  </div>
 </section>
 
 <!-- QUESTÕES -->
@@ -530,6 +531,9 @@ footer .brand{color:#fff;margin-bottom:12px}
       </div>
     </div>
   </div>
+  <div class="wrap">
+    <figure class="shot rv"><img src="shots/questoes.webp" width="1600" height="955" loading="lazy" decoding="async" alt="Bateria de questões certo/errado no padrão Cebraspe dentro do Prova X"><figcaption>Tela real: bateria de questões certo/errado no padrão Cebraspe.</figcaption></figure>
+  </div>
 </section>
 
 <!-- REVISÃO -->
@@ -547,6 +551,9 @@ footer .brand{color:#fff;margin-bottom:12px}
       <div class="card rv"><div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></div><h3>Pendências</h3><p>O que ficou para trás fica visível, não esquecido.</p></div>
     </div>
     <p class="quote rv">O objetivo não é estudar cada vez mais. É esquecer cada vez menos.</p>
+  </div>
+  <div class="wrap">
+    <figure class="shot rv"><img src="shots/revisao.webp" width="1600" height="955" loading="lazy" decoding="async" alt="Revisão inteligente com resumo e pontos-chave do tópico"><figcaption>Tela real: revisão inteligente do tópico, gerada a partir do material do curso.</figcaption></figure>
   </div>
 </section>
 
@@ -592,6 +599,9 @@ footer .brand{color:#fff;margin-bottom:12px}
       </div>
     </div>
   </div>
+  <div class="wrap">
+    <figure class="shot rv"><img src="shots/cronograma.webp" width="1600" height="955" loading="lazy" decoding="async" alt="Cronograma inteligente do Prova X com blocos de estudo do dia"><figcaption>Tela real: cronograma com os blocos de estudo do dia e a meta em andamento.</figcaption></figure>
+  </div>
 </section>
 
 <!-- PODCAST -->
@@ -627,6 +637,9 @@ footer .brand{color:#fff;margin-bottom:12px}
         <span>16:04</span>
       </div>
     </div>
+  </div>
+  <div class="wrap">
+    <figure class="shot rv"><img src="shots/podcast.webp" width="1600" height="955" loading="lazy" decoding="async" alt="Player de podcast do Prova X com transcrição da conversa entre Ana e Rafael"><figcaption>Tela real: player do podcast com transcrição do episódio do tópico.</figcaption></figure>
   </div>
 </section>
 
