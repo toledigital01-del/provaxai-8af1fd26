@@ -2,132 +2,20 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Estatísticas – Prova X</title>
-<link rel="stylesheet" href="shell.css">
-<style>
-  .seg { display:inline-flex; gap:4px; background:#EEF2F7; border:1px solid #E2E8F0; border-radius:10px; padding:4px; margin-top:18px; }
-  .seg button { border:none; background:transparent; font-family:inherit; font-size:.82rem; font-weight:600; color:#64748B; padding:7px 14px; border-radius:7px; cursor:pointer; }
-  .seg button.on { background:#fff; color:#154C9B; box-shadow:0 1px 3px rgba(16,18,24,.08); }
-  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-top:22px; }
-  .kpi { background:#fff; border:1px solid #E2E8F0; border-radius:12px; padding:14px 16px; }
-  .kpi .k { font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; color:#94A3B8; font-weight:600; }
-  .kpi .v { font-size:1.5rem; font-weight:700; letter-spacing:-.02em; margin-top:6px; }
-  .chap { background:#fff; border:1px solid #E2E8F0; border-radius:12px; margin-top:12px; overflow:hidden; }
-  .chap-h { display:flex; align-items:center; gap:12px; padding:14px 16px; cursor:pointer; }
-  .chap-h .cn { font-size:.92rem; font-weight:600; flex:1; min-width:0; }
-  .chap-h .track { width:120px; }
-  .chap-h .pct { min-width:36px; }
-  .chap-h .chev { color:#94A3B8; font-size:.8rem; }
-  .chap-b { display:none; border-top:1px solid #F1F5F9; }
-  .chap.open .chap-b { display:block; }
-  .trow { display:flex; align-items:center; gap:10px; padding:10px 16px; border-bottom:1px solid #F8FAFC; text-decoration:none; color:inherit; }
-  .trow:hover { background:#F8FAFC; }
-  .trow .tn { flex:1; min-width:0; font-size:.85rem; }
-  .trow .mini { font-size:.74rem; color:#64748B; width:78px; text-align:right; font-variant-numeric:tabular-nums; }
-  .trow .track { width:100px; }
-  .legend { display:flex; gap:14px; flex-wrap:wrap; margin-top:16px; font-size:.76rem; color:#64748B; }
-  .legend span.i { display:inline-flex; align-items:center; gap:6px; }
-  @media (max-width:640px){ .trow .mini:nth-child(3){display:none} .chap-h .track{width:70px} }
-</style>
-  <script src="px-guard.js"></script>
+<meta name="robots" content="noindex">
+<script>
+  /* Página antiga de Estatísticas: agora faz parte de Desempenho (abas internas). */
+  (function () {
+    var p = new URLSearchParams(location.search);
+    var m = p.get('m') || p.get('mode');
+    var tab = m === 'cap' ? 'topicos' : p.get('tab') || 'disciplinas';
+    location.replace('desempenho.html?tab=' + tab + location.hash);
+  })();
+</script>
+<meta http-equiv="refresh" content="0;url=desempenho.html?tab=disciplinas">
 </head>
 <body>
-<aside id="shell-sidebar"></aside>
-<div class="shell-main">
-  <header id="shell-topbar"></header>
-  <div class="shell-body">
-    <div class="page">
-      <h1 class="title">Estatísticas</h1>
-      <p class="subtitle">Desempenho no Concurso PRF por disciplina e por capítulo do edital</p>
-
-      <div class="seg" id="seg">
-        <button data-m="disc" class="on">Por disciplina</button>
-        <button data-m="cap">Por capítulo do edital</button>
-      </div>
-
-      <div class="kpis" id="kpis"></div>
-      <div class="legend">
-        <span class="i"><span class="sdot" style="background:#EF4444"></span>Não familiar</span>
-        <span class="i"><span class="sdot" style="background:#F59E0B"></span>Aprendendo</span>
-        <span class="i"><span class="sdot" style="background:#22C55E"></span>Familiar</span>
-        <span class="i"><span class="sdot" style="background:#154C9B"></span>Dominado</span>
-      </div>
-
-      <div id="out" style="margin-top:20px"></div>
-    </div>
-  </div>
-</div>
-
-<script src="data.js"></script>
-<script src="shell.js"></script>
-<script>
-  renderShell({ active: 'estatisticas' });
-
-  const PRF = materialById('prf-2021');
-  const DISCS = disciplinasDe('prf-2021').map(d => disciplinaInfo(d));
-  const ALLT = DISCS.flatMap(d => d.topics.map(t => ({ ...t, disc: d.name })));
-
-  const media = ALLT.length ? Math.round(ALLT.reduce((a,t)=>a+t.prog,0)/ALLT.length) : 0;
-  const dom = ALLT.filter(t => t.st === 'dom').length;
-  const fracos = ALLT.filter(t => t.st === 'nao').length;
-
-  document.getElementById('kpis').innerHTML = `
-    <div class="kpi"><div class="k">Domínio geral</div><div class="v">${media}%</div></div>
-    <div class="kpi"><div class="k">Disciplinas</div><div class="v">${DISCS.length}</div></div>
-    <div class="kpi"><div class="k">Tópicos dominados</div><div class="v">${dom}/${ALLT.length}</div></div>
-    <div class="kpi"><div class="k">Pontos fracos</div><div class="v">${fracos}</div></div>`;
-
-  function href(disc, topic) {
-    const base = `id=prf-2021&title=${encodeURIComponent(PRF.title)}&type=${encodeURIComponent(PRF.type)}&disc=${encodeURIComponent(disc)}`;
-    return topic ? `workspace.html?${base}&topic=${encodeURIComponent(topic)}` : `disciplina.html?${base}`;
-  }
-
-  function viewDisc() {
-    return DISCS.slice().sort((a,b)=>a.pct-b.pct).map(d => {
-      const p = pesoDe(d.name);
-      return `<a class="card ${areaClass(d.name)}" href="${href(d.name)}" style="display:block;margin-top:10px;text-decoration:none">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-          <h3>${d.name}</h3><span class="tag">Peso ${p.peso} · incidência ${p.incidencia}%</span>
-        </div>
-        <div class="cmeta">${d.topics.length} tópicos · ${d.topics.filter(t=>t.st==='dom').length} dominados</div>
-        <div class="progress-line"><div class="track"><div class="fill ${fillClass(d.pct)}" style="width:${d.pct}%"></div></div><div class="pct">${d.pct}%</div></div>
-      </a>`;
-    }).join('');
-  }
-
-  function viewCap() {
-    return DISCS.map((d,i) => `
-      <div class="chap${i===0?' open':''}">
-        <div class="chap-h" onclick="this.parentNode.classList.toggle('open')">
-          <div class="cn">${d.name}</div>
-          <div class="track"><div class="fill ${fillClass(d.pct)}" style="width:${d.pct}%"></div></div>
-          <div class="pct">${d.pct}%</div>
-          <div class="chev">▾</div>
-        </div>
-        <div class="chap-b">
-          ${d.topics.map(t => {
-            const s = topicStats(t.name);
-            return `<a class="trow" href="${href(d.name, t.name)}">
-              ${dotHTML(t.st)}
-              <div class="tn">${t.name}</div>
-              <div class="mini">${s.acertos}% acertos</div>
-              <div class="mini">${s.questoes} questões</div>
-              <div class="track"><div class="fill ${fillClass(t.prog)}" style="width:${t.prog}%"></div></div>
-              <div class="pct">${t.prog}%</div>
-            </a>`;
-          }).join('')}
-        </div>
-      </div>`).join('');
-  }
-
-  function render(m) { document.getElementById('out').innerHTML = m === 'cap' ? viewCap() : viewDisc(); }
-  render('disc');
-  document.getElementById('seg').addEventListener('click', e => {
-    const b = e.target.closest('button[data-m]'); if (!b) return;
-    document.querySelectorAll('#seg button').forEach(x => x.classList.toggle('on', x === b));
-    render(b.dataset.m);
-  });
-</script>
+<p style="font-family:system-ui;padding:24px">Redirecionando para <a href="desempenho.html?tab=disciplinas">Desempenho</a>…</p>
 </body>
 </html>
