@@ -1211,18 +1211,18 @@ window.edAplicar = async function(){
 
 let kbQd = '', kbQt = '', KB_PANE = 'conteudo';
 function kbListHTML(items, id){
-  return `<div id="${id}" style="border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;max-height:56vh;overflow-y:auto;background:#fff">${items}</div>`;
+  return `<div id="${id}" class="kb-surface" style="max-height:56vh;overflow-y:auto">${items}</div>`;
 }
 function kbBusca(id, val, ph, fn){
-  return `<input id="${id}" value="${esc(val)}" placeholder="${esc(ph)}" oninput="${fn}(this.value)" style="margin:0 0 6px;padding:7px 10px;font-size:0.78rem">`;
+  return `<input id="${id}" value="${esc(val)}" placeholder="${esc(ph)}" oninput="${fn}(this.value)" style="margin:0 0 8px;padding:8px 11px;font-size:0.8rem">`;
 }
 function kbRow(label, active, ok, onclick, extra){
-  return `<button class="act" style="display:flex;width:100%;text-align:left;border:none;border-bottom:1px solid #F1F5F9;border-radius:0;padding:9px 11px;gap:8px;align-items:center;background:${active?'#EFF6FF':'#fff'};font-weight:${active?'700':'500'}" onclick="${onclick}">
-    <span style="width:7px;height:7px;border-radius:99px;background:${ok?'#10B981':'#CBD5E1'};flex:none"></span>
-    <span style="flex:1;font-size:0.8rem">${esc(label)}</span>
-    ${extra?`<span class="muted" style="font-size:0.7rem;font-weight:600;flex:none">${esc(extra)}</span>`:''}</button>`;
+  return `<button class="act" style="display:flex;width:100%;text-align:left;border:none;border-bottom:1px solid #F5F7FA;border-radius:0;padding:11px 13px;gap:10px;align-items:center;background:${active?'#F5F8FE':'#fff'};font-weight:${active?'650':'450'};color:${active?'#0F172A':'#334155'}" onclick="${onclick}">
+    <span style="width:6px;height:6px;border-radius:99px;background:${ok?'#10B981':'#DDE3EC'};flex:none"></span>
+    <span style="flex:1;font-size:0.8125rem;line-height:1.4">${esc(label)}</span>
+    ${extra?`<span class="muted" style="font-size:0.7rem;font-weight:500;flex:none">${esc(extra)}</span>`:''}</button>`;
 }
-function kbVazio(txt){ return `<div class="muted" style="padding:11px;font-size:0.78rem">${esc(txt)}</div>`; }
+function kbVazio(txt){ return `<div class="muted" style="padding:14px;font-size:0.78rem">${esc(txt)}</div>`; }
 
 function kbDiscItems(){
   const q = kbQd.trim().toLowerCase();
