@@ -104,7 +104,53 @@
         };
       });
       localStorage.setItem('px_prog_cache_v1', JSON.stringify(map));
+      PX.saveSnapshot();
     } catch (e) {}
+  };
+
+  /* ---------- Histórico de evolução (snapshot diário do índice de domínio) ---------- */
+  PX.resumoGeral = function () {
+    let map = {};
+    try { map = JSON.parse(localStorage.getItem('px_prog_cache_v1')) || {}; } catch (e) {}
+    const rows = Object.keys(map).map(k => map[k]);
+    let dom = 0, seg = 0, q = 0, c = 0;
+    rows.forEach(r => {
+      dom += Math.min(100, r.dominio || 0);
+      seg += r.tempo_segundos || 0;
+      q += r.questoes_respondidas || 0;
+      c += r.questoes_certas || 0;
+    });
+    const total = rows.length || 1;
+    return {
+      dominio: Math.round(dom / total),
+      tempo_segundos: seg,
+      questoes: q,
+      certas: c,
+      acertos_pct: q ? Math.round((c / q) * 100) : 0,
+    };
+  };
+
+  PX.saveSnapshot = async function () {
+    if (!PX.user) return;
+    const r = PX.resumoGeral();
+    if (!r.tempo_segundos && !r.questoes && !r.dominio) return;
+    const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    try {
+      await PX.sb.from('dominio_snapshots').upsert({
+        user_id: PX.user.id, course_slug: 'prf-2021', dia: hoje,
+        dominio: r.dominio, acertos_pct: r.acertos_pct,
+        questoes: r.questoes, tempo_segundos: r.tempo_segundos,
+      }, { onConflict: 'user_id,course_slug,dia' });
+    } catch (e) {}
+  };
+
+  PX.getSnapshots = async function (dias) {
+    await PX.ready;
+    if (!PX.user) return [];
+    const desde = new Date(Date.now() - (dias || 90) * 86400000).toISOString().slice(0, 10);
+    const { data } = await PX.sb.from('dominio_snapshots').select('dia,dominio,acertos_pct,questoes')
+      .eq('user_id', PX.user.id).gte('dia', desde).order('dia');
+    return data || [];
   };
 
   PX.ready = boot();
