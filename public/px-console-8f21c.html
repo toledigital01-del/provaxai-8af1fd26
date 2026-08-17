@@ -557,7 +557,9 @@ async function viewConfig(){
       <div><button class="act" onclick="salvarConfig('${s.id}')">Salvar</button></div>
     </div>`).join('') || '<p class="muted">Nenhuma configuração cadastrada.</p>'}
   </div>`;
+  pintarSyncAviso();
 }
+
 async function cfgSalvarChave(env){
   const el = document.getElementById('key-'+env);
   const valor = (el.value||'').trim();
