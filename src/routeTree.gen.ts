@@ -17,6 +17,7 @@ import { Route as ApiPublicAthenaRouteImport } from './routes/api/public/athena'
 import { Route as ApiPublicKbAutocourseRouteImport } from './routes/api/public/kb-autocourse'
 import { Route as ApiPublicKbEditalRouteImport } from './routes/api/public/kb-edital'
 import { Route as ApiPublicKbIngestRouteImport } from './routes/api/public/kb-ingest'
+import { Route as ApiPublicResumoRouteImport } from './routes/api/public/resumo'
 import { Route as ApiPublicTtsRouteImport } from './routes/api/public/tts'
 import { Route as ApiPublicHotmartWebhookRouteImport } from './routes/api/public/hotmart/webhook'
 
@@ -61,6 +62,11 @@ const ApiPublicKbIngestRoute = ApiPublicKbIngestRouteImport.update({
   path: '/api/public/kb-ingest',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicResumoRoute = ApiPublicResumoRouteImport.update({
+  id: '/api/public/resumo',
+  path: '/api/public/resumo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTtsRoute = ApiPublicTtsRouteImport.update({
   id: '/api/public/tts',
   path: '/api/public/tts',
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
+  '/api/public/resumo': typeof ApiPublicResumoRoute
   '/api/public/tts': typeof ApiPublicTtsRoute
   '/api/public/hotmart/webhook': typeof ApiPublicHotmartWebhookRoute
 }
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
+  '/api/public/resumo': typeof ApiPublicResumoRoute
   '/api/public/tts': typeof ApiPublicTtsRoute
   '/api/public/hotmart/webhook': typeof ApiPublicHotmartWebhookRoute
 }
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
+  '/api/public/resumo': typeof ApiPublicResumoRoute
   '/api/public/tts': typeof ApiPublicTtsRoute
   '/api/public/hotmart/webhook': typeof ApiPublicHotmartWebhookRoute
 }
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
     | '/api/public/kb-autocourse'
     | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
+    | '/api/public/resumo'
     | '/api/public/tts'
     | '/api/public/hotmart/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -132,6 +142,7 @@ export interface FileRouteTypes {
     | '/api/public/kb-autocourse'
     | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
+    | '/api/public/resumo'
     | '/api/public/tts'
     | '/api/public/hotmart/webhook'
   id:
@@ -144,6 +155,7 @@ export interface FileRouteTypes {
     | '/api/public/kb-autocourse'
     | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
+    | '/api/public/resumo'
     | '/api/public/tts'
     | '/api/public/hotmart/webhook'
   fileRoutesById: FileRoutesById
@@ -157,6 +169,7 @@ export interface RootRouteChildren {
   ApiPublicKbAutocourseRoute: typeof ApiPublicKbAutocourseRoute
   ApiPublicKbEditalRoute: typeof ApiPublicKbEditalRoute
   ApiPublicKbIngestRoute: typeof ApiPublicKbIngestRoute
+  ApiPublicResumoRoute: typeof ApiPublicResumoRoute
   ApiPublicTtsRoute: typeof ApiPublicTtsRoute
   ApiPublicHotmartWebhookRoute: typeof ApiPublicHotmartWebhookRoute
 }
@@ -219,6 +232,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicKbIngestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/resumo': {
+      id: '/api/public/resumo'
+      path: '/api/public/resumo'
+      fullPath: '/api/public/resumo'
+      preLoaderRoute: typeof ApiPublicResumoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/tts': {
       id: '/api/public/tts'
       path: '/api/public/tts'
@@ -245,6 +265,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicKbAutocourseRoute: ApiPublicKbAutocourseRoute,
   ApiPublicKbEditalRoute: ApiPublicKbEditalRoute,
   ApiPublicKbIngestRoute: ApiPublicKbIngestRoute,
+  ApiPublicResumoRoute: ApiPublicResumoRoute,
   ApiPublicTtsRoute: ApiPublicTtsRoute,
   ApiPublicHotmartWebhookRoute: ApiPublicHotmartWebhookRoute,
 }
