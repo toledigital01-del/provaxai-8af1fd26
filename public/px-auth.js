@@ -251,6 +251,7 @@
       });
       localStorage.setItem('px_prog_cache_v1', JSON.stringify(map));
     } catch (e) {}
+    PX.saveSnapshot();
     return res;
   };
 
