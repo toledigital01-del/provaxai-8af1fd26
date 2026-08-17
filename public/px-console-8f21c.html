@@ -818,7 +818,7 @@ function kbPaintVisao(){
   if(!box) return;
   const discs = kbDiscList();
   if(!discs.length){ box.innerHTML = '<p class="muted">Nenhuma matéria cadastrada ainda.</p>'; return; }
-  box.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">' +
+  box.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">' +
     discs.map(function(d){
       const tops = kbTopicList(d);
       const docs = KB_DOCS.filter(function(x){ return x.disciplina === d && (x.conteudo||'').trim(); });
@@ -827,12 +827,16 @@ function kbPaintVisao(){
       const fontes = KB_LIB.filter(function(x){ return x.discipline_nome === d; }).length;
       const total = tops.length || docs.length || 1;
       const pct = Math.min(100, Math.round((docs.filter(function(x){ return x.topico && kbStatusDoc(x)==='publicado'; }).length / total) * 100));
-      const cor = pct >= 80 ? '#10B981' : pct >= 30 ? '#F59E0B' : '#EF4444';
-      return '<button class="act" onclick="kbSelDisc(\'' + escJs(d) + '\')" style="display:block;text-align:left;border:1px solid ' + (d===kbDisc?'#2563EB':'#E2E8F0') + ';border-radius:12px;padding:10px 12px;background:#fff">' +
-        '<b style="font-size:0.82rem;display:block;margin-bottom:6px">' + esc(d) + '</b>' +
-        '<div style="height:6px;border-radius:99px;background:#E2E8F0;overflow:hidden;margin-bottom:6px"><div style="height:100%;width:' + pct + '%;background:' + cor + '"></div></div>' +
-        '<span class="muted" style="font-size:0.72rem;display:block">' + pct + '% de cobertura · ' + tops.length + ' tópico(s) do edital</span>' +
-        '<span class="muted" style="font-size:0.72rem;display:block">' + pub + ' publicada(s) · ' + rasc + ' em rascunho · ' + fontes + ' documento(s)-fonte</span>' +
+      const cor = pct >= 80 ? '#10B981' : pct >= 30 ? '#94A3B8' : '#CBD5E1';
+      const sel = d === kbDisc;
+      return '<button class="act" onclick="kbSelDisc(\'' + escJs(d) + '\')" style="display:block;text-align:left;border:1px solid ' + (sel?'#C7D6F2':'#E9EDF3') + ';border-radius:14px;padding:16px;background:' + (sel?'#F8FAFF':'#fff') + '">' +
+        '<span style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px">' +
+          '<b style="flex:1;font-size:0.85rem;font-weight:650;line-height:1.35">' + esc(d) + '</b>' +
+          '<span style="font-size:0.78rem;font-weight:700;color:#475569">' + pct + '%</span>' +
+        '</span>' +
+        '<span style="display:block;height:5px;border-radius:99px;background:#EEF1F6;overflow:hidden;margin-bottom:12px"><span style="display:block;height:100%;width:' + pct + '%;background:' + cor + '"></span></span>' +
+        '<span class="muted" style="font-size:0.75rem;display:block;font-weight:400">' + tops.length + ' tópicos · ' + pub + ' publicadas</span>' +
+        '<span class="muted" style="font-size:0.75rem;display:block;font-weight:400">' + rasc + ' em rascunho · ' + fontes + ' documentos-fonte</span>' +
       '</button>';
     }).join('') + '</div>';
 }
@@ -846,13 +850,16 @@ function kbPaintFila(){
   const porDisc = {};
   pend.forEach(function(d){ (porDisc[d.disciplina] = porDisc[d.disciplina] || []).push(d); });
   box.innerHTML = Object.keys(porDisc).sort().map(function(d){
-    return '<div style="border:1px solid #E2E8F0;border-radius:12px;margin-bottom:8px;overflow:hidden">' +
-      '<div style="padding:8px 11px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;font-size:0.8rem"><b>' + esc(d) + '</b> <span class="muted">· ' + porDisc[d].length + ' aula(s) pendente(s)</span></div>' +
+    return '<div style="margin-bottom:22px">' +
+      '<div style="display:flex;align-items:baseline;gap:8px;padding:0 2px 8px;border-bottom:1px solid #EEF1F6">' +
+        '<h4 style="margin:0">' + esc(d) + '</h4>' +
+        '<span class="muted" style="font-size:0.75rem">' + porDisc[d].length + ' pendente(s)</span>' +
+      '</div>' +
       porDisc[d].map(function(x){
         const st = KB_STATUS[kbStatusDoc(x)];
-        return '<div style="padding:7px 11px;display:flex;gap:8px;align-items:center;border-bottom:1px solid #F1F5F9;font-size:0.78rem">' +
+        return '<div style="padding:11px 2px;display:flex;gap:12px;align-items:center;border-bottom:1px solid #F5F7FA;font-size:0.82rem">' +
           '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(x.topico || 'Visão geral da matéria') + '</span>' +
-          '<span style="font-size:0.68rem;font-weight:700;padding:1px 8px;border-radius:99px;background:' + st.fundo + ';color:' + st.cor + '">' + st.rotulo + '</span>' +
+          '<span class="kb-tag' + (kbStatusDoc(x)==='revisado'?' is-wait':'') + '">' + st.rotulo + '</span>' +
           '<button class="act" onclick="kbAbrirDoc(\'' + escJs(x.disciplina) + '\',' + (x.topico ? "'" + escJs(x.topico) + "'" : 'null') + ')">Revisar</button>' +
         '</div>';
       }).join('') + '</div>';
