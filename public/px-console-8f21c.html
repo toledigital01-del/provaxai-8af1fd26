@@ -1148,6 +1148,8 @@ function kbPaint(){
     '<label class="muted">Tópicos</label>' + kbBusca('kb-q-topic', kbQt, 'Buscar tópico…', 'kbFiltroTopic') +
     kbListHTML(kbTopicItems(), 'kb-topic-list');
   kbEditor();
+  kbPaintVisao();
+  kbPaintFila();
 }
 window.kbPane = p => {
   KB_PANE = p;
