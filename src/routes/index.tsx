@@ -6,23 +6,20 @@ export const Route = createFileRoute("/")({
   },
   head: () => ({
     meta: [
-      {
-        title:
-          "Prova X — Curso PRF com IA: edital completo, questões e revisão",
-      },
+      { title: "Prova X — Plataforma Inteligente de Preparação para a PRF" },
       {
         name: "description",
         content:
-          "Estude para a Polícia Rodoviária Federal com a Athena IA: 15 disciplinas, 303 tópicos do edital, questões no padrão Cebraspe, revisão inteligente e cronograma adaptativo.",
+          "Estude para a PRF com edital organizado, Athena IA, questões no padrão Cebraspe, revisão inteligente, cronograma e acompanhamento de desempenho.",
       },
       {
         property: "og:title",
-        content: "Prova X — Curso PRF com IA: edital completo, questões e revisão",
+        content: "Prova X — Plataforma Inteligente de Preparação para a PRF",
       },
       {
         property: "og:description",
         content:
-          "Estude para a PRF com a Athena IA: edital completo, questões no padrão Cebraspe e revisão inteligente.",
+          "Seu edital. Seu plano. Sua evolução. Aula, Athena IA, questões Cebraspe, revisão e cronograma em um só ambiente.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
