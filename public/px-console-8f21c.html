@@ -1339,10 +1339,9 @@ function kbEditor(){
     </div>
 
 
-    <div data-pane="manut" style="display:none;margin-top:4px;border:1px dashed #E2E8F0;border-radius:12px;padding:10px;font-size:0.8rem">
-
-      <b>Manutenção da base</b>
-      <p class="muted" style="margin:4px 0 8px">${orfaos.length ? orfaos.length + ' conteúdo(s) órfão(s) — matéria vazia ou fora do edital.' : 'Nenhum conteúdo órfão encontrado.'}</p>
+    <div data-pane="manut" style="display:none;margin-top:4px">
+      <h4>Manutenção da base</h4>
+      <p class="muted" style="margin:0 0 14px">${orfaos.length ? orfaos.length + ' conteúdo(s) órfão(s) — matéria vazia ou fora do edital.' : 'Nenhum conteúdo órfão encontrado.'}</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="act" onclick="kbReindexar(true)">Prévia da reindexação</button>
         <button class="act" onclick="kbReindexar(false)">Reindexar base</button>
@@ -1352,21 +1351,21 @@ function kbEditor(){
         <button class="act" id="kb-exp-csv" onclick="kbExportLog('csv')" disabled>Baixar CSV</button>
         <button class="act" id="kb-exp-pdf" onclick="kbExportLog('pdf')" disabled>Baixar PDF</button>
       </div>
-      <div id="kb-prog-wrap" style="display:none;margin-top:8px">
-        <div style="height:8px;border-radius:99px;background:#E2E8F0;overflow:hidden">
+      <div id="kb-prog-wrap" style="display:none;margin-top:12px">
+        <div style="height:6px;border-radius:99px;background:#EEF1F6;overflow:hidden">
           <div id="kb-prog-bar" style="height:100%;width:0%;background:#2563EB;border-radius:99px;transition:width .2s"></div>
         </div>
-        <p class="muted" id="kb-prog-txt" style="margin:4px 0 0"></p>
+        <p class="muted" id="kb-prog-txt" style="margin:6px 0 0"></p>
       </div>
-      <pre id="kb-log" style="display:none;margin-top:8px;max-height:190px;overflow:auto;background:#0F172A;color:#E2E8F0;border-radius:10px;padding:8px 10px;font-size:0.72rem;line-height:1.5;white-space:pre-wrap"></pre>
-      <p class="muted" id="kb-orf" style="margin-top:6px"></p>
+      <pre id="kb-log" style="display:none;margin-top:12px;max-height:190px;overflow:auto;background:#0F172A;color:#E2E8F0;border-radius:12px;padding:12px 14px;font-size:0.72rem;line-height:1.6;white-space:pre-wrap"></pre>
+      <p class="muted" id="kb-orf" style="margin-top:8px"></p>
     </div>
 
 
-    <div data-pane="ia" style="display:none;margin-top:4px;border:1px solid #E2E8F0;border-radius:12px;padding:12px">
-      <b style="font-size:0.9rem">Alimentar a IA com material</b>
-      <p class="muted" style="margin:4px 0 10px">Solte os arquivos aqui (PDF, textos, imagens de apostila/slide/print — vários de uma vez) ou cole um endereço de site/vídeo. A leitura começa sozinha, sem etapa de extração.</p>
-      <div style="margin-bottom:8px">
+    <div data-pane="ia" style="display:none;margin-top:4px">
+      <h4>Alimentar a IA com material</h4>
+      <p class="muted" style="margin:0 0 16px;max-width:70ch">Solte os arquivos aqui (PDF, textos, imagens de apostila/slide/print — vários de uma vez) ou cole um endereço de site/vídeo. A leitura começa sozinha, sem etapa de extração.</p>
+      <div style="margin-bottom:14px;max-width:420px">
         <label class="muted">Direitos autorais deste material (obrigatório)</label>
         <select id="kb-direitos">
           <option value="">Escolha antes de enviar…</option>
@@ -1375,41 +1374,43 @@ function kbEditor(){
           <option value="terceiro_verificar">Material de terceiro — ainda preciso verificar direitos</option>
         </select>
       </div>
-      <div id="kb-drop" style="border:2px dashed #CBD5E1;border-radius:12px;padding:14px;text-align:center;background:#F8FAFC">
-        <p class="muted" style="margin:0 0 8px">Arraste e solte os arquivos aqui ou escolha abaixo</p>
+      <div id="kb-drop" class="kb-drop">
+        <p class="muted" style="margin:0 0 10px">Arraste e solte os arquivos aqui ou escolha abaixo</p>
         <input type="file" id="kb-file" multiple accept=".pdf,.txt,.md,.csv,.json,.html,.srt,.vtt,.png,.jpg,.jpeg,.webp,.gif,.bmp,.heic,image/*,application/pdf,text/*" style="width:auto;max-width:100%">
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">
         <input id="kb-url" placeholder="Cole o link do site ou do vídeo e aperte Enter" style="flex:1;min-width:220px">
       </div>
-      <div style="margin-top:10px;border:1px dashed #CBD5E1;border-radius:12px;padding:10px;background:#F8FAFC">
-        <b style="font-size:0.82rem">Conectar Google Drive</b>
-        <p class="muted" style="margin:4px 0 8px;font-size:0.78rem">Importa uma pasta do Drive inteira (com subpastas) para a biblioteca desta matéria. Todo material do Drive entra como "terceiro — verificar direitos" e nasce em rascunho.</p>
+      <div class="kb-soft" style="margin-top:16px">
+        <h4>Conectar Google Drive</h4>
+        <p class="muted" style="margin:0 0 12px;font-size:0.78rem">Importa uma pasta do Drive inteira (com subpastas) para a biblioteca desta matéria. Todo material do Drive entra como "terceiro — verificar direitos" e nasce em rascunho.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <input id="kb-drive-url" placeholder="Cole o link da pasta do Google Drive" style="flex:1;min-width:220px">
           <button class="act" onclick="kbDriveImportar()">Importar pasta</button>
         </div>
-        <p class="muted" id="kb-drive-msg" style="margin-top:6px;font-size:0.76rem"></p>
+        <p class="muted" id="kb-drive-msg" style="margin-top:8px;font-size:0.76rem"></p>
       </div>
-      <div style="margin-top:12px">
-        <b style="font-size:0.82rem">Documentos-fonte já enviados</b>
-        <div id="kb-biblioteca" style="margin-top:6px"></div>
+      <div style="margin-top:20px">
+        <h4>Documentos-fonte já enviados</h4>
+        <div id="kb-biblioteca" style="margin-top:10px"></div>
       </div>
-      <div id="kb-ing-prog-wrap" style="display:none;margin-top:10px">
-        <div style="height:8px;border-radius:99px;background:#E2E8F0;overflow:hidden">
+      <div id="kb-ing-prog-wrap" style="display:none;margin-top:14px">
+        <div style="height:6px;border-radius:99px;background:#EEF1F6;overflow:hidden">
           <div id="kb-ing-prog-bar" style="height:100%;width:0%;background:#2563EB;border-radius:99px;transition:width .2s"></div>
         </div>
-        <p class="muted" id="kb-ing-prog-txt" style="margin:4px 0 0"></p>
+        <p class="muted" id="kb-ing-prog-txt" style="margin:6px 0 0"></p>
       </div>
-      <div id="kb-fontes" style="margin-top:8px"></div>
-      <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
-        <label class="muted" style="display:flex;gap:6px;align-items:center"><input type="radio" name="kb-mode" value="append" checked style="width:auto"> Somar ao conteúdo</label>
-        <label class="muted" style="display:flex;gap:6px;align-items:center"><input type="radio" name="kb-mode" value="replace" style="width:auto"> Substituir</label>
+      <div id="kb-fontes" style="margin-top:12px"></div>
+      <div style="display:flex;gap:16px;align-items:center;margin-top:14px;flex-wrap:wrap">
+        <label class="muted" style="display:flex;gap:6px;align-items:center;margin:0"><input type="radio" name="kb-mode" value="append" checked style="width:auto"> Somar ao conteúdo</label>
+        <label class="muted" style="display:flex;gap:6px;align-items:center;margin:0"><input type="radio" name="kb-mode" value="replace" style="width:auto"> Substituir</label>
       </div>
-      <hr style="border:none;border-top:1px solid #F1F5F9;margin:12px 0">
-      <b style="font-size:0.9rem">Montar curso com IA</b>
-      <p class="muted" style="margin:4px 0 10px">A IA lê o material da caixa acima e cria as aulas já distribuídas nos tópicos oficiais de <b>${esc(kbDisc)}</b>, prontas para o aluno.</p>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px">
+
+      <hr class="kb-hr">
+
+      <h4>Montar curso com IA</h4>
+      <p class="muted" style="margin:0 0 16px;max-width:70ch">A IA lê o material da caixa acima e cria as aulas já distribuídas nos tópicos oficiais de <b>${esc(kbDisc)}</b>, prontas para o aluno.</p>
+      <div class="kb-fields">
         <div><label class="muted">Inteligência artificial</label>
           <select id="kb-modelo">
             <option value="google/gemini-3-flash-preview">Rápido e econômico — padrão (Gemini Flash)</option>
@@ -1431,13 +1432,13 @@ function kbEditor(){
             <option value="aprofundado">Aprofundado — aula longa</option>
           </select></div>
       </div>
-      <label class="muted" style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" id="kb-aprov" checked style="width:auto"> Modo aprovação (prioriza o que mais cai, pegadinhas e treino no estilo da banca)</label>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+      <label class="muted" style="display:flex;gap:8px;align-items:flex-start;margin-top:14px"><input type="checkbox" id="kb-aprov" checked style="width:auto;margin-top:2px"> <span style="font-weight:400">Modo aprovação (prioriza o que mais cai, pegadinhas e treino no estilo da banca)</span></label>
+      <div class="kb-actions">
         <button class="act primary" id="kb-btn-montar" onclick="kbMontarCurso()">Montar curso desta matéria</button>
       </div>
 
-      <p class="muted" id="kb-ing" style="margin-top:8px"></p>
-      <div id="kb-preview" style="margin-top:8px"></div>
+      <p class="muted" id="kb-ing" style="margin-top:10px"></p>
+      <div id="kb-preview" style="margin-top:12px"></div>
     </div>`;
   kbPane(KB_PANE);
   kbPrefsLoad();
