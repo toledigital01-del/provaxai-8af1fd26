@@ -923,11 +923,14 @@ function runCount(el) {
   if (el.dataset.done) return;
   el.dataset.done = '1';
   var to = parseInt(el.dataset.to, 10) || 0, sfx = el.dataset.suffix || '';
-  if (reduce) { el.textContent = to + sfx; return; }
-  var t0 = performance.now(), dur = 1100;
+  el.textContent = to + sfx;
+  /* números pequenos nunca animam: evita exibir "0" em qualquer frame */
+  if (reduce || to <= 20) return;
+  var from = Math.max(1, Math.round(to * 0.35));
+  var t0 = performance.now(), dur = 1000;
   (function step(t) {
     var p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3);
-    el.textContent = Math.round(to * e) + sfx;
+    el.textContent = Math.max(1, Math.round(from + (to - from) * e)) + sfx;
     if (p < 1) requestAnimationFrame(step);
   })(t0);
 }
