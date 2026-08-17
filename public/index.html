@@ -284,7 +284,43 @@ footer .brand{color:#fff;margin-bottom:12px}
   .rv{opacity:1;transform:none}
   html{scroll-behavior:auto}
 }
+/* cronograma flow */
+.flow{display:grid;gap:10px}
+.flow-step{display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px solid #E2E8F0;background:#fff;border-radius:14px;font-weight:600;color:var(--navy);font-size:15px}
+.flow-step b{width:26px;height:26px;flex:none;display:grid;place-items:center;border-radius:8px;background:#EFF4FB;color:var(--navy-2);font-size:13px}
+.flow-step.done{border-color:#F2B705;background:#FFFBEB}
+.flow-step.done b{background:#F2B705;color:#0B2A5B}
+/* podcast player */
+.player{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:22px;backdrop-filter:blur(6px)}
+.pl-head{display:flex;align-items:center;gap:14px}
+.pl-cover{width:56px;height:56px;flex:none;display:grid;place-items:center;font-size:24px;border-radius:14px;background:linear-gradient(160deg,#14418B,#0B2A5B);border:1px solid rgba(255,255,255,.14)}
+.pl-head b{display:block;color:#fff;font-size:15.5px}
+.pl-head small{display:block;color:#94A3B8;font-size:13px;margin-top:3px}
+.pl-wave{display:flex;align-items:flex-end;gap:4px;height:52px;margin:20px 0 14px}
+.pl-wave i{flex:1;background:rgba(255,255,255,.22);border-radius:3px;height:30%;animation:wv 1.5s ease-in-out infinite}
+.pl-wave i:nth-child(3n){background:#F2B705;animation-duration:1.9s}
+.pl-wave i:nth-child(2n){animation-delay:.25s;animation-duration:1.7s}
+.pl-wave i:nth-child(4n){animation-delay:.5s}
+@keyframes wv{0%,100%{height:22%}50%{height:88%}}
+.pl-bar{background:rgba(255,255,255,.16)}
+.pl-bar i{background:#F2B705}
+.pl-foot{display:flex;align-items:center;justify-content:space-between;margin-top:14px;color:#94A3B8;font-size:12.5px;font-weight:600}
+.pl-ctrls{display:flex;align-items:center;gap:14px}
+.pl-btn{color:#CBD5E1;font-size:15px}
+.pl-btn.play{width:40px;height:40px;display:grid;place-items:center;border-radius:50%;background:#F2B705;color:#0B2A5B;font-size:14px}
+.dark-sec .tag{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#E2E8F0}
+.dark-sec .quote{color:#fff}
+.dark-sec .lead{color:#94A3B8}
+/* por que */
+.why{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.why .w{border:1px solid #E2E8F0;background:#fff;border-radius:18px;padding:26px}
+.why .n{font-size:13px;font-weight:800;letter-spacing:.12em;color:#F2B705}
+.why h3{margin:10px 0 8px;font-size:19px;color:var(--navy)}
+.why p{color:var(--muted);font-size:15px;line-height:1.6}
+@media (max-width:860px){.why{grid-template-columns:1fr}}
+@media (prefers-reduced-motion: reduce){.pl-wave i{animation:none}}
 </style>
+
 </head>
 <body>
 
@@ -294,7 +330,8 @@ footer .brand{color:#fff;margin-bottom:12px}
     <nav class="main">
       <a href="#como">Como funciona</a>
       <a href="#athena">Athena IA</a>
-      <a href="#questoes">Questões</a>
+      <a href="#cronograma">Cronograma</a>
+      <a href="#podcast">Podcast</a>
       <a href="#recursos">Recursos</a>
       <a href="#planos">Planos</a>
       <a href="#faq">FAQ</a>
@@ -310,13 +347,15 @@ footer .brand{color:#fff;margin-bottom:12px}
   <div class="drawer wrap" id="drawer">
     <a href="#como">Como funciona</a>
     <a href="#athena">Athena IA</a>
-    <a href="#questoes">Questões</a>
+    <a href="#cronograma">Cronograma</a>
+    <a href="#podcast">Podcast</a>
     <a href="#recursos">Recursos</a>
     <a href="#planos">Planos</a>
     <a href="#faq">FAQ</a>
     <a href="login.html">Entrar</a>
     <a class="btn btn-primary" href="#planos">Começar agora</a>
   </div>
+
 </header>
 
 <main>
@@ -348,10 +387,11 @@ footer .brand{color:#fff;margin-bottom:12px}
             <small style="font-size:12.5px;color:var(--muted);font-weight:650">62%</small>
           </div>
           <div class="kpis">
-            <div class="kpi"><b class="count" data-to="15">0</b><small>disciplinas</small></div>
-            <div class="kpi"><b class="count" data-to="91">0</b><small>tópicos</small></div>
-            <div class="kpi"><b class="count" data-to="7" data-suffix="d">0</b><small>de garantia</small></div>
+            <div class="kpi"><b class="count" data-to="15">15</b><small>disciplinas</small></div>
+            <div class="kpi"><b class="count" data-to="91">91</b><small>tópicos</small></div>
+            <div class="kpi"><b class="count" data-to="7" data-suffix="d">7d</b><small>de garantia</small></div>
           </div>
+
         </div>
       </div>
       <div class="float float-a">
@@ -377,8 +417,9 @@ footer .brand{color:#fff;margin-bottom:12px}
 <!-- NÚMEROS -->
 <div class="strip">
   <div class="wrap">
-    <div class="st rv"><b class="count" data-to="15">0</b><span>disciplinas</span><small>Conteúdo organizado</small></div>
-    <div class="st rv"><b class="count" data-to="91">0</b><span>tópicos</span><small>Edital estruturado</small></div>
+    <div class="st rv"><b class="count" data-to="15">15</b><span>disciplinas</span><small>Conteúdo organizado</small></div>
+    <div class="st rv"><b class="count" data-to="91">91</b><span>tópicos</span><small>Edital estruturado</small></div>
+
     <div class="st rv"><b>Athena IA</b><span>Assistente de estudo</span><small>Explica, pratica e revisa</small></div>
     <div class="st rv"><b>Cebraspe</b><span>Certo/errado</span><small>Treino no formato da banca</small></div>
   </div>
@@ -509,30 +550,86 @@ footer .brand{color:#fff;margin-bottom:12px}
   </div>
 </section>
 
-<!-- CRONOGRAMA -->
-<section class="bluesoft">
-  <div class="wrap grid g2" style="align-items:center;gap:clamp(28px,4vw,56px)">
-    <div class="rv">
-      <span class="eyebrow">Cronograma</span>
-      <h2 style="margin:12px 0 12px">Pare de perder tempo decidindo o que estudar.</h2>
-      <p class="lead">Seu tempo de estudo é precioso. Em vez de começar todo dia perguntando “o que eu faço hoje?”, use o cronograma para organizar sua preparação considerando conteúdos, progresso e prioridades.</p>
-      <p class="quote">Abra. Veja. Estude.</p>
-      <div class="cta-row" style="margin-top:26px"><a class="btn btn-primary btn-lg" href="#planos">Ver como funciona</a></div>
+<!-- CRONOGRAMA INTELIGENTE -->
+<section class="bluesoft" id="cronograma">
+  <div class="wrap">
+    <div class="sec-head center rv">
+      <span class="eyebrow">Cronograma inteligente</span>
+      <h2>Seu cronograma não deveria ser<br>igual ao de todo mundo.</h2>
+      <p class="lead">Você informa quanto tempo tem, quantos dias por semana consegue estudar e sua rotina. O Prova X organiza a sua preparação considerando o peso das matérias, o seu progresso e o que precisa de atenção agora.</p>
     </div>
-    <div class="panel rv">
-      <div class="panel-top"><span class="pt-dot"></span><span class="pt-dot"></span><span class="pt-dot"></span><span class="pt-title">Cronograma · Hoje</span></div>
-      <div class="mk-body">
-        <div class="mk-row"><span class="edge"></span><b>Legislação de Trânsito · Sinalização</b><small>40 min</small></div>
-        <div class="mk-row"><span class="edge" style="background:#F2B705"></span><b>Questões — Direito Constitucional</b><small>25 min</small></div>
-        <div class="mk-row"><span class="edge" style="background:#94A3B8"></span><b>Revisão — Ética no Serviço Público</b><small>15 min</small></div>
-        <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
-          <div class="bar" style="flex:1"><i data-w="48%"></i></div>
-          <small style="font-size:12.5px;color:var(--muted);font-weight:650">meta do dia</small>
+
+    <div class="grid g4" style="margin-bottom:clamp(24px,3vw,38px)">
+      <div class="card rv"><h3>Peso da matéria</h3><p>Disciplinas mais relevantes no edital recebem mais espaço na sua semana.</p></div>
+      <div class="card rv"><h3>Tempo disponível</h3><p>O plano se adapta às horas que você realmente tem — não às que gostaria de ter.</p></div>
+      <div class="card rv"><h3>Progresso</h3><p>O que você já estudou sai da fila e libera espaço para o próximo tópico.</p></div>
+      <div class="card rv"><h3>Prioridades</h3><p>Conteúdos com desempenho baixo voltam antes, como estudo ou revisão.</p></div>
+    </div>
+
+    <div class="grid g2" style="align-items:center;gap:clamp(28px,4vw,56px)">
+      <div class="rv">
+        <div class="flow">
+          <span class="flow-step"><b>1</b> Você tem 40 minutos hoje</span>
+          <span class="flow-step"><b>2</b> Peso das matérias no edital</span>
+          <span class="flow-step"><b>3</b> Prioridades pelo seu desempenho</span>
+          <span class="flow-step done"><b>4</b> Cronograma do dia gerado</span>
+        </div>
+        <p class="quote" style="margin-top:26px">Você não precisa passar horas montando um cronograma. Precisa usar seu tempo para estudar.</p>
+        <div class="cta-row" style="margin-top:24px"><a class="btn btn-primary btn-lg" href="#planos">Ver meu cronograma</a></div>
+      </div>
+      <div class="panel rv">
+        <div class="panel-top"><span class="pt-dot"></span><span class="pt-dot"></span><span class="pt-dot"></span><span class="pt-title">Prova X · Cronograma · Hoje · 40 min</span></div>
+        <div class="mk-body">
+          <div class="mk-row"><span class="edge" style="background:#14418B"></span><b>Direito Constitucional · Direitos e garantias</b><small>Alta · 20 min</small></div>
+          <div class="mk-row"><span class="edge" style="background:#F2B705"></span><b>Português · Concordância</b><small>Média · 10 min</small></div>
+          <div class="mk-row"><span class="edge" style="background:#94A3B8"></span><b>Legislação de Trânsito · Sinalização</b><small>Revisão · 5 min</small></div>
+          <div class="mk-row"><span class="edge" style="background:#0EA5E9"></span><b>Questões — bloco misto</b><small>5 min</small></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+            <div class="bar" style="flex:1"><i data-w="48%"></i></div>
+            <small style="font-size:12.5px;color:var(--muted);font-weight:650">meta do dia</small>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </section>
+
+<!-- PODCAST -->
+<section class="dark-sec" id="podcast">
+  <div class="wrap grid g2" style="align-items:center;gap:clamp(28px,4vw,56px)">
+    <div class="rv">
+      <span class="eyebrow">Podcast</span>
+      <h2 style="margin:12px 0 14px">Estude mesmo quando não pode parar para ler.</h2>
+      <p class="lead">Transforme o conteúdo dos tópicos em áudio e aproveite os momentos que normalmente seriam perdidos no seu dia.</p>
+      <div class="tags" style="margin:20px 0 4px">
+        <span class="tag">No trânsito</span><span class="tag">Caminhando</span><span class="tag">Treinando</span><span class="tag">Nas tarefas</span><span class="tag">No transporte</span>
+      </div>
+      <p class="quote" style="margin-top:22px">Seu estudo também pode continuar quando o livro fecha.</p>
+      <div class="cta-row" style="margin-top:24px"><a class="btn btn-light btn-lg" href="#planos">Ouvir um conteúdo</a></div>
+    </div>
+    <div class="player rv">
+      <div class="pl-head">
+        <span class="pl-cover">🎧</span>
+        <div>
+          <b>Sinalização de Trânsito — visão geral</b>
+          <small>Curso PRF · Legislação de Trânsito</small>
+        </div>
+      </div>
+      <div class="pl-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="bar pl-bar"><i data-w="38%"></i></div>
+      <div class="pl-foot">
+        <span>06:12</span>
+        <div class="pl-ctrls">
+          <span class="pl-btn" aria-hidden="true">⏮</span>
+          <span class="pl-btn play" aria-hidden="true">▶</span>
+          <span class="pl-btn" aria-hidden="true">⏭</span>
+        </div>
+        <span>16:04</span>
+      </div>
+    </div>
+  </div>
+</section>
+
 
 <!-- EDITAL -->
 <section>
@@ -610,7 +707,20 @@ footer .brand{color:#fff;margin-bottom:12px}
   </div>
 </section>
 
+<!-- POR QUE O PROVA X -->
+<section class="soft">
+  <div class="wrap">
+    <div class="sec-head center rv"><span class="eyebrow">Por que o Prova X</span><h2>Não são ferramentas isoladas.<br>É um sistema de preparação.</h2></div>
+    <div class="why">
+      <div class="w rv"><div class="n">01 — Organização</div><h3>Todo o estudo estruturado</h3><p>O edital vira disciplinas, capítulos e tópicos. Você sempre sabe onde está e qual é o próximo passo.</p></div>
+      <div class="w rv"><div class="n">02 — Inteligência</div><h3>IA, cronograma e dados</h3><p>A Athena explica, o cronograma prioriza pelo peso das matérias e o seu desempenho aponta onde falta atenção.</p></div>
+      <div class="w rv"><div class="n">03 — Continuidade</div><h3>Aula, questões, revisão e áudio</h3><p>O ciclo não quebra: você estuda, pratica, revisa e continua ouvindo quando não pode ler.</p></div>
+    </div>
+  </div>
+</section>
+
 <!-- PARA QUEM É -->
+
 <section>
   <div class="wrap">
     <div class="sec-head center rv"><span class="eyebrow">Para quem é</span><h2>O Prova X é para quem decidiu parar de estudar no improviso.</h2></div>
@@ -687,8 +797,8 @@ footer .brand{color:#fff;margin-bottom:12px}
     <div class="sec-head center rv"><span class="eyebrow">Construído para sua preparação</span><h2>O que já está pronto na plataforma.</h2><p class="lead">Sem depoimentos fabricados: aqui estão os números reais do produto hoje.</p></div>
     <img class="rv" src="curso-prf-hero.png" alt="Curso Polícia Rodoviária Federal no Prova X, com disciplinas e tópicos do edital" loading="lazy" width="1536" height="1024" style="width:100%;height:auto;aspect-ratio:1536/1024;object-fit:cover;border-radius:var(--r-l);border:1px solid var(--line);box-shadow:var(--sh-l)">
     <div class="grid g4 rv" style="gap:12px;margin-top:clamp(20px,3vw,32px)">
-      <div class="card"><h3><span class="count" data-to="15">0</span></h3><p>disciplinas do curso PRF</p></div>
-      <div class="card"><h3><span class="count" data-to="91">0</span></h3><p>tópicos mapeados no edital</p></div>
+      <div class="card"><h3><span class="count" data-to="15">15</span></h3><p>disciplinas do curso PRF</p></div>
+      <div class="card"><h3><span class="count" data-to="91">91</span></h3><p>tópicos mapeados no edital</p></div>
       <div class="card"><h3>Athena</h3><p>IA disponível dentro de cada tópico</p></div>
       <div class="card"><h3>Cebraspe</h3><p>questões e simulados certo/errado</p></div>
     </div>
@@ -711,6 +821,9 @@ footer .brand{color:#fff;margin-bottom:12px}
       <details class="rv"><summary>Como recebo meu acesso?</summary><p>A compra é processada pela Hotmart. Após a confirmação do pagamento, seu acesso é liberado automaticamente para o e-mail usado na compra — basta entrar em “Entrar” e acessar sua área de estudo.</p></details>
       <details class="rv"><summary>Posso cancelar?</summary><p>Sim. As assinaturas são gerenciadas pela Hotmart e podem ser canceladas por lá a qualquer momento, seguindo as condições da plataforma de pagamento e o prazo de garantia de 7 dias.</p></details>
       <details class="rv"><summary>As questões seguem o padrão Cebraspe?</summary><p>Sim. As questões e simulados usam o formato certo/errado, com a regra de anulação em que um item errado cancela um item certo — o mesmo padrão adotado pela banca.</p></details>
+      <details class="rv"><summary>Como funciona o cronograma inteligente?</summary><p>Você informa o tempo disponível e a frequência de estudo. O cronograma distribui os blocos considerando o peso das disciplinas no edital, o que você já estudou e os pontos em que seu desempenho está mais baixo — e se reorganiza conforme você avança.</p></details>
+      <details class="rv"><summary>Posso estudar ouvindo o conteúdo?</summary><p>Sim. Os tópicos do curso têm versão em podcast dentro do próprio workspace, com player, transcrição e controle de progresso — dá para continuar no trânsito, na academia ou nas tarefas do dia.</p></details>
+
     </div>
   </div>
 </section>
@@ -735,6 +848,8 @@ footer .brand{color:#fff;margin-bottom:12px}
         <a class="brand" href="index.html"><span class="mark">X</span> Prova X</a>
         <p style="color:#94A3B8;font-size:14.5px;max-width:280px">Plataforma inteligente de preparação para concursos.</p>
         <p style="color:#64748B;font-size:13.5px;margin-top:12px">Seu edital. Seu plano. Sua evolução.</p>
+        <p style="color:#64748B;font-size:12.5px;margin-top:12px;max-width:300px;line-height:1.6">O Prova X é uma plataforma independente de preparação para concursos. Não possui vínculo, patrocínio ou endosso da Polícia Rodoviária Federal e não utiliza seus símbolos oficiais.</p>
+
       </div>
       <div><h4>Produto</h4><ul>
         <li><a href="index.html">Início</a></li>
