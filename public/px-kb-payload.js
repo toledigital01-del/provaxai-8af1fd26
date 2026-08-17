@@ -17,6 +17,14 @@
     return ok ? d : '';
   }
 
+  var STATUS = ['rascunho', 'revisado', 'publicado'];
+
+  /* Status de revisão válido; padrão rascunho (aula só aparece ao aluno quando "publicado"). */
+  function validarStatus(valor) {
+    var s = normalizar(valor);
+    return STATUS.indexOf(s) >= 0 ? s : 'rascunho';
+  }
+
   /* Monta o registro de knowledge_docs. Lança erro em português se a matéria for inválida. */
   function montarDoc(opts) {
     var o = opts || {};
@@ -24,13 +32,15 @@
     if (!disciplina) throw new Error('Selecione uma matéria válida antes de salvar na base de conhecimento.');
     var topico = normalizar(o.topico);
     var conteudo = typeof o.conteudo === 'string' ? o.conteudo : '';
+    var status = o.status ? validarStatus(o.status) : o.publicado === true ? 'publicado' : 'rascunho';
     return {
       course_slug: normalizar(o.courseSlug) || 'prf-2021',
       disciplina: disciplina,
       topico: topico || null,
       titulo: normalizar(o.titulo) || (topico || null),
       conteudo: conteudo,
-      publicado: o.publicado !== false,
+      status: status,
+      publicado: status === 'publicado',
       updated_by: o.userId || null,
     };
   }
@@ -51,6 +61,7 @@
 
   return {
     validarDisciplina: validarDisciplina,
+    validarStatus: validarStatus,
     montarDoc: montarDoc,
     filtrarAulasPublicaveis: filtrarAulasPublicaveis,
     encontrarOrfaos: encontrarOrfaos,

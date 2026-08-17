@@ -597,10 +597,33 @@ const kbDiscList = () => {
 const kbTopicList = d => (d && kbGlobalTopics()[d]) || [];
 
 
+/* Biblioteca de documentos-fonte (kb_documentos) — tudo que já foi enviado, com origem e direitos. */
+let KB_LIB = [];
+const KB_DIREITOS = {
+  dominio_publico: { rotulo:'Domínio público', cor:'#047857', fundo:'#ECFDF5' },
+  material_proprio: { rotulo:'Material próprio', cor:'#1D4ED8', fundo:'#EFF6FF' },
+  terceiro_verificar: { rotulo:'Terceiro — verificar direitos', cor:'#B45309', fundo:'#FEF3C7' },
+};
+const KB_STATUS = {
+  rascunho: { rotulo:'Rascunho', cor:'#B45309', fundo:'#FEF3C7' },
+  revisado: { rotulo:'Revisado', cor:'#1D4ED8', fundo:'#DBEAFE' },
+  publicado: { rotulo:'Publicado para alunos', cor:'#047857', fundo:'#ECFDF5' },
+};
+function kbStatusDoc(doc){
+  if(!doc) return 'rascunho';
+  return doc.status || (doc.publicado ? 'publicado' : 'rascunho');
+}
+async function loadLib(){
+  try{
+    const { data } = await PX.sb.from('kb_documentos').select('*').eq('course_slug','prf-2021').order('criado_em', { ascending:false });
+    KB_LIB = data || [];
+  }catch(e){ KB_LIB = []; }
+}
 async function loadKB(){
   const { data, error } = await PX.sb.from('knowledge_docs').select('*').eq('course_slug','prf-2021').order('disciplina');
   if(error) throw error;
   KB_DOCS = data || [];
+  await loadLib();
   // Rede de segurança: se os dados locais não carregarem, monta a lista de matérias pelo banco.
   const nomes = {};
   KB_DOCS.forEach(x => { if(x.disciplina) nomes[x.disciplina] = 1; });
@@ -626,7 +649,18 @@ async function viewConhecimento(){
     <div class="kpis">
       <div class="kpi"><b>${KB_DOCS.filter(x=>(x.conteudo||'').trim()).length}</b><span>Conteúdos cadastrados</span></div>
       <div class="kpi"><b>${discs.length}</b><span>Matérias do edital</span></div>
+      <div class="kpi"><b>${KB_LIB.length}</b><span>Documentos na biblioteca</span></div>
       <div class="kpi"><b>${(totalChars/1000).toFixed(1)} mil</b><span>Caracteres na base da IA</span></div>
+    </div>
+    <div class="card">
+      <h2>Visão geral das matérias</h2>
+      <p class="muted" style="margin-bottom:10px">Cobertura de cada matéria do edital. Clique no cartão para abrir a matéria já selecionada abaixo.</p>
+      <div id="kb-visao"></div>
+    </div>
+    <div class="card">
+      <h2>Aulas aguardando revisão</h2>
+      <p class="muted" style="margin-bottom:10px">Tudo que a IA gerou e ainda não foi revisado/publicado. O aluno não vê nada desta lista.</p>
+      <div id="kb-fila"></div>
     </div>
     <div class="card">
       <h2>Carregar edital (a IA monta matérias, tópicos e subtópicos)</h2>
@@ -670,8 +704,63 @@ async function viewConhecimento(){
     document.getElementById('kb-grid').style.gridTemplateColumns = '1fr';
   edInit();
   kbPaint();
-
 }
+
+/* ---- Painel com um cartão por matéria (cobertura do edital) ---- */
+function kbPaintVisao(){
+  const box = document.getElementById('kb-visao');
+  if(!box) return;
+  const discs = kbDiscList();
+  if(!discs.length){ box.innerHTML = '<p class="muted">Nenhuma matéria cadastrada ainda.</p>'; return; }
+  box.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">' +
+    discs.map(function(d){
+      const tops = kbTopicList(d);
+      const docs = KB_DOCS.filter(function(x){ return x.disciplina === d && (x.conteudo||'').trim(); });
+      const pub = docs.filter(function(x){ return kbStatusDoc(x) === 'publicado'; }).length;
+      const rasc = docs.filter(function(x){ return kbStatusDoc(x) !== 'publicado'; }).length;
+      const fontes = KB_LIB.filter(function(x){ return x.discipline_nome === d; }).length;
+      const total = tops.length || docs.length || 1;
+      const pct = Math.min(100, Math.round((docs.filter(function(x){ return x.topico && kbStatusDoc(x)==='publicado'; }).length / total) * 100));
+      const cor = pct >= 80 ? '#10B981' : pct >= 30 ? '#F59E0B' : '#EF4444';
+      return '<button class="act" onclick="kbSelDisc(\'' + escJs(d) + '\')" style="display:block;text-align:left;border:1px solid ' + (d===kbDisc?'#2563EB':'#E2E8F0') + ';border-radius:12px;padding:10px 12px;background:#fff">' +
+        '<b style="font-size:0.82rem;display:block;margin-bottom:6px">' + esc(d) + '</b>' +
+        '<div style="height:6px;border-radius:99px;background:#E2E8F0;overflow:hidden;margin-bottom:6px"><div style="height:100%;width:' + pct + '%;background:' + cor + '"></div></div>' +
+        '<span class="muted" style="font-size:0.72rem;display:block">' + pct + '% de cobertura · ' + tops.length + ' tópico(s) do edital</span>' +
+        '<span class="muted" style="font-size:0.72rem;display:block">' + pub + ' publicada(s) · ' + rasc + ' em rascunho · ' + fontes + ' documento(s)-fonte</span>' +
+      '</button>';
+    }).join('') + '</div>';
+}
+
+/* ---- Fila de aulas em rascunho/revisado (ainda invisíveis para o aluno) ---- */
+function kbPaintFila(){
+  const box = document.getElementById('kb-fila');
+  if(!box) return;
+  const pend = KB_DOCS.filter(function(d){ return (d.conteudo||'').trim() && kbStatusDoc(d) !== 'publicado'; });
+  if(!pend.length){ box.innerHTML = '<p class="muted">Nada pendente — todas as aulas com conteúdo já estão publicadas.</p>'; return; }
+  const porDisc = {};
+  pend.forEach(function(d){ (porDisc[d.disciplina] = porDisc[d.disciplina] || []).push(d); });
+  box.innerHTML = Object.keys(porDisc).sort().map(function(d){
+    return '<div style="border:1px solid #E2E8F0;border-radius:12px;margin-bottom:8px;overflow:hidden">' +
+      '<div style="padding:8px 11px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;font-size:0.8rem"><b>' + esc(d) + '</b> <span class="muted">· ' + porDisc[d].length + ' aula(s) pendente(s)</span></div>' +
+      porDisc[d].map(function(x){
+        const st = KB_STATUS[kbStatusDoc(x)];
+        return '<div style="padding:7px 11px;display:flex;gap:8px;align-items:center;border-bottom:1px solid #F1F5F9;font-size:0.78rem">' +
+          '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(x.topico || 'Visão geral da matéria') + '</span>' +
+          '<span style="font-size:0.68rem;font-weight:700;padding:1px 8px;border-radius:99px;background:' + st.fundo + ';color:' + st.cor + '">' + st.rotulo + '</span>' +
+          '<button class="act" onclick="kbAbrirDoc(\'' + escJs(x.disciplina) + '\',' + (x.topico ? "'" + escJs(x.topico) + "'" : 'null') + ')">Revisar</button>' +
+        '</div>';
+      }).join('') + '</div>';
+  }).join('');
+}
+window.kbAbrirDoc = function(d, t){
+  const disc = kbValidDisc(d);
+  if(disc){ kbDisc = disc; }
+  kbTopic = t;
+  KB_PANE = 'conteudo';
+  kbPaint();
+  const el = document.getElementById('kb-editor');
+  if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+};
 
 /* =========================================================
    Carregar edital → IA extrai matérias, tópicos e subtópicos
@@ -1059,6 +1148,8 @@ function kbPaint(){
     '<label class="muted">Tópicos</label>' + kbBusca('kb-q-topic', kbQt, 'Buscar tópico…', 'kbFiltroTopic') +
     kbListHTML(kbTopicItems(), 'kb-topic-list');
   kbEditor();
+  kbPaintVisao();
+  kbPaintFila();
 }
 window.kbPane = p => {
   KB_PANE = p;
@@ -1091,6 +1182,7 @@ function kbEditor(){
   const doc = kbFind(kbDisc, kbTopic) || {};
   const alvo = kbTopic ? `${kbDisc} › ${kbTopic}` : `${kbDisc} (visão geral)`;
   const orfaos = PXKB.encontrarOrfaos(KB_DOCS, kbDiscList());
+  const st = kbStatusDoc(doc.id ? doc : null);
   document.getElementById('kb-editor').innerHTML = `
     <div id="kb-busy" style="display:none;gap:8px;align-items:center;background:#EFF6FF;border:1px solid #BFDBFE;color:#1D4ED8;border-radius:10px;padding:8px 11px;margin-bottom:8px;font-size:0.8rem;font-weight:600">
       <span style="width:12px;height:12px;border-radius:99px;border:2px solid #93C5FD;border-top-color:#1D4ED8;display:inline-block;animation:pxspin .8s linear infinite"></span>
@@ -1111,16 +1203,22 @@ function kbEditor(){
     </div>
     <div data-pane="conteudo">
     <label class="muted">Conteúdo — ${esc(alvo)}</label>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+      <span style="font-size:0.72rem;font-weight:700;padding:2px 9px;border-radius:99px;background:${KB_STATUS[st].fundo};color:${KB_STATUS[st].cor}">${KB_STATUS[st].rotulo}</span>
+      <span class="muted" style="font-size:0.75rem">${st==='publicado'?'Esta aula está visível para os alunos.':'Rascunhos e aulas revisadas não aparecem para o aluno.'}</span>
+    </div>
     <input id="kb-tit" placeholder="Título da aula (opcional)" value="${esc(doc.titulo||'')}" style="margin-bottom:8px">
     <textarea id="kb-txt" rows="18" placeholder="Cole aqui o material teórico completo deste tópico. Use ## para títulos, - para listas.">${esc(doc.conteudo||'')}</textarea>
 
     <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
-      <label class="muted" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="kb-pub" ${doc.publicado===false?'':'checked'} style="width:auto"> Publicado para alunos</label>
+      <button class="act" onclick="kbSetStatus('revisado')" ${doc.id&&st!=='revisado'?'':'disabled'}>Marcar como revisado</button>
+      <button class="act primary" onclick="kbSetStatus('publicado')" ${doc.id&&st==='revisado'?'':'disabled'}>Publicar para alunos</button>
+      ${doc.id&&st==='publicado'?`<button class="act" onclick="kbSetStatus('rascunho')">Despublicar</button>`:''}
       <div class="spacer" style="flex:1"></div>
       ${doc.id?`<button class="act danger" onclick="kbDelete('${doc.id}')">Excluir</button>`:''}
       <button class="act primary" onclick="kbSave()" ${discOk?'':'disabled'}>Salvar conteúdo</button>
     </div>
-    <p class="muted" id="kb-msg" style="margin-top:8px">${doc.updated_at?'Atualizado em '+dt(doc.updated_at):'Sem conteúdo cadastrado.'}</p>
+    <p class="muted" id="kb-msg" style="margin-top:8px">${doc.updated_at?'Atualizado em '+dt(doc.updated_at):'Sem conteúdo cadastrado.'}${doc.id&&st==='rascunho'?' · Revise antes de publicar.':''}</p>
     </div>
 
     <div data-pane="manut" style="display:none;margin-top:4px;border:1px dashed #E2E8F0;border-radius:12px;padding:10px;font-size:0.8rem">
@@ -1150,12 +1248,34 @@ function kbEditor(){
     <div data-pane="ia" style="display:none;margin-top:4px;border:1px solid #E2E8F0;border-radius:12px;padding:12px">
       <b style="font-size:0.9rem">Alimentar a IA com material</b>
       <p class="muted" style="margin:4px 0 10px">Solte os arquivos aqui (PDF, textos, imagens de apostila/slide/print — vários de uma vez) ou cole um endereço de site/vídeo. A leitura começa sozinha, sem etapa de extração.</p>
+      <div style="margin-bottom:8px">
+        <label class="muted">Direitos autorais deste material (obrigatório)</label>
+        <select id="kb-direitos">
+          <option value="">Escolha antes de enviar…</option>
+          <option value="dominio_publico">Domínio público (lei, edital, jurisprudência)</option>
+          <option value="material_proprio">Material próprio (eu escrevi ou tenho os direitos)</option>
+          <option value="terceiro_verificar">Material de terceiro — ainda preciso verificar direitos</option>
+        </select>
+      </div>
       <div id="kb-drop" style="border:2px dashed #CBD5E1;border-radius:12px;padding:14px;text-align:center;background:#F8FAFC">
         <p class="muted" style="margin:0 0 8px">Arraste e solte os arquivos aqui ou escolha abaixo</p>
         <input type="file" id="kb-file" multiple accept=".pdf,.txt,.md,.csv,.json,.html,.srt,.vtt,.png,.jpg,.jpeg,.webp,.gif,.bmp,.heic,image/*,application/pdf,text/*" style="width:auto;max-width:100%">
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px">
         <input id="kb-url" placeholder="Cole o link do site ou do vídeo e aperte Enter" style="flex:1;min-width:220px">
+      </div>
+      <div style="margin-top:10px;border:1px dashed #CBD5E1;border-radius:12px;padding:10px;background:#F8FAFC">
+        <b style="font-size:0.82rem">Conectar Google Drive</b>
+        <p class="muted" style="margin:4px 0 8px;font-size:0.78rem">Importa uma pasta do Drive inteira (com subpastas) para a biblioteca desta matéria. Todo material do Drive entra como "terceiro — verificar direitos" e nasce em rascunho.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input id="kb-drive-url" placeholder="Cole o link da pasta do Google Drive" style="flex:1;min-width:220px">
+          <button class="act" onclick="kbDriveImportar()">Importar pasta</button>
+        </div>
+        <p class="muted" id="kb-drive-msg" style="margin-top:6px;font-size:0.76rem"></p>
+      </div>
+      <div style="margin-top:12px">
+        <b style="font-size:0.82rem">Documentos-fonte já enviados</b>
+        <div id="kb-biblioteca" style="margin-top:6px"></div>
       </div>
       <div id="kb-ing-prog-wrap" style="display:none;margin-top:10px">
         <div style="height:8px;border-radius:99px;background:#E2E8F0;overflow:hidden">
@@ -1206,7 +1326,94 @@ function kbEditor(){
   kbRenderLog();
   kbBindIngest();
   kbPaintFontes();
+  kbPaintBiblioteca();
 }
+
+/* =========================================================
+   Biblioteca de documentos-fonte (kb_documentos)
+   ========================================================= */
+function kbDireitosEscolhido(){ return (document.getElementById('kb-direitos')||{}).value || ''; }
+function kbTipoDoc(nome, mime, url){
+  if(url) return kbEhVideoUrl(url) ? 'video' : 'url';
+  if(/^image\//i.test(mime||'') || /\.(png|jpe?g|webp|gif|bmp|heic|heif|tiff?)$/i.test(nome||'')) return 'imagem';
+  if(/pdf/i.test(mime||'') || /\.pdf$/i.test(nome||'')) return 'pdf';
+  return 'texto';
+}
+/* Grava (ou atualiza, se já houver o mesmo link de origem) um documento na biblioteca. */
+async function kbLibGravar(reg){
+  const linha = {
+    course_slug: 'prf-2021',
+    discipline_nome: kbDisc,
+    topic_nome: kbTopic || null,
+    nome_arquivo: reg.nome,
+    tipo: reg.tipo,
+    origem_url: reg.origem_url || null,
+    texto_extraido: String(reg.texto || ''),
+    status_direitos: reg.direitos || 'terceiro_verificar',
+    enviado_por: PX.user ? PX.user.id : null,
+  };
+  const q = linha.origem_url
+    ? await PX.sb.from('kb_documentos').upsert(linha, { onConflict:'course_slug,origem_url' })
+    : await PX.sb.from('kb_documentos').insert(linha);
+  if(q.error) kbIngMsg('Documento lido, mas não consegui guardar na biblioteca: ' + q.error.message);
+  await loadLib();
+  kbPaintBiblioteca();
+}
+function kbPaintBiblioteca(){
+  const box = document.getElementById('kb-biblioteca');
+  if(!box) return;
+  const lista = KB_LIB.filter(function(d){ return d.discipline_nome === kbDisc; });
+  if(!lista.length){ box.innerHTML = '<p class="muted" style="font-size:0.78rem">Nenhum documento-fonte guardado para esta matéria ainda.</p>'; return; }
+  box.innerHTML = '<div style="border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;font-size:0.78rem">' +
+    lista.map(function(d){
+      const dir = KB_DIREITOS[d.status_direitos] || KB_DIREITOS.terceiro_verificar;
+      return '<div style="padding:7px 10px;border-bottom:1px solid #F1F5F9;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+        '<span style="flex:1;min-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
+          (d.origem_url ? '<a href="' + esc(d.origem_url) + '" target="_blank" rel="noopener">' + esc(d.nome_arquivo) + '</a>' : esc(d.nome_arquivo)) +
+        '</span>' +
+        '<span class="muted">' + esc(d.tipo) + (d.topic_nome ? ' · ' + esc(d.topic_nome) : '') + ' · ' + dt(d.criado_em) + '</span>' +
+        '<span style="font-size:0.68rem;font-weight:700;padding:1px 8px;border-radius:99px;background:' + dir.fundo + ';color:' + dir.cor + '">' + dir.rotulo + '</span>' +
+        '<button class="act" onclick="kbLibReprocessar(\'' + d.id + '\')">Reprocessar</button>' +
+        '<button class="act danger" onclick="kbLibRemover(\'' + d.id + '\')">Remover</button>' +
+      '</div>';
+    }).join('') + '</div>';
+}
+/* Reprocessar = jogar de volta o texto fiel guardado para o material desta matéria. */
+window.kbLibReprocessar = function(id){
+  const d = KB_LIB.find(function(x){ return x.id === id; });
+  if(!d) return;
+  kbRegistrarFonte(d.nome_arquivo, d.texto_extraido || '');
+  kbMontarEstado();
+  kbIngMsg('Documento "' + d.nome_arquivo + '" recarregado no material desta matéria.');
+};
+window.kbLibRemover = async function(id){
+  if(!confirm('Remover este documento da biblioteca? O texto guardado será apagado.')) return;
+  const { error } = await PX.sb.from('kb_documentos').delete().eq('id', id);
+  if(error) return kbIngMsg('Erro ao remover: ' + error.message);
+  await logAdmin('remover_documento_fonte','kb_documentos', id);
+  await loadLib();
+  kbPaintBiblioteca();
+};
+/* Importação do Drive — pronta para ligar assim que as credenciais do Google forem cadastradas. */
+window.kbDriveImportar = async function(){
+  const msg = document.getElementById('kb-drive-msg');
+  const url = (document.getElementById('kb-drive-url')||{}).value || '';
+  const setMsg = t => { if(msg) msg.textContent = t; };
+  if(!kbValidDisc(kbDisc)) return setMsg('Selecione uma matéria válida antes de importar.');
+  if(!url.trim()) return setMsg('Cole o link da pasta do Google Drive.');
+  setMsg('Conectando ao Google Drive…');
+  try{
+    const j = await kbPost('/api/public/kb-drive', { pasta_url: url.trim(), disciplina: kbDisc, topico: kbTopic || null });
+    const arqs = j.arquivos || [];
+    let n = 0;
+    for(const a of arqs){
+      await kbLibGravar({ nome:a.nome, tipo:'google_drive', origem_url:a.origem_url, texto:a.texto, direitos:'terceiro_verificar' });
+      n++;
+      setMsg('Importando ' + n + ' de ' + arqs.length + '…');
+    }
+    setMsg(n + ' arquivo(s) importados do Drive para a biblioteca (em rascunho, aguardando revisão).');
+  }catch(e){ setMsg(e.message); }
+};
 
 const KB_PREFS_KEY = 'px.kb.prefs';
 function kbPrefsGet(){ try{ return JSON.parse(localStorage.getItem(KB_PREFS_KEY) || '{}'); }catch(e){ return {}; } }
@@ -1343,6 +1550,8 @@ function kbBindIngest(){
 window.kbIngestFiles = async function(files){
   if(!files || !files.length) return;
   if(!kbValidDisc(kbDisc)) return kbIngMsg('Selecione uma matéria válida antes de carregar material.');
+  const direitos = kbDireitosEscolhido();
+  if(!direitos) return kbIngMsg('Escolha antes a situação de direitos autorais deste material.');
   KB_ING_ATIVO = true;
   kbSetBusy(true, 'Lendo ' + files.length + ' arquivo(s)…');
   kbMontarEstado();
@@ -1360,7 +1569,11 @@ window.kbIngestFiles = async function(files){
         const j = await kbPost('/api/public/kb-ingest', { tipo, nome:f.name, mime:f.type || '', arquivo_base64:b64 });
         texto = j.texto; origem = j.origem || f.name;
       }
-      if(texto){ kbRegistrarFonte(origem, texto); n++; }
+      if(texto){
+        kbRegistrarFonte(origem, texto);
+        await kbLibGravar({ nome: origem, tipo: kbTipoDoc(f.name, f.type || '', ''), texto: texto, direitos: direitos });
+        n++;
+      }
     }catch(e){
       kbIngMsg('Erro ao ler "' + f.name + '": ' + e.message);
     }
@@ -1376,6 +1589,8 @@ window.kbIngestFiles = async function(files){
 };
 window.kbIngestUrlAuto = async function(url){
   if(!kbValidDisc(kbDisc)) return kbIngMsg('Selecione uma matéria válida antes de carregar material.');
+  const direitos = kbDireitosEscolhido();
+  if(!direitos) return kbIngMsg('Escolha antes a situação de direitos autorais deste material.');
   const tipo = kbEhVideoUrl(url) ? 'video' : 'url';
   KB_ING_ATIVO = true;
   kbSetBusy(true, 'Lendo ' + (tipo === 'video' ? 'vídeo' : 'site') + '…');
@@ -1384,6 +1599,7 @@ window.kbIngestUrlAuto = async function(url){
   try{
     const j = await kbPost('/api/public/kb-ingest', { tipo, url });
     kbRegistrarFonte(j.origem || url, j.texto || '');
+    await kbLibGravar({ nome: j.origem || url, tipo: tipo, origem_url: url, texto: j.texto || '', direitos: direitos });
     kbIngMsg('Conteúdo do link carregado (' + String(j.texto || '').length.toLocaleString('pt-BR') + ' caracteres).');
   }catch(e){ kbIngMsg('Erro: ' + e.message); }
   KB_ING_ATIVO = false;
@@ -1539,13 +1755,14 @@ window.kbPublicarGeradas = async function(){
   const disciplinaSelecionada = kbValidDisc(kbDisc);
   if(!lista.length) return kbIngMsg('Marque ao menos uma aula desta matéria para publicar.');
 
-  kbSetBusy(true, 'Publicando ' + lista.length + ' aula(s) em ' + disciplinaSelecionada + '…');
+  kbSetBusy(true, 'Salvando ' + lista.length + ' aula(s) como rascunho em ' + disciplinaSelecionada + '…');
   for(const a of lista){
     const doc = kbFind(disciplinaSelecionada, a.topico);
     let payload;
     try{
+      /* Toda aula gerada por IA nasce como rascunho — só vai ao ar depois da revisão humana. */
       payload = PXKB.montarDoc({ disciplina:disciplinaSelecionada, discList:kbDiscList(), topico:a.topico,
-        titulo:a.titulo || a.topico, conteudo:String(a.conteudo).trim(), publicado:true, userId:PX.user.id });
+        titulo:a.titulo || a.topico, conteudo:String(a.conteudo).trim(), status:'rascunho', userId:PX.user.id });
     }catch(e){ kbSetBusy(false); return kbIngMsg(e.message); }
     const { error } = doc
       ? await PX.sb.from('knowledge_docs').update(payload).eq('id', doc.id)
@@ -1556,7 +1773,7 @@ window.kbPublicarGeradas = async function(){
   await logAdmin('montar_curso_ia','knowledge_docs', null, { disciplina:disciplinaSelecionada, aulas:lista.length });
   const n = lista.length; KB_GERADAS = []; KB_ABERTA = -1;
   await loadKB(); kbSetBusy(false); kbPaint();
-  kbIngMsg(n + ' aula(s) publicadas para os alunos em ' + disciplinaSelecionada + '.');
+  kbIngMsg(n + ' aula(s) salvas como rascunho em ' + disciplinaSelecionada + '. Revise em "Aulas aguardando revisão" e publique.');
 };
 
 /* Manutenção: reindexar a base e tratar conteúdos órfãos (matéria vazia ou fora do edital). */
@@ -1786,11 +2003,12 @@ window.kbCorrigirOrfaos = async function(acao){
 window.kbSave = async function(){
   const msg = document.getElementById('kb-msg');
   const conteudo = document.getElementById('kb-txt').value;
+  const atual = kbFind(kbDisc, kbTopic);
   let payload;
   try{
     payload = PXKB.montarDoc({ disciplina:kbDisc, discList:kbDiscList(), topico:kbTopic,
       titulo:document.getElementById('kb-tit').value, conteudo,
-      publicado:document.getElementById('kb-pub').checked, userId:PX.user.id });
+      status: kbStatusDoc(atual), userId:PX.user.id });
   }catch(e){ if(msg) msg.textContent = e.message; return; }
   const disciplinaSelecionada = payload.disciplina;
   msg.textContent = 'Salvando em ' + disciplinaSelecionada + (kbTopic ? ' › ' + kbTopic : ' (visão geral)') + '…';
@@ -1803,6 +2021,22 @@ window.kbSave = async function(){
   await logAdmin('salvar_conhecimento','knowledge_docs', doc?doc.id:null, { disciplina:disciplinaSelecionada, topico:kbTopic });
   await loadKB(); kbPaint();
   document.getElementById('kb-msg').textContent = 'Conteúdo salvo em ' + disciplinaSelecionada + '. A Athena já usa este material.';
+};
+/* Muda o status da aula selecionada (rascunho → revisado → publicado). */
+window.kbSetStatus = async function(status){
+  const doc = kbFind(kbDisc, kbTopic);
+  const msg = document.getElementById('kb-msg');
+  if(!doc){ if(msg) msg.textContent = 'Salve o conteúdo antes de mudar o status.'; return; }
+  if(msg) msg.textContent = 'Atualizando status…';
+  const { error } = await PX.sb.from('knowledge_docs')
+    .update({ status: status, publicado: status === 'publicado' }).eq('id', doc.id);
+  if(error){ if(msg) msg.textContent = 'Erro: ' + error.message; return; }
+  await logAdmin('status_conhecimento','knowledge_docs', doc.id, { status });
+  await loadKB(); kbPaint();
+  const m2 = document.getElementById('kb-msg');
+  if(m2) m2.textContent = status === 'publicado' ? 'Aula publicada — já aparece para os alunos.'
+    : status === 'revisado' ? 'Aula marcada como revisada. Publique quando quiser liberar.'
+    : 'Aula voltou para rascunho e saiu do ar.';
 };
 window.kbDelete = async function(id){
   if(!confirm('Excluir este conteúdo da base?')) return;
