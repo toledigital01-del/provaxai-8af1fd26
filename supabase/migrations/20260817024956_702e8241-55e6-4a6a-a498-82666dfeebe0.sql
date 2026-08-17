@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS kb_documentos_origem_unica ON public.kb_documentos (course_slug, origem_url) WHERE origem_url IS NOT NULL;
