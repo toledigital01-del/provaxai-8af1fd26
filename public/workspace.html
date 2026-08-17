@@ -410,6 +410,46 @@ function kbAvisoHTML(titulo, texto, acao) {
     + (acao || '') + '</div>';
 }
 
+function loginBtnHTML() {
+  return '<p style="margin:12px 0 0"><a class="btn-primary" style="display:inline-block;text-decoration:none;padding:9px 16px;border-radius:10px" href="login.html?next='
+    + encodeURIComponent(location.pathname + location.search) + '">Entrar na minha conta</a></p>';
+}
+function loginAvisoHTML(o) {
+  return kbAvisoHTML('Entre para ' + o, 'Este recurso é liberado para alunos logados.', loginBtnHTML());
+}
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
+/* Dados reais das abas (banco + IA), carregados sob demanda por tópico */
+let dbFlash = { state: 'idle', rows: [], status: 0 };
+let dbQuest = { state: 'idle', rows: [], status: 0 };
+let podState = { state: 'idle', roteiro: [], erro: '' };
+let lacState = { state: 'idle', frases: [], erro: '' };
+
+async function carregarFlashcards() {
+  dbFlash = { state: 'load', rows: [], status: 0 };
+  let r = { status: 0, rows: [] };
+  try { r = await PX.flashcardsTopico(disc, scope === 'topico' ? topic : null, id); } catch (e) {}
+  if (r.status === 401 && window.PX && PX.ready) {
+    try { await PX.ready; r = await PX.flashcardsTopico(disc, scope === 'topico' ? topic : null, id); } catch (e) {}
+  }
+  dbFlash = { state: 'ok', rows: r.rows || [], status: r.status };
+  if (tab === 'flashcards') renderPane();
+}
+
+async function carregarQuestoes() {
+  dbQuest = { state: 'load', rows: [], status: 0 };
+  let r = { status: 0, rows: [] };
+  try { r = await PX.questoesTopico(disc, scope === 'topico' ? topic : null, id); } catch (e) {}
+  if (r.status === 401 && window.PX && PX.ready) {
+    try { await PX.ready; r = await PX.questoesTopico(disc, scope === 'topico' ? topic : null, id); } catch (e) {}
+  }
+  dbQuest = { state: 'ok', rows: r.rows || [], status: r.status };
+  if (tab === 'questoes' || tab === 'simulados') renderPane();
+}
+
+
 async function carregarConteudoKB() {
   const box = document.getElementById('kb-conteudo');
   if (!box) return;
