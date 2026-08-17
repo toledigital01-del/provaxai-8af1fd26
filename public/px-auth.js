@@ -104,8 +104,11 @@
         };
       });
       localStorage.setItem('px_prog_cache_v1', JSON.stringify(map));
+      bindExitSnapshot();
+      await PX.recuperarDiaPerdido();
       PX.saveSnapshot();
     } catch (e) {}
+
   };
 
   /* ---------- Histórico de evolução (snapshot diário do índice de domínio) ---------- */
