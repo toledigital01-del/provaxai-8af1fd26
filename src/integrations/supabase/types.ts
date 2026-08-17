@@ -314,6 +314,7 @@ export type Database = {
           dia: string
           dominio: number
           id: string
+          por_disciplina: Json
           questoes: number
           tempo_segundos: number
           user_id: string
@@ -325,6 +326,7 @@ export type Database = {
           dia?: string
           dominio?: number
           id?: string
+          por_disciplina?: Json
           questoes?: number
           tempo_segundos?: number
           user_id: string
@@ -336,6 +338,7 @@ export type Database = {
           dia?: string
           dominio?: number
           id?: string
+          por_disciplina?: Json
           questoes?: number
           tempo_segundos?: number
           user_id?: string

@@ -130,19 +130,44 @@
     };
   };
 
-  PX.saveSnapshot = async function () {
-    if (!PX.user) return;
+  /* Mesma fonte de verdade da tela: desempenhoAgregado() quando data.js está carregado. */
+  PX.resumoDoDia = function () {
+    if (typeof desempenhoAgregado === 'function') {
+      try {
+        const agg = desempenhoAgregado('prf-2021');
+        const T = agg.totals;
+        const por = {};
+        (agg.discs || []).forEach(d => { por[d.name] = d.pct || 0; });
+        return {
+          dominio: T.dominioMedio, acertos_pct: T.acertoPct,
+          questoes: T.questoes, tempo_segundos: T.tempo_segundos, por_disciplina: por,
+        };
+      } catch (e) {}
+    }
     const r = PX.resumoGeral();
+    r.por_disciplina = {};
+    return r;
+  };
+
+  let _snapTs = 0;
+  PX.saveSnapshot = async function (force) {
+    if (!PX.user) return;
+    const agora = Date.now();
+    if (!force && agora - _snapTs < 30000) return;   /* no máximo 1 gravação a cada 30s */
+    const r = PX.resumoDoDia();
     if (!r.tempo_segundos && !r.questoes && !r.dominio) return;
+    _snapTs = agora;
     const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
     try {
       await PX.sb.from('dominio_snapshots').upsert({
         user_id: PX.user.id, course_slug: 'prf-2021', dia: hoje,
         dominio: r.dominio, acertos_pct: r.acertos_pct,
         questoes: r.questoes, tempo_segundos: r.tempo_segundos,
+        por_disciplina: r.por_disciplina || {},
       }, { onConflict: 'user_id,course_slug,dia' });
     } catch (e) {}
   };
+
 
   PX.getSnapshots = async function (dias) {
     await PX.ready;
@@ -251,7 +276,7 @@
       });
       localStorage.setItem('px_prog_cache_v1', JSON.stringify(map));
     } catch (e) {}
-    PX.saveSnapshot();
+    PX.saveSnapshot(true);
     return res;
   };
 
@@ -271,6 +296,7 @@
     PX.sb.from('study_sessions').insert({
       user_id: PX.user.id, discipline_nome: disc, topic_nome: topic, ferramenta, segundos: segundos || 0,
     }).then(() => {});
+    PX.saveSnapshot();
   };
 
   PX.logAttempt = async function (a) {
@@ -280,6 +306,7 @@
       user_id: PX.user.id, discipline_nome: a.disc, topic_nome: a.topic,
       resposta: a.resposta, correta: !!a.correta, segundos: a.segundos || 0,
     }).then(() => {});
+    PX.saveSnapshot();
   };
 
   /* ---------- Pastas e material próprio ---------- */

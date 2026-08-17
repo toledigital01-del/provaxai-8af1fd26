@@ -145,7 +145,7 @@
     const box = document.getElementById('evol');
     if (!box) return;
     let pts = [];
-    try { pts = (await PX.getSnapshots(90)) || []; } catch (e) {}
+    try { pts = (await PX.getSnapshots(84)) || []; } catch (e) {}   /* 12 semanas */
     if (!document.getElementById('evol')) return;
     if (pts.length < 3) {
       box.innerHTML = `<div class="empty">
