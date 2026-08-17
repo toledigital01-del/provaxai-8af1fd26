@@ -131,6 +131,45 @@ async function logAdmin(acao, alvo_tipo, alvo_id, detalhes){
   await PX.sb.from('admin_logs').insert({ admin_id: PX.user.id, acao, alvo_tipo, alvo_id: alvo_id || null, detalhes: detalhes || {} });
 }
 
+/* ---------- Alterações pendentes de sincronização ---------- */
+const ACOES_CONTEUDO = ['salvar_conhecimento','status_conhecimento','excluir_conhecimento','montar_curso_ia',
+  'importar_edital','reindexar_conhecimento','limpar_orfaos_conhecimento'];
+const dth = s => s ? new Date(s).toLocaleString('pt-BR', { dateStyle:'short', timeStyle:'short' }) : '—';
+
+async function syncPendencia(){
+  const [sync, edit] = await Promise.all([
+    PX.sb.from('admin_logs').select('created_at').eq('acao','sincronizar_curriculo')
+      .order('created_at',{ascending:false}).limit(1).maybeSingle(),
+    PX.sb.from('admin_logs').select('created_at,acao').in('acao', ACOES_CONTEUDO)
+      .order('created_at',{ascending:false}).limit(1).maybeSingle(),
+  ]);
+  const ultimaSync = sync.data ? sync.data.created_at : null;
+  const ultimaEdicao = edit.data ? edit.data.created_at : null;
+  const pendente = !!ultimaEdicao && (!ultimaSync || new Date(ultimaEdicao) > new Date(ultimaSync));
+  return { ultimaSync, ultimaEdicao, pendente };
+}
+
+function syncAvisoHTML(p){
+  if(p.pendente){
+    return `<div style="border:1px solid #f0c36d;background:#fff8e6;color:#7a5300;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.9rem">
+      ⚠ Há alterações não sincronizadas${p.ultimaSync?` desde a última sincronização (${dth(p.ultimaSync)})`:' — o currículo nunca foi sincronizado'}.
+      Última edição de conteúdo: ${dth(p.ultimaEdicao)}. Clique em <b>Sincronizar currículo agora</b> em Configurações para os alunos verem a versão atual.</div>`;
+  }
+  return `<div style="border:1px solid #cfe8d4;background:#f2fbf4;color:#1f6b39;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.9rem">
+    ✓ Currículo sincronizado${p.ultimaSync?` em ${dth(p.ultimaSync)}`:''}.</div>`;
+}
+
+async function pintarSyncAviso(){
+  const alvos = ['sync-alerta','cfg-sync-alerta'].map(id=>document.getElementById(id)).filter(Boolean);
+  if(!alvos.length) return;
+  try {
+    const p = await syncPendencia();
+    const html = syncAvisoHTML(p);
+    alvos.forEach(el => { el.innerHTML = html; });
+  } catch(e){ alvos.forEach(el => { el.innerHTML = ''; }); }
+}
+
+
 /* ---------- Views ---------- */
 async function viewGeral(){
   const cnt = async (t, f) => { let q = PX.sb.from(t).select('*', {count:'exact', head:true}); if(f) q = f(q); const {count} = await q; return count || 0; };
