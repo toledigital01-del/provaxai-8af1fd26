@@ -793,8 +793,8 @@ function kbPaintSteps(pendentes){
   if(!nav) return;
   nav.innerHTML = KB_STEPS.map(function(s){
     const on = s[0] === KB_STEP;
-    const badge = s[0] === 'revisao' && pendentes ? ' <span style="background:#F59E0B;color:#3A2A00;border-radius:99px;padding:0 7px;font-size:.68rem;font-weight:800">' + pendentes + '</span>' : '';
-    return '<button class="act' + (on ? ' primary' : '') + '" onclick="kbSetStep(\'' + s[0] + '\')">' + s[1] + badge + '</button>';
+    const badge = s[0] === 'revisao' && pendentes ? '<span class="kb-count">' + pendentes + '</span>' : '';
+    return '<button class="' + (on ? 'on' : '') + '" onclick="kbSetStep(\'' + s[0] + '\')">' + s[1] + badge + '</button>';
   }).join('');
   const help = document.getElementById('kb-step-help');
   const atual = KB_STEPS.find(function(s){ return s[0] === KB_STEP; });
