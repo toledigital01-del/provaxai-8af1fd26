@@ -1,0 +1,1 @@
+ALTER TABLE public.dominio_snapshots ADD COLUMN IF NOT EXISTS por_disciplina jsonb NOT NULL DEFAULT '{}'::jsonb;
