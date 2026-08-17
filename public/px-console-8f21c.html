@@ -1153,9 +1153,9 @@ function edSoNoCursoHTML(){
       + '<span class="muted"> — ' + faltam.slice(0,40).map(esc).join(' · ') + (faltam.length>40 ? ' … (+' + (faltam.length-40) + ')' : '') + '</span></div>';
   }).join('');
   if(!blocos) return '';
-  return '<div style="padding:10px 11px;background:#FFFBEB;border-top:1px solid #FDE68A">'
-    + '<b style="font-size:0.82rem;color:#92400E">Já está no curso e não veio neste edital</b>'
-    + '<p class="muted" style="margin:2px 0 6px;font-size:0.75rem">Nada será apagado. Confira se algum item ficou de fora da extração.</p>'
+  return '<div style="padding:14px 16px;background:#FBFCFE;border-top:1px solid #EEF1F6">'
+    + '<b style="font-size:0.82rem">Já está no curso e não veio neste edital</b>'
+    + '<p class="muted" style="margin:3px 0 8px;font-size:0.75rem">Nada será apagado. Confira se algum item ficou de fora da extração.</p>'
     + blocos + '</div>';
 }
 
