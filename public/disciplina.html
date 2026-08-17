@@ -11,17 +11,17 @@
   .filters { display:flex; gap:6px; flex-wrap:wrap; margin-top:22px; }
   .chip { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line-strong); background:#fff; border-radius:999px; padding:5px 12px; font-size:0.78rem; color:var(--muted); cursor:pointer; font-family:inherit; transition:all .14s; }
   .chip:hover { background:#F6F6F7; }
-  .chip.active { background:#2563EB; color:#fff; border-color:#2563EB; }
+  .chip.active { background:#0B2A5B; color:#fff; border-color:#0B2A5B; }
 
   .px-row { position:relative; flex-wrap:wrap; }
   .px-row .tlink { display:flex; align-items:center; gap:10px; min-width:0; text-decoration:none; color:inherit; }
-  .px-check { width:17px; height:17px; accent-color:#2563EB; cursor:pointer; flex-shrink:0; }
+  .px-check { width:17px; height:17px; accent-color:#0B2A5B; cursor:pointer; flex-shrink:0; }
   .note-btn { border:1px solid var(--line-strong); background:#fff; border-radius:8px; padding:4px 9px; font-size:.72rem; font-weight:600; color:var(--muted); cursor:pointer; font-family:inherit; white-space:nowrap; }
-  .note-btn:hover { border-color:#2563EB; color:#1D4ED8; }
+  .note-btn:hover { border-color:#0B2A5B; color:#154C9B; }
   .note-box { grid-column:1 / -1; width:100%; margin-top:10px; }
   .note-box textarea { width:100%; min-height:82px; border:1px solid var(--line-strong); border-radius:10px; padding:10px 12px; font-family:inherit; font-size:.85rem; resize:vertical; background:#fff; color:inherit; }
   .note-actions { display:flex; justify-content:flex-end; margin-top:8px; }
-  .note-save { background:#2563EB; color:#fff; border:none; border-radius:8px; padding:7px 14px; font-size:.78rem; font-weight:600; cursor:pointer; font-family:inherit; }
+  .note-save { background:#0B2A5B; color:#fff; border:none; border-radius:8px; padding:7px 14px; font-size:.78rem; font-weight:600; cursor:pointer; font-family:inherit; }
 
   @media (max-width: 900px) {
     .disc-layout { flex-direction:column; }
@@ -66,7 +66,7 @@
             <button class="chip" data-f="nao"><span class="sdot" style="background:#EF4444"></span> Não Familiar</button>
             <button class="chip" data-f="apr"><span class="sdot" style="background:#F59E0B"></span> Aprendendo</button>
             <button class="chip" data-f="fam"><span class="sdot" style="background:#22C55E"></span> Familiar</button>
-            <button class="chip" data-f="dom"><span class="sdot" style="background:#3B82F6"></span> Dominado</button>
+            <button class="chip" data-f="dom"><span class="sdot" style="background:#154C9B"></span> Dominado</button>
           </div>
 
           <div class="panel prose" id="kb-panel" style="display:none;margin-top:18px;"></div>

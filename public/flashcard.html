@@ -9,10 +9,10 @@
     body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; background: #FAFAFA; color: #111827; height: 100vh; overflow: hidden; display: flex; }
     .sidebar { width: 220px; min-width: 220px; background: #FFE1D9; height: 100vh; display: flex; flex-direction: column; padding: 16px 12px; flex-shrink: 0; }
     .sidebar-logo { display: flex; align-items: center; gap: 8px; padding: 6px 8px; margin-bottom: 20px; text-decoration: none; margin-top: 4px; }
-    .sidebar-logo-text { font-weight: 800; font-size: 1.3rem; letter-spacing: -0.03em; background: linear-gradient(to right, #FF8040, #FF4D00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .sidebar-logo-text { font-weight: 800; font-size: 1.3rem; letter-spacing: -0.03em; background: linear-gradient(to right, #154C9B, #0B2A5B); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
     .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.9rem; font-weight: 500; color: #6B2D00; text-decoration: none; transition: background 0.15s; margin-bottom: 2px; }
     .nav-item:hover { background: rgba(255,255,255,0.5); }
-    .nav-item.active { background: #fff; color: #FF4D00; font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .nav-item.active { background: #fff; color: #0B2A5B; font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
     .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
 
     /* Breadcrumb */
@@ -35,7 +35,7 @@
     .progress-section { background: #fff; border: 1.5px solid #E5E5E5; border-radius: 16px; padding: 20px 24px; margin-bottom: 24px; }
     .progress-title { font-size: 0.85rem; color: #6B7280; font-weight: 500; margin-bottom: 12px; }
     .progress-bar { height: 10px; background: #F3F4F6; border-radius: 999px; overflow: hidden; margin-bottom: 8px; }
-    .progress-fill { height: 100%; background: linear-gradient(to right, #3b82f6, #1d4ed8); border-radius: 999px; transition: width 0.5s ease; }
+    .progress-fill { height: 100%; background: linear-gradient(to right, #154C9B, #154C9B); border-radius: 999px; transition: width 0.5s ease; }
     .progress-stats { display: flex; gap: 16px; }
     .stat-item { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; font-weight: 500; }
     .stat-dot { width: 8px; height: 8px; border-radius: 50%; }
@@ -43,8 +43,8 @@
     /* Study modes */
     .modes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 28px; }
     .mode-card { background: #fff; border: 1.5px solid #E5E5E5; border-radius: 14px; padding: 18px 16px; cursor: pointer; transition: all 0.2s; text-align: center; }
-    .mode-card:hover { border-color: #FF8040; background: #FFF8F6; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,77,0,0.08); }
-    .mode-card.active { border-color: #FF4D00; background: #FFF0E8; }
+    .mode-card:hover { border-color: #154C9B; background: #FFF8F6; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,77,0,0.08); }
+    .mode-card.active { border-color: #0B2A5B; background: #FFF0E8; }
     .mode-icon { font-size: 1.5rem; margin-bottom: 8px; }
     .mode-name { font-size: 0.85rem; font-weight: 600; color: #374151; margin-bottom: 2px; }
     .mode-desc { font-size: 0.75rem; color: #9CA3AF; }
@@ -58,14 +58,14 @@
     .card-face { position: absolute; inset: 0; backface-visibility: hidden; background: #fff; border: 1.5px solid #E5E5E5; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
     .card-face.back { transform: rotateY(180deg); background: linear-gradient(135deg, #FFF8F6, #FFF0E8); border-color: #FFD0B0; }
     .card-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #9CA3AF; margin-bottom: 16px; }
-    .card-face.back .card-label { color: #FF8040; }
+    .card-face.back .card-label { color: #154C9B; }
     .card-text { font-size: 1.2rem; font-weight: 600; text-align: center; line-height: 1.5; color: #111827; }
     .flip-hint { font-size: 0.78rem; color: #C4C4C4; margin-top: 16px; }
 
     /* Nav buttons */
     .card-nav { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
     .nav-arrow { width: 48px; height: 48px; border-radius: 50%; border: 1.5px solid #E5E5E5; background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #374151; transition: all 0.2s; font-size: 1.2rem; }
-    .nav-arrow:hover { border-color: #FF8040; color: #FF4D00; background: #FFF0E8; }
+    .nav-arrow:hover { border-color: #154C9B; color: #0B2A5B; background: #FFF0E8; }
     .nav-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
 
     /* Rating buttons */
@@ -75,8 +75,8 @@
     .btn-unknown:hover { background: #FEE2E2; }
     .btn-learning { background: #FFF7ED; border-color: #FED7AA; color: #EA580C; }
     .btn-learning:hover { background: #FFEDD5; }
-    .btn-familiar { background: #EFF6FF; border-color: #BFDBFE; color: #2563EB; }
-    .btn-familiar:hover { background: #DBEAFE; }
+    .btn-familiar { background: #E8EEF9; border-color: #BFDBFE; color: #0B2A5B; }
+    .btn-familiar:hover { background: #E8EEF9; }
     .btn-mastered { background: #F0FDF4; border-color: #BBF7D0; color: #16A34A; }
     .btn-mastered:hover { background: #DCFCE7; }
 
@@ -104,8 +104,8 @@
 <aside class="sidebar">
   <a href="study-sets.html" class="sidebar-logo">
     <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-      <path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="#FF4D00"/>
-      <path d="M16 8C16 8 11 14 11 18C11 20.8 13.2 23 16 23C18.8 23 21 20.8 21 18C21 14 16 8 16 8Z" fill="#FF8040"/>
+      <path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="#0B2A5B"/>
+      <path d="M16 8C16 8 11 14 11 18C11 20.8 13.2 23 16 23C18.8 23 21 20.8 21 18C21 14 16 8 16 8Z" fill="#154C9B"/>
       <circle cx="16" cy="19" r="3" fill="#FFF0E8"/>
     </svg>
     <span class="sidebar-logo-text">Prova X</span>
@@ -127,7 +127,7 @@
   <div style="border-top:1px solid rgba(255,77,0,0.15);padding-top:12px;">
     <button class="sign-in-btn" onclick="alert('Login em breve!')">
       <div style="width:30px;height:30px;border-radius:50%;background:rgba(255,77,0,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <svg width="15" height="15" fill="none" stroke="#FF4D00" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <svg width="15" height="15" fill="none" stroke="#0B2A5B" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       </div>
       <span>Entrar</span>
     </button>
@@ -148,7 +148,7 @@
     <div class="set-header">
       <h1 class="set-title" id="set-title">Carregando conjunto...</h1>
       <div class="set-meta">
-        <span id="set-category" style="background:#FFF0E8;color:#FF4D00;padding:4px 12px;border-radius:999px;font-size:0.8rem;font-weight:600;"></span>
+        <span id="set-category" style="background:#FFF0E8;color:#0B2A5B;padding:4px 12px;border-radius:999px;font-size:0.8rem;font-weight:600;"></span>
         <span id="set-cards-count"></span>
         <span>·</span>
         <span id="set-date"></span>
@@ -245,7 +245,7 @@
         <div style="font-size:3rem;margin-bottom:16px;" id="mode-icon-big">🎓</div>
         <h2 style="font-size:1.3rem;font-weight:700;margin-bottom:8px;" id="mode-title-big">Modo em Breve</h2>
         <p style="color:#9CA3AF;font-size:0.9rem;margin-bottom:24px;max-width:320px;margin-left:auto;margin-right:auto;" id="mode-desc-big">Este modo estará disponível em breve. Por enquanto, use os Flashcards!</p>
-        <button onclick="setMode('flashcards',null)" style="padding:12px 28px;border-radius:12px;background:linear-gradient(to bottom,#FF8040,#FF4D00);color:#fff;border:none;cursor:pointer;font-weight:600;font-size:0.95rem;font-family:inherit;">
+        <button onclick="setMode('flashcards',null)" style="padding:12px 28px;border-radius:12px;background:linear-gradient(to bottom,#154C9B,#0B2A5B);color:#fff;border:none;cursor:pointer;font-weight:600;font-size:0.95rem;font-family:inherit;">
           Usar Flashcards
         </button>
       </div>
@@ -349,7 +349,7 @@
     document.getElementById('prog-stats').innerHTML = `
       <div class="stat-item"><div class="stat-dot" style="background:#EF4444;"></div> ${unknown} Desconhecido</div>
       <div class="stat-item"><div class="stat-dot" style="background:#F97316;"></div> ${learning} Aprendendo</div>
-      <div class="stat-item"><div class="stat-dot" style="background:#3B82F6;"></div> ${familiar} Familiar</div>
+      <div class="stat-item"><div class="stat-dot" style="background:#154C9B;"></div> ${familiar} Familiar</div>
       <div class="stat-item"><div class="stat-dot" style="background:#22C55E;"></div> ${mastered} Dominado</div>
     `;
   }
@@ -396,7 +396,7 @@
   }
 
   function updateTermRating(idx, rating) {
-    const colors = { unknown: '#EF4444', learning: '#F97316', familiar: '#3B82F6', mastered: '#22C55E' };
+    const colors = { unknown: '#EF4444', learning: '#F97316', familiar: '#154C9B', mastered: '#22C55E' };
     const labels = { unknown: 'Desconhecido', learning: 'Aprendendo', familiar: 'Familiar', mastered: 'Dominado' };
     const el = document.getElementById('term-rating-' + idx);
     if (el) {
