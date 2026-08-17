@@ -1569,7 +1569,11 @@ window.kbIngestFiles = async function(files){
         const j = await kbPost('/api/public/kb-ingest', { tipo, nome:f.name, mime:f.type || '', arquivo_base64:b64 });
         texto = j.texto; origem = j.origem || f.name;
       }
-      if(texto){ kbRegistrarFonte(origem, texto); n++; }
+      if(texto){
+        kbRegistrarFonte(origem, texto);
+        await kbLibGravar({ nome: origem, tipo: kbTipoDoc(f.name, f.type || '', ''), texto: texto, direitos: direitos });
+        n++;
+      }
     }catch(e){
       kbIngMsg('Erro ao ler "' + f.name + '": ' + e.message);
     }
