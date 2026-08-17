@@ -1270,8 +1270,9 @@ window.kbPane = p => {
   document.querySelectorAll('[data-pane]').forEach(el => { el.style.display = el.getAttribute('data-pane') === p ? '' : 'none'; });
   document.querySelectorAll('[data-panebtn]').forEach(el => {
     const on = el.getAttribute('data-panebtn') === p;
-    el.style.background = on ? '#2563EB' : '#fff';
-    el.style.color = on ? '#fff' : '#475569';
+    el.style.background = on ? '#fff' : 'transparent';
+    el.style.color = on ? '#0F172A' : '#64748B';
+    el.style.boxShadow = on ? '0 1px 2px rgba(15,23,42,.08)' : 'none';
   });
 };
 
