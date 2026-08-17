@@ -86,10 +86,13 @@
 
   /* ---------- Aba: Geral ---------- */
   function viewGeral() {
-    const rank = AGG.discs.slice().sort((a, b) => b.acertoPct - a.acertoPct || b.questoes - a.questoes);
+    const rank = AGG.discs.slice().sort((a, b) =>
+      b.acertoPct - a.acertoPct ||
+      (b.peso || 0) - (a.peso || 0) ||
+      a.name.localeCompare(b.name, 'pt-BR'));
     return `
       <div class="kpis">
-        <div class="kpi"><div class="k">Índice de domínio médio</div><div class="v">${T.dominioMedio}%</div><div class="s">média entre as ${AGG.discs.length} disciplinas</div></div>
+        <div class="kpi"><div class="k">Índice de domínio médio</div><div class="v">${T.dominioMedio}%</div><div class="s">média ponderada sobre os ${T.topicos} tópicos do edital</div></div>
         <div class="kpi"><div class="k">Tempo total estudado</div><div class="v">${T.tempo}</div><div class="s">soma de todos os tópicos</div></div>
         <div class="kpi"><div class="k">Aproveitamento geral</div><div class="v">${T.acertoPct}%</div><div class="s">${T.certas} acertos em ${T.questoes} questões</div></div>
       </div>
