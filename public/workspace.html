@@ -658,14 +658,15 @@ function renderPane() {
     if (lacState.state !== 'ok') {
       p.innerHTML = `<div class="pane">${head}${
         lacState.state === 'erro'
-          ? kbAvisoHTML('Não consegui gerar o exercício', lacState.erro, '<p style="margin:12px 0 0"><button class="btn-secondary" id="lac-retry">Tentar de novo</button></p>')
+          ? (lacState.status === 401 ? loginAvisoHTML('praticar as lacunas') : kbAvisoHTML('Não consegui gerar o exercício', lacState.erro, '<p style="margin:12px 0 0"><button class="btn-secondary" id="lac-retry">Tentar de novo</button></p>'))
           : '<p class="prose" style="color:var(--muted);">A Athena está montando as lacunas deste tópico…</p>'
       }</div>`;
-      if (lacState.state === 'erro') document.getElementById('lac-retry').onclick = () => { lacState = { state: 'idle', frases: [], erro: '' }; renderPane(); };
+      const lacr = document.getElementById('lac-retry');
+      if (lacr) lacr.onclick = () => { lacState = { state: 'idle', frases: [], erro: '' }; renderPane(); };
       if (lacState.state === 'idle') {
         lacState = { state: 'load', frases: [], erro: '' };
         PX.iaPost('lacunas', { disciplina: disc, topico: topic, curso: id }).then(r => {
-          lacState = r.erro ? { state: 'erro', frases: [], erro: r.erro } : { state: 'ok', frases: r.frases || [], erro: '' };
+          lacState = r.erro ? { state: 'erro', frases: [], erro: r.erro, status: r.status } : { state: 'ok', frases: r.frases || [], erro: '' };
           if (tab === 'espacos') renderPane();
         });
       }
