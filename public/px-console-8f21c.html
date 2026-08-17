@@ -2002,11 +2002,12 @@ window.kbCorrigirOrfaos = async function(acao){
 window.kbSave = async function(){
   const msg = document.getElementById('kb-msg');
   const conteudo = document.getElementById('kb-txt').value;
+  const atual = kbFind(kbDisc, kbTopic);
   let payload;
   try{
     payload = PXKB.montarDoc({ disciplina:kbDisc, discList:kbDiscList(), topico:kbTopic,
       titulo:document.getElementById('kb-tit').value, conteudo,
-      publicado:document.getElementById('kb-pub').checked, userId:PX.user.id });
+      status: kbStatusDoc(atual), userId:PX.user.id });
   }catch(e){ if(msg) msg.textContent = e.message; return; }
   const disciplinaSelecionada = payload.disciplina;
   msg.textContent = 'Salvando em ' + disciplinaSelecionada + (kbTopic ? ' › ' + kbTopic : ' (visão geral)') + '…';
@@ -2019,6 +2020,30 @@ window.kbSave = async function(){
   await logAdmin('salvar_conhecimento','knowledge_docs', doc?doc.id:null, { disciplina:disciplinaSelecionada, topico:kbTopic });
   await loadKB(); kbPaint();
   document.getElementById('kb-msg').textContent = 'Conteúdo salvo em ' + disciplinaSelecionada + '. A Athena já usa este material.';
+};
+/* Muda o status da aula selecionada (rascunho → revisado → publicado). */
+window.kbSetStatus = async function(status){
+  const doc = kbFind(kbDisc, kbTopic);
+  const msg = document.getElementById('kb-msg');
+  if(!doc){ if(msg) msg.textContent = 'Salve o conteúdo antes de mudar o status.'; return; }
+  if(msg) msg.textContent = 'Atualizando status…';
+  const { error } = await PX.sb.from('knowledge_docs')
+    .update({ status: status, publicado: status === 'publicado' }).eq('id', doc.id);
+  if(error){ if(msg) msg.textContent = 'Erro: ' + error.message; return; }
+  await logAdmin('status_conhecimento','knowledge_docs', doc.id, { status });
+  await loadKB(); kbPaint();
+  const m2 = document.getElementById('kb-msg');
+  if(m2) m2.textContent = status === 'publicado' ? 'Aula publicada — já aparece para os alunos.'
+    : status === 'revisado' ? 'Aula marcada como revisada. Publique quando quiser liberar.'
+    : 'Aula voltou para rascunho e saiu do ar.';
+};
+/* Abre a aula pendente direto da fila de revisão. */
+window.kbAbrirDoc = function(disc, topico){
+  kbDisc = disc; kbTopic = topico || '';
+  KB_PANE = 'conteudo';
+  kbPaint();
+  const el = document.getElementById('kb-editor');
+  if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
 };
 window.kbDelete = async function(id){
   if(!confirm('Excluir este conteúdo da base?')) return;
