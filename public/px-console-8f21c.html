@@ -1589,6 +1589,8 @@ window.kbIngestFiles = async function(files){
 };
 window.kbIngestUrlAuto = async function(url){
   if(!kbValidDisc(kbDisc)) return kbIngMsg('Selecione uma matéria válida antes de carregar material.');
+  const direitos = kbDireitosEscolhido();
+  if(!direitos) return kbIngMsg('Escolha antes a situação de direitos autorais deste material.');
   const tipo = kbEhVideoUrl(url) ? 'video' : 'url';
   KB_ING_ATIVO = true;
   kbSetBusy(true, 'Lendo ' + (tipo === 'video' ? 'vídeo' : 'site') + '…');
@@ -1597,6 +1599,7 @@ window.kbIngestUrlAuto = async function(url){
   try{
     const j = await kbPost('/api/public/kb-ingest', { tipo, url });
     kbRegistrarFonte(j.origem || url, j.texto || '');
+    await kbLibGravar({ nome: j.origem || url, tipo: tipo, origem_url: url, texto: j.texto || '', direitos: direitos });
     kbIngMsg('Conteúdo do link carregado (' + String(j.texto || '').length.toLocaleString('pt-BR') + ' caracteres).');
   }catch(e){ kbIngMsg('Erro: ' + e.message); }
   KB_ING_ATIVO = false;
