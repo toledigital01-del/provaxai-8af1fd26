@@ -399,6 +399,10 @@ function goTab(t) {
   const u = new URL(location.href); u.searchParams.set('tab', t);
   history.replaceState(null, '', u);
   fcIdx = 0; fcOpen = false;
+  dbFlash = { state: 'idle', rows: [], status: 0 };
+  dbQuest = { state: 'idle', rows: [], status: 0 };
+  podState = { state: 'idle', roteiro: [], erro: '' };
+  lacState = { state: 'idle', frases: [], erro: '' };
   renderPane();
   document.querySelector('.ws-center').scrollTop = 0;
 }
