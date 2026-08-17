@@ -201,7 +201,9 @@ async function viewGeral(){
   const { data: recent } = await PX.sb.from('profiles').select('full_name,email,created_at').order('created_at',{ascending:false}).limit(8);
   document.getElementById('recent').innerHTML = tabela(['Nome','E-mail','Cadastro'],
     (recent||[]).map(p=>[esc(p.full_name||'—'), esc(p.email), dt(p.created_at)]));
+  pintarSyncAviso();
 }
+
 
 function tabela(head, rows){
   if(!rows.length) return '<p class="muted">Nenhum registro.</p>';
