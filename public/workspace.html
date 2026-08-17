@@ -340,9 +340,10 @@ function renderResumo(p) {
   if (rzState === 'erro') {
     p.innerHTML = `<div class="pane">
       <div class="cesp-head"><b>Revisão Inteligente</b><span>${ctxLabel()}</span></div>
-      ${kbAvisoHTML('Não consegui gerar o resumo', rzErro, '<p style="margin:12px 0 0"><button class="btn-secondary" id="rz-retry">Tentar de novo</button></p>')}
+      ${rzStatus === 401 ? loginAvisoHTML('gerar o resumo') : kbAvisoHTML('Não consegui gerar o resumo', rzErro, '<p style="margin:12px 0 0"><button class="btn-secondary" id="rz-retry">Tentar de novo</button></p>')}
     </div>`;
-    document.getElementById('rz-retry').onclick = () => rzCarregar();
+    const rzr = document.getElementById('rz-retry');
+    if (rzr) rzr.onclick = () => rzCarregar();
     return;
   }
   const blocks = rzData || [];
