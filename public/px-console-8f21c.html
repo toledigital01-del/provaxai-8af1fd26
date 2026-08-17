@@ -1755,13 +1755,14 @@ window.kbPublicarGeradas = async function(){
   const disciplinaSelecionada = kbValidDisc(kbDisc);
   if(!lista.length) return kbIngMsg('Marque ao menos uma aula desta matéria para publicar.');
 
-  kbSetBusy(true, 'Publicando ' + lista.length + ' aula(s) em ' + disciplinaSelecionada + '…');
+  kbSetBusy(true, 'Salvando ' + lista.length + ' aula(s) como rascunho em ' + disciplinaSelecionada + '…');
   for(const a of lista){
     const doc = kbFind(disciplinaSelecionada, a.topico);
     let payload;
     try{
+      /* Toda aula gerada por IA nasce como rascunho — só vai ao ar depois da revisão humana. */
       payload = PXKB.montarDoc({ disciplina:disciplinaSelecionada, discList:kbDiscList(), topico:a.topico,
-        titulo:a.titulo || a.topico, conteudo:String(a.conteudo).trim(), publicado:true, userId:PX.user.id });
+        titulo:a.titulo || a.topico, conteudo:String(a.conteudo).trim(), status:'rascunho', userId:PX.user.id });
     }catch(e){ kbSetBusy(false); return kbIngMsg(e.message); }
     const { error } = doc
       ? await PX.sb.from('knowledge_docs').update(payload).eq('id', doc.id)
@@ -1772,7 +1773,7 @@ window.kbPublicarGeradas = async function(){
   await logAdmin('montar_curso_ia','knowledge_docs', null, { disciplina:disciplinaSelecionada, aulas:lista.length });
   const n = lista.length; KB_GERADAS = []; KB_ABERTA = -1;
   await loadKB(); kbSetBusy(false); kbPaint();
-  kbIngMsg(n + ' aula(s) publicadas para os alunos em ' + disciplinaSelecionada + '.');
+  kbIngMsg(n + ' aula(s) salvas como rascunho em ' + disciplinaSelecionada + '. Revise em "Aulas aguardando revisão" e publique.');
 };
 
 /* Manutenção: reindexar a base e tratar conteúdos órfãos (matéria vazia ou fora do edital). */
