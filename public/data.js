@@ -433,8 +433,10 @@ function desempenhoAgregado(concursoId) {
   });
 
   const t = { topicos: 0, questoes: 0, certas: 0, erros: 0, tempo_segundos: 0, conta: { nao: 0, apr: 0, fam: 0, dom: 0 } };
+  let somaDominioTopicos = 0;
   discs.forEach(function (d) {
     t.topicos += d.topics.length;
+    somaDominioTopicos += d.topics.reduce(function (a, tp) { return a + (tp.prog || 0); }, 0);
     t.questoes += d.questoes;
     t.certas += d.certas;
     t.erros += d.erros;
@@ -443,7 +445,9 @@ function desempenhoAgregado(concursoId) {
   });
   t.saldo = t.certas - t.erros;
   t.acertoPct = t.questoes ? Math.round((t.certas / t.questoes) * 100) : 0;
-  t.dominioMedio = discs.length ? Math.round(discs.reduce(function (a, d) { return a + d.pct; }, 0) / discs.length) : 0;
+  /* média ponderada por tópico: soma do domínio de cada tópico / total de tópicos do edital */
+  t.dominioMedio = t.topicos ? Math.round(somaDominioTopicos / t.topicos) : 0;
+
   t.tempo = _fmtTempo(t.tempo_segundos);
   return { discs: discs, totals: t };
 }
