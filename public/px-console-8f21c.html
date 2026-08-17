@@ -597,10 +597,33 @@ const kbDiscList = () => {
 const kbTopicList = d => (d && kbGlobalTopics()[d]) || [];
 
 
+/* Biblioteca de documentos-fonte (kb_documentos) — tudo que já foi enviado, com origem e direitos. */
+let KB_LIB = [];
+const KB_DIREITOS = {
+  dominio_publico: { rotulo:'Domínio público', cor:'#047857', fundo:'#ECFDF5' },
+  material_proprio: { rotulo:'Material próprio', cor:'#1D4ED8', fundo:'#EFF6FF' },
+  terceiro_verificar: { rotulo:'Terceiro — verificar direitos', cor:'#B45309', fundo:'#FEF3C7' },
+};
+const KB_STATUS = {
+  rascunho: { rotulo:'Rascunho', cor:'#B45309', fundo:'#FEF3C7' },
+  revisado: { rotulo:'Revisado', cor:'#1D4ED8', fundo:'#DBEAFE' },
+  publicado: { rotulo:'Publicado para alunos', cor:'#047857', fundo:'#ECFDF5' },
+};
+function kbStatusDoc(doc){
+  if(!doc) return 'rascunho';
+  return doc.status || (doc.publicado ? 'publicado' : 'rascunho');
+}
+async function loadLib(){
+  try{
+    const { data } = await PX.sb.from('kb_documentos').select('*').eq('course_slug','prf-2021').order('criado_em', { ascending:false });
+    KB_LIB = data || [];
+  }catch(e){ KB_LIB = []; }
+}
 async function loadKB(){
   const { data, error } = await PX.sb.from('knowledge_docs').select('*').eq('course_slug','prf-2021').order('disciplina');
   if(error) throw error;
   KB_DOCS = data || [];
+  await loadLib();
   // Rede de segurança: se os dados locais não carregarem, monta a lista de matérias pelo banco.
   const nomes = {};
   KB_DOCS.forEach(x => { if(x.disciplina) nomes[x.disciplina] = 1; });
