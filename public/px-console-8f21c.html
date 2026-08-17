@@ -1228,8 +1228,10 @@ window.kbSelDisc = d => {
 
   KB_GERADAS = [];
   KB_ABERTA = -1;
+  if(KB_STEP === 'cobertura' && typeof kbSetStep === 'function') kbSetStep('conteudo');
   kbPaint();
 };
+
 window.kbSelTopic = t => { if(KB_BUSY) return; kbTopic = t; kbPaint(); };
 
 function kbEditor(){
