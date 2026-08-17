@@ -630,7 +630,9 @@ async function cfgSincronizar(){
     }
     msg.textContent = `Pronto: ${nd} disciplina(s) e ${nt} tópico(s) publicados para os alunos.`;
     await logAdmin('sincronizar_curriculo','courses',null);
+    await pintarSyncAviso();
   } catch(e){
+
     msg.textContent = 'Erro ao sincronizar: ' + (e.message || e);
   }
   btn.disabled = false;
