@@ -1248,12 +1248,34 @@ function kbEditor(){
     <div data-pane="ia" style="display:none;margin-top:4px;border:1px solid #E2E8F0;border-radius:12px;padding:12px">
       <b style="font-size:0.9rem">Alimentar a IA com material</b>
       <p class="muted" style="margin:4px 0 10px">Solte os arquivos aqui (PDF, textos, imagens de apostila/slide/print — vários de uma vez) ou cole um endereço de site/vídeo. A leitura começa sozinha, sem etapa de extração.</p>
+      <div style="margin-bottom:8px">
+        <label class="muted">Direitos autorais deste material (obrigatório)</label>
+        <select id="kb-direitos">
+          <option value="">Escolha antes de enviar…</option>
+          <option value="dominio_publico">Domínio público (lei, edital, jurisprudência)</option>
+          <option value="material_proprio">Material próprio (eu escrevi ou tenho os direitos)</option>
+          <option value="terceiro_verificar">Material de terceiro — ainda preciso verificar direitos</option>
+        </select>
+      </div>
       <div id="kb-drop" style="border:2px dashed #CBD5E1;border-radius:12px;padding:14px;text-align:center;background:#F8FAFC">
         <p class="muted" style="margin:0 0 8px">Arraste e solte os arquivos aqui ou escolha abaixo</p>
         <input type="file" id="kb-file" multiple accept=".pdf,.txt,.md,.csv,.json,.html,.srt,.vtt,.png,.jpg,.jpeg,.webp,.gif,.bmp,.heic,image/*,application/pdf,text/*" style="width:auto;max-width:100%">
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px">
         <input id="kb-url" placeholder="Cole o link do site ou do vídeo e aperte Enter" style="flex:1;min-width:220px">
+      </div>
+      <div style="margin-top:10px;border:1px dashed #CBD5E1;border-radius:12px;padding:10px;background:#F8FAFC">
+        <b style="font-size:0.82rem">Conectar Google Drive</b>
+        <p class="muted" style="margin:4px 0 8px;font-size:0.78rem">Importa uma pasta do Drive inteira (com subpastas) para a biblioteca desta matéria. Todo material do Drive entra como "terceiro — verificar direitos" e nasce em rascunho.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input id="kb-drive-url" placeholder="Cole o link da pasta do Google Drive" style="flex:1;min-width:220px">
+          <button class="act" onclick="kbDriveImportar()">Importar pasta</button>
+        </div>
+        <p class="muted" id="kb-drive-msg" style="margin-top:6px;font-size:0.76rem"></p>
+      </div>
+      <div style="margin-top:12px">
+        <b style="font-size:0.82rem">Documentos-fonte já enviados</b>
+        <div id="kb-biblioteca" style="margin-top:6px"></div>
       </div>
       <div id="kb-ing-prog-wrap" style="display:none;margin-top:10px">
         <div style="height:8px;border-radius:99px;background:#E2E8F0;overflow:hidden">
