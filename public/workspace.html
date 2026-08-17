@@ -628,25 +628,99 @@ function renderPane() {
   } else if (tab === 'teste') {
     p.innerHTML = `<div class="pane">
       <p class="prose">Discorra sobre <b>${topic}</b> em até 15 linhas, destacando regra geral, exceções e aplicação prática.</p>
-      <textarea class="notes" placeholder="Escreva sua resposta..."></textarea>
-      <div class="mini"><button onclick="alert('Correção por IA em breve!')">Corrigir com IA</button></div>
+      <textarea class="notes" id="rd-txt" placeholder="Escreva sua resposta..."></textarea>
+      <div class="mini"><button id="rd-go">Corrigir com IA</button></div>
+      <div id="rd-out" class="prose"></div>
     </div>`;
+    document.getElementById('rd-go').onclick = async () => {
+      const ta = document.getElementById('rd-txt');
+      const out = document.getElementById('rd-out');
+      const btn = document.getElementById('rd-go');
+      const texto = (ta.value || '').trim();
+      if (texto.length < 20) { out.innerHTML = kbAvisoHTML('Escreva um pouco mais', 'Sua resposta precisa de pelo menos algumas linhas para ser corrigida.', ''); return; }
+      btn.disabled = true;
+      out.innerHTML = '<p style="color:var(--muted)">A Athena está corrigindo sua resposta…</p>';
+      const r = await PX.iaPost('redacao', { disciplina: disc, topico: topic, texto, curso: id });
+      btn.disabled = false;
+      if (r.erro) {
+        out.innerHTML = r.status === 401
+          ? loginAvisoHTML('receber a correção')
+          : kbAvisoHTML('Não consegui corrigir agora', r.erro, '');
+        return;
+      }
+      out.innerHTML = PX.kbHTML(r.feedback);
+    };
   } else if (tab === 'espacos') {
-    p.innerHTML = `<div class="pane prose">
-      <p>Complete as lacunas sobre ${topic}:</p>
-      <p style="margin-top:14px;">A regra geral de ${topic.toLowerCase()} determina que <input style="border:none;border-bottom:1.5px solid var(--line-strong);outline:none;font-family:inherit;font-size:0.9rem;width:180px;"> deve ser observado, salvo quando <input style="border:none;border-bottom:1.5px solid var(--line-strong);outline:none;font-family:inherit;font-size:0.9rem;width:180px;">.</p>
-      <div class="mini"><button onclick="alert('Verificação em breve!')">Verificar</button></div>
+    const head = `<div class="cesp-head"><b>Preencher espaços</b><span>${ctxLabel()} — complete as lacunas com os termos exatos cobrados pela banca.</span></div>`;
+    if (lacState.state !== 'ok') {
+      p.innerHTML = `<div class="pane">${head}${
+        lacState.state === 'erro'
+          ? kbAvisoHTML('Não consegui gerar o exercício', lacState.erro, '<p style="margin:12px 0 0"><button class="btn-secondary" id="lac-retry">Tentar de novo</button></p>')
+          : '<p class="prose" style="color:var(--muted);">A Athena está montando as lacunas deste tópico…</p>'
+      }</div>`;
+      if (lacState.state === 'erro') document.getElementById('lac-retry').onclick = () => { lacState = { state: 'idle', frases: [], erro: '' }; renderPane(); };
+      if (lacState.state === 'idle') {
+        lacState = { state: 'load', frases: [], erro: '' };
+        PX.iaPost('lacunas', { disciplina: disc, topico: topic, curso: id }).then(r => {
+          lacState = r.erro ? { state: 'erro', frases: [], erro: r.erro } : { state: 'ok', frases: r.frases || [], erro: '' };
+          if (tab === 'espacos') renderPane();
+        });
+      }
+      return;
+    }
+    const inp = 'style="border:none;border-bottom:1.5px solid var(--line-strong);outline:none;font-family:inherit;font-size:0.9rem;width:180px;background:transparent;color:inherit;"';
+    let gi = 0;
+    const corpo = lacState.frases.map((f, fi) => {
+      const partes = String(f.frase).split('___');
+      let html = '';
+      partes.forEach((pt, i) => {
+        html += esc(pt);
+        if (i < partes.length - 1) {
+          const ans = f.respostas[i] || '';
+          html += `<input ${inp} data-ans="${esc(ans)}" data-i="${gi++}"> <span class="lac-fb" style="font-size:0.82rem;color:var(--muted)"></span>`;
+        }
+      });
+      return `<p style="margin-top:14px;"><b>${fi + 1}.</b> ${html}</p>`;
+    }).join('');
+    p.innerHTML = `<div class="pane prose">${head}${corpo}
+      <div class="mini"><button id="lac-go">Verificar</button><button id="lac-new">Gerar novas frases</button></div>
     </div>`;
+    document.getElementById('lac-new').onclick = () => { lacState = { state: 'idle', frases: [], erro: '' }; renderPane(); };
+    document.getElementById('lac-go').onclick = () => {
+      p.querySelectorAll('input[data-ans]').forEach(el => {
+        const esperado = (el.dataset.ans || '').trim().toLowerCase();
+        const dado = (el.value || '').trim().toLowerCase();
+        const ok = dado && (dado === esperado || esperado.indexOf(dado) === 0 && dado.length >= Math.max(4, esperado.length - 2));
+        el.style.borderBottomColor = ok ? 'var(--ok, #059669)' : 'var(--no, #DC2626)';
+        const fb = el.nextElementSibling;
+        if (fb) fb.textContent = ok ? '✓' : '✗ ' + (el.dataset.ans || '');
+      });
+    };
   } else if (tab === 'podcast') {
     const dur = 5 * 60 + 29;
     const fmt = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
-    const roteiro = [
-      { who:'Anna', me:false, txt:`Você viu que o edital cobra <b>${topic}</b> dentro de ${disc}? É um dos pontos que mais aparecem nas últimas provas da banca.` },
-      { who:'Simon', me:true, txt:`Sim. Vale começar pela regra geral: o que a lei determina de forma expressa, e só depois olhar as exceções — é assim que a Cebraspe costuma montar o item.` },
-      { who:'Anna', me:false, txt:`Exato. E repare que a banca adora trocar uma palavra da regra — “sempre”, “nunca”, “somente” — para transformar um item certo em errado.` },
-      { who:'Simon', me:true, txt:`Boa. Então o roteiro de estudo é: entender o conceito, decorar as exceções e treinar com itens Certo/Errado de ${topic.toLowerCase()}.` },
-      { who:'Anna', me:false, txt:`Fechado. No fim do episódio, abra os flashcards e a revisão espaçada para fixar o que ouvimos aqui.` },
-    ];
+    if (podState.state !== 'ok') {
+      p.innerHTML = `<div class="pane">
+        <div class="cesp-head"><b>Podcast — ${topic}</b><span>${disc}</span></div>
+        ${podState.state === 'erro'
+          ? (podState.status === 401 ? loginAvisoHTML('ouvir o episódio') : kbAvisoHTML('Não consegui gerar o episódio', podState.erro, '<p style="margin:12px 0 0"><button class="btn-secondary" id="pod-retry">Tentar de novo</button></p>'))
+          : '<p class="prose" style="color:var(--muted);">Ana e Rafael estão gravando o episódio deste tópico…</p>'}
+      </div>`;
+      const rt = document.getElementById('pod-retry');
+      if (rt) rt.onclick = () => { podState = { state: 'idle', roteiro: [], erro: '' }; renderPane(); };
+      if (podState.state === 'idle') {
+        podState = { state: 'load', roteiro: [], erro: '' };
+        PX.iaPost('podcast', { disciplina: disc, topico: topic, curso: id }).then(r => {
+          podState = r.erro
+            ? { state: 'erro', roteiro: [], erro: r.erro, status: r.status }
+            : { state: 'ok', roteiro: r.roteiro || [], erro: '' };
+          if (tab === 'podcast') renderPane();
+        });
+      }
+      return;
+    }
+    const roteiro = podState.roteiro.map(l => ({ who: l.who, me: l.who === 'Rafael', txt: esc(l.texto) }));
+
     p.innerHTML = `<div class="pane">
       <div class="pod">
         <div class="pod-top">
