@@ -378,6 +378,48 @@ export type Database = {
         }
         Relationships: []
       }
+      kb_documentos: {
+        Row: {
+          course_slug: string
+          criado_em: string
+          discipline_nome: string
+          enviado_por: string | null
+          id: string
+          nome_arquivo: string
+          origem_url: string | null
+          status_direitos: string
+          texto_extraido: string
+          tipo: string
+          topic_nome: string | null
+        }
+        Insert: {
+          course_slug?: string
+          criado_em?: string
+          discipline_nome: string
+          enviado_por?: string | null
+          id?: string
+          nome_arquivo: string
+          origem_url?: string | null
+          status_direitos?: string
+          texto_extraido?: string
+          tipo?: string
+          topic_nome?: string | null
+        }
+        Update: {
+          course_slug?: string
+          criado_em?: string
+          discipline_nome?: string
+          enviado_por?: string | null
+          id?: string
+          nome_arquivo?: string
+          origem_url?: string | null
+          status_direitos?: string
+          texto_extraido?: string
+          tipo?: string
+          topic_nome?: string | null
+        }
+        Relationships: []
+      }
       knowledge_docs: {
         Row: {
           conteudo: string
@@ -387,6 +429,7 @@ export type Database = {
           id: string
           ordem: number
           publicado: boolean
+          status: string
           titulo: string | null
           topico: string | null
           updated_at: string
@@ -400,6 +443,7 @@ export type Database = {
           id?: string
           ordem?: number
           publicado?: boolean
+          status?: string
           titulo?: string | null
           topico?: string | null
           updated_at?: string
@@ -413,6 +457,7 @@ export type Database = {
           id?: string
           ordem?: number
           publicado?: boolean
+          status?: string
           titulo?: string | null
           topico?: string | null
           updated_at?: string
