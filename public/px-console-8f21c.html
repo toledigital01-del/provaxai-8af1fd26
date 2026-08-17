@@ -1301,33 +1301,33 @@ function kbEditor(){
   const orfaos = PXKB.encontrarOrfaos(KB_DOCS, kbDiscList());
   const st = kbStatusDoc(doc.id ? doc : null);
   document.getElementById('kb-editor').innerHTML = `
-    <div id="kb-busy" style="display:none;gap:8px;align-items:center;background:#EFF6FF;border:1px solid #BFDBFE;color:#1D4ED8;border-radius:10px;padding:8px 11px;margin-bottom:8px;font-size:0.8rem;font-weight:600">
-      <span style="width:12px;height:12px;border-radius:99px;border:2px solid #93C5FD;border-top-color:#1D4ED8;display:inline-block;animation:pxspin .8s linear infinite"></span>
+    <div id="kb-busy" style="display:none;gap:8px;align-items:center;background:#F5F8FE;border:1px solid #DCE6F8;color:#1D4ED8;border-radius:10px;padding:9px 12px;margin-bottom:10px;font-size:0.8rem;font-weight:600">
+      <span style="width:12px;height:12px;border-radius:99px;border:2px solid #C7D6F2;border-top-color:#1D4ED8;display:inline-block;animation:pxspin .8s linear infinite"></span>
       <span data-msg>Processando…</span>
     </div>
-    
-    <div style="position:sticky;top:0;z-index:5;background:#fff;padding-bottom:8px">
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:${discOk?'#ECFDF5':'#FEF2F2'};border:1px solid ${discOk?'#A7F3D0':'#FECACA'};color:${discOk?'#047857':'#B91C1C'};border-radius:10px;padding:8px 11px;font-size:0.8rem;font-weight:600">
-        ${discOk ? esc(discOk) + (kbTopic ? ' › ' + esc(kbTopic) : ' › visão geral') : 'Nenhuma matéria válida selecionada — escolha uma matéria na coluna à esquerda para salvar ou gerar conteúdo.'}
-        ${discOk && kbTopic ? `<a href="workspace.html?id=prf-2021&disc=${encodeURIComponent(discOk)}&topic=${encodeURIComponent(kbTopic)}&tab=tutor" target="_blank" rel="noopener" style="margin-left:auto;color:#1D4ED8;text-decoration:none">Ver como aluno ↗</a>` : ''}
+
+    <div style="position:sticky;top:0;z-index:5;background:#fff;padding-bottom:12px">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:0.875rem;font-weight:650;color:${discOk?'#0F172A':'#B91C1C'};padding:0 2px 10px;border-bottom:1px solid #EEF1F6">
+        ${discOk ? esc(discOk) + (kbTopic ? ' <span style="color:#94A3B8;font-weight:400">›</span> ' + esc(kbTopic) : ' <span style="color:#94A3B8;font-weight:400">› visão geral</span>') : 'Nenhuma matéria válida selecionada — escolha uma matéria na coluna à esquerda para salvar ou gerar conteúdo.'}
+        ${discOk && kbTopic ? `<a href="workspace.html?id=prf-2021&disc=${encodeURIComponent(discOk)}&topic=${encodeURIComponent(kbTopic)}&tab=tutor" target="_blank" rel="noopener" style="margin-left:auto;color:#2563EB;text-decoration:none;font-size:0.8rem;font-weight:600">Ver como aluno ↗</a>` : ''}
       </div>
 
-      <div style="display:flex;gap:6px;margin-top:8px;background:#F1F5F9;border-radius:10px;padding:4px;flex-wrap:wrap">
-        <button class="act" data-panebtn="conteudo" onclick="kbPane('conteudo')" style="border:none;border-radius:8px;font-size:0.78rem;font-weight:700">Conteúdo da aula</button>
-        <button class="act" data-panebtn="ia" onclick="kbPane('ia')" style="border:none;border-radius:8px;font-size:0.78rem;font-weight:700">Material e curso com IA</button>
-        <button class="act" data-panebtn="manut" onclick="kbPane('manut')" style="border:none;border-radius:8px;font-size:0.78rem;font-weight:700">Manutenção${orfaos.length?' ('+orfaos.length+')':''}</button>
+      <div style="display:flex;gap:4px;margin-top:12px;background:#F1F4F9;border-radius:11px;padding:4px;flex-wrap:wrap">
+        <button class="act" data-panebtn="conteudo" onclick="kbPane('conteudo')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Conteúdo da aula</button>
+        <button class="act" data-panebtn="ia" onclick="kbPane('ia')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Material e curso com IA</button>
+        <button class="act" data-panebtn="manut" onclick="kbPane('manut')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Manutenção${orfaos.length?' ('+orfaos.length+')':''}</button>
       </div>
     </div>
     <div data-pane="conteudo">
-    <label class="muted">Conteúdo — ${esc(alvo)}</label>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
-      <span style="font-size:0.72rem;font-weight:700;padding:2px 9px;border-radius:99px;background:${KB_STATUS[st].fundo};color:${KB_STATUS[st].cor}">${KB_STATUS[st].rotulo}</span>
-      <span class="muted" style="font-size:0.75rem">${st==='publicado'?'Esta aula está visível para os alunos.':'Rascunhos e aulas revisadas não aparecem para o aluno.'}</span>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+      <label class="muted" style="margin:0">Conteúdo — ${esc(alvo)}</label>
+      <span class="kb-tag ${st==='publicado'?'is-on':st==='revisado'?'is-wait':''}">${KB_STATUS[st].rotulo}</span>
+      <span class="muted" style="font-size:0.75rem">${st==='publicado'?'Visível para os alunos.':'Rascunhos e aulas revisadas não aparecem para o aluno.'}</span>
     </div>
-    <input id="kb-tit" placeholder="Título da aula (opcional)" value="${esc(doc.titulo||'')}" style="margin-bottom:8px">
+    <input id="kb-tit" placeholder="Título da aula (opcional)" value="${esc(doc.titulo||'')}" style="margin-bottom:10px">
     <textarea id="kb-txt" rows="18" placeholder="Cole aqui o material teórico completo deste tópico. Use ## para títulos, - para listas.">${esc(doc.conteudo||'')}</textarea>
 
-    <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
+    <div class="kb-actions">
       <button class="act" onclick="kbSetStatus('revisado')" ${doc.id&&st!=='revisado'?'':'disabled'}>Marcar como revisado</button>
       <button class="act primary" onclick="kbSetStatus('publicado')" ${doc.id&&st==='revisado'?'':'disabled'}>Publicar para alunos</button>
       ${doc.id&&st==='publicado'?`<button class="act" onclick="kbSetStatus('rascunho')">Despublicar</button>`:''}
@@ -1335,8 +1335,9 @@ function kbEditor(){
       ${doc.id?`<button class="act danger" onclick="kbDelete('${doc.id}')">Excluir</button>`:''}
       <button class="act primary" onclick="kbSave()" ${discOk?'':'disabled'}>Salvar conteúdo</button>
     </div>
-    <p class="muted" id="kb-msg" style="margin-top:8px">${doc.updated_at?'Atualizado em '+dt(doc.updated_at):'Sem conteúdo cadastrado.'}${doc.id&&st==='rascunho'?' · Revise antes de publicar.':''}</p>
+    <p class="muted" id="kb-msg" style="margin-top:10px">${doc.updated_at?'Atualizado em '+dt(doc.updated_at):'Sem conteúdo cadastrado.'}${doc.id&&st==='rascunho'?' · Revise antes de publicar.':''}</p>
     </div>
+
 
     <div data-pane="manut" style="display:none;margin-top:4px;border:1px dashed #E2E8F0;border-radius:12px;padding:10px;font-size:0.8rem">
 
