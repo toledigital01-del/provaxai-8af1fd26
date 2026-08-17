@@ -241,6 +241,55 @@ footer li a:hover{color:var(--brand)}
 .fbot{border-top:1px solid var(--line);margin-top:36px;padding-top:22px;font-size:13px;color:var(--faint);
   display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between}
 
+
+/* ---------- faixa institucional PRF ---------- */
+.prf-stripe{height:4px;background:linear-gradient(90deg,var(--brand) 0 33%,var(--gold) 33% 66%,var(--brand) 66% 100%)}
+
+/* ---------- por dentro (telas reais) ---------- */
+.tabs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:26px}
+.tab{font-size:14px;font-weight:600;padding:9px 16px;border-radius:999px;border:1px solid var(--line);
+  background:var(--surface);color:var(--muted);cursor:pointer;transition:.18s}
+.tab:hover{color:var(--text);border-color:var(--brand)}
+.tab.on{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 6px 16px -8px rgba(11,42,91,.7)}
+.pane{display:none}
+.pane.on{display:block;animation:fadeUp .45s cubic-bezier(.22,1,.36,1) both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}}
+.app{border:1px solid var(--line);border-radius:var(--r-l);overflow:hidden;background:var(--surface);box-shadow:var(--shadow-l)}
+.app-top{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--brand);color:#fff;border-bottom:3px solid var(--gold)}
+.app-top .b{font-family:Sora;font-weight:800;font-size:14px;letter-spacing:-.03em;display:flex;align-items:center;gap:7px}
+.app-top .b i{width:20px;height:20px;border-radius:6px;background:var(--gold);color:#3A2A00;display:grid;place-items:center;font-size:11px;font-style:normal;font-weight:800}
+.app-top .u{margin-left:auto;font-size:11.5px;opacity:.85}
+.app-body{display:grid;grid-template-columns:190px minmax(0,1fr);min-height:400px}
+.app-body.three{grid-template-columns:190px minmax(0,1fr) 250px}
+.app-nav{background:var(--surface-2);border-right:1px solid var(--line);padding:14px 10px}
+.ng{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);padding:12px 9px 5px}
+.ni{display:flex;align-items:center;gap:8px;font-size:12.8px;color:var(--muted);padding:7px 9px;border-radius:8px}
+.ni.on{background:var(--surface);color:var(--brand);font-weight:700;box-shadow:var(--shadow-s);border-left:3px solid var(--gold);padding-left:6px}
+.app-main{padding:20px;min-width:0}
+.app-aside{border-left:1px solid var(--line);background:var(--surface-2);padding:14px}
+@media(max-width:900px){.app-body,.app-body.three{grid-template-columns:1fr}.app-nav,.app-aside{display:none}}
+.crumb{font-size:11.5px;color:var(--faint)}
+.h-t{font-size:19px;margin:6px 0 4px}
+.lesson p{font-size:13.6px;color:var(--muted);margin-top:9px}
+.lesson mark{background:var(--gold-soft);color:inherit;padding:0 3px;border-radius:3px}
+.box{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--bg-soft);margin-top:14px}
+.mini{font-size:11.5px;font-weight:700;padding:6px 12px;border-radius:8px;border:1px solid var(--line);color:var(--brand);background:var(--surface);display:inline-block}
+.mini.g{background:var(--gold);border-color:var(--gold);color:#3A2A00}
+.st{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-top:8px;font-size:13.4px;background:var(--bg-soft)}
+.st i{width:9px;height:9px;border-radius:50%;flex:none}
+.st span.tag{margin-left:auto;font-size:11px;color:var(--faint)}
+.kgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:640px){.kgrid{grid-template-columns:repeat(2,1fr)}}
+.k{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--bg-soft)}
+.k small{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);font-weight:700}
+.k b{display:block;font-family:Sora;font-size:23px;letter-spacing:-.03em;margin-top:4px}
+.row{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);margin-top:12px}
+.row .track{flex:1;height:7px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.row .track i{display:block;height:100%;border-radius:99px;background:var(--brand)}
+.blk{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:12px;align-items:center;border:1px solid var(--line);
+  border-radius:12px;padding:12px 14px;margin-top:9px;background:var(--bg-soft)}
+.blk .hh{font-family:Sora;font-weight:700;font-size:13px;color:var(--brand)}
+
 /* reveal */
 .rv{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.22,1,.36,1),transform .7s cubic-bezier(.22,1,.36,1)}
 .rv.in{opacity:1;transform:none}
@@ -262,6 +311,7 @@ footer li a:hover{color:var(--brand)}
     <nav class="nav only-desk">
       <a href="#curso">Curso PRF</a>
       <a href="#recursos">Recursos</a>
+      <a href="#dentro">Por dentro</a>
       <a href="#como">Como funciona</a>
       <a href="#planos">Planos</a>
       <a href="#faq">Dúvidas</a>
@@ -275,6 +325,7 @@ footer li a:hover{color:var(--brand)}
       </button>
     </div>
   </div>
+<div class="prf-stripe" style="position:fixed;top:66px;left:0;right:0;z-index:59"></div>
 </header>
 <div class="mob" id="mob">
   <a href="#curso">Curso PRF</a>
@@ -473,6 +524,167 @@ footer li a:hover{color:var(--brand)}
         <div class="bar"><span style="width:82%"></span></div>
         <div style="margin-top:10px;font-size:13px;color:var(--muted)">Direito Penal <b style="float:right;color:var(--amber)">54%</b></div>
         <div class="bar"><span style="width:54%;background:linear-gradient(90deg,#FBBF24,#F59E0B)"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- POR DENTRO -->
+<section class="sec" id="dentro">
+  <div class="wrap">
+    <div class="head mid rv">
+      <span class="eyebrow">Por dentro</span>
+      <h2>As telas reais que você vai usar</h2>
+      <p class="lead">Nada de mockup genérico: é o mesmo workspace, a mesma lista de tópicos, o mesmo painel de desempenho e o mesmo cronograma que abrem depois do login.</p>
+    </div>
+
+    <div class="tabs rv">
+      <button class="tab on" data-p="p1">Workspace com a Athena</button>
+      <button class="tab" data-p="p2">Tópicos da disciplina</button>
+      <button class="tab" data-p="p3">Desempenho por capítulo</button>
+      <button class="tab" data-p="p4">Cronograma</button>
+    </div>
+
+    <!-- 1. workspace -->
+    <div class="pane on rv" id="p1">
+      <div class="app">
+        <div class="app-top"><span class="b"><i>X</i> Prova X</span><span class="u">Curso PRF 2021 · aluno</span></div>
+        <div class="app-body three">
+          <div class="app-nav">
+            <div class="ng">Aprender</div>
+            <div class="ni on">Aula com Athena IA</div>
+            <div class="ni">Podcast da aula</div>
+            <div class="ng">Praticar</div>
+            <div class="ni">Questões</div>
+            <div class="ni">Simulado</div>
+            <div class="ni">Flashcards</div>
+            <div class="ng">Revisar</div>
+            <div class="ni">Revisão espaçada</div>
+            <div class="ni">Anotações</div>
+            <div class="ng">Evolução</div>
+            <div class="ni">Estatísticas</div>
+          </div>
+          <div class="app-main">
+            <div class="crumb">Legislação de Trânsito › Cap. 2 · Normas gerais de circulação</div>
+            <h3 class="h-t">Medidas administrativas e penalidades</h3>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px">
+              <span class="chip">Aula publicada</span><span class="chip" style="background:var(--gold-soft);color:var(--gold-2)">Peso alto no edital</span>
+            </div>
+            <div class="lesson">
+              <p><b>Penalidade</b> é a sanção aplicada ao infrator: advertência, multa, suspensão do direito de dirigir e cassação da CNH (<mark>art. 256 do CTB</mark>).</p>
+              <p><b>Medida administrativa</b> é providência imediata, de caráter preventivo: retenção do veículo, remoção, recolhimento da CNH e do CRLV (<mark>art. 269 do CTB</mark>). Ela não pune — resguarda a segurança viária no momento da fiscalização.</p>
+              <p>Na prática da PRF as duas coisas andam juntas: o agente autua (penalidade) e, se houver risco, retém o veículo (medida administrativa).</p>
+            </div>
+            <div class="box">
+              <b style="font-size:13.5px">Fixação imediata</b>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+                <span class="mini g">Praticar 10 questões</span><span class="mini">Ver flashcards</span><span class="mini">Marcar como dominado</span>
+              </div>
+            </div>
+          </div>
+          <div class="app-aside">
+            <div style="display:flex;gap:6px;margin-bottom:12px">
+              <span class="mini g" style="flex:1;text-align:center">Chat</span><span class="mini" style="flex:1;text-align:center">Estatísticas</span>
+            </div>
+            <div class="bubble me" style="margin-left:0;font-size:12px">Cai mais medida ou penalidade?</div>
+            <div class="bubble" style="font-size:12px"><b style="color:var(--brand)">Athena</b> — O Cebraspe adora trocar os dois. Guarde: recolhimento da CNH = medida; suspensão do direito de dirigir = penalidade.</div>
+            <div class="bubble" style="font-size:12px;border-style:dashed">Quer 5 itens certo/errado sobre isso?</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. disciplina -->
+    <div class="pane rv" id="p2">
+      <div class="app">
+        <div class="app-top"><span class="b"><i>X</i> Prova X</span><span class="u">Legislação de Trânsito · 23 tópicos</span></div>
+        <div class="app-body">
+          <div class="app-nav">
+            <div class="ng">Meu material</div>
+            <div class="ni on">Concurso PRF</div>
+            <div class="ni">Meus PDFs</div>
+            <div class="ng">Estudo</div>
+            <div class="ni">Cronograma</div>
+            <div class="ni">Revisão de hoje</div>
+            <div class="ni">Estatísticas</div>
+            <div class="ni">Cobertura do edital</div>
+          </div>
+          <div class="app-main">
+            <div class="box" style="margin-top:0;border-left:3px solid var(--gold)">
+              <div class="crumb">Continue de onde parou</div>
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:6px">
+                <b style="font-size:14.5px">Sistema Nacional de Trânsito — competências</b>
+                <span class="mini g" style="margin-left:auto">Retomar aula</span>
+              </div>
+            </div>
+            <div class="row" style="margin-top:16px"><span>Índice de domínio</span><span class="track"><i style="width:62%"></i></span><b style="color:var(--brand)">62%</b></div>
+            <div class="st"><i style="background:#0F8F5F"></i>Sistema Nacional de Trânsito<span class="tag">dominado</span></div>
+            <div class="st"><i style="background:#1D6FD0"></i>Normas gerais de circulação e conduta<span class="tag">revisar</span></div>
+            <div class="st"><i style="background:#F2B705"></i>Medidas administrativas e penalidades<span class="tag">em andamento</span></div>
+            <div class="st"><i style="background:#C62828"></i>Crimes de trânsito (arts. 302 a 312)<span class="tag">não iniciado</span></div>
+            <div class="st"><i style="background:#C62828"></i>Habilitação e processo de suspensão<span class="tag">não iniciado</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. dashboard -->
+    <div class="pane rv" id="p3">
+      <div class="app">
+        <div class="app-top"><span class="b"><i>X</i> Prova X</span><span class="u">Estatísticas · Curso PRF 2021</span></div>
+        <div class="app-body">
+          <div class="app-nav">
+            <div class="ng">Estudo</div>
+            <div class="ni">Meus concursos</div>
+            <div class="ni">Cronograma</div>
+            <div class="ng">Evolução</div>
+            <div class="ni on">Estatísticas</div>
+            <div class="ni">Cobertura do edital</div>
+          </div>
+          <div class="app-main">
+            <div class="kgrid">
+              <div class="k"><small>Tópicos estudados</small><b>121<span style="font-size:13px;color:var(--faint)">/303</span></b></div>
+              <div class="k"><small>Aproveitamento</small><b style="color:var(--emerald)">71%</b></div>
+              <div class="k"><small>Questões resolvidas</small><b>1.284</b></div>
+              <div class="k"><small>Sequência</small><b>18 dias</b></div>
+            </div>
+            <div style="margin-top:20px;font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)">Desempenho por capítulo do edital</div>
+            <div class="row"><span style="width:180px">Legislação de Trânsito</span><span class="track"><i style="width:82%"></i></span><b>82%</b></div>
+            <div class="row"><span style="width:180px">Direito Constitucional</span><span class="track"><i style="width:67%"></i></span><b>67%</b></div>
+            <div class="row"><span style="width:180px">Direito Penal</span><span class="track"><i style="width:54%;background:var(--gold)"></i></span><b>54%</b></div>
+            <div class="row"><span style="width:180px">Física</span><span class="track"><i style="width:38%;background:var(--rose)"></i></span><b>38%</b></div>
+            <div class="row"><span style="width:180px">Língua Portuguesa</span><span class="track"><i style="width:74%"></i></span><b>74%</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. cronograma -->
+    <div class="pane rv" id="p4">
+      <div class="app">
+        <div class="app-top"><span class="b"><i>X</i> Prova X</span><span class="u">Cronograma adaptativo · semana</span></div>
+        <div class="app-body">
+          <div class="app-nav">
+            <div class="ng">Estudo</div>
+            <div class="ni">Meus concursos</div>
+            <div class="ni on">Cronograma</div>
+            <div class="ni">Revisão de hoje</div>
+            <div class="ng">Evolução</div>
+            <div class="ni">Estatísticas</div>
+          </div>
+          <div class="app-main">
+            <div class="box" style="margin-top:0;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+              <div><div class="crumb">Meta de hoje</div><b style="font-size:15px">3h de estudo · 2 revisões</b></div>
+              <div style="flex:1;min-width:140px"><div class="bar"><span style="width:55%"></span></div><div class="crumb" style="margin-top:5px">1h40 concluídas</div></div>
+              <span class="mini g">Semana</span><span class="mini">Mês</span>
+            </div>
+            <div class="blk"><div class="hh">08:00</div><div><b style="font-size:13.6px">Legislação de Trânsito — Crimes de trânsito</b><div class="crumb">aula + 10 questões · peso alto</div></div><span class="mini">50 min</span></div>
+            <div class="blk"><div class="hh">10:00</div><div><b style="font-size:13.6px">Direito Penal — Concurso de pessoas</b><div class="crumb">domínio baixo · prioridade</div></div><span class="mini">50 min</span></div>
+            <div class="blk"><div class="hh">14:00</div><div><b style="font-size:13.6px">Revisão espaçada</b><div class="crumb">12 cartões vencendo hoje</div></div><span class="mini">25 min</span></div>
+            <div class="blk"><div class="hh">19:00</div><div><b style="font-size:13.6px">Simulado Cebraspe</b><div class="crumb">30 itens certo/errado · pontuação líquida</div></div><span class="mini">45 min</span></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -717,6 +929,16 @@ document.querySelectorAll('.rv').forEach(function (el, i) { el.style.transitionD
     if (b) { b.textContent = 'Minha área'; b.href = 'home.html'; }
   }).catch(function () {});
 })();
+</script>
+<script>
+document.querySelectorAll('.tab').forEach(function(t){
+  t.addEventListener('click',function(){
+    document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on')});
+    document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on')});
+    t.classList.add('on');
+    var p=document.getElementById(t.dataset.p); if(p){p.classList.add('on');p.classList.add('in');}
+  });
+});
 </script>
 </body>
 </html>
