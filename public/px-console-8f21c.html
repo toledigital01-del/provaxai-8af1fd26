@@ -1202,16 +1202,22 @@ function kbEditor(){
     </div>
     <div data-pane="conteudo">
     <label class="muted">Conteúdo — ${esc(alvo)}</label>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+      <span style="font-size:0.72rem;font-weight:700;padding:2px 9px;border-radius:99px;background:${KB_STATUS[st].fundo};color:${KB_STATUS[st].cor}">${KB_STATUS[st].rotulo}</span>
+      <span class="muted" style="font-size:0.75rem">${st==='publicado'?'Esta aula está visível para os alunos.':'Rascunhos e aulas revisadas não aparecem para o aluno.'}</span>
+    </div>
     <input id="kb-tit" placeholder="Título da aula (opcional)" value="${esc(doc.titulo||'')}" style="margin-bottom:8px">
     <textarea id="kb-txt" rows="18" placeholder="Cole aqui o material teórico completo deste tópico. Use ## para títulos, - para listas.">${esc(doc.conteudo||'')}</textarea>
 
     <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
-      <label class="muted" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="kb-pub" ${doc.publicado===false?'':'checked'} style="width:auto"> Publicado para alunos</label>
+      <button class="act" onclick="kbSetStatus('revisado')" ${doc.id&&st!=='revisado'?'':'disabled'}>Marcar como revisado</button>
+      <button class="act primary" onclick="kbSetStatus('publicado')" ${doc.id&&st==='revisado'?'':'disabled'}>Publicar para alunos</button>
+      ${doc.id&&st==='publicado'?`<button class="act" onclick="kbSetStatus('rascunho')">Despublicar</button>`:''}
       <div class="spacer" style="flex:1"></div>
       ${doc.id?`<button class="act danger" onclick="kbDelete('${doc.id}')">Excluir</button>`:''}
       <button class="act primary" onclick="kbSave()" ${discOk?'':'disabled'}>Salvar conteúdo</button>
     </div>
-    <p class="muted" id="kb-msg" style="margin-top:8px">${doc.updated_at?'Atualizado em '+dt(doc.updated_at):'Sem conteúdo cadastrado.'}</p>
+    <p class="muted" id="kb-msg" style="margin-top:8px">${doc.updated_at?'Atualizado em '+dt(doc.updated_at):'Sem conteúdo cadastrado.'}${doc.id&&st==='rascunho'?' · Revise antes de publicar.':''}</p>
     </div>
 
     <div data-pane="manut" style="display:none;margin-top:4px;border:1px dashed #E2E8F0;border-radius:12px;padding:10px;font-size:0.8rem">
