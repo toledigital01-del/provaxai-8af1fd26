@@ -704,8 +704,63 @@ async function viewConhecimento(){
     document.getElementById('kb-grid').style.gridTemplateColumns = '1fr';
   edInit();
   kbPaint();
-
 }
+
+/* ---- Painel com um cartão por matéria (cobertura do edital) ---- */
+function kbPaintVisao(){
+  const box = document.getElementById('kb-visao');
+  if(!box) return;
+  const discs = kbDiscList();
+  if(!discs.length){ box.innerHTML = '<p class="muted">Nenhuma matéria cadastrada ainda.</p>'; return; }
+  box.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">' +
+    discs.map(function(d){
+      const tops = kbTopicList(d);
+      const docs = KB_DOCS.filter(function(x){ return x.disciplina === d && (x.conteudo||'').trim(); });
+      const pub = docs.filter(function(x){ return kbStatusDoc(x) === 'publicado'; }).length;
+      const rasc = docs.filter(function(x){ return kbStatusDoc(x) !== 'publicado'; }).length;
+      const fontes = KB_LIB.filter(function(x){ return x.discipline_nome === d; }).length;
+      const total = tops.length || docs.length || 1;
+      const pct = Math.min(100, Math.round((docs.filter(function(x){ return x.topico && kbStatusDoc(x)==='publicado'; }).length / total) * 100));
+      const cor = pct >= 80 ? '#10B981' : pct >= 30 ? '#F59E0B' : '#EF4444';
+      return '<button class="act" onclick="kbSelDisc(\'' + escJs(d) + '\')" style="display:block;text-align:left;border:1px solid ' + (d===kbDisc?'#2563EB':'#E2E8F0') + ';border-radius:12px;padding:10px 12px;background:#fff">' +
+        '<b style="font-size:0.82rem;display:block;margin-bottom:6px">' + esc(d) + '</b>' +
+        '<div style="height:6px;border-radius:99px;background:#E2E8F0;overflow:hidden;margin-bottom:6px"><div style="height:100%;width:' + pct + '%;background:' + cor + '"></div></div>' +
+        '<span class="muted" style="font-size:0.72rem;display:block">' + pct + '% de cobertura · ' + tops.length + ' tópico(s) do edital</span>' +
+        '<span class="muted" style="font-size:0.72rem;display:block">' + pub + ' publicada(s) · ' + rasc + ' em rascunho · ' + fontes + ' documento(s)-fonte</span>' +
+      '</button>';
+    }).join('') + '</div>';
+}
+
+/* ---- Fila de aulas em rascunho/revisado (ainda invisíveis para o aluno) ---- */
+function kbPaintFila(){
+  const box = document.getElementById('kb-fila');
+  if(!box) return;
+  const pend = KB_DOCS.filter(function(d){ return (d.conteudo||'').trim() && kbStatusDoc(d) !== 'publicado'; });
+  if(!pend.length){ box.innerHTML = '<p class="muted">Nada pendente — todas as aulas com conteúdo já estão publicadas.</p>'; return; }
+  const porDisc = {};
+  pend.forEach(function(d){ (porDisc[d.disciplina] = porDisc[d.disciplina] || []).push(d); });
+  box.innerHTML = Object.keys(porDisc).sort().map(function(d){
+    return '<div style="border:1px solid #E2E8F0;border-radius:12px;margin-bottom:8px;overflow:hidden">' +
+      '<div style="padding:8px 11px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;font-size:0.8rem"><b>' + esc(d) + '</b> <span class="muted">· ' + porDisc[d].length + ' aula(s) pendente(s)</span></div>' +
+      porDisc[d].map(function(x){
+        const st = KB_STATUS[kbStatusDoc(x)];
+        return '<div style="padding:7px 11px;display:flex;gap:8px;align-items:center;border-bottom:1px solid #F1F5F9;font-size:0.78rem">' +
+          '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(x.topico || 'Visão geral da matéria') + '</span>' +
+          '<span style="font-size:0.68rem;font-weight:700;padding:1px 8px;border-radius:99px;background:' + st.fundo + ';color:' + st.cor + '">' + st.rotulo + '</span>' +
+          '<button class="act" onclick="kbAbrirDoc(\'' + escJs(x.disciplina) + '\',' + (x.topico ? "'" + escJs(x.topico) + "'" : 'null') + ')">Revisar</button>' +
+        '</div>';
+      }).join('') + '</div>';
+  }).join('');
+}
+window.kbAbrirDoc = function(d, t){
+  const disc = kbValidDisc(d);
+  if(disc){ kbDisc = disc; }
+  kbTopic = t;
+  KB_PANE = 'conteudo';
+  kbPaint();
+  const el = document.getElementById('kb-editor');
+  if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+};
 
 /* =========================================================
    Carregar edital → IA extrai matérias, tópicos e subtópicos
