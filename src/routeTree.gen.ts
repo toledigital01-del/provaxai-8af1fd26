@@ -17,6 +17,7 @@ import { Route as ApiPublicAthenaRouteImport } from './routes/api/public/athena'
 import { Route as ApiPublicKbAutocourseRouteImport } from './routes/api/public/kb-autocourse'
 import { Route as ApiPublicKbEditalRouteImport } from './routes/api/public/kb-edital'
 import { Route as ApiPublicKbIngestRouteImport } from './routes/api/public/kb-ingest'
+import { Route as ApiPublicPodcastRouteImport } from './routes/api/public/podcast'
 import { Route as ApiPublicResumoRouteImport } from './routes/api/public/resumo'
 import { Route as ApiPublicTtsRouteImport } from './routes/api/public/tts'
 import { Route as ApiPublicHotmartWebhookRouteImport } from './routes/api/public/hotmart/webhook'
@@ -62,6 +63,11 @@ const ApiPublicKbIngestRoute = ApiPublicKbIngestRouteImport.update({
   path: '/api/public/kb-ingest',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPodcastRoute = ApiPublicPodcastRouteImport.update({
+  id: '/api/public/podcast',
+  path: '/api/public/podcast',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicResumoRoute = ApiPublicResumoRouteImport.update({
   id: '/api/public/resumo',
   path: '/api/public/resumo',
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
+  '/api/public/podcast': typeof ApiPublicPodcastRoute
   '/api/public/resumo': typeof ApiPublicResumoRoute
   '/api/public/tts': typeof ApiPublicTtsRoute
   '/api/public/hotmart/webhook': typeof ApiPublicHotmartWebhookRoute
@@ -100,6 +107,7 @@ export interface FileRoutesByTo {
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
+  '/api/public/podcast': typeof ApiPublicPodcastRoute
   '/api/public/resumo': typeof ApiPublicResumoRoute
   '/api/public/tts': typeof ApiPublicTtsRoute
   '/api/public/hotmart/webhook': typeof ApiPublicHotmartWebhookRoute
@@ -114,6 +122,7 @@ export interface FileRoutesById {
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
+  '/api/public/podcast': typeof ApiPublicPodcastRoute
   '/api/public/resumo': typeof ApiPublicResumoRoute
   '/api/public/tts': typeof ApiPublicTtsRoute
   '/api/public/hotmart/webhook': typeof ApiPublicHotmartWebhookRoute
@@ -129,6 +138,7 @@ export interface FileRouteTypes {
     | '/api/public/kb-autocourse'
     | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
+    | '/api/public/podcast'
     | '/api/public/resumo'
     | '/api/public/tts'
     | '/api/public/hotmart/webhook'
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/api/public/kb-autocourse'
     | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
+    | '/api/public/podcast'
     | '/api/public/resumo'
     | '/api/public/tts'
     | '/api/public/hotmart/webhook'
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/api/public/kb-autocourse'
     | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
+    | '/api/public/podcast'
     | '/api/public/resumo'
     | '/api/public/tts'
     | '/api/public/hotmart/webhook'
@@ -169,6 +181,7 @@ export interface RootRouteChildren {
   ApiPublicKbAutocourseRoute: typeof ApiPublicKbAutocourseRoute
   ApiPublicKbEditalRoute: typeof ApiPublicKbEditalRoute
   ApiPublicKbIngestRoute: typeof ApiPublicKbIngestRoute
+  ApiPublicPodcastRoute: typeof ApiPublicPodcastRoute
   ApiPublicResumoRoute: typeof ApiPublicResumoRoute
   ApiPublicTtsRoute: typeof ApiPublicTtsRoute
   ApiPublicHotmartWebhookRoute: typeof ApiPublicHotmartWebhookRoute
@@ -232,6 +245,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicKbIngestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/podcast': {
+      id: '/api/public/podcast'
+      path: '/api/public/podcast'
+      fullPath: '/api/public/podcast'
+      preLoaderRoute: typeof ApiPublicPodcastRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/resumo': {
       id: '/api/public/resumo'
       path: '/api/public/resumo'
@@ -265,6 +285,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicKbAutocourseRoute: ApiPublicKbAutocourseRoute,
   ApiPublicKbEditalRoute: ApiPublicKbEditalRoute,
   ApiPublicKbIngestRoute: ApiPublicKbIngestRoute,
+  ApiPublicPodcastRoute: ApiPublicPodcastRoute,
   ApiPublicResumoRoute: ApiPublicResumoRoute,
   ApiPublicTtsRoute: ApiPublicTtsRoute,
   ApiPublicHotmartWebhookRoute: ApiPublicHotmartWebhookRoute,
