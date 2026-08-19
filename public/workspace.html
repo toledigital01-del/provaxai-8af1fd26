@@ -962,10 +962,34 @@ function renderPane() {
       </div>
     </div>`;
   } else {
+    /* anotações: cache local para abrir na hora + gravação no banco (segue o aluno) */
     const key = 'notes:' + id + ':' + disc + ':' + topic;
-    p.innerHTML = `<div class="pane"><textarea class="notes" id="nt" placeholder="Suas anotações sobre ${topic}...">${localStorage.getItem(key) || ''}</textarea></div>`;
-    document.getElementById('nt').oninput = e => localStorage.setItem(key, e.target.value);
+    p.innerHTML = `<div class="pane">
+      <textarea class="notes" id="nt" placeholder="Suas anotações sobre ${topic}...">${localStorage.getItem(key) || ''}</textarea>
+      <div class="mini"><span id="nt-st" style="align-self:center;font-size:0.8rem;color:var(--muted);">Carregando suas anotações…</span></div>
+    </div>`;
+    const ta = document.getElementById('nt');
+    const st = document.getElementById('nt-st');
+    let timer = null;
+    (async () => {
+      try {
+        const salvo = await PX.getNote(disc, topic);
+        if (!document.getElementById('nt')) return;
+        if (salvo != null && ta.value !== salvo && document.activeElement !== ta) ta.value = salvo;
+        st.textContent = PX.user ? 'Salvo na sua conta.' : 'Entre para salvar as anotações na sua conta.';
+      } catch (e) { st.textContent = ''; }
+    })();
+    ta.oninput = e => {
+      localStorage.setItem(key, e.target.value);
+      st.textContent = 'Salvando…';
+      clearTimeout(timer);
+      timer = setTimeout(async () => {
+        try { await PX.saveNote(disc, topic, e.target.value); st.textContent = 'Salvo na sua conta.'; }
+        catch (err) { st.textContent = 'Salvo neste navegador (sem conexão com a conta).'; }
+      }, 900);
+    };
   }
+
 }
 renderPane();
 
