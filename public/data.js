@@ -307,9 +307,21 @@ const PESO_EDITAL = {
   'Direitos Humanos e Cidadania': { peso: 6, incidencia: 62 },
 };
 
+/* Pesos oficiais vindos do banco (tabela disciplines), sincronizados por px-auth.js.
+   Têm prioridade sobre a tabela fixa acima, para o admin recalibrar sem mexer no código. */
+const PX_PESO_KEY = 'px_pesos_v1';
+function pesosDoBanco() {
+  try { return JSON.parse(localStorage.getItem(PX_PESO_KEY)) || {}; } catch (e) { return {}; }
+}
+
 function pesoDe(disc) {
+  const db = pesosDoBanco()[disc];
+  if (db && typeof db.peso === 'number') {
+    return { peso: db.peso, incidencia: typeof db.incidencia === 'number' ? db.incidencia : (PESO_EDITAL[disc] || {}).incidencia || 50 };
+  }
   return PESO_EDITAL[disc] || { peso: 5, incidencia: 50 };
 }
+
 
 /* Prioridade adaptativa de um tópico: incidência + peso do edital + fraqueza do aluno */
 function prioridadeTopico(disc, topico) {
