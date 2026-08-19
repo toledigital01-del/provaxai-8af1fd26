@@ -553,7 +553,7 @@ async function carregarFlashcards() {
   if (r.status === 401 && window.PX && PX.ready) {
     try { await PX.ready; r = await PX.flashcardsTopico(disc, scope === 'topico' ? topic : null, id); } catch (e) {}
   }
-  try { fcRev = await PX.reviewMap(); } catch (e) { fcRev = {}; }
+  try { await pxReady(); fcRev = await PX.reviewMap(); } catch (e) { fcRev = {}; }
   dbFlash = { state: 'ok', rows: r.rows || [], status: r.status };
   if (tab === 'flashcards') renderPane();
 }
