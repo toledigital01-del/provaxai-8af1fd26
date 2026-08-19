@@ -71,7 +71,7 @@
     try {
       const [{ data: cursos }, { data: discs }, { data: tops }] = await Promise.all([
         PX.sb.from('courses').select('id,slug').order('ordem'),
-        PX.sb.from('disciplines').select('id,course_id,nome,ordem').order('ordem'),
+        PX.sb.from('disciplines').select('id,course_id,nome,ordem,peso,incidencia').order('ordem'),
         PX.sb.from('topics').select('discipline_id,nome,ordem').order('ordem'),
       ]);
       if (!cursos || !discs || !discs.length) return;
