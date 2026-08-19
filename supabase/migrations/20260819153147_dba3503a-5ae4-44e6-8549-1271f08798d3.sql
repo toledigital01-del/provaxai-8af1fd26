@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS kb_documentos_curso_origem_uidx ON public.kb_documentos (course_slug, origem_url);
