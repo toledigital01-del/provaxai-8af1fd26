@@ -542,6 +542,9 @@ async function viewLogs(){
 }
 
 let CFG_STATUS = null;
+let CFG_EXTRAS = [];
+const CFG_JSON_OCULTAS = ['ia_athena','ia_sistema','voz_elevenlabs','integracoes_ia'];
+
 const CFG_PROVEDORES = [
   { id:'lovable', nome:'IA inclusa (Lovable)', dica:'Já vem conectada e não precisa de chave.' },
   { id:'openai', nome:'OpenAI (GPT)', dica:'Requer a chave OPENAI_API_KEY.' },
@@ -586,6 +589,10 @@ async function viewConfig(){
   const conect = (CFG_STATUS && CFG_STATUS.conectado) || {};
   const salvas = {};
   try { const { data: ks } = await PX.sb.from('api_keys').select('chave'); (ks||[]).forEach(k => salvas[k.chave] = true); } catch(e){}
+  const extras = (mapa['integracoes_ia'] && Array.isArray(mapa['integracoes_ia'].valor) ? mapa['integracoes_ia'].valor : [])
+    .filter(x => x && x.env && !CFG_CHAVES.some(c => c.env === x.env));
+  CFG_EXTRAS = extras;
+  const lista = CFG_CHAVES.concat(extras.map(x => ({ id:x.env, env:x.env, nome:x.nome||x.env, exemplo:'cole a credencial', dica:x.dica||'Integração cadastrada por você.', extra:true })));
   const athena = (mapa['ia_athena'] && mapa['ia_athena'].valor) || { provider:'lovable', model:'google/gemini-3-flash-preview' };
   const sistema = (mapa['ia_sistema'] && mapa['ia_sistema'].valor) || { provider:'lovable', model:'google/gemini-3-flash-preview' };
   const voz = (mapa['voz_elevenlabs'] && mapa['voz_elevenlabs'].valor) || { ativo:false, voice_id:'9BWtsMINqrJLrRacOk9x', model:'eleven_turbo_v2_5' };
@@ -595,19 +602,33 @@ async function viewConfig(){
     <h2>Integrações de IA</h2>
     <p class="muted">Cole aqui as chaves de cada serviço. Elas ficam gravadas em área restrita a administradores e nunca aparecem para os alunos.</p>
     <div class="grid">
-      ${CFG_CHAVES.map(c=>`<div class="row">
+      ${lista.map(c=>`<div class="row">
         <div>
-          <label class="muted"><b>${esc(c.nome)}</b> ${cfgPill(!!conect[c.id])} ${salvas[c.env]?'<span class="tag">chave salva no painel</span>':''}</label>
+          <label class="muted"><b>${esc(c.nome)}</b> ${c.extra?'':cfgPill(!!conect[c.id])} ${salvas[c.env]?'<span class="tag">chave salva no painel</span>':''}</label>
           <input id="key-${c.env}" type="password" autocomplete="new-password" placeholder="${salvas[c.env]?'•••••••••• (cole uma nova para trocar)':esc(c.exemplo)}">
-          <div class="muted">${esc(c.dica)}</div>
+          <div class="muted">${esc(c.env)} — ${esc(c.dica)}</div>
         </div>
         <div>
           <button class="act primary" onclick="cfgSalvarChave('${c.env}')">Salvar</button>
+          <button class="act" onclick="cfgTestarChave('${c.env}')">Testar</button>
           ${salvas[c.env]?`<button class="act" onclick="cfgApagarChave('${c.env}')">Remover</button>`:''}
+          ${c.extra?`<button class="act" onclick="cfgRemoverIntegracao('${c.env}')">Excluir integração</button>`:''}
+          <div class="muted" id="teste-${c.env}" style="margin-top:6px"></div>
         </div>
       </div>`).join('')}
     </div>
+    <div id="cfg-nova-int" style="display:none;margin-top:12px;border-top:1px solid var(--linha,#e2e8f0);padding-top:12px">
+      <div class="row">
+        <div><label class="muted">Nome de exibição</label><input id="int-nome" placeholder="Google Drive (conta principal)"></div>
+        <div><label class="muted">Nome da variável / chave</label><input id="int-env" placeholder="GOOGLE_DRIVE_API_KEY_1"></div>
+        <div><label class="muted">Valor da credencial</label><input id="int-valor" type="password" autocomplete="new-password" placeholder="cole aqui"></div>
+      </div>
+      <button class="act primary" onclick="cfgCriarIntegracao()">Cadastrar integração</button>
+      <button class="act" onclick="document.getElementById('cfg-nova-int').style.display='none'">Cancelar</button>
+    </div>
+    <button class="act" style="margin-top:12px" onclick="document.getElementById('cfg-nova-int').style.display='block'">+ Nova integração</button>
   </div>
+
 
 
   <div class="card">
@@ -646,15 +667,61 @@ async function viewConfig(){
 
   <div class="card">
     <h2>Configurações avançadas (JSON)</h2>
-    ${(ps||[]).map(s=>`<div class="row">
+    <p class="muted">Só aparecem aqui as configurações que não têm formulário próprio. IA da Athena, IA do sistema, voz e integrações são editadas nos formulários acima.</p>
+    ${(ps||[]).filter(s=>!CFG_JSON_OCULTAS.includes(s.chave)).map(s=>`<div class="row">
       <div><label class="muted">${esc(s.chave)}</label><input id="ps-${s.id}" value='${esc(JSON.stringify(s.valor))}'></div>
       <div><button class="act" onclick="salvarConfig('${s.id}')">Salvar</button></div>
     </div>`).join('') || '<p class="muted">Nenhuma configuração cadastrada.</p>'}
   </div>`;
+
   pintarSyncAviso();
 }
 
+async function cfgTestarChave(env){
+  const alvo = document.getElementById('teste-'+env);
+  if(alvo) alvo.textContent = 'Testando…';
+  try {
+    const { data:{ session } } = await PX.sb.auth.getSession();
+    const r = await fetch('/api/public/ai-test', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', Authorization: 'Bearer ' + (session ? session.access_token : '') },
+      body: JSON.stringify({ env }),
+    });
+    const j = await r.json().catch(()=>({ ok:false, detalhe:'resposta inválida' }));
+    if(alvo){
+      alvo.textContent = j.ok ? '✓ funcionando' : ('✗ erro: ' + (j.detalhe || j.error || 'falhou'));
+      alvo.style.color = j.ok ? '#166534' : '#991b1b';
+    }
+  } catch(e){
+    if(alvo){ alvo.textContent = '✗ erro: ' + e.message; alvo.style.color = '#991b1b'; }
+  }
+}
+async function cfgCriarIntegracao(){
+  const nome = (document.getElementById('int-nome').value||'').trim();
+  const env = (document.getElementById('int-env').value||'').trim().toUpperCase().replace(/[^A-Z0-9_]/g,'_');
+  const valor = (document.getElementById('int-valor').value||'').trim();
+  if(!nome || !env) return alert('Informe o nome de exibição e o nome da variável.');
+  if(CFG_CHAVES.some(c=>c.env===env)) return alert('Essa integração já existe na lista fixa.');
+  const novas = (CFG_EXTRAS||[]).filter(x=>x.env!==env).concat([{ env, nome }]);
+  if(!(await cfgUpsert('integracoes_ia', novas))) return;
+  if(valor){
+    const { error } = await PX.sb.from('api_keys').upsert({ chave: env, valor, updated_by: PX.user.id }, { onConflict:'chave' });
+    if(error) return alert(error.message);
+    await logAdmin('salvar_chave_api','api_keys',env);
+  }
+  alert('Integração cadastrada.');
+  viewConfig();
+}
+async function cfgRemoverIntegracao(env){
+  if(!confirm('Excluir esta integração da lista? A chave salva também será removida.')) return;
+  const novas = (CFG_EXTRAS||[]).filter(x=>x.env!==env);
+  if(!(await cfgUpsert('integracoes_ia', novas))) return;
+  await PX.sb.from('api_keys').delete().eq('chave', env);
+  await logAdmin('remover_chave_api','api_keys',env);
+  viewConfig();
+}
 async function cfgSalvarChave(env){
+
   const el = document.getElementById('key-'+env);
   const valor = (el.value||'').trim();
   if(!valor) return alert('Cole a chave antes de salvar.');

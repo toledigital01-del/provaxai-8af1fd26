@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ApiPublicAdminDeleteUserRouteImport } from './routes/api/public/admin-delete-user'
 import { Route as ApiPublicAiStatusRouteImport } from './routes/api/public/ai-status'
+import { Route as ApiPublicAiTestRouteImport } from './routes/api/public/ai-test'
 import { Route as ApiPublicAthenaRouteImport } from './routes/api/public/athena'
 import { Route as ApiPublicKbAutocourseRouteImport } from './routes/api/public/kb-autocourse'
 import { Route as ApiPublicKbDriveRouteImport } from './routes/api/public/kb-drive'
@@ -44,6 +45,11 @@ const ApiPublicAdminDeleteUserRoute =
 const ApiPublicAiStatusRoute = ApiPublicAiStatusRouteImport.update({
   id: '/api/public/ai-status',
   path: '/api/public/ai-status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAiTestRoute = ApiPublicAiTestRouteImport.update({
+  id: '/api/public/ai-test',
+  path: '/api/public/ai-test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicAthenaRoute = ApiPublicAthenaRouteImport.update({
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/public/admin-delete-user': typeof ApiPublicAdminDeleteUserRoute
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
+  '/api/public/ai-test': typeof ApiPublicAiTestRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-drive': typeof ApiPublicKbDriveRoute
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/public/admin-delete-user': typeof ApiPublicAdminDeleteUserRoute
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
+  '/api/public/ai-test': typeof ApiPublicAiTestRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-drive': typeof ApiPublicKbDriveRoute
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/public/admin-delete-user': typeof ApiPublicAdminDeleteUserRoute
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
+  '/api/public/ai-test': typeof ApiPublicAiTestRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-drive': typeof ApiPublicKbDriveRoute
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/api/public/admin-delete-user'
     | '/api/public/ai-status'
+    | '/api/public/ai-test'
     | '/api/public/athena'
     | '/api/public/kb-autocourse'
     | '/api/public/kb-drive'
@@ -178,6 +188,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/api/public/admin-delete-user'
     | '/api/public/ai-status'
+    | '/api/public/ai-test'
     | '/api/public/athena'
     | '/api/public/kb-autocourse'
     | '/api/public/kb-drive'
@@ -195,6 +206,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/api/public/admin-delete-user'
     | '/api/public/ai-status'
+    | '/api/public/ai-test'
     | '/api/public/athena'
     | '/api/public/kb-autocourse'
     | '/api/public/kb-drive'
@@ -213,6 +225,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiPublicAdminDeleteUserRoute: typeof ApiPublicAdminDeleteUserRoute
   ApiPublicAiStatusRoute: typeof ApiPublicAiStatusRoute
+  ApiPublicAiTestRoute: typeof ApiPublicAiTestRoute
   ApiPublicAthenaRoute: typeof ApiPublicAthenaRoute
   ApiPublicKbAutocourseRoute: typeof ApiPublicKbAutocourseRoute
   ApiPublicKbDriveRoute: typeof ApiPublicKbDriveRoute
@@ -254,6 +267,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/ai-status'
       fullPath: '/api/public/ai-status'
       preLoaderRoute: typeof ApiPublicAiStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/ai-test': {
+      id: '/api/public/ai-test'
+      path: '/api/public/ai-test'
+      fullPath: '/api/public/ai-test'
+      preLoaderRoute: typeof ApiPublicAiTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/athena': {
@@ -341,6 +361,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiPublicAdminDeleteUserRoute: ApiPublicAdminDeleteUserRoute,
   ApiPublicAiStatusRoute: ApiPublicAiStatusRoute,
+  ApiPublicAiTestRoute: ApiPublicAiTestRoute,
   ApiPublicAthenaRoute: ApiPublicAthenaRoute,
   ApiPublicKbAutocourseRoute: ApiPublicKbAutocourseRoute,
   ApiPublicKbDriveRoute: ApiPublicKbDriveRoute,
