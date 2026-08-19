@@ -244,10 +244,12 @@ async function viewAlunos(){
         dt(p.last_login_at),
         p.suspended?'<span class="pill off">Suspenso</span>':'<span class="pill ok">Ativo</span>',
         temAcesso(p.id)?'<span class="pill ok">Liberado</span>':'<span class="pill off">Sem acesso</span>',
-        `<button class="act ${temAcesso(p.id)?'danger':'primary'}" onclick="acessoCurso('${p.id}',${!temAcesso(p.id)})">${temAcesso(p.id)?'Remover acesso':'Liberar acesso'}</button>
+        `<button class="act" onclick="verDesempenho('${p.id}','${esc(p.full_name||p.email||'aluno').replace(/'/g,'&#39;')}')">Ver desempenho</button>
+         <button class="act ${temAcesso(p.id)?'danger':'primary'}" onclick="acessoCurso('${p.id}',${!temAcesso(p.id)})">${temAcesso(p.id)?'Remover acesso':'Liberar acesso'}</button>
          <button class="act" onclick="toggleAdmin('${p.id}',${(roleMap[p.id]||[]).includes('admin')})">${(roleMap[p.id]||[]).includes('admin')?'Remover admin':'Tornar admin'}</button>
          <button class="act ${p.suspended?'':'danger'}" onclick="suspender('${p.id}',${!p.suspended})">${p.suspended?'Reativar':'Suspender'}</button>
          <button class="act danger" onclick="excluirAluno('${p.id}','${esc(p.email||p.full_name||'')}')">Excluir</button>`
+
 
       ]));
   };
@@ -303,6 +305,71 @@ async function excluirAluno(id, quem){
   }
 }
 
+/* ---------- Desempenho do aluno (somente leitura para o admin) ---------- */
+let _dpAluno = null;
+async function verDesempenho(userId, nome){
+  view.innerHTML = `<div class="card"><h2>Desempenho — ${esc(nome)}</h2><p class="muted">Carregando…</p></div>`;
+  const [{ data: prog }, { data: snaps }] = await Promise.all([
+    PX.sb.from('topic_progress').select('*').eq('user_id', userId),
+    PX.sb.from('dominio_snapshots').select('dia,dominio,acertos_pct,questoes').eq('user_id', userId).order('dia').limit(60),
+  ]);
+  const map = {};
+  (prog||[]).forEach(r=>{ map[r.topic_nome] = {
+    status:r.status, dominio:r.dominio, tempo_segundos:r.tempo_segundos,
+    questoes_respondidas:r.questoes_respondidas, questoes_certas:r.questoes_certas,
+    last_access_at:r.last_access_at }; });
+  _dpAluno = { userId, nome, map, snaps: snaps||[] };
+  pintarDesempenho('geral');
+}
+function _dpAgg(){
+  const antes = PX_PROG_OVERRIDE;
+  PX_PROG_OVERRIDE = _dpAluno.map;
+  try { return desempenhoAgregado('prf-2021'); }
+  finally { PX_PROG_OVERRIDE = antes; }
+}
+function pintarDesempenho(aba){
+  const { nome, snaps } = _dpAluno;
+  const agg = _dpAgg(), t = agg.totals;
+  const tab = (id,label)=>`<button class="act ${aba===id?'primary':''}" onclick="pintarDesempenho('${id}')">${label}</button>`;
+  let corpo = '';
+  if(aba==='geral'){
+    const linha = snaps.length>=3
+      ? tabela(['Dia','Domínio','Acertos','Questões'], snaps.map(s=>[s.dia, s.dominio+'%', s.acertos_pct+'%', s.questoes]))
+      : '<p class="muted">Histórico insuficiente (mínimo de 3 dias registrados).</p>';
+    corpo = `<div class="kpis">
+        <div class="kpi"><b>${t.dominioMedio}%</b><span>Índice de domínio médio</span></div>
+        <div class="kpi"><b>${t.tempo}</b><span>Tempo de estudo</span></div>
+        <div class="kpi"><b>${t.questoes}</b><span>Questões resolvidas</span></div>
+        <div class="kpi"><b>${t.acertoPct}%</b><span>Aproveitamento</span></div>
+        <div class="kpi"><b>${t.saldo}</b><span>Saldo líquido (Cebraspe)</span></div>
+        <div class="kpi"><b>${t.conta.dom}/${t.topicos}</b><span>Tópicos dominados</span></div>
+      </div>
+      <div class="card"><h2>Evolução</h2>${linha}</div>`;
+  } else if(aba==='disciplina'){
+    const rows = agg.discs.slice().sort((a,b)=> b.pct-a.pct || b.peso.peso-a.peso.peso || a.name.localeCompare(b.name));
+    corpo = tabela(['Disciplina','Peso','Domínio','Questões','Acertos','Saldo','Tópicos dominados'],
+      rows.map(d=>[esc(d.name), d.peso.peso, d.pct+'%', d.questoes, d.acertoPct+'%', (d.certas-d.erros), `${d.conta.dom}/${d.topics.length}`]));
+  } else {
+    const rows = [];
+    agg.discs.forEach(d=>d.topics.forEach(tp=>{
+      const p = _dpAluno.map[tp.name] || {};
+      rows.push([esc(d.name), esc(tp.name),
+        ({nao:'Não estudado',apr:'Aprendendo',fam:'Familiar',dom:'Dominado'})[tp.st] || tp.st,
+        tp.prog+'%', p.questoes_respondidas||0, p.questoes_certas||0, p.last_access_at?dt(p.last_access_at):'—']);
+    }));
+    corpo = tabela(['Disciplina','Tópico','Status','Domínio','Questões','Acertos','Último acesso'], rows);
+  }
+  view.innerHTML = `<div class="card">
+      <div class="row" style="align-items:center;gap:10px">
+        <button class="act" onclick="viewAlunos()">← Voltar para Alunos</button>
+        <h2 style="margin:0">Desempenho — ${esc(nome)}</h2>
+      </div>
+      <p class="muted">Visão somente leitura do administrador. Nenhum dado do aluno é alterado.</p>
+      <div class="row">${tab('geral','Geral')}${tab('disciplina','Por disciplina')}${tab('topico','Por tópico')}</div>
+    </div>
+    <div class="card">${corpo}</div>`;
+}
+
 
 async function viewCursos(){
   const { data: cs } = await PX.sb.from('courses').select('*').order('ordem');
@@ -342,10 +409,37 @@ async function viewConteudo(){
   const topCount = {}; (ts||[]).forEach(t=>topCount[t.discipline_id]=(topCount[t.discipline_id]||0)+1);
   const qCount = {}; (qs||[]).forEach(q=>qCount[q.discipline_nome]=(qCount[q.discipline_nome]||0)+1);
   const cname = {}; (cs||[]).forEach(c=>cname[c.id]=c.nome);
-  view.innerHTML = `<div class="card"><h2>Disciplinas e tópicos</h2>${tabela(
+  view.innerHTML = `<div class="card"><h2>Disciplinas e tópicos</h2>
+    <p class="muted">O <b>Peso</b> (1 a 20) e a <b>Incidência</b> (0 a 100%) alimentam o Cronograma inteligente. Edite direto na tabela — vale na próxima geração do cronograma do aluno.</p>
+    <p class="muted" id="dp-msg"></p>
+    ${tabela(
     ['Curso','Disciplina','Tópicos','Peso','Incidência','Questões'],
-    (ds||[]).map(d=>[esc(cname[d.course_id]||'—'), esc(d.nome), topCount[d.id]||0, d.peso, d.incidencia+'%', qCount[d.nome]||0]))}</div>`;
+    (ds||[]).map(d=>[esc(cname[d.course_id]||'—'), esc(d.nome), topCount[d.id]||0,
+      `<input type="number" min="1" max="20" step="1" value="${d.peso}" style="width:74px"
+         onchange="salvarPesoDisc('${d.id}','peso',this)">`,
+      `<input type="number" min="0" max="100" step="1" value="${d.incidencia}" style="width:84px"
+         onchange="salvarPesoDisc('${d.id}','incidencia',this)"> %`,
+      qCount[d.nome]||0]))}</div>`;
 }
+async function salvarPesoDisc(id, campo, el){
+  const msg = document.getElementById('dp-msg');
+  const n = Math.round(Number(el.value));
+  const min = campo==='peso' ? 1 : 0, max = campo==='peso' ? 20 : 100;
+  if(!Number.isFinite(n) || n < min || n > max){
+    el.value = el.defaultValue;
+    if(msg) msg.textContent = `Valor inválido: ${campo==='peso'?'Peso':'Incidência'} deve ser um número inteiro de ${min} a ${max}.`;
+    return;
+  }
+  el.value = n;
+  if(msg) msg.textContent = 'Salvando…';
+  const { error } = await PX.sb.from('disciplines').update({ [campo]: n }).eq('id', id);
+  if(error){ el.value = el.defaultValue; if(msg) msg.textContent = 'Não deu certo: ' + error.message; return; }
+  el.defaultValue = String(n);
+  await logAdmin('editar_'+campo, 'discipline', id, { valor: n });
+  try{ if(PX.syncCurriculo) await PX.syncCurriculo(); }catch(e){}
+  if(msg) msg.textContent = 'Salvo. O Cronograma usa o novo valor na próxima geração.';
+}
+
 
 async function viewFinanceiro(){
   const { data: ps } = await PX.sb.from('purchases').select('*').order('created_at',{ascending:false}).limit(100);
