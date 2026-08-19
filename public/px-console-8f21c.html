@@ -342,10 +342,37 @@ async function viewConteudo(){
   const topCount = {}; (ts||[]).forEach(t=>topCount[t.discipline_id]=(topCount[t.discipline_id]||0)+1);
   const qCount = {}; (qs||[]).forEach(q=>qCount[q.discipline_nome]=(qCount[q.discipline_nome]||0)+1);
   const cname = {}; (cs||[]).forEach(c=>cname[c.id]=c.nome);
-  view.innerHTML = `<div class="card"><h2>Disciplinas e tópicos</h2>${tabela(
+  view.innerHTML = `<div class="card"><h2>Disciplinas e tópicos</h2>
+    <p class="muted">O <b>Peso</b> (1 a 20) e a <b>Incidência</b> (0 a 100%) alimentam o Cronograma inteligente. Edite direto na tabela — vale na próxima geração do cronograma do aluno.</p>
+    <p class="muted" id="dp-msg"></p>
+    ${tabela(
     ['Curso','Disciplina','Tópicos','Peso','Incidência','Questões'],
-    (ds||[]).map(d=>[esc(cname[d.course_id]||'—'), esc(d.nome), topCount[d.id]||0, d.peso, d.incidencia+'%', qCount[d.nome]||0]))}</div>`;
+    (ds||[]).map(d=>[esc(cname[d.course_id]||'—'), esc(d.nome), topCount[d.id]||0,
+      `<input type="number" min="1" max="20" step="1" value="${d.peso}" style="width:74px"
+         onchange="salvarPesoDisc('${d.id}','peso',this)">`,
+      `<input type="number" min="0" max="100" step="1" value="${d.incidencia}" style="width:84px"
+         onchange="salvarPesoDisc('${d.id}','incidencia',this)"> %`,
+      qCount[d.nome]||0]))}</div>`;
 }
+async function salvarPesoDisc(id, campo, el){
+  const msg = document.getElementById('dp-msg');
+  const n = Math.round(Number(el.value));
+  const min = campo==='peso' ? 1 : 0, max = campo==='peso' ? 20 : 100;
+  if(!Number.isFinite(n) || n < min || n > max){
+    el.value = el.defaultValue;
+    if(msg) msg.textContent = `Valor inválido: ${campo==='peso'?'Peso':'Incidência'} deve ser um número inteiro de ${min} a ${max}.`;
+    return;
+  }
+  el.value = n;
+  if(msg) msg.textContent = 'Salvando…';
+  const { error } = await PX.sb.from('disciplines').update({ [campo]: n }).eq('id', id);
+  if(error){ el.value = el.defaultValue; if(msg) msg.textContent = 'Não deu certo: ' + error.message; return; }
+  el.defaultValue = String(n);
+  await logAdmin('editar_'+campo, 'discipline', id, { valor: n });
+  try{ if(PX.syncCurriculo) await PX.syncCurriculo(); }catch(e){}
+  if(msg) msg.textContent = 'Salvo. O Cronograma usa o novo valor na próxima geração.';
+}
+
 
 async function viewFinanceiro(){
   const { data: ps } = await PX.sb.from('purchases').select('*').order('created_at',{ascending:false}).limit(100);
