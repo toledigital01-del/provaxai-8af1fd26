@@ -2433,6 +2433,27 @@ window.kbCorrigirOrfaos = async function(acao){
 };
 
 
+/* Editor de aula: cresce conforme o texto, sem limite de caracteres. */
+window.kbAutoGrow = function(el){
+  if(!el) return;
+  if(!document.getElementById('kb-editor-wrap')?.classList.contains('is-full')){
+    el.style.height = 'auto';
+    el.style.height = Math.max(420, el.scrollHeight + 4) + 'px';
+  }
+  const c = document.getElementById('kb-chars');
+  if(c) c.textContent = String(el.value.length).replace(/\B(?=(\d{3})+(?!\d))/g,'.') + ' caracteres';
+};
+window.kbToggleExpand = function(){
+  const wrap = document.getElementById('kb-editor-wrap');
+  if(!wrap) return;
+  const full = wrap.classList.toggle('is-full');
+  document.body.style.overflow = full ? 'hidden' : '';
+  const b = document.getElementById('kb-expand');
+  if(b) b.textContent = full ? 'Sair da tela cheia' : 'Tela cheia';
+  const t = document.getElementById('kb-txt');
+  if(t){ t.style.height = full ? '' : 'auto'; kbAutoGrow(t); t.focus(); }
+};
+
 window.kbSave = async function(){
   const msg = document.getElementById('kb-msg');
   const conteudo = document.getElementById('kb-txt').value;
