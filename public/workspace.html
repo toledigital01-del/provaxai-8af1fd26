@@ -652,22 +652,37 @@ function renderPane() {
       document.getElementById('fc-retry').onclick = () => carregarFlashcards();
       return;
     }
-    const cards = dbFlash.rows.map(r => ({ q: r.frente, a: r.verso }));
+    const cards = dbFlash.rows.map(r => ({ id: r.id, q: r.frente, a: r.verso }));
     if (!cards.length) {
       p.innerHTML = `<div class="pane">${head}${kbAvisoHTML('Ainda não há flashcards cadastrados para este tópico', 'Os cards de <b>' + esc(topic) + '</b> estão em produção. Enquanto isso, use a aula e o chat da Athena.', '')}</div>`;
       mountScopePicker(); return;
     }
     if (fcIdx >= cards.length) fcIdx = 0;
     const c = cards[fcIdx];
+    const rev = fcRev[c.id];
+    const quando = rev && rev.due_at ? new Date(rev.due_at).toLocaleDateString('pt-BR') : null;
     p.innerHTML = `<div class="pane">
       ${head}
       <div class="fc" id="fc"><div><div class="q">${esc(c.q)}</div>${fcOpen ? `<div class="a">${esc(c.a)}</div>` : '<div class="a">Clique para revelar</div>'}</div></div>
-      <div class="mini"><button id="prev">← Anterior</button><button id="next">Próximo →</button><span style="align-self:center;font-size:0.8rem;color:var(--muted);">${fcIdx+1} de ${cards.length}</span></div>
+      ${fcOpen ? `<div class="mini" id="fc-rate" style="flex-wrap:wrap;">
+        <span style="align-self:center;font-size:0.8rem;color:var(--muted);margin-right:4px;">Como foi?</span>
+        <button data-n="0">Errei</button><button data-n="1">Difícil</button><button data-n="2">Bom</button><button data-n="3">Fácil</button>
+      </div>` : ''}
+      <div class="mini"><button id="prev">← Anterior</button><button id="next">Próximo →</button>
+        <span style="align-self:center;font-size:0.8rem;color:var(--muted);">${fcIdx+1} de ${cards.length}${quando ? ' · próxima revisão: ' + quando : ''}</span></div>
     </div>`;
     mountScopePicker();
     document.getElementById('fc').onclick = () => { fcOpen = !fcOpen; renderPane(); };
     document.getElementById('prev').onclick = () => { fcIdx = (fcIdx - 1 + cards.length) % cards.length; fcOpen = false; renderPane(); };
     document.getElementById('next').onclick = () => { fcIdx = (fcIdx + 1) % cards.length; fcOpen = false; renderPane(); };
+    const rate = document.getElementById('fc-rate');
+    if (rate) rate.querySelectorAll('button').forEach(b => b.onclick = async () => {
+      rate.querySelectorAll('button').forEach(x => x.disabled = true);
+      try { await PX.reviewCard(c.id, Number(b.dataset.n)); fcRev = await PX.reviewMap(); } catch (e) {}
+      try { PX.logSession(disc, topic, 'flashcards', 0); } catch (e) {}
+      fcIdx = (fcIdx + 1) % cards.length; fcOpen = false; renderPane();
+    });
+
   } else if (tab === 'questoes' || tab === 'simulados') {
     const head = `<div class="cesp-head">
         <b>${tab === 'simulados' ? 'Simulado' : 'Bateria de questões'} — estilo Cebraspe/Cespe</b>
