@@ -674,7 +674,51 @@ async function viewConfig(){
   pintarSyncAviso();
 }
 
+async function cfgTestarChave(env){
+  const alvo = document.getElementById('teste-'+env);
+  if(alvo) alvo.textContent = 'Testando…';
+  try {
+    const { data:{ session } } = await PX.sb.auth.getSession();
+    const r = await fetch('/api/public/ai-test', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', Authorization: 'Bearer ' + (session ? session.access_token : '') },
+      body: JSON.stringify({ env }),
+    });
+    const j = await r.json().catch(()=>({ ok:false, detalhe:'resposta inválida' }));
+    if(alvo){
+      alvo.textContent = j.ok ? '✓ funcionando' : ('✗ erro: ' + (j.detalhe || j.error || 'falhou'));
+      alvo.style.color = j.ok ? '#166534' : '#991b1b';
+    }
+  } catch(e){
+    if(alvo){ alvo.textContent = '✗ erro: ' + e.message; alvo.style.color = '#991b1b'; }
+  }
+}
+async function cfgCriarIntegracao(){
+  const nome = (document.getElementById('int-nome').value||'').trim();
+  const env = (document.getElementById('int-env').value||'').trim().toUpperCase().replace(/[^A-Z0-9_]/g,'_');
+  const valor = (document.getElementById('int-valor').value||'').trim();
+  if(!nome || !env) return alert('Informe o nome de exibição e o nome da variável.');
+  if(CFG_CHAVES.some(c=>c.env===env)) return alert('Essa integração já existe na lista fixa.');
+  const novas = (CFG_EXTRAS||[]).filter(x=>x.env!==env).concat([{ env, nome }]);
+  if(!(await cfgUpsert('integracoes_ia', novas))) return;
+  if(valor){
+    const { error } = await PX.sb.from('api_keys').upsert({ chave: env, valor, updated_by: PX.user.id }, { onConflict:'chave' });
+    if(error) return alert(error.message);
+    await logAdmin('salvar_chave_api','api_keys',env);
+  }
+  alert('Integração cadastrada.');
+  viewConfig();
+}
+async function cfgRemoverIntegracao(env){
+  if(!confirm('Excluir esta integração da lista? A chave salva também será removida.')) return;
+  const novas = (CFG_EXTRAS||[]).filter(x=>x.env!==env);
+  if(!(await cfgUpsert('integracoes_ia', novas))) return;
+  await PX.sb.from('api_keys').delete().eq('chave', env);
+  await logAdmin('remover_chave_api','api_keys',env);
+  viewConfig();
+}
 async function cfgSalvarChave(env){
+
   const el = document.getElementById('key-'+env);
   const valor = (el.value||'').trim();
   if(!valor) return alert('Cole a chave antes de salvar.');
