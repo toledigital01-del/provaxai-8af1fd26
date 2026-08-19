@@ -586,6 +586,10 @@ async function viewConfig(){
   const conect = (CFG_STATUS && CFG_STATUS.conectado) || {};
   const salvas = {};
   try { const { data: ks } = await PX.sb.from('api_keys').select('chave'); (ks||[]).forEach(k => salvas[k.chave] = true); } catch(e){}
+  const extras = (mapa['integracoes_ia'] && Array.isArray(mapa['integracoes_ia'].valor) ? mapa['integracoes_ia'].valor : [])
+    .filter(x => x && x.env && !CFG_CHAVES.some(c => c.env === x.env));
+  CFG_EXTRAS = extras;
+  const lista = CFG_CHAVES.concat(extras.map(x => ({ id:x.env, env:x.env, nome:x.nome||x.env, exemplo:'cole a credencial', dica:x.dica||'Integração cadastrada por você.', extra:true })));
   const athena = (mapa['ia_athena'] && mapa['ia_athena'].valor) || { provider:'lovable', model:'google/gemini-3-flash-preview' };
   const sistema = (mapa['ia_sistema'] && mapa['ia_sistema'].valor) || { provider:'lovable', model:'google/gemini-3-flash-preview' };
   const voz = (mapa['voz_elevenlabs'] && mapa['voz_elevenlabs'].valor) || { ativo:false, voice_id:'9BWtsMINqrJLrRacOk9x', model:'eleven_turbo_v2_5' };
@@ -595,19 +599,33 @@ async function viewConfig(){
     <h2>Integrações de IA</h2>
     <p class="muted">Cole aqui as chaves de cada serviço. Elas ficam gravadas em área restrita a administradores e nunca aparecem para os alunos.</p>
     <div class="grid">
-      ${CFG_CHAVES.map(c=>`<div class="row">
+      ${lista.map(c=>`<div class="row">
         <div>
-          <label class="muted"><b>${esc(c.nome)}</b> ${cfgPill(!!conect[c.id])} ${salvas[c.env]?'<span class="tag">chave salva no painel</span>':''}</label>
+          <label class="muted"><b>${esc(c.nome)}</b> ${c.extra?'':cfgPill(!!conect[c.id])} ${salvas[c.env]?'<span class="tag">chave salva no painel</span>':''}</label>
           <input id="key-${c.env}" type="password" autocomplete="new-password" placeholder="${salvas[c.env]?'•••••••••• (cole uma nova para trocar)':esc(c.exemplo)}">
-          <div class="muted">${esc(c.dica)}</div>
+          <div class="muted">${esc(c.env)} — ${esc(c.dica)}</div>
         </div>
         <div>
           <button class="act primary" onclick="cfgSalvarChave('${c.env}')">Salvar</button>
+          <button class="act" onclick="cfgTestarChave('${c.env}')">Testar</button>
           ${salvas[c.env]?`<button class="act" onclick="cfgApagarChave('${c.env}')">Remover</button>`:''}
+          ${c.extra?`<button class="act" onclick="cfgRemoverIntegracao('${c.env}')">Excluir integração</button>`:''}
+          <div class="muted" id="teste-${c.env}" style="margin-top:6px"></div>
         </div>
       </div>`).join('')}
     </div>
+    <div id="cfg-nova-int" style="display:none;margin-top:12px;border-top:1px solid var(--linha,#e2e8f0);padding-top:12px">
+      <div class="row">
+        <div><label class="muted">Nome de exibição</label><input id="int-nome" placeholder="Google Drive (conta principal)"></div>
+        <div><label class="muted">Nome da variável / chave</label><input id="int-env" placeholder="GOOGLE_DRIVE_API_KEY_1"></div>
+        <div><label class="muted">Valor da credencial</label><input id="int-valor" type="password" autocomplete="new-password" placeholder="cole aqui"></div>
+      </div>
+      <button class="act primary" onclick="cfgCriarIntegracao()">Cadastrar integração</button>
+      <button class="act" onclick="document.getElementById('cfg-nova-int').style.display='none'">Cancelar</button>
+    </div>
+    <button class="act" style="margin-top:12px" onclick="document.getElementById('cfg-nova-int').style.display='block'">+ Nova integração</button>
   </div>
+
 
 
   <div class="card">
