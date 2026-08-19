@@ -1602,7 +1602,7 @@ function kbTipoDoc(nome, mime, url){
   return 'texto';
 }
 /* Grava (ou atualiza, se já houver o mesmo link de origem) um documento na biblioteca. */
-async function kbLibGravar(reg){
+async function kbLibGravar(reg, quieto){
   const linha = {
     course_slug: 'prf-2021',
     discipline_nome: kbDisc,
@@ -1617,10 +1617,11 @@ async function kbLibGravar(reg){
   const q = linha.origem_url
     ? await PX.sb.from('kb_documentos').upsert(linha, { onConflict:'course_slug,origem_url' })
     : await PX.sb.from('kb_documentos').insert(linha);
-  if(q.error) kbIngMsg('Documento lido, mas não consegui guardar na biblioteca: ' + q.error.message);
-  await loadLib();
-  kbPaintBiblioteca();
+  if(q.error && !quieto) kbIngMsg('Documento lido, mas não consegui guardar na biblioteca: ' + q.error.message);
+  if(!quieto){ await loadLib(); kbPaintBiblioteca(); }
+  return q.error ? q.error.message : '';
 }
+
 function kbPaintBiblioteca(){
   const box = document.getElementById('kb-biblioteca');
   if(!box) return;
@@ -1657,26 +1658,33 @@ window.kbLibRemover = async function(id){
   await loadLib();
   kbPaintBiblioteca();
 };
-/* Importação do Drive — pronta para ligar assim que as credenciais do Google forem cadastradas. */
+/* Importação do Drive: lê a pasta (ou o arquivo), guarda na biblioteca e já
+   deixa o texto disponível como fonte para montar o curso. */
 window.kbDriveImportar = async function(){
   const msg = document.getElementById('kb-drive-msg');
   const url = (document.getElementById('kb-drive-url')||{}).value || '';
   const setMsg = t => { if(msg) msg.textContent = t; };
   if(!kbValidDisc(kbDisc)) return setMsg('Selecione uma matéria válida antes de importar.');
-  if(!url.trim()) return setMsg('Cole o link da pasta do Google Drive.');
+  if(!url.trim()) return setMsg('Cole o link da pasta ou do arquivo do Google Drive.');
   setMsg('Conectando ao Google Drive…');
   try{
     const j = await kbPost('/api/public/kb-drive', { pasta_url: url.trim(), disciplina: kbDisc, topico: kbTopic || null });
     const arqs = j.arquivos || [];
-    let n = 0;
+    let n = 0, falhas = 0, ultimoErro = '';
     for(const a of arqs){
-      await kbLibGravar({ nome:a.nome, tipo:'google_drive', origem_url:a.origem_url, texto:a.texto, direitos:'terceiro_verificar' });
-      n++;
-      setMsg('Importando ' + n + ' de ' + arqs.length + '…');
+      const erro = await kbLibGravar({ nome:a.nome, tipo:'google_drive', origem_url:a.origem_url, texto:a.texto, direitos:'terceiro_verificar' }, true);
+      if(erro){ falhas++; ultimoErro = erro; }
+      else { kbRegistrarFonte(a.nome, a.texto || ''); n++; }
+      setMsg('Importando ' + (n + falhas) + ' de ' + arqs.length + '…');
     }
-    setMsg(n + ' arquivo(s) importados do Drive para a biblioteca (em rascunho, aguardando revisão).');
+    await loadLib();
+    kbPaintBiblioteca();
+    kbMontarEstado();
+    setMsg(n + ' arquivo(s) importados do Drive e já carregados como material desta matéria.' +
+      (falhas ? ' ' + falhas + ' falharam ao salvar: ' + ultimoErro : ''));
   }catch(e){ setMsg(e.message); }
 };
+
 
 const KB_PREFS_KEY = 'px.kb.prefs';
 function kbPrefsGet(){ try{ return JSON.parse(localStorage.getItem(KB_PREFS_KEY) || '{}'); }catch(e){ return {}; } }
@@ -1878,7 +1886,30 @@ function kbLotes(arr, tam){
   for(let i = 0; i < arr.length; i += tam) out.push(arr.slice(i, i + tam));
   return out;
 }
-async function kbGerarLotes(disciplina, topicos, prefs, material){
+/* Recorta o material mantendo os trechos mais ligados aos tópicos do lote,
+   para apostilas grandes não estourarem o limite do modelo. */
+function kbMaterialLote(material, lote, limite){
+  limite = limite || 120000;
+  if(material.length <= limite) return material;
+  const termos = lote.join(' ').toLowerCase().split(/[^a-zà-ú0-9]+/).filter(function(p){ return p.length > 3; });
+  const blocos = material.split(/\n(?=#{1,3}\s)|\n\s*\n/);
+  const ranq = blocos.map(function(b, i){
+    const t = b.toLowerCase();
+    let s = 0;
+    termos.forEach(function(p){ if(t.indexOf(p) >= 0) s++; });
+    return { i: i, b: b, s: s };
+  }).sort(function(a, b){ return b.s - a.s || a.i - b.i; });
+  const sel = [];
+  let tam = 0;
+  for(const r of ranq){
+    if(tam + r.b.length > limite) continue;
+    sel.push(r); tam += r.b.length;
+    if(tam >= limite * 0.95) break;
+  }
+  if(!sel.length) return material.slice(0, limite);
+  return sel.sort(function(a, b){ return a.i - b.i; }).map(function(r){ return r.b; }).join('\n\n');
+}
+async function kbGerarLotes(disciplina, topicos, prefs, material, exigirTodos){
   const lotes = kbLotes(topicos, 6);
   let feitos = 0;
   for(const lote of lotes){
@@ -1886,9 +1917,10 @@ async function kbGerarLotes(disciplina, topicos, prefs, material){
     kbSetBusy(true, 'Montando aulas de ' + disciplina + ' — ' + (feitos + 1) + ' a ' + Math.min(feitos + lote.length, topicos.length) + ' de ' + topicos.length + '…');
     try{
       const j = await kbPost('/api/public/kb-autocourse', {
-        disciplina, topicos: lote, material: material.slice(0, 300000),
+        disciplina, topicos: lote, material: kbMaterialLote(material, lote),
         modelo: prefs.modelo, banca: prefs.banca, cargo: prefs.cargo,
-        profundidade: prefs.prof, modo_aprovacao: prefs.aprov
+        profundidade: prefs.prof, modo_aprovacao: prefs.aprov,
+        exigir_todos: !!exigirTodos
       });
       (j.aulas || []).forEach(function(a){
         if(!a || !a.topico) return;
@@ -1904,6 +1936,7 @@ async function kbGerarLotes(disciplina, topicos, prefs, material){
     kbPaintPreview();
   }
 }
+
 window.kbMontarCurso = async function(){
   const disciplinaSelecionada = kbValidDisc(kbDisc);
   if(!disciplinaSelecionada) return kbIngMsg('Selecione uma matéria válida antes de montar o curso.');
@@ -1926,7 +1959,7 @@ window.kbMontarCurso = async function(){
       const faltando = topicos.filter(function(t){ return !KB_GERADAS.some(function(a){ return a.topico === t; }); });
       if(!faltando.length) break;
       kbSetBusy(true, 'Completando ' + faltando.length + ' tópico(s) que faltaram…');
-      await kbGerarLotes(disciplinaSelecionada, faltando, prefs, material);
+      await kbGerarLotes(disciplinaSelecionada, faltando, prefs, material, true);
     }
   }catch(e){ kbIngMsg('Erro: ' + e.message); }
   kbSetBusy(false);
@@ -1948,7 +1981,7 @@ window.kbGerarFaltantes = async function(){
   const prefs = { modelo: val('kb-modelo'), banca: val('kb-banca'), cargo: val('kb-cargo'), prof: val('kb-prof') || 'completo',
     aprov: (document.getElementById('kb-aprov')||{}).checked !== false };
   kbSetBusy(true, 'Gerando ' + faltando.length + ' aula(s) que faltam…');
-  await kbGerarLotes(disciplina, faltando, prefs, material);
+  await kbGerarLotes(disciplina, faltando, prefs, material, true);
   kbSetBusy(false);
   kbIngProgHide();
   kbMontarEstado();

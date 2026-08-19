@@ -13,7 +13,9 @@ const Body = z.object({
   cargo: z.string().max(120).optional(),
   profundidade: z.enum(['essencial', 'completo', 'aprofundado']).optional(),
   modo_aprovacao: z.boolean().optional(),
+  exigir_todos: z.boolean().optional(),
 })
+
 
 
 export const Route = createFileRoute('/api/public/kb-autocourse')({
@@ -51,7 +53,14 @@ export const Route = createFileRoute('/api/public/kb-autocourse')({
           'Receberá material bruto (PDF, site, transcrição ou texto) de uma disciplina e a lista oficial de tópicos do edital.',
           'Tarefa: montar o curso, distribuindo e reescrevendo o material em aulas didáticas para os tópicos correspondentes.',
           'Regras:',
-          '- Use apenas tópicos da lista fornecida (texto idêntico). Ignore tópicos sem base no material.',
+          '- Use apenas tópicos da lista fornecida (texto idêntico).',
+          ...(body.exigir_todos
+            ? [
+                '- OBRIGATÓRIO: devolva UMA aula para CADA tópico da lista, sem exceção, na mesma ordem.',
+                '- Se o material não cobrir bem um tópico, escreva a aula com base no que o edital exige, mantendo-se no escopo da disciplina, e avise em uma linha no início: "> Conteúdo baseado no edital — material de apoio insuficiente."',
+              ]
+            : ['- Ignore tópicos sem qualquer base no material.']),
+
           '- Cada aula em Markdown simples: ## para seções, - para listas, **negrito** para pontos de prova.',
           `- Tamanho de cada aula: ${tamanho}.`,
           '- Não invente legislação, jurisprudência nem números; baseie-se no material fornecido.',
