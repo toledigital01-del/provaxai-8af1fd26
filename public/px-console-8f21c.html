@@ -664,11 +664,13 @@ async function viewConfig(){
 
   <div class="card">
     <h2>Configurações avançadas (JSON)</h2>
-    ${(ps||[]).map(s=>`<div class="row">
+    <p class="muted">Só aparecem aqui as configurações que não têm formulário próprio. IA da Athena, IA do sistema, voz e integrações são editadas nos formulários acima.</p>
+    ${(ps||[]).filter(s=>!CFG_JSON_OCULTAS.includes(s.chave)).map(s=>`<div class="row">
       <div><label class="muted">${esc(s.chave)}</label><input id="ps-${s.id}" value='${esc(JSON.stringify(s.valor))}'></div>
       <div><button class="act" onclick="salvarConfig('${s.id}')">Salvar</button></div>
     </div>`).join('') || '<p class="muted">Nenhuma configuração cadastrada.</p>'}
   </div>`;
+
   pintarSyncAviso();
 }
 
