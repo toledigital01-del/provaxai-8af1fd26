@@ -1447,8 +1447,9 @@ function kbDiscItems(){
 function kbTopicItems(){
   const q = kbQt.trim().toLowerCase();
   const tops = kbTopicList(kbDisc).filter(t => !q || t.toLowerCase().includes(q));
-  const geral = (!q || 'visão geral da matéria'.includes(q))
-    ? kbRow('Visão geral da matéria', kbTopic===null, !!(kbFind(kbDisc,null)||{}).conteudo, 'kbSelTopic(null)')
+  const geral = (!q || 'carregar material desta matéria'.includes(q))
+    ? kbRow('📥 Carregar material desta matéria', kbTopic===null, !!(kbFind(kbDisc,null)||{}).conteudo, 'kbSelTopic(null)')
+
     : '';
   if(!geral && !tops.length) return kbVazio('Nenhum tópico com esse nome.');
   return geral + tops.map(t => kbRow(t, t===kbTopic, !!((kbFind(kbDisc,t)||{}).conteudo||'').trim(), `kbSelTopic('${escJs(t)}')`)).join('');
