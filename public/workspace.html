@@ -971,6 +971,10 @@ renderPane();
 /* ---------- Coluna direita ---------- */
 const reco = (TOPICS[disc] || []).filter(t => t !== topic).slice(0, 3);
 document.getElementById('ws-right').innerHTML = `
+  <div class="ws-sheet-head" id="ws-sheet-head">
+    <b>Athena IA</b>
+    <button type="button" class="ws-sheet-close" id="ws-sheet-close" aria-label="Fechar">✕</button>
+  </div>
   <div class="rtabs">
     <button class="rtab active" data-r="chat">Chat</button>
     <button class="rtab" data-r="stats">Estatísticas</button>
@@ -1073,8 +1077,65 @@ document.getElementById('side-form').onsubmit = e => {
     const i2 = history_.findIndex(m => m.pending);
     if (i2 >= 0) history_[i2] = { role: 'ai', ctx, text: resp };
     saveChat(history_); renderChat();
+    if (window.wsSheetNovaResposta) window.wsSheetNovaResposta();
   });
 };
+
+/* ---------- Chat em bottom sheet no mobile ---------- */
+(function () {
+  const fab = document.getElementById('ws-chat-fab');
+  const backdrop = document.getElementById('ws-sheet-backdrop');
+  const sheet = document.getElementById('ws-right');
+  const head = document.getElementById('ws-sheet-head');
+  const closeBtn = document.getElementById('ws-sheet-close');
+  const mq = window.matchMedia('(max-width: 1200px)');
+  const isMobile = () => mq.matches;
+
+  window.wsSheetAberto = () => document.body.classList.contains('sheet-open');
+
+  function abrir() {
+    if (!isMobile()) return;
+    document.body.classList.add('sheet-open');
+    document.body.style.overflow = 'hidden';
+    fab.classList.remove('has-new');
+    const log = document.getElementById('side-log');
+    if (log) log.scrollTop = log.scrollHeight;
+    setTimeout(() => {
+      const inp = document.getElementById('side-msg');
+      if (inp && !document.getElementById('r-chat').hidden) inp.focus();
+    }, 280);
+  }
+  function fechar() {
+    document.body.classList.remove('sheet-open');
+    document.body.style.overflow = '';
+  }
+  window.wsSheetNovaResposta = () => { if (isMobile() && !window.wsSheetAberto()) fab.classList.add('has-new'); };
+
+  fab.addEventListener('click', abrir);
+  backdrop.addEventListener('click', fechar);
+  if (closeBtn) closeBtn.addEventListener('click', fechar);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') fechar(); });
+  mq.addEventListener('change', e => { if (!e.matches) fechar(); });
+
+  /* arrastar a alça para baixo fecha */
+  if (head) {
+    let y0 = null;
+    head.addEventListener('touchstart', e => { y0 = e.touches[0].clientY; sheet.style.transition = 'none'; }, { passive: true });
+    head.addEventListener('touchmove', e => {
+      if (y0 == null) return;
+      const dy = Math.max(0, e.touches[0].clientY - y0);
+      sheet.style.transform = 'translateY(' + dy + 'px)';
+    }, { passive: true });
+    head.addEventListener('touchend', e => {
+      const dy = y0 == null ? 0 : (e.changedTouches[0].clientY - y0);
+      sheet.style.transition = '';
+      sheet.style.transform = '';
+      y0 = null;
+      if (dy > 90) fechar();
+    });
+  }
+})();
+
 </script>
 
 </body>
