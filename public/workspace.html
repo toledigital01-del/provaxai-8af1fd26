@@ -555,7 +555,7 @@ async function carregarFlashcards() {
   }
   try { await pxReady(); fcRev = await PX.reviewMap(); } catch (e) { fcRev = {}; }
   dbFlash = { state: 'ok', rows: r.rows || [], status: r.status };
-  if (tab === 'flashcards') renderPane();
+  if (tab === 'flashcards' || tab === 'revisao') renderPane();
 }
 
 
