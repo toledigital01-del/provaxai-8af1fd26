@@ -8,6 +8,9 @@
 <meta name="description" content="Gestão de alunos, cursos, assinaturas, IA e suporte da plataforma Prova X.">
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  #kb-editor-wrap.is-full{position:fixed;inset:0;z-index:9000;background:#fff;padding:16px 20px;display:flex;flex-direction:column;}
+  #kb-editor-wrap.is-full #kb-txt{flex:1;height:auto !important;min-height:0;resize:none;}
+
   body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#F8FAFC;color:#0F172A;}
   .wrap{max-width:1180px;margin:0 auto;padding:22px 18px 60px;}
   header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
@@ -1473,6 +1476,7 @@ function kbPaint(){
     '<label class="muted">Tópicos</label>' + kbBusca('kb-q-topic', kbQt, 'Buscar tópico…', 'kbFiltroTopic') +
     kbListHTML(kbTopicItems(), 'kb-topic-list');
   kbEditor();
+  if(typeof kbAutoGrow === 'function') kbAutoGrow(document.getElementById('kb-txt'));
   kbPaintVisao();
   kbPaintFila();
 }
@@ -1572,7 +1576,16 @@ function kbEditor(){
       <span class="muted" style="font-size:0.75rem">${st==='publicado'?'Visível para os alunos.':'Rascunhos e aulas revisadas não aparecem para o aluno.'}</span>
     </div>
     <input id="kb-tit" placeholder="Título da aula (opcional)" value="${esc(doc.titulo||'')}" style="margin-bottom:10px">
-    <textarea id="kb-txt" rows="18" placeholder="Cole aqui o material teórico completo deste tópico. Use ## para títulos, - para listas.">${esc(doc.conteudo||'')}</textarea>
+    <div id="kb-editor-wrap">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
+        <span class="muted" style="font-size:0.75rem">Sem limite de tamanho — cole a aula inteira.</span>
+        <span class="spacer" style="flex:1"></span>
+        <span class="muted" id="kb-chars" style="font-size:0.75rem"></span>
+        <button type="button" class="act" id="kb-expand" onclick="kbToggleExpand()" style="font-size:0.75rem;padding:4px 10px">Tela cheia</button>
+      </div>
+      <textarea id="kb-txt" rows="18" oninput="kbAutoGrow(this)" style="min-height:420px;resize:vertical;line-height:1.55" placeholder="Cole aqui o material teórico completo deste tópico. Use ## para títulos, - para listas.">${esc(doc.conteudo||'')}</textarea>
+    </div>
+
 
     <div class="kb-actions">
       <button class="act" onclick="kbSetStatus('revisado')" ${doc.id&&st!=='revisado'?'':'disabled'}>Marcar como revisado</button>
@@ -2423,6 +2436,27 @@ window.kbCorrigirOrfaos = async function(acao){
   kbOrfMsg(orfaos.length + ' conteúdo(s) órfão(s) ' + (acao === 'mover' ? 'movidos para ' + destino + '.' : 'excluídos.'));
 };
 
+
+/* Editor de aula: cresce conforme o texto, sem limite de caracteres. */
+window.kbAutoGrow = function(el){
+  if(!el) return;
+  if(!document.getElementById('kb-editor-wrap')?.classList.contains('is-full')){
+    el.style.height = 'auto';
+    el.style.height = Math.max(420, el.scrollHeight + 4) + 'px';
+  }
+  const c = document.getElementById('kb-chars');
+  if(c) c.textContent = String(el.value.length).replace(/\B(?=(\d{3})+(?!\d))/g,'.') + ' caracteres';
+};
+window.kbToggleExpand = function(){
+  const wrap = document.getElementById('kb-editor-wrap');
+  if(!wrap) return;
+  const full = wrap.classList.toggle('is-full');
+  document.body.style.overflow = full ? 'hidden' : '';
+  const b = document.getElementById('kb-expand');
+  if(b) b.textContent = full ? 'Sair da tela cheia' : 'Tela cheia';
+  const t = document.getElementById('kb-txt');
+  if(t){ t.style.height = full ? '' : 'auto'; kbAutoGrow(t); t.focus(); }
+};
 
 window.kbSave = async function(){
   const msg = document.getElementById('kb-msg');
