@@ -1959,7 +1959,7 @@ window.kbMontarCurso = async function(){
       const faltando = topicos.filter(function(t){ return !KB_GERADAS.some(function(a){ return a.topico === t; }); });
       if(!faltando.length) break;
       kbSetBusy(true, 'Completando ' + faltando.length + ' tópico(s) que faltaram…');
-      await kbGerarLotes(disciplinaSelecionada, faltando, prefs, material);
+      await kbGerarLotes(disciplinaSelecionada, faltando, prefs, material, true);
     }
   }catch(e){ kbIngMsg('Erro: ' + e.message); }
   kbSetBusy(false);
@@ -1981,7 +1981,7 @@ window.kbGerarFaltantes = async function(){
   const prefs = { modelo: val('kb-modelo'), banca: val('kb-banca'), cargo: val('kb-cargo'), prof: val('kb-prof') || 'completo',
     aprov: (document.getElementById('kb-aprov')||{}).checked !== false };
   kbSetBusy(true, 'Gerando ' + faltando.length + ' aula(s) que faltam…');
-  await kbGerarLotes(disciplina, faltando, prefs, material);
+  await kbGerarLotes(disciplina, faltando, prefs, material, true);
   kbSetBusy(false);
   kbIngProgHide();
   kbMontarEstado();
