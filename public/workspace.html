@@ -433,6 +433,71 @@ let dbFlash = { state: 'idle', rows: [], status: 0 };
 let dbQuest = { state: 'idle', rows: [], status: 0 };
 let podState = { state: 'idle', roteiro: [], erro: '' };
 let lacState = { state: 'idle', frases: [], erro: '' };
+let matState = { state: 'idle', rows: [], status: 0, retidos: 0, disc: '' };
+
+/* Material completo: texto integral dos documentos-fonte liberados da matéria */
+function matAlvo() { return scope === 'geral' && selDisc !== 'all' ? selDisc : (scope === 'geral' ? '' : disc); }
+async function carregarMaterial() {
+  const alvo = matAlvo();
+  if (!alvo) { matState = { state: 'ok', rows: [], status: 200, retidos: 0, disc: '' }; return renderPane(); }
+  matState = { state: 'load', rows: [], status: 0, retidos: 0, disc: alvo };
+  renderPane();
+  let r = { status: 0, rows: [] };
+  try { r = await PX.materialCompleto(alvo, id); } catch (e) {}
+  if (r.status === 401 && window.PX && PX.ready) {
+    try { await PX.ready; r = await PX.materialCompleto(alvo, id); } catch (e) {}
+  }
+  let retidos = 0;
+  try { retidos = await PX.materialRetido(alvo, id); } catch (e) {}
+  matState = { state: 'ok', rows: r.rows || [], status: r.status, retidos: retidos, disc: alvo };
+  if (tab === 'material') renderPane();
+}
+
+function renderMaterial(p) {
+  const head = `<div class="cesp-head"><b>Material completo</b><span>${ctxLabel()} — texto integral do material de apoio, sem cortes. A aula resumida da Athena continua na aba “Aula com Athena IA”.</span></div>${scope === 'geral' ? scopePickerHTML() : ''}`;
+  const alvo = matAlvo();
+  if (!alvo) {
+    p.innerHTML = `<div class="pane">${head}<p class="prose" style="color:var(--muted);">Escolha uma disciplina acima para ver o material completo.</p></div>`;
+    mountScopePicker(); return;
+  }
+  if (matState.state !== 'ok' || matState.disc !== alvo) {
+    p.innerHTML = `<div class="pane">${head}<p class="prose" style="color:var(--muted);">Carregando o material completo desta matéria…</p></div>`;
+    mountScopePicker();
+    if (matState.state === 'idle' || matState.disc !== alvo) carregarMaterial();
+    return;
+  }
+  if (matState.status === 401) {
+    p.innerHTML = `<div class="pane">${head}${loginAvisoHTML('ver o material completo')}</div>`;
+    mountScopePicker(); return;
+  }
+  if (matState.status !== 200) {
+    p.innerHTML = `<div class="pane">${head}${kbAvisoHTML('Não consegui carregar o material', 'Verifique sua conexão e tente novamente.', '<p style="margin:12px 0 0"><button class="btn-secondary" id="mat-retry">Tentar de novo</button></p>')}</div>`;
+    mountScopePicker();
+    document.getElementById('mat-retry').onclick = () => carregarMaterial();
+    return;
+  }
+  const nota = matState.retidos > 0
+    ? `<p style="margin:10px 0 0;color:var(--muted);font-size:0.82rem;">Parte do material de apoio desta matéria ainda está em revisão.</p>`
+    : '';
+  if (!matState.rows.length) {
+    p.innerHTML = `<div class="pane">${head}${kbAvisoHTML('Nenhum material completo disponível ainda', 'O material de apoio de <b>' + esc(alvo) + '</b> está sendo preparado. Enquanto isso, use a aula da Athena, as questões e os flashcards.', nota)}</div>`;
+    mountScopePicker(); return;
+  }
+  const corpo = matState.rows.map(d => `
+    <section style="margin-top:22px;padding-top:18px;border-top:1px solid var(--line);">
+      <h3 style="margin:0 0 2px">${esc(d.nome_arquivo || 'Material')}</h3>
+      <p style="margin:0 0 10px;color:var(--muted);font-size:0.78rem;">${esc(d.topic_nome || 'Material geral da matéria')}</p>
+      ${PX.kbHTML(d.texto_extraido || '')}
+    </section>`).join('');
+  p.innerHTML = `<div class="pane prose">${head}
+    <p style="margin:10px 0 0;color:var(--muted);font-size:0.82rem;">${matState.rows.length} documento(s) de apoio · ${esc(alvo)}</p>
+    ${nota}
+    ${corpo}
+  </div>`;
+  mountScopePicker();
+}
+
+
 
 async function carregarFlashcards() {
   dbFlash = { state: 'load', rows: [], status: 0 };
@@ -519,7 +584,10 @@ function renderPane() {
     document.getElementById('fx-r').onclick = () => { rzOn = true; goTab('resumo'); };
     carregarConteudoKB();
 
+  } else if (tab === 'material') {
+    renderMaterial(p);
   } else if (tab === 'resumo') {
+
     renderResumo(p);
   } else if (tab === 'flashcards') {
     const head = `<div class="cesp-head"><b>Flashcards</b><span>${ctxLabel()}</span></div>${scopePickerHTML()}`;
