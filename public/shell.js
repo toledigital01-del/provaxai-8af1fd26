@@ -218,3 +218,16 @@
     });
   }, 40);
 })();
+
+/* Espera o backend (px-auth.js) ficar disponível — px-auth é injetado de forma
+   assíncrona, então páginas que gravam no banco devem aguardar por aqui. */
+window.pxReady = function () {
+  return new Promise(function (resolve) {
+    var t0 = Date.now();
+    (function tick() {
+      if (window.PX && PX.ready) { PX.ready.then(function () { resolve(window.PX); }); return; }
+      if (Date.now() - t0 > 8000) { resolve(null); return; }
+      setTimeout(tick, 60);
+    })();
+  });
+};
