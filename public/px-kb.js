@@ -121,15 +121,16 @@
 
   /* Questões oficiais do tópico. Devolve { status, rows } */
   PX.questoesTopico = async function (disciplina, topico, curso) {
-    return tabela('questions?select=enunciado,gabarito,comentario&' +
+    return tabela('questions?select=id,enunciado,gabarito,comentario&' +
       filtroTopico(disciplina, topico, curso) + '&ativa=is.true&limit=30');
   };
 
   /* Flashcards oficiais do tópico. Devolve { status, rows } */
   PX.flashcardsTopico = async function (disciplina, topico, curso) {
-    return tabela('flashcards?select=frente,verso&' +
+    return tabela('flashcards?select=id,frente,verso&' +
       filtroTopico(disciplina, topico, curso) + '&is_oficial=is.true&limit=50');
   };
+
 
   /* Material completo (texto integral dos documentos-fonte da matéria).
      A política do banco só devolve documentos com direitos liberados
