@@ -1572,7 +1572,16 @@ function kbEditor(){
       <span class="muted" style="font-size:0.75rem">${st==='publicado'?'Visível para os alunos.':'Rascunhos e aulas revisadas não aparecem para o aluno.'}</span>
     </div>
     <input id="kb-tit" placeholder="Título da aula (opcional)" value="${esc(doc.titulo||'')}" style="margin-bottom:10px">
-    <textarea id="kb-txt" rows="18" placeholder="Cole aqui o material teórico completo deste tópico. Use ## para títulos, - para listas.">${esc(doc.conteudo||'')}</textarea>
+    <div id="kb-editor-wrap">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
+        <span class="muted" style="font-size:0.75rem">Sem limite de tamanho — cole a aula inteira.</span>
+        <span class="spacer" style="flex:1"></span>
+        <span class="muted" id="kb-chars" style="font-size:0.75rem"></span>
+        <button type="button" class="act" id="kb-expand" onclick="kbToggleExpand()" style="font-size:0.75rem;padding:4px 10px">Tela cheia</button>
+      </div>
+      <textarea id="kb-txt" rows="18" oninput="kbAutoGrow(this)" style="min-height:420px;resize:vertical;line-height:1.55" placeholder="Cole aqui o material teórico completo deste tópico. Use ## para títulos, - para listas.">${esc(doc.conteudo||'')}</textarea>
+    </div>
+
 
     <div class="kb-actions">
       <button class="act" onclick="kbSetStatus('revisado')" ${doc.id&&st!=='revisado'?'':'disabled'}>Marcar como revisado</button>
