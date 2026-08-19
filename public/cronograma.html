@@ -387,14 +387,38 @@ document.getElementById('open-plan').onclick = () => {
 };
 document.getElementById('m-cancel').onclick = () => modal.classList.remove('open');
 modal.onclick = e => { if (e.target === modal) modal.classList.remove('open'); };
-document.getElementById('m-save').onclick = () => {
+document.getElementById('m-save').onclick = async () => {
   plano.data = document.getElementById('f-data').value;
   plano.horas = Number(document.getElementById('f-horas').value) || 3;
   plano.descanso = Number(document.getElementById('f-desc').value);
   localStorage.setItem(KEY, JSON.stringify(plano));
   modal.classList.remove('open');
   render();
+  /* grava o plano na conta do aluno (segue em qualquer dispositivo) */
+  try {
+    await pxReady();
+    await PX.savePlan({
+      course_slug: mat.id, data_prova: plano.data || null,
+      horas_por_dia: plano.horas, dias_descanso: [Number(plano.descanso) || 0],
+    });
+  } catch (e) {}
 };
+
+/* carrega o plano salvo na conta e sobrepõe o cache local */
+(async () => {
+  try {
+    if (!(await pxReady())) return;
+    const salvo = await PX.getPlan();
+    if (!salvo) return;
+    plano.data = salvo.data_prova || plano.data;
+    plano.horas = Number(salvo.horas_por_dia) || plano.horas;
+    const d = Array.isArray(salvo.dias_descanso) ? salvo.dias_descanso[0] : salvo.dias_descanso;
+    if (d != null) plano.descanso = Number(d) || 0;
+    localStorage.setItem(KEY, JSON.stringify(plano));
+    render();
+  } catch (e) {}
+})();
+
 </script>
 </body>
 </html>

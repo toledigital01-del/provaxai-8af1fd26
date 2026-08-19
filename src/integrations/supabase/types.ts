@@ -345,6 +345,53 @@ export type Database = {
         }
         Relationships: []
       }
+      flashcard_reviews: {
+        Row: {
+          card_id: string
+          created_at: string
+          due_at: string
+          ease: number
+          id: string
+          intervalo_dias: number
+          last_review_at: string
+          repeticoes: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_id: string
+          created_at?: string
+          due_at?: string
+          ease?: number
+          id?: string
+          intervalo_dias?: number
+          last_review_at?: string
+          repeticoes?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_id?: string
+          created_at?: string
+          due_at?: string
+          ease?: number
+          id?: string
+          intervalo_dias?: number
+          last_review_at?: string
+          repeticoes?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flashcard_reviews_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "flashcards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flashcards: {
         Row: {
           course_slug: string | null
