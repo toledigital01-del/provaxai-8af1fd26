@@ -542,6 +542,9 @@ async function viewLogs(){
 }
 
 let CFG_STATUS = null;
+let CFG_EXTRAS = [];
+const CFG_JSON_OCULTAS = ['ia_athena','ia_sistema','voz_elevenlabs','integracoes_ia'];
+
 const CFG_PROVEDORES = [
   { id:'lovable', nome:'IA inclusa (Lovable)', dica:'Já vem conectada e não precisa de chave.' },
   { id:'openai', nome:'OpenAI (GPT)', dica:'Requer a chave OPENAI_API_KEY.' },
