@@ -10,6 +10,44 @@
   .ws-resize { position:absolute; top:0; bottom:0; left:calc(100% - var(--ws-right-w,360px) - 4px); width:8px; cursor:col-resize; z-index:6; touch-action:none; }
   .ws-resize:hover, .ws-resize.dragging { background:rgba(37,99,235,.18); }
   @media (max-width: 1200px) { .ws { grid-template-columns: minmax(0,1fr); height:auto; } .ws-right { border-left:none; border-top:1px solid var(--line); } .ws-resize { display:none; } }
+
+  /* ---- Chat da Athena como bottom sheet (mobile/tablet) ---- */
+  .ws-chat-fab, .ws-sheet-backdrop, .ws-sheet-head { display:none; }
+  @media (max-width: 1200px) {
+    .ws-chat-fab {
+      display:inline-flex; align-items:center; gap:8px; position:fixed;
+      right:16px; bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:60;
+      border:none; border-radius:999px; padding:12px 18px; cursor:pointer;
+      background:#0B2A5B; color:#fff; font-family:inherit; font-size:0.88rem; font-weight:600;
+      box-shadow:0 10px 26px rgba(11,42,91,.32); transition:transform .16s, opacity .16s;
+    }
+    .ws-chat-fab:active { transform:scale(.96); }
+    .ws-chat-fab svg { width:18px; height:18px; }
+    .ws-chat-fab .dot { position:absolute; top:8px; right:10px; width:9px; height:9px; border-radius:50%; background:#F59E0B; border:2px solid #fff; display:none; }
+    .ws-chat-fab.has-new .dot { display:block; }
+    body.sheet-open .ws-chat-fab { opacity:0; pointer-events:none; }
+
+    .ws-sheet-backdrop { display:block; position:fixed; inset:0; z-index:64; background:rgba(15,23,42,.45); opacity:0; pointer-events:none; transition:opacity .22s; }
+    body.sheet-open .ws-sheet-backdrop { opacity:1; pointer-events:auto; }
+
+    body .ws-right {
+      position:fixed; left:0; right:0; bottom:0; z-index:65;
+      height:86vh; max-height:86vh; border-top:1px solid var(--line);
+      border-radius:20px 20px 0 0; box-shadow:0 -14px 40px rgba(15,23,42,.22);
+      transform:translateY(100%); transition:transform .26s cubic-bezier(.32,.72,0,1);
+      display:flex; flex-direction:column; padding:0 16px calc(14px + env(safe-area-inset-bottom,0px));
+      overflow:hidden; background:var(--bg-soft);
+    }
+    body.sheet-open .ws-right { transform:translateY(0); }
+    .ws-sheet-head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0 6px; position:relative; touch-action:none; }
+    .ws-sheet-head::before { content:''; position:absolute; top:6px; left:50%; transform:translateX(-50%); width:42px; height:4px; border-radius:2px; background:var(--line-strong); }
+    .ws-sheet-head b { font-size:0.9rem; margin-top:8px; }
+    .ws-sheet-close { margin-top:8px; border:1px solid var(--line-strong); background:#fff; border-radius:9px; width:30px; height:30px; font-size:1rem; line-height:1; cursor:pointer; color:var(--muted); font-family:inherit; }
+    .ws-right #r-chat { flex:1; min-height:0; display:flex; flex-direction:column; }
+    .ws-right #r-chat .ws-chat { flex:1; min-height:0; display:flex; flex-direction:column; }
+    .ws-right #r-chat .ws-chat .log { flex:1; min-height:0; max-height:none; }
+    .ws-right #r-stats { flex:1; min-height:0; overflow-y:auto; }
+  }
   .fixa { margin-top:26px; padding-top:18px; border-top:1px solid var(--line); }
   .fixa .lbl { font-size:0.95rem; font-weight:600; }
   .fixa .btns { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
@@ -179,10 +217,17 @@
       </section>
 
       <div class="ws-resize" id="ws-resize" title="Arraste para redimensionar"></div>
+      <div class="ws-sheet-backdrop" id="ws-sheet-backdrop"></div>
       <aside class="ws-right" id="ws-right"></aside>
     </div>
   </div>
 </div>
+<button class="ws-chat-fab" id="ws-chat-fab" type="button" aria-label="Abrir chat com a Athena IA">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+  <span>Athena</span>
+  <span class="dot"></span>
+</button>
+
 
 <script src="data.js"></script>
 <script src="shell.js"></script>
@@ -926,6 +971,10 @@ renderPane();
 /* ---------- Coluna direita ---------- */
 const reco = (TOPICS[disc] || []).filter(t => t !== topic).slice(0, 3);
 document.getElementById('ws-right').innerHTML = `
+  <div class="ws-sheet-head" id="ws-sheet-head">
+    <b>Athena IA</b>
+    <button type="button" class="ws-sheet-close" id="ws-sheet-close" aria-label="Fechar">✕</button>
+  </div>
   <div class="rtabs">
     <button class="rtab active" data-r="chat">Chat</button>
     <button class="rtab" data-r="stats">Estatísticas</button>
@@ -1028,8 +1077,65 @@ document.getElementById('side-form').onsubmit = e => {
     const i2 = history_.findIndex(m => m.pending);
     if (i2 >= 0) history_[i2] = { role: 'ai', ctx, text: resp };
     saveChat(history_); renderChat();
+    if (window.wsSheetNovaResposta) window.wsSheetNovaResposta();
   });
 };
+
+/* ---------- Chat em bottom sheet no mobile ---------- */
+(function () {
+  const fab = document.getElementById('ws-chat-fab');
+  const backdrop = document.getElementById('ws-sheet-backdrop');
+  const sheet = document.getElementById('ws-right');
+  const head = document.getElementById('ws-sheet-head');
+  const closeBtn = document.getElementById('ws-sheet-close');
+  const mq = window.matchMedia('(max-width: 1200px)');
+  const isMobile = () => mq.matches;
+
+  window.wsSheetAberto = () => document.body.classList.contains('sheet-open');
+
+  function abrir() {
+    if (!isMobile()) return;
+    document.body.classList.add('sheet-open');
+    document.body.style.overflow = 'hidden';
+    fab.classList.remove('has-new');
+    const log = document.getElementById('side-log');
+    if (log) log.scrollTop = log.scrollHeight;
+    setTimeout(() => {
+      const inp = document.getElementById('side-msg');
+      if (inp && !document.getElementById('r-chat').hidden) inp.focus();
+    }, 280);
+  }
+  function fechar() {
+    document.body.classList.remove('sheet-open');
+    document.body.style.overflow = '';
+  }
+  window.wsSheetNovaResposta = () => { if (isMobile() && !window.wsSheetAberto()) fab.classList.add('has-new'); };
+
+  fab.addEventListener('click', abrir);
+  backdrop.addEventListener('click', fechar);
+  if (closeBtn) closeBtn.addEventListener('click', fechar);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') fechar(); });
+  mq.addEventListener('change', e => { if (!e.matches) fechar(); });
+
+  /* arrastar a alça para baixo fecha */
+  if (head) {
+    let y0 = null;
+    head.addEventListener('touchstart', e => { y0 = e.touches[0].clientY; sheet.style.transition = 'none'; }, { passive: true });
+    head.addEventListener('touchmove', e => {
+      if (y0 == null) return;
+      const dy = Math.max(0, e.touches[0].clientY - y0);
+      sheet.style.transform = 'translateY(' + dy + 'px)';
+    }, { passive: true });
+    head.addEventListener('touchend', e => {
+      const dy = y0 == null ? 0 : (e.changedTouches[0].clientY - y0);
+      sheet.style.transition = '';
+      sheet.style.transform = '';
+      y0 = null;
+      if (dy > 90) fechar();
+    });
+  }
+})();
+
 </script>
 
 </body>
