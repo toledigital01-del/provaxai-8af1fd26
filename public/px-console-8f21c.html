@@ -1886,7 +1886,30 @@ function kbLotes(arr, tam){
   for(let i = 0; i < arr.length; i += tam) out.push(arr.slice(i, i + tam));
   return out;
 }
-async function kbGerarLotes(disciplina, topicos, prefs, material){
+/* Recorta o material mantendo os trechos mais ligados aos tópicos do lote,
+   para apostilas grandes não estourarem o limite do modelo. */
+function kbMaterialLote(material, lote, limite){
+  limite = limite || 120000;
+  if(material.length <= limite) return material;
+  const termos = lote.join(' ').toLowerCase().split(/[^a-zà-ú0-9]+/).filter(function(p){ return p.length > 3; });
+  const blocos = material.split(/\n(?=#{1,3}\s)|\n\s*\n/);
+  const ranq = blocos.map(function(b, i){
+    const t = b.toLowerCase();
+    let s = 0;
+    termos.forEach(function(p){ if(t.indexOf(p) >= 0) s++; });
+    return { i: i, b: b, s: s };
+  }).sort(function(a, b){ return b.s - a.s || a.i - b.i; });
+  const sel = [];
+  let tam = 0;
+  for(const r of ranq){
+    if(tam + r.b.length > limite) continue;
+    sel.push(r); tam += r.b.length;
+    if(tam >= limite * 0.95) break;
+  }
+  if(!sel.length) return material.slice(0, limite);
+  return sel.sort(function(a, b){ return a.i - b.i; }).map(function(r){ return r.b; }).join('\n\n');
+}
+async function kbGerarLotes(disciplina, topicos, prefs, material, exigirTodos){
   const lotes = kbLotes(topicos, 6);
   let feitos = 0;
   for(const lote of lotes){
@@ -1894,9 +1917,10 @@ async function kbGerarLotes(disciplina, topicos, prefs, material){
     kbSetBusy(true, 'Montando aulas de ' + disciplina + ' — ' + (feitos + 1) + ' a ' + Math.min(feitos + lote.length, topicos.length) + ' de ' + topicos.length + '…');
     try{
       const j = await kbPost('/api/public/kb-autocourse', {
-        disciplina, topicos: lote, material: material.slice(0, 300000),
+        disciplina, topicos: lote, material: kbMaterialLote(material, lote),
         modelo: prefs.modelo, banca: prefs.banca, cargo: prefs.cargo,
-        profundidade: prefs.prof, modo_aprovacao: prefs.aprov
+        profundidade: prefs.prof, modo_aprovacao: prefs.aprov,
+        exigir_todos: !!exigirTodos
       });
       (j.aulas || []).forEach(function(a){
         if(!a || !a.topico) return;
@@ -1912,6 +1936,7 @@ async function kbGerarLotes(disciplina, topicos, prefs, material){
     kbPaintPreview();
   }
 }
+
 window.kbMontarCurso = async function(){
   const disciplinaSelecionada = kbValidDisc(kbDisc);
   if(!disciplinaSelecionada) return kbIngMsg('Selecione uma matéria válida antes de montar o curso.');
