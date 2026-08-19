@@ -420,6 +420,42 @@
     return data ? data.conteudo : null;
   };
 
+  /* ---------- Revisão espaçada (SM-2 simplificado) ---------- */
+  /* nota: 0 = errei, 1 = difícil, 2 = bom, 3 = fácil */
+  PX.reviewCard = async function (cardId, nota) {
+    await PX.ready;
+    if (!PX.user || !cardId) return null;
+    const { data: atual } = await PX.sb.from('flashcard_reviews')
+      .select('ease,intervalo_dias,repeticoes').eq('user_id', PX.user.id).eq('card_id', cardId).maybeSingle();
+    let ease = atual ? Number(atual.ease) || 2.5 : 2.5;
+    let rep = atual ? atual.repeticoes || 0 : 0;
+    let intervalo = atual ? atual.intervalo_dias || 0 : 0;
+    const q = Math.max(0, Math.min(3, Number(nota) || 0));
+    if (q === 0) { rep = 0; intervalo = 0; ease = Math.max(1.3, ease - 0.2); }
+    else {
+      rep += 1;
+      ease = Math.max(1.3, Math.min(3.0, ease + (q === 1 ? -0.15 : q === 2 ? 0 : 0.1)));
+      intervalo = rep === 1 ? (q === 1 ? 1 : 2) : rep === 2 ? (q === 1 ? 3 : 6) : Math.round(intervalo * ease) || 6;
+      if (q === 1) intervalo = Math.max(1, Math.round(intervalo * 0.6));
+    }
+    const due = new Date(Date.now() + Math.max(0, intervalo) * 86400000).toISOString();
+    return PX.sb.from('flashcard_reviews').upsert({
+      user_id: PX.user.id, card_id: cardId, ease, intervalo_dias: intervalo,
+      repeticoes: rep, due_at: due, last_review_at: new Date().toISOString(),
+    }, { onConflict: 'user_id,card_id' });
+  };
+
+  /* revisões do aluno indexadas por card (para montar a fila de hoje) */
+  PX.reviewMap = async function () {
+    await PX.ready;
+    if (!PX.user) return {};
+    const { data } = await PX.sb.from('flashcard_reviews')
+      .select('card_id,due_at,intervalo_dias,repeticoes').eq('user_id', PX.user.id);
+    const map = {};
+    (data || []).forEach(r => { map[r.card_id] = r; });
+    return map;
+  };
+
   /* ---------- Cronograma ---------- */
   PX.getPlan = async function () {
     await PX.ready;
@@ -431,10 +467,32 @@
     await PX.ready;
     if (!PX.user) return null;
     return PX.sb.from('study_plans').upsert(
-      { user_id: PX.user.id, data_prova: plan.data_prova || null, horas_por_dia: plan.horas_por_dia || 3, dias_descanso: plan.dias_descanso || [] },
+      { user_id: PX.user.id, course_slug: plan.course_slug || 'prf-2021', data_prova: plan.data_prova || null, horas_por_dia: plan.horas_por_dia || 3, dias_descanso: plan.dias_descanso || [] },
       { onConflict: 'user_id' }
     );
   };
+
+  /* blocos de estudo materializados do dia (concluir/desmarcar acompanha o aluno) */
+  PX.getBlocks = async function (dia) {
+    await PX.ready;
+    if (!PX.user) return [];
+    let q = PX.sb.from('study_blocks').select('*').eq('user_id', PX.user.id);
+    if (dia) q = q.eq('dia', dia);
+    const { data } = await q;
+    return data || [];
+  };
+  PX.saveBlocks = async function (blocos) {
+    await PX.ready;
+    if (!PX.user || !blocos || !blocos.length) return null;
+    return PX.sb.from('study_blocks').upsert(
+      blocos.map(b => ({
+        user_id: PX.user.id, dia: b.dia, discipline_nome: b.disc,
+        topic_nome: b.topic || null, minutos: b.minutos || 0, concluido: !!b.concluido,
+      })),
+      { onConflict: 'user_id,dia,discipline_nome,topic_nome' }
+    );
+  };
+
 
   /* ---------- Catálogo ---------- */
   PX.listCourses = async function () {
