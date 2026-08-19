@@ -367,9 +367,11 @@
     await PX.ready;
     if (!PX.user) return;
     PX.sb.from('question_attempts').insert({
-      user_id: PX.user.id, discipline_nome: a.disc, topic_nome: a.topic,
+      user_id: PX.user.id, discipline_nome: a.disc, topic_nome: a.topic || null,
+      question_id: a.question_id || null,
       resposta: a.resposta, correta: !!a.correta, segundos: a.segundos || 0,
     }).then(() => {});
+
     PX.saveSnapshot();
   };
 
