@@ -1772,8 +1772,8 @@ window.kbDriveImportar = async function(){
   const msg = document.getElementById('kb-drive-msg');
   const url = (document.getElementById('kb-drive-url')||{}).value || '';
   const setMsg = t => { if(msg) msg.textContent = t; };
-  if(!kbValidDisc(kbDisc)) return setMsg('Selecione uma matéria válida antes de importar.');
-  if(!url.trim()) return setMsg('Cole o link da pasta ou do arquivo do Google Drive.');
+  if(!kbValidDisc(kbDisc)){ setMsg('Selecione uma matéria válida antes de importar.'); return 0; }
+  if(!url.trim()){ setMsg('Cole o link da pasta ou do arquivo do Google Drive.'); return 0; }
   setMsg('Conectando ao Google Drive…');
   try{
     const j = await kbPost('/api/public/kb-drive', { pasta_url: url.trim(), disciplina: kbDisc, topico: kbTopic || null });
@@ -1790,8 +1790,20 @@ window.kbDriveImportar = async function(){
     kbMontarEstado();
     setMsg(n + ' arquivo(s) importados do Drive e já carregados como material desta matéria.' +
       (falhas ? ' ' + falhas + ' falharam ao salvar: ' + ultimoErro : ''));
-  }catch(e){ setMsg(e.message); }
+    return n;
+  }catch(e){ setMsg(e.message); return 0; }
 };
+
+/* Importa a pasta do Drive e, terminando bem, já dispara a montagem do curso
+   com as preferências (banca, cargo, profundidade, modo aprovação) da tela. */
+window.kbDriveImportarEMontar = async function(){
+  const msg = document.getElementById('kb-drive-msg');
+  const n = await window.kbDriveImportar();
+  if(!n) return;
+  if(msg) msg.textContent = n + ' arquivo(s) importados. Montando o curso com IA…';
+  await window.kbMontarCurso();
+};
+
 
 
 const KB_PREFS_KEY = 'px.kb.prefs';
