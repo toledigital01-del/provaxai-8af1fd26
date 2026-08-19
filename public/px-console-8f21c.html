@@ -1602,7 +1602,7 @@ function kbTipoDoc(nome, mime, url){
   return 'texto';
 }
 /* Grava (ou atualiza, se já houver o mesmo link de origem) um documento na biblioteca. */
-async function kbLibGravar(reg){
+async function kbLibGravar(reg, quieto){
   const linha = {
     course_slug: 'prf-2021',
     discipline_nome: kbDisc,
@@ -1617,10 +1617,11 @@ async function kbLibGravar(reg){
   const q = linha.origem_url
     ? await PX.sb.from('kb_documentos').upsert(linha, { onConflict:'course_slug,origem_url' })
     : await PX.sb.from('kb_documentos').insert(linha);
-  if(q.error) kbIngMsg('Documento lido, mas não consegui guardar na biblioteca: ' + q.error.message);
-  await loadLib();
-  kbPaintBiblioteca();
+  if(q.error && !quieto) kbIngMsg('Documento lido, mas não consegui guardar na biblioteca: ' + q.error.message);
+  if(!quieto){ await loadLib(); kbPaintBiblioteca(); }
+  return q.error ? q.error.message : '';
 }
+
 function kbPaintBiblioteca(){
   const box = document.getElementById('kb-biblioteca');
   if(!box) return;
