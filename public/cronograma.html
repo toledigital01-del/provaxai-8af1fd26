@@ -396,6 +396,7 @@ document.getElementById('m-save').onclick = async () => {
   render();
   /* grava o plano na conta do aluno (segue em qualquer dispositivo) */
   try {
+    await pxReady();
     await PX.savePlan({
       course_slug: mat.id, data_prova: plano.data || null,
       horas_por_dia: plano.horas, dias_descanso: [Number(plano.descanso) || 0],
@@ -406,7 +407,7 @@ document.getElementById('m-save').onclick = async () => {
 /* carrega o plano salvo na conta e sobrepõe o cache local */
 (async () => {
   try {
-    await PX.ready;
+    if (!(await pxReady())) return;
     const salvo = await PX.getPlan();
     if (!salvo) return;
     plano.data = salvo.data_prova || plano.data;

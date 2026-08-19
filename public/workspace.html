@@ -682,7 +682,7 @@ function renderPane() {
     const rate = document.getElementById('fc-rate');
     if (rate) rate.querySelectorAll('button').forEach(b => b.onclick = async () => {
       rate.querySelectorAll('button').forEach(x => x.disabled = true);
-      try { await PX.reviewCard(c.id, Number(b.dataset.n)); fcRev = await PX.reviewMap(); } catch (e) {}
+      try { await pxReady(); await PX.reviewCard(c.id, Number(b.dataset.n)); fcRev = await PX.reviewMap(); } catch (e) {}
       try { PX.logSession(disc, topic, 'flashcards', 0); } catch (e) {}
       fcIdx = (fcIdx + 1) % cards.length; fcOpen = false; renderPane();
     });
@@ -748,11 +748,11 @@ function renderPane() {
         /* registra a tentativa no banco (alimenta Desempenho e Cobertura) */
         if (primeira) {
           try {
-            PX.logAttempt({
+            pxReady().then(function () { PX.logAttempt({
               disc, topic: scope === 'topico' ? topic : null, question_id: box.dataset.qid || null,
               resposta: b.dataset.v, correta: ok,
               segundos: Math.max(0, Math.round((Date.now() - inicio) / 1000)),
-            });
+            }); });
           } catch (e) {}
         }
       });
@@ -761,7 +761,7 @@ function renderPane() {
       const boxes = [...p.querySelectorAll('.qbox')];
       const resp = boxes.filter(b => b.dataset.resp);
       const certos = resp.filter(b => b.dataset.resp === b.dataset.gab).length;
-      try { PX.logSession(disc, scope === 'topico' ? topic : null, tab, Math.max(0, Math.round((Date.now() - inicio) / 1000))); } catch (e) {}
+      try { pxReady().then(function () { PX.logSession(disc, scope === 'topico' ? topic : null, tab, Math.max(0, Math.round((Date.now() - inicio) / 1000))); }); } catch (e) {}
       alert(`Respondidos: ${resp.length}/${boxes.length}\nAcertos: ${certos}\nLíquido (Cebraspe): ${certos - (resp.length - certos)}`);
     };
 
@@ -973,10 +973,11 @@ function renderPane() {
     let timer = null;
     (async () => {
       try {
+        await pxReady();
         const salvo = await PX.getNote(disc, topic);
         if (!document.getElementById('nt')) return;
         if (salvo != null && ta.value !== salvo && document.activeElement !== ta) ta.value = salvo;
-        st.textContent = PX.user ? 'Salvo na sua conta.' : 'Entre para salvar as anotações na sua conta.';
+        st.textContent = (window.PX && PX.user) ? 'Salvo na sua conta.' : 'Entre para salvar as anotações na sua conta.';
       } catch (e) { st.textContent = ''; }
     })();
     ta.oninput = e => {
@@ -984,7 +985,7 @@ function renderPane() {
       st.textContent = 'Salvando…';
       clearTimeout(timer);
       timer = setTimeout(async () => {
-        try { await PX.saveNote(disc, topic, e.target.value); st.textContent = 'Salvo na sua conta.'; }
+        try { await pxReady(); await PX.saveNote(disc, topic, e.target.value); st.textContent = 'Salvo na sua conta.'; }
         catch (err) { st.textContent = 'Salvo neste navegador (sem conexão com a conta).'; }
       }, 900);
     };
