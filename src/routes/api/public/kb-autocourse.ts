@@ -13,7 +13,9 @@ const Body = z.object({
   cargo: z.string().max(120).optional(),
   profundidade: z.enum(['essencial', 'completo', 'aprofundado']).optional(),
   modo_aprovacao: z.boolean().optional(),
+  exigir_todos: z.boolean().optional(),
 })
+
 
 
 export const Route = createFileRoute('/api/public/kb-autocourse')({
