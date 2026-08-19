@@ -584,7 +584,10 @@ function renderPane() {
     document.getElementById('fx-r').onclick = () => { rzOn = true; goTab('resumo'); };
     carregarConteudoKB();
 
+  } else if (tab === 'material') {
+    renderMaterial(p);
   } else if (tab === 'resumo') {
+
     renderResumo(p);
   } else if (tab === 'flashcards') {
     const head = `<div class="cesp-head"><b>Flashcards</b><span>${ctxLabel()}</span></div>${scopePickerHTML()}`;
