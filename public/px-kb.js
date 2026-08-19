@@ -131,6 +131,34 @@
       filtroTopico(disciplina, topico, curso) + '&is_oficial=is.true&limit=50');
   };
 
+  /* Material completo (texto integral dos documentos-fonte da matéria).
+     A política do banco só devolve documentos com direitos liberados
+     (domínio público ou material próprio); o que estiver em verificação
+     de direitos continua servindo de insumo para a IA, mas não é exibido. */
+  PX.materialCompleto = async function (disciplina, curso) {
+    return tabela('kb_documentos?select=nome_arquivo,tipo,topic_nome,texto_extraido,criado_em' +
+      '&course_slug=eq.' + encodeURIComponent(curso || 'prf-2021') +
+      '&discipline_nome=eq.' + encodeURIComponent(disciplina) +
+      '&order=criado_em.asc');
+  };
+
+  /* Quantos documentos desta matéria estão retidos por revisão de direitos */
+  PX.materialRetido = async function (disciplina, curso) {
+    try {
+      var tk = await PX.token();
+      if (!tk) return 0;
+      var r = await fetch(SB_URL + '/rest/v1/rpc/kb_material_retido', {
+        method: 'POST',
+        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tk, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ _disciplina: disciplina, _curso: curso || 'prf-2021' }),
+      });
+      if (!r.ok) return 0;
+      var n = await r.json();
+      return typeof n === 'number' ? n : 0;
+    } catch (e) { return 0; }
+  };
+
+
   /* Chamada autenticada aos endpoints de IA do Prova X (/api/public/...) */
   PX.iaPost = async function (rota, dados) {
     try {
