@@ -132,10 +132,15 @@ function pxStudyToggle(topic) {
 
 /* ---- Progresso real do aluno (cache do banco, preenchido por px-auth.js) ---- */
 const PX_PROG_KEY = 'px_prog_cache_v1';
+/* Override em memória: usado pelo painel admin para ver o desempenho de outro aluno
+   (somente leitura) sem trocar de conta. null = usa o cache do usuário logado. */
+var PX_PROG_OVERRIDE = null;
 function pxProgAll() {
+  if (PX_PROG_OVERRIDE) return PX_PROG_OVERRIDE;
   try { return JSON.parse(localStorage.getItem(PX_PROG_KEY)) || {}; } catch (e) { return {}; }
 }
 function pxProgGet(topic) { return pxProgAll()[topic] || null; }
+
 function pxProgSaveAll(map) {
   try { localStorage.setItem(PX_PROG_KEY, JSON.stringify(map || {})); } catch (e) {}
 }
