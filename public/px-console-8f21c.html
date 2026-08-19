@@ -305,6 +305,71 @@ async function excluirAluno(id, quem){
   }
 }
 
+/* ---------- Desempenho do aluno (somente leitura para o admin) ---------- */
+let _dpAluno = null;
+async function verDesempenho(userId, nome){
+  view.innerHTML = `<div class="card"><h2>Desempenho — ${esc(nome)}</h2><p class="muted">Carregando…</p></div>`;
+  const [{ data: prog }, { data: snaps }] = await Promise.all([
+    PX.sb.from('topic_progress').select('*').eq('user_id', userId),
+    PX.sb.from('dominio_snapshots').select('dia,dominio,acertos_pct,questoes').eq('user_id', userId).order('dia').limit(60),
+  ]);
+  const map = {};
+  (prog||[]).forEach(r=>{ map[r.topic_nome] = {
+    status:r.status, dominio:r.dominio, tempo_segundos:r.tempo_segundos,
+    questoes_respondidas:r.questoes_respondidas, questoes_certas:r.questoes_certas,
+    last_access_at:r.last_access_at }; });
+  _dpAluno = { userId, nome, map, snaps: snaps||[] };
+  pintarDesempenho('geral');
+}
+function _dpAgg(){
+  const antes = PX_PROG_OVERRIDE;
+  PX_PROG_OVERRIDE = _dpAluno.map;
+  try { return desempenhoAgregado('prf-2021'); }
+  finally { PX_PROG_OVERRIDE = antes; }
+}
+function pintarDesempenho(aba){
+  const { nome, snaps } = _dpAluno;
+  const agg = _dpAgg(), t = agg.totals;
+  const tab = (id,label)=>`<button class="act ${aba===id?'primary':''}" onclick="pintarDesempenho('${id}')">${label}</button>`;
+  let corpo = '';
+  if(aba==='geral'){
+    const linha = snaps.length>=3
+      ? tabela(['Dia','Domínio','Acertos','Questões'], snaps.map(s=>[s.dia, s.dominio+'%', s.acertos_pct+'%', s.questoes]))
+      : '<p class="muted">Histórico insuficiente (mínimo de 3 dias registrados).</p>';
+    corpo = `<div class="kpis">
+        <div class="kpi"><b>${t.dominioMedio}%</b><span>Índice de domínio médio</span></div>
+        <div class="kpi"><b>${t.tempo}</b><span>Tempo de estudo</span></div>
+        <div class="kpi"><b>${t.questoes}</b><span>Questões resolvidas</span></div>
+        <div class="kpi"><b>${t.acertoPct}%</b><span>Aproveitamento</span></div>
+        <div class="kpi"><b>${t.saldo}</b><span>Saldo líquido (Cebraspe)</span></div>
+        <div class="kpi"><b>${t.conta.dom}/${t.topicos}</b><span>Tópicos dominados</span></div>
+      </div>
+      <div class="card"><h2>Evolução</h2>${linha}</div>`;
+  } else if(aba==='disciplina'){
+    const rows = agg.discs.slice().sort((a,b)=> b.pct-a.pct || b.peso.peso-a.peso.peso || a.name.localeCompare(b.name));
+    corpo = tabela(['Disciplina','Peso','Domínio','Questões','Acertos','Saldo','Tópicos dominados'],
+      rows.map(d=>[esc(d.name), d.peso.peso, d.pct+'%', d.questoes, d.acertoPct+'%', (d.certas-d.erros), `${d.conta.dom}/${d.topics.length}`]));
+  } else {
+    const rows = [];
+    agg.discs.forEach(d=>d.topics.forEach(tp=>{
+      const p = _dpAluno.map[tp.name] || {};
+      rows.push([esc(d.name), esc(tp.name),
+        ({nao:'Não estudado',apr:'Aprendendo',fam:'Familiar',dom:'Dominado'})[tp.st] || tp.st,
+        tp.prog+'%', p.questoes_respondidas||0, p.questoes_certas||0, p.last_access_at?dt(p.last_access_at):'—']);
+    }));
+    corpo = tabela(['Disciplina','Tópico','Status','Domínio','Questões','Acertos','Último acesso'], rows);
+  }
+  view.innerHTML = `<div class="card">
+      <div class="row" style="align-items:center;gap:10px">
+        <button class="act" onclick="viewAlunos()">← Voltar para Alunos</button>
+        <h2 style="margin:0">Desempenho — ${esc(nome)}</h2>
+      </div>
+      <p class="muted">Visão somente leitura do administrador. Nenhum dado do aluno é alterado.</p>
+      <div class="row">${tab('geral','Geral')}${tab('disciplina','Por disciplina')}${tab('topico','Por tópico')}</div>
+    </div>
+    <div class="card">${corpo}</div>`;
+}
+
 
 async function viewCursos(){
   const { data: cs } = await PX.sb.from('courses').select('*').order('ordem');
