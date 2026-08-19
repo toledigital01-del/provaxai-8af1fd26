@@ -1658,26 +1658,33 @@ window.kbLibRemover = async function(id){
   await loadLib();
   kbPaintBiblioteca();
 };
-/* Importação do Drive — pronta para ligar assim que as credenciais do Google forem cadastradas. */
+/* Importação do Drive: lê a pasta (ou o arquivo), guarda na biblioteca e já
+   deixa o texto disponível como fonte para montar o curso. */
 window.kbDriveImportar = async function(){
   const msg = document.getElementById('kb-drive-msg');
   const url = (document.getElementById('kb-drive-url')||{}).value || '';
   const setMsg = t => { if(msg) msg.textContent = t; };
   if(!kbValidDisc(kbDisc)) return setMsg('Selecione uma matéria válida antes de importar.');
-  if(!url.trim()) return setMsg('Cole o link da pasta do Google Drive.');
+  if(!url.trim()) return setMsg('Cole o link da pasta ou do arquivo do Google Drive.');
   setMsg('Conectando ao Google Drive…');
   try{
     const j = await kbPost('/api/public/kb-drive', { pasta_url: url.trim(), disciplina: kbDisc, topico: kbTopic || null });
     const arqs = j.arquivos || [];
-    let n = 0;
+    let n = 0, falhas = 0, ultimoErro = '';
     for(const a of arqs){
-      await kbLibGravar({ nome:a.nome, tipo:'google_drive', origem_url:a.origem_url, texto:a.texto, direitos:'terceiro_verificar' });
-      n++;
-      setMsg('Importando ' + n + ' de ' + arqs.length + '…');
+      const erro = await kbLibGravar({ nome:a.nome, tipo:'google_drive', origem_url:a.origem_url, texto:a.texto, direitos:'terceiro_verificar' }, true);
+      if(erro){ falhas++; ultimoErro = erro; }
+      else { kbRegistrarFonte(a.nome, a.texto || ''); n++; }
+      setMsg('Importando ' + (n + falhas) + ' de ' + arqs.length + '…');
     }
-    setMsg(n + ' arquivo(s) importados do Drive para a biblioteca (em rascunho, aguardando revisão).');
+    await loadLib();
+    kbPaintBiblioteca();
+    kbMontarEstado();
+    setMsg(n + ' arquivo(s) importados do Drive e já carregados como material desta matéria.' +
+      (falhas ? ' ' + falhas + ' falharam ao salvar: ' + ultimoErro : ''));
   }catch(e){ setMsg(e.message); }
 };
+
 
 const KB_PREFS_KEY = 'px.kb.prefs';
 function kbPrefsGet(){ try{ return JSON.parse(localStorage.getItem(KB_PREFS_KEY) || '{}'); }catch(e){ return {}; } }
