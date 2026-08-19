@@ -1734,8 +1734,16 @@ function kbPaintBiblioteca(){
   const box = document.getElementById('kb-biblioteca');
   if(!box) return;
   const lista = KB_LIB.filter(function(d){ return d.discipline_nome === kbDisc; });
+  const retidos = lista.filter(function(d){ return d.status_direitos === 'terceiro_verificar'; }).length;
+  const aviso = retidos
+    ? '<div class="kb-tag is-wait" style="display:block;margin-bottom:10px;padding:9px 12px;line-height:1.45">' +
+      '⚠ ' + retidos + ' de ' + lista.length + ' documento(s) desta matéria estão retidos como <b>terceiro — verificar direitos</b>: ' +
+      'servem de insumo para a IA gerar a aula, mas <b>não</b> aparecem para o aluno em “Material completo”. ' +
+      'Reclassifique como “material próprio” ou “domínio público” para liberar.</div>'
+    : '';
   if(!lista.length){ box.innerHTML = '<p class="muted" style="font-size:0.78rem">Nenhum documento-fonte guardado para esta matéria ainda.</p>'; return; }
-  box.innerHTML = '<div class="kb-surface" style="font-size:0.8125rem">' +
+  box.innerHTML = aviso + '<div class="kb-surface" style="font-size:0.8125rem">' +
+
     lista.map(function(d){
       const dir = KB_DIREITOS[d.status_direitos] || KB_DIREITOS.terceiro_verificar;
       const cls = d.status_direitos === 'terceiro_verificar' ? ' is-wait' : d.status_direitos === 'dominio_publico' ? ' is-on' : '';
