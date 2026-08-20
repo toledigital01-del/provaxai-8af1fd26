@@ -1832,14 +1832,8 @@ async function kbPost(path, payload){
   if(!r.ok) throw new Error(j.error || 'Falha na requisição.');
   return j;
 }
-function kbApplyText(texto, origem){
-  const ta = document.getElementById('kb-txt');
-  if(!ta) return;
-  const modo = (document.querySelector('input[name="kb-mode"]:checked')||{}).value || 'append';
-  const bloco = (origem ? `\n\n## Fonte: ${origem}\n` : '\n\n') + texto;
-  ta.value = modo === 'replace' ? texto : (ta.value.trim() ? ta.value + bloco : texto);
-}
 function kbEhTextoSimples(f){
+
   return /^text\//i.test(f.type || '') || /\.(txt|md|markdown|csv|json|srt|vtt|log|tsv)$/i.test(f.name || '');
 }
 function kbEhImagem(f){
