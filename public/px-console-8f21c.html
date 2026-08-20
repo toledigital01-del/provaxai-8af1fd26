@@ -709,12 +709,18 @@ async function cfgTestarChave(env){
     });
     const j = await r.json().catch(()=>({ ok:false, detalhe:'resposta inválida' }));
     if(alvo){
-      alvo.textContent = j.ok ? '✓ funcionando' : ('✗ erro: ' + (j.detalhe || j.error || 'falhou'));
+      alvo.textContent = j.ok ? '✓ chave válida — testada agora' : ('✗ chave inválida: ' + String(j.detalhe || j.error || 'falhou').slice(0,220));
       alvo.style.color = j.ok ? '#166534' : '#991b1b';
     }
+    return !!j.ok;
   } catch(e){
     if(alvo){ alvo.textContent = '✗ erro: ' + e.message; alvo.style.color = '#991b1b'; }
+    return false;
   }
+}
+async function cfgTestarTodas(){
+  const linhas = Array.from(document.querySelectorAll('[data-keyrow]')).map(el => el.getAttribute('data-keyrow'));
+  for(const env of linhas){ await cfgTestarChave(env); }
 }
 async function cfgCriarIntegracao(){
   const nome = (document.getElementById('int-nome').value||'').trim();
