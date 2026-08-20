@@ -1090,6 +1090,7 @@ window.kbAbrirDoc = function(d, t){
   if(disc){ kbDisc = disc; }
   kbTopic = t;
   KB_PANE = 'ia';
+  KB_OPEN = true;
   if(typeof kbSetStep === 'function') kbSetStep('conteudo');
   kbPaint();
   const el = document.getElementById('kb-editor');
@@ -1591,6 +1592,7 @@ window.kbSelDisc = d => {
   kbDisc = disc;
   kbTopic = null;
   kbQt = '';
+  KB_OPEN = true;
 
   KB_GERADAS = [];
   KB_ABERTA = -1;
