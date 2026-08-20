@@ -1467,8 +1467,55 @@ function kbTopicItems(){
 window.kbFiltroDisc = v => { kbQd = v; document.getElementById('kb-disc-list').innerHTML = kbDiscItems(); };
 window.kbFiltroTopic = v => { kbQt = v; document.getElementById('kb-topic-list').innerHTML = kbTopicItems(); };
 
+/* ---- Caixas (uma por matéria) na etapa de Conteúdo ---- */
+let KB_OPEN = false;
+function kbCardDisc(d){
+  const tops = kbTopicList(d);
+  const docs = KB_DOCS.filter(function(x){ return x.disciplina === d && (x.conteudo||'').trim(); });
+  const comAula = tops.filter(function(t){ return !!((kbFind(d,t)||{}).conteudo||'').trim(); }).length;
+  const fontes = KB_LIB.filter(function(x){ return x.discipline_nome === d; }).length;
+  const pct = tops.length ? Math.round(comAula / tops.length * 100) : (docs.length ? 100 : 0);
+  const cor = pct >= 80 ? '#10B981' : pct > 0 ? '#F59E0B' : '#CBD5E1';
+  return '<button class="act" onclick="kbSelDisc(\'' + escJs(d) + '\')" style="display:block;text-align:left;border:1px solid #E9EDF3;border-radius:14px;padding:16px;background:#fff">' +
+    '<span style="display:block;font-size:0.88rem;font-weight:650;line-height:1.35;margin-bottom:4px">' + esc(d) + '</span>' +
+    '<span class="muted" style="display:block;font-size:0.75rem;font-weight:400;margin-bottom:12px">' + tops.length + ' tópicos · ' + fontes + ' documento(s)</span>' +
+    '<span style="display:flex;align-items:center;gap:8px">' +
+      '<span style="flex:1;height:6px;border-radius:99px;background:#EEF1F6;overflow:hidden"><span style="display:block;height:100%;width:' + pct + '%;background:' + cor + '"></span></span>' +
+      '<span style="font-size:0.75rem;font-weight:700;color:#475569">' + pct + '%</span>' +
+    '</span>' +
+  '</button>';
+}
+function kbPaintCards(){
+  const box = document.getElementById('kb-cards');
+  if(!box) return;
+  const discs = kbDiscList();
+  box.innerHTML = discs.length
+    ? '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:4px">' +
+        discs.map(kbCardDisc).join('') + '</div>'
+    : '<p class="muted">Nenhuma matéria cadastrada — carregue o edital na etapa 1.</p>';
+}
+function kbToggleModo(){
+  const cards = document.getElementById('kb-cards-wrap');
+  const grid = document.getElementById('kb-grid');
+  const back = document.getElementById('kb-voltar');
+  if(!cards || !grid) return;
+  cards.style.display = KB_OPEN ? 'none' : '';
+  grid.style.display = KB_OPEN ? 'grid' : 'none';
+  if(back) back.style.display = KB_OPEN ? '' : 'none';
+  if(KB_OPEN) kbAjustarColunas();
+}
+window.kbFecharDisc = function(){
+  if(KB_BUSY) return;
+  KB_OPEN = false;
+  kbToggleModo();
+  kbPaintCards();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
 function kbPaint(){
   const discs = kbDiscList();
+  kbPaintCards();
+  kbToggleModo();
   if(!discs.length){
     document.getElementById('kb-discs').innerHTML = '<label class="muted">Matérias</label>' + kbListHTML(
       kbVazio('Não consegui carregar a lista de matérias. Atualize a página (Ctrl+F5) e tente de novo.'), 'kb-disc-list');
@@ -1487,6 +1534,7 @@ function kbPaint(){
   kbPaintVisao();
   kbPaintFila();
 }
+
 window.kbPane = p => {
   KB_PANE = p;
   document.querySelectorAll('[data-pane]').forEach(el => { el.style.display = el.getAttribute('data-pane') === p ? '' : 'none'; });
