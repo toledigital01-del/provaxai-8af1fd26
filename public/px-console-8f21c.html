@@ -1058,7 +1058,38 @@ function kbPaintVisao(){
         '<span class="muted" style="font-size:0.75rem;display:block;font-weight:400">' + tops.length + ' tópicos · ' + pub + ' publicadas</span>' +
         '<span class="muted" style="font-size:0.75rem;display:block;font-weight:400">' + rasc + ' em rascunho · ' + fontes + ' documentos-fonte</span>' +
       '</button>';
-    }).join('') + '</div>';
+    }).join('') + '</div>' + kbCoberturaDetalhe(discs);
+}
+
+/* Checklist do edital: tópico a tópico, o que já tem material e o que falta. */
+function kbCoberturaDetalhe(discs){
+  let totalTop = 0, totalOk = 0;
+  const blocos = discs.map(function(d){
+    const tops = kbTopicList(d);
+    const linhas = tops.map(function(t){
+      const doc = kbFind(d, t) || {};
+      const tem = !!((doc.conteudo||'').trim());
+      const st = tem ? kbStatusDoc(doc) : null;
+      totalTop++; if(tem) totalOk++;
+      const cor = !tem ? '#DC2626' : st === 'publicado' ? '#047857' : '#B45309';
+      const rot = !tem ? 'Sem material' : st === 'publicado' ? 'Publicado' : KB_STATUS[st].rotulo;
+      return '<div style="display:flex;gap:10px;align-items:center;padding:8px 13px;border-bottom:1px solid #F5F7FA;font-size:0.8rem">' +
+        '<span style="width:6px;height:6px;border-radius:99px;background:' + cor + ';flex:none"></span>' +
+        '<span style="flex:1;min-width:0">' + esc(t) + '</span>' +
+        '<span class="kb-tag" style="color:' + cor + '">' + rot + '</span>' +
+        '<button class="act" onclick="kbAbrirDoc(\'' + escJs(d) + '\',\'' + escJs(t) + '\')">Abrir</button>' +
+      '</div>';
+    }).join('');
+    const ok = tops.filter(function(t){ return !!((kbFind(d,t)||{}).conteudo||'').trim(); }).length;
+    return '<details style="margin-top:10px" ' + (ok < tops.length ? '' : '') + '>' +
+      '<summary style="cursor:pointer;font-size:0.85rem;font-weight:650;padding:6px 2px">' + esc(d) +
+        ' <span class="muted" style="font-weight:400">· ' + ok + '/' + tops.length + ' tópicos com material</span></summary>' +
+      '<div class="kb-surface" style="margin-top:8px">' + (linhas || kbVazio('Sem tópicos cadastrados.')) + '</div></details>';
+  }).join('');
+  const pct = totalTop ? Math.round(totalOk / totalTop * 100) : 0;
+  return '<hr class="kb-hr"><h4>Checklist do edital</h4>' +
+    '<p class="muted" style="margin:4px 0 10px">' + totalOk + ' de ' + totalTop + ' tópicos do edital já têm material (' + pct + '%). ' +
+    'Vermelho = nenhum material; amarelo = material em rascunho/revisão; verde = publicado para o aluno.</p>' + blocos;
 }
 
 /* ---- Fila de aulas em rascunho/revisado (ainda invisíveis para o aluno) ---- */
