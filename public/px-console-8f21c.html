@@ -604,7 +604,10 @@ async function viewConfig(){
   } catch(e){ CFG_STATUS = null; }
   const conect = (CFG_STATUS && CFG_STATUS.conectado) || {};
   const salvas = {};
-  try { const { data: ks } = await PX.sb.from('api_keys').select('chave'); (ks||[]).forEach(k => salvas[k.chave] = true); } catch(e){}
+  try {
+    const { data: ks } = await PX.sb.from('api_keys').select('chave,valor,updated_at');
+    (ks||[]).forEach(k => { salvas[k.chave] = { mask: cfgMascara(k.valor), data: k.updated_at ? dt(k.updated_at) : '' }; });
+  } catch(e){}
   const extras = (mapa['integracoes_ia'] && Array.isArray(mapa['integracoes_ia'].valor) ? mapa['integracoes_ia'].valor : [])
     .filter(x => x && x.env && !CFG_CHAVES.some(c => c.env === x.env));
   CFG_EXTRAS = extras;
