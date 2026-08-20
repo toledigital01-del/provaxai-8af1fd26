@@ -17,7 +17,7 @@
     return ok ? d : '';
   }
 
-  var STATUS = ['rascunho', 'revisado', 'publicado'];
+  var STATUS = ['rascunho', 'publicado'];
 
   /* Status de revisão válido; padrão rascunho (aula só aparece ao aluno quando "publicado"). */
   function validarStatus(valor) {

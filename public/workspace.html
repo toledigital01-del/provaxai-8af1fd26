@@ -493,9 +493,7 @@ async function carregarMaterial() {
   if (r.status === 401 && window.PX && PX.ready) {
     try { await PX.ready; r = await PX.materialCompleto(alvo, id); } catch (e) {}
   }
-  let retidos = 0;
-  try { retidos = await PX.materialRetido(alvo, id); } catch (e) {}
-  matState = { state: 'ok', rows: r.rows || [], status: r.status, retidos: retidos, disc: alvo };
+  matState = { state: 'ok', rows: r.rows || [], status: r.status, retidos: 0, disc: alvo };
   if (tab === 'material') renderPane();
 }
 
@@ -522,9 +520,7 @@ function renderMaterial(p) {
     document.getElementById('mat-retry').onclick = () => carregarMaterial();
     return;
   }
-  const nota = matState.retidos > 0
-    ? `<p style="margin:10px 0 0;color:var(--muted);font-size:0.82rem;">Parte do material de apoio desta matéria ainda está em revisão.</p>`
-    : '';
+  const nota = '';
   if (!matState.rows.length) {
     p.innerHTML = `<div class="pane">${head}${kbAvisoHTML('Nenhum material completo disponível ainda', 'O material de apoio de <b>' + esc(alvo) + '</b> está sendo preparado. Enquanto isso, use a aula da Athena, as questões e os flashcards.', nota)}</div>`;
     mountScopePicker(); return;
