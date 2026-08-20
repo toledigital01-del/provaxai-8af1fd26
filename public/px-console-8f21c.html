@@ -1082,7 +1082,7 @@ window.kbAbrirDoc = function(d, t){
   const disc = kbValidDisc(d);
   if(disc){ kbDisc = disc; }
   kbTopic = t;
-  KB_PANE = 'conteudo';
+  KB_PANE = 'ia';
   if(typeof kbSetStep === 'function') kbSetStep('conteudo');
   kbPaint();
   const el = document.getElementById('kb-editor');
@@ -1422,7 +1422,7 @@ window.edAplicar = async function(){
 };
 
 
-let kbQd = '', kbQt = '', KB_PANE = 'conteudo';
+let kbQd = '', kbQt = '', KB_PANE = 'ia';
 function kbListHTML(items, id){
   return `<div id="${id}" class="kb-surface" style="max-height:56vh;overflow-y:auto">${items}</div>`;
 }
@@ -1564,7 +1564,6 @@ function kbEditor(){
       </div>
 
       <div style="display:flex;gap:4px;margin-top:12px;background:#F1F4F9;border-radius:11px;padding:4px;flex-wrap:wrap">
-        <button class="act" data-panebtn="conteudo" onclick="kbPane('conteudo')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Conteúdo da aula</button>
         <button class="act" data-panebtn="ia" onclick="kbPane('ia')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Material da matéria</button>
         <button class="act" data-panebtn="manut" onclick="kbPane('manut')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Manutenção${orfaos.length?' ('+orfaos.length+')':''}</button>
       </div>
