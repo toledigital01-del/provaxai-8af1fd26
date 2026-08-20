@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ApiPublicAdminCopilotRouteImport } from './routes/api/public/admin-copilot'
 import { Route as ApiPublicAdminDeleteUserRouteImport } from './routes/api/public/admin-delete-user'
 import { Route as ApiPublicAiStatusRouteImport } from './routes/api/public/ai-status'
 import { Route as ApiPublicAiTestRouteImport } from './routes/api/public/ai-test'
@@ -35,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAdminCopilotRoute = ApiPublicAdminCopilotRouteImport.update({
+  id: '/api/public/admin-copilot',
+  path: '/api/public/admin-copilot',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicAdminDeleteUserRoute =
@@ -117,6 +123,7 @@ const ApiPublicHotmartWebhookRoute = ApiPublicHotmartWebhookRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/public/admin-copilot': typeof ApiPublicAdminCopilotRoute
   '/api/public/admin-delete-user': typeof ApiPublicAdminDeleteUserRoute
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/ai-test': typeof ApiPublicAiTestRoute
@@ -136,6 +143,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/public/admin-copilot': typeof ApiPublicAdminCopilotRoute
   '/api/public/admin-delete-user': typeof ApiPublicAdminDeleteUserRoute
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/ai-test': typeof ApiPublicAiTestRoute
@@ -156,6 +164,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/public/admin-copilot': typeof ApiPublicAdminCopilotRoute
   '/api/public/admin-delete-user': typeof ApiPublicAdminDeleteUserRoute
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/ai-test': typeof ApiPublicAiTestRoute
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/sitemap.xml'
+    | '/api/public/admin-copilot'
     | '/api/public/admin-delete-user'
     | '/api/public/ai-status'
     | '/api/public/ai-test'
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/sitemap.xml'
+    | '/api/public/admin-copilot'
     | '/api/public/admin-delete-user'
     | '/api/public/ai-status'
     | '/api/public/ai-test'
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/sitemap.xml'
+    | '/api/public/admin-copilot'
     | '/api/public/admin-delete-user'
     | '/api/public/ai-status'
     | '/api/public/ai-test'
@@ -235,6 +247,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiPublicAdminCopilotRoute: typeof ApiPublicAdminCopilotRoute
   ApiPublicAdminDeleteUserRoute: typeof ApiPublicAdminDeleteUserRoute
   ApiPublicAiStatusRoute: typeof ApiPublicAiStatusRoute
   ApiPublicAiTestRoute: typeof ApiPublicAiTestRoute
@@ -266,6 +279,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/admin-copilot': {
+      id: '/api/public/admin-copilot'
+      path: '/api/public/admin-copilot'
+      fullPath: '/api/public/admin-copilot'
+      preLoaderRoute: typeof ApiPublicAdminCopilotRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/admin-delete-user': {
@@ -379,6 +399,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiPublicAdminCopilotRoute: ApiPublicAdminCopilotRoute,
   ApiPublicAdminDeleteUserRoute: ApiPublicAdminDeleteUserRoute,
   ApiPublicAiStatusRoute: ApiPublicAiStatusRoute,
   ApiPublicAiTestRoute: ApiPublicAiTestRoute,
