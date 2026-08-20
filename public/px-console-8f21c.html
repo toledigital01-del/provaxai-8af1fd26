@@ -562,6 +562,19 @@ const CFG_CHAVES = [
   { id:'elevenlabs', env:'ELEVENLABS_API_KEY', nome:'ElevenLabs (voz)', exemplo:'sk_...', dica:'Narração das aulas e podcasts. Pegue em elevenlabs.io → Profile → API key.' },
 ];
 function cfgPill(ok){ return `<span class="tag" style="background:${ok?'#dcfce7':'#fee2e2'};color:${ok?'#166534':'#991b1b'}">${ok?'conectado':'não conectado'}</span>`; }
+function cfgMascara(v){
+  const s = String(v||'');
+  if(s.length <= 10) return '••••';
+  return s.slice(0,4) + '••••••' + s.slice(-4);
+}
+/** Etiqueta clara de origem da chave: salva no painel (com prévia e data) ou vinda da plataforma. */
+function cfgOrigem(c, info, conect){
+  if(info){
+    return `<span class="tag" style="background:#e0f2fe;color:#075985">chave no painel · ${esc(info.mask)}${info.data?' · '+esc(info.data):''}</span>`;
+  }
+  if(conect) return '<span class="tag" style="background:#f1f5f9;color:#475569">chave do ambiente da plataforma</span>';
+  return '<span class="tag" style="background:#fef3c7;color:#92400e">sem chave cadastrada</span>';
+}
 function cfgSelects(prefixo, atual){
   const mods = (CFG_STATUS && CFG_STATUS.modelos) || {};
   const prov = atual.provider || 'lovable';
