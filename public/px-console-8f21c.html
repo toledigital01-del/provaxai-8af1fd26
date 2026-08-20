@@ -1694,18 +1694,41 @@ function kbEditor(){
       </div>
 
       <label class="muted">2. Envie o material</label>
-      <div id="kb-drop" class="kb-drop">
-        <p class="muted" style="margin:0 0 10px">Arraste e solte aqui (PDF, txt, imagens de apostila/slide) ou escolha abaixo</p>
-        <input type="file" id="kb-file" multiple accept=".pdf,.txt,.md,.csv,.json,.html,.srt,.vtt,.png,.jpg,.jpeg,.webp,.gif,.bmp,.heic,image/*,application/pdf,text/*" style="width:auto;max-width:100%">
+      <div style="display:flex;gap:4px;flex-wrap:wrap;background:#F1F4F9;border-radius:11px;padding:4px;margin-bottom:12px">
+        <button class="act" data-ingtab="texto" onclick="kbIngTab('texto')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Texto</button>
+        <button class="act" data-ingtab="site" onclick="kbIngTab('site')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Website</button>
+        <button class="act" data-ingtab="video" onclick="kbIngTab('video')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Vídeo</button>
+        <button class="act" data-ingtab="doc" onclick="kbIngTab('doc')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Documento</button>
+        <button class="act" data-ingtab="drive" onclick="kbIngTab('drive')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Google Drive</button>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">
-        <input id="kb-url" placeholder="Ou cole o link do site/vídeo e aperte Enter" style="flex:1;min-width:220px">
+
+      <div class="kb-soft" data-ingpane="texto">
+        <h4>Novo material via texto</h4>
+        <textarea id="kb-livre" rows="5" placeholder="Cole aqui o texto que deve entrar na base desta matéria" style="margin-top:8px"></textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="act primary" onclick="kbAdicionarTexto()">Cadastrar</button></div>
       </div>
-      <div style="margin-top:10px">
-        <textarea id="kb-livre" rows="4" placeholder="Ou cole aqui um texto solto para entrar na base desta matéria"></textarea>
-        <button class="act" style="margin-top:6px" onclick="kbAdicionarTexto()">Adicionar este texto</button>
+
+      <div class="kb-soft" data-ingpane="site" style="display:none">
+        <h4>Novo material via website</h4>
+        <p class="muted" style="margin:4px 0 10px;font-size:0.78rem">Cole a URL da página e aperte Enter para a IA ler o conteúdo.</p>
+        <input id="kb-url" placeholder="https://…">
       </div>
-      <div class="kb-soft" style="margin-top:16px">
+
+      <div class="kb-soft" data-ingpane="video" style="display:none">
+        <h4>Novo material via vídeo</h4>
+        <p class="muted" style="margin:4px 0 10px;font-size:0.78rem">Cole a URL de um vídeo (YouTube) e aperte Enter — a transcrição entra na base.</p>
+        <input id="kb-url-video" placeholder="https://youtube.com/…">
+      </div>
+
+      <div class="kb-soft" data-ingpane="doc" style="display:none">
+        <h4>Novo material via documento</h4>
+        <div id="kb-drop" class="kb-drop" style="margin-top:10px">
+          <p class="muted" style="margin:0 0 10px">Arraste e solte aqui (PDF, txt, imagens de apostila/slide) ou escolha o arquivo</p>
+          <input type="file" id="kb-file" multiple accept=".pdf,.txt,.md,.csv,.json,.html,.srt,.vtt,.png,.jpg,.jpeg,.webp,.gif,.bmp,.heic,image/*,application/pdf,text/*" style="width:auto;max-width:100%">
+        </div>
+      </div>
+
+      <div class="kb-soft" data-ingpane="drive" style="display:none">
         <h4>Google Drive</h4>
         <p class="muted" style="margin:0 0 12px;font-size:0.78rem">Importa uma pasta inteira do Drive (com subpastas) para o material desta matéria. Todo material do Drive entra como "terceiro — verificar direitos".</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
@@ -1714,6 +1737,7 @@ function kbEditor(){
         </div>
         <p class="muted" id="kb-drive-msg" style="margin-top:8px;font-size:0.76rem"></p>
       </div>
+
 
       <div id="kb-ing-prog-wrap" style="display:none;margin-top:14px">
         <div style="height:6px;border-radius:99px;background:#EEF1F6;overflow:hidden">
