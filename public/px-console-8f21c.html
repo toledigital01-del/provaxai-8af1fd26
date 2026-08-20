@@ -1753,11 +1753,17 @@ function kbEditor(){
 
       <div class="kb-soft" data-ingpane="doc" style="display:none">
         <h4>Novo material via documento</h4>
+        <p class="muted" style="margin:4px 0 0;font-size:0.78rem">Pode enviar vários arquivos de uma vez — a leitura acontece em fila, 3 por vez.</p>
         <div id="kb-drop" class="kb-drop" style="margin-top:10px">
-          <p class="muted" style="margin:0 0 10px">Arraste e solte aqui (PDF, txt, imagens de apostila/slide) ou escolha o arquivo</p>
+          <p class="muted" style="margin:0 0 10px">Arraste e solte aqui (PDF, txt, imagens de apostila/slide) ou escolha os arquivos</p>
           <input type="file" id="kb-file" multiple accept=".pdf,.txt,.md,.csv,.json,.html,.srt,.vtt,.png,.jpg,.jpeg,.webp,.gif,.bmp,.heic,image/*,application/pdf,text/*" style="width:auto;max-width:100%">
         </div>
+        <label class="muted" style="display:flex;gap:6px;align-items:center;margin:10px 0 0;font-size:0.78rem">
+          <input type="checkbox" id="kb-auto-classificar" style="width:auto"> Classificar nos tópicos automaticamente ao terminar a leitura
+        </label>
+        <div id="kb-fila"></div>
       </div>
+
 
       <div class="kb-soft" data-ingpane="drive" style="display:none">
         <h4>Google Drive</h4>
