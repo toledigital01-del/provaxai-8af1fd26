@@ -1565,7 +1565,7 @@ function kbEditor(){
 
       <div style="display:flex;gap:4px;margin-top:12px;background:#F1F4F9;border-radius:11px;padding:4px;flex-wrap:wrap">
         <button class="act" data-panebtn="conteudo" onclick="kbPane('conteudo')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Conteúdo da aula</button>
-        <button class="act" data-panebtn="ia" onclick="kbPane('ia')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Material e curso com IA</button>
+        <button class="act" data-panebtn="ia" onclick="kbPane('ia')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Material da matéria</button>
         <button class="act" data-panebtn="manut" onclick="kbPane('manut')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Manutenção${orfaos.length?' ('+orfaos.length+')':''}</button>
       </div>
     </div>
@@ -1624,11 +1624,11 @@ function kbEditor(){
 
     <div data-pane="ia" style="display:none;margin-top:4px">
       <div id="kb-cob-ia" style="margin:0 0 14px;padding:10px 13px;border:1px solid #E9EDF3;border-radius:10px;background:#F8FAFF;font-size:0.8rem;line-height:1.5"></div>
-      <h4>Alimentar a IA com material</h4>
-      <p class="muted" style="margin:0 0 16px;max-width:70ch">Solte os arquivos aqui (PDF, textos, imagens de apostila/slide/print — vários de uma vez) ou cole um endereço de site/vídeo. A leitura começa sozinha, sem etapa de extração.</p>
+      <h4>Base de conhecimento de ${esc(kbDisc || 'sua matéria')}</h4>
+      <p class="muted" style="margin:0 0 16px;max-width:70ch">Suba o material desta matéria (PDF, texto, imagem, vídeo ou link). A IA <b>não reescreve nada</b>: ela apenas guarda cada trecho no tópico certo do edital.</p>
 
       <div style="margin-bottom:14px;max-width:420px">
-        <label class="muted">Direitos autorais deste material (obrigatório)</label>
+        <label class="muted">1. Direitos autorais deste material (obrigatório)</label>
         <select id="kb-direitos">
           <option value="">Escolha antes de enviar…</option>
           <option value="dominio_publico">Domínio público (lei, edital, jurisprudência)</option>
@@ -1636,28 +1636,29 @@ function kbEditor(){
           <option value="terceiro_verificar">Material de terceiro — ainda preciso verificar direitos</option>
         </select>
       </div>
+
+      <label class="muted">2. Envie o material</label>
       <div id="kb-drop" class="kb-drop">
-        <p class="muted" style="margin:0 0 10px">Arraste e solte os arquivos aqui ou escolha abaixo</p>
+        <p class="muted" style="margin:0 0 10px">Arraste e solte aqui (PDF, txt, imagens de apostila/slide) ou escolha abaixo</p>
         <input type="file" id="kb-file" multiple accept=".pdf,.txt,.md,.csv,.json,.html,.srt,.vtt,.png,.jpg,.jpeg,.webp,.gif,.bmp,.heic,image/*,application/pdf,text/*" style="width:auto;max-width:100%">
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">
-        <input id="kb-url" placeholder="Cole o link do site ou do vídeo e aperte Enter" style="flex:1;min-width:220px">
+        <input id="kb-url" placeholder="Ou cole o link do site/vídeo e aperte Enter" style="flex:1;min-width:220px">
+      </div>
+      <div style="margin-top:10px">
+        <textarea id="kb-livre" rows="4" placeholder="Ou cole aqui um texto solto para entrar na base desta matéria"></textarea>
+        <button class="act" style="margin-top:6px" onclick="kbAdicionarTexto()">Adicionar este texto</button>
       </div>
       <div class="kb-soft" style="margin-top:16px">
-        <h4>Conectar Google Drive</h4>
-        <p class="muted" style="margin:0 0 12px;font-size:0.78rem">Importa uma pasta do Drive inteira (com subpastas) para a biblioteca desta matéria. Todo material do Drive entra como "terceiro — verificar direitos" e nasce em rascunho.</p>
+        <h4>Google Drive</h4>
+        <p class="muted" style="margin:0 0 12px;font-size:0.78rem">Importa uma pasta inteira do Drive (com subpastas) para o material desta matéria. Todo material do Drive entra como "terceiro — verificar direitos".</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <input id="kb-drive-url" placeholder="Cole o link da pasta do Google Drive" style="flex:1;min-width:220px">
           <button class="act" onclick="kbDriveImportar()">Importar pasta</button>
-          <button class="act primary" onclick="kbDriveImportarEMontar()">Importar pasta e montar curso automaticamente</button>
         </div>
         <p class="muted" id="kb-drive-msg" style="margin-top:8px;font-size:0.76rem"></p>
+      </div>
 
-      </div>
-      <div style="margin-top:20px">
-        <h4>Documentos-fonte já enviados</h4>
-        <div id="kb-biblioteca" style="margin-top:10px"></div>
-      </div>
       <div id="kb-ing-prog-wrap" style="display:none;margin-top:14px">
         <div style="height:6px;border-radius:99px;background:#EEF1F6;overflow:hidden">
           <div id="kb-ing-prog-bar" style="height:100%;width:0%;background:#2563EB;border-radius:99px;transition:width .2s"></div>
@@ -1665,45 +1666,24 @@ function kbEditor(){
         <p class="muted" id="kb-ing-prog-txt" style="margin:6px 0 0"></p>
       </div>
       <div id="kb-fontes" style="margin-top:12px"></div>
-      <div style="display:flex;gap:16px;align-items:center;margin-top:14px;flex-wrap:wrap">
-        <label class="muted" style="display:flex;gap:6px;align-items:center;margin:0"><input type="radio" name="kb-mode" value="append" checked style="width:auto"> Somar ao conteúdo</label>
-        <label class="muted" style="display:flex;gap:6px;align-items:center;margin:0"><input type="radio" name="kb-mode" value="replace" style="width:auto"> Substituir</label>
-      </div>
 
       <hr class="kb-hr">
 
-      <h4>Montar curso com IA</h4>
-      <p class="muted" style="margin:0 0 16px;max-width:70ch">A IA lê o material da caixa acima e cria as aulas já distribuídas nos tópicos oficiais de <b>${esc(kbDisc)}</b>, prontas para o aluno.</p>
-      <div class="kb-fields">
-        <div><label class="muted">Inteligência artificial</label>
-          <select id="kb-modelo">
-            <option value="google/gemini-3-flash-preview">Rápido e econômico — padrão (Gemini Flash)</option>
-            <option value="google/gemini-3.1-pro-preview">Material gigante e raciocínio profundo (Gemini Pro)</option>
-            <option value="openai/gpt-5.6-sol">Máxima qualidade (GPT-5.6 Sol)</option>
-            <option value="openai/gpt-5.6-terra">Equilibrado (GPT-5.6 Terra)</option>
-          </select></div>
-        <div><label class="muted">Banca</label>
-          <select id="kb-banca">
-            <option>Cebraspe</option><option>FGV</option><option>FCC</option>
-            <option>Vunesp</option><option>Cesgranrio</option><option>IBFC</option><option>Outra</option>
-          </select></div>
-        <div><label class="muted">Cargo / concurso</label>
-          <input id="kb-cargo" value="Polícia Rodoviária Federal"></div>
-        <div><label class="muted">Profundidade</label>
-          <select id="kb-prof">
-            <option value="essencial">Essencial — aula enxuta</option>
-            <option value="completo" selected>Completo — padrão</option>
-            <option value="aprofundado">Aprofundado — aula longa</option>
-          </select></div>
-      </div>
-      <label class="muted" style="display:flex;gap:8px;align-items:flex-start;margin-top:14px"><input type="checkbox" id="kb-aprov" checked style="width:auto;margin-top:2px"> <span style="font-weight:400">Modo aprovação (prioriza o que mais cai, pegadinhas e treino no estilo da banca)</span></label>
+      <h4>3. Guardar nos tópicos do edital</h4>
+      <p class="muted" style="margin:0 0 12px;max-width:70ch">A IA lê cada trecho do material carregado e o encaixa no tópico oficial correspondente. O texto é guardado como está, em rascunho, para você revisar e publicar.</p>
       <div class="kb-actions">
-        <button class="act primary" id="kb-btn-montar" onclick="kbMontarCurso()">Montar curso desta matéria</button>
+        <button class="act primary" id="kb-btn-montar" onclick="kbDistribuir()">Guardar material nos tópicos</button>
       </div>
 
       <p class="muted" id="kb-ing" style="margin-top:10px"></p>
       <div id="kb-preview" style="margin-top:12px"></div>
+
+      <div style="margin-top:20px">
+        <h4>Documentos-fonte já enviados</h4>
+        <div id="kb-biblioteca" style="margin-top:10px"></div>
+      </div>
     </div>`;
+
   kbPane(KB_PANE);
   kbPrefsLoad();
   kbRenderLog();
@@ -1815,15 +1795,8 @@ window.kbDriveImportar = async function(){
   }catch(e){ setMsg(e.message); return 0; }
 };
 
-/* Importa a pasta do Drive e, terminando bem, já dispara a montagem do curso
-   com as preferências (banca, cargo, profundidade, modo aprovação) da tela. */
-window.kbDriveImportarEMontar = async function(){
-  const msg = document.getElementById('kb-drive-msg');
-  const n = await window.kbDriveImportar();
-  if(!n) return;
-  if(msg) msg.textContent = n + ' arquivo(s) importados. Montando o curso com IA…';
-  await window.kbMontarCurso();
-};
+
+
 
 
 
@@ -1852,14 +1825,8 @@ async function kbPost(path, payload){
   if(!r.ok) throw new Error(j.error || 'Falha na requisição.');
   return j;
 }
-function kbApplyText(texto, origem){
-  const ta = document.getElementById('kb-txt');
-  if(!ta) return;
-  const modo = (document.querySelector('input[name="kb-mode"]:checked')||{}).value || 'append';
-  const bloco = (origem ? `\n\n## Fonte: ${origem}\n` : '\n\n') + texto;
-  ta.value = modo === 'replace' ? texto : (ta.value.trim() ? ta.value + bloco : texto);
-}
 function kbEhTextoSimples(f){
+
   return /^text\//i.test(f.type || '') || /\.(txt|md|markdown|csv|json|srt|vtt|log|tsv)$/i.test(f.name || '');
 }
 function kbEhImagem(f){
@@ -1903,29 +1870,37 @@ window.kbFonteRemover = function(i){
   const f = KB_FONTES[i];
   if(!f) return;
   KB_FONTES.splice(i,1);
-  const ta = document.getElementById('kb-txt');
-  if(ta && f.bloco) ta.value = ta.value.split(f.bloco).join('').replace(/\n{4,}/g,'\n\n');
   kbPaintFontes();
   kbMontarEstado();
   kbIngMsg('Fonte "' + f.nome + '" removida do material.');
 };
+/* Guarda o texto fiel da fonte na memória da tela (não mexe na aula do tópico). */
 function kbRegistrarFonte(nome, texto){
-  const ta = document.getElementById('kb-txt');
-  const antes = ta ? ta.value : '';
-  kbApplyText(texto, nome);
-  const depois = ta ? ta.value : '';
-  const bloco = depois.startsWith(antes) ? depois.slice(antes.length) : '';
-  KB_FONTES.push({ nome: nome, chars: texto.length, bloco: bloco });
+  KB_FONTES.push({ nome: nome, chars: (texto||'').length, texto: String(texto||'') });
   kbPaintFontes();
 }
+window.kbAdicionarTexto = function(){
+  const ta = document.getElementById('kb-livre');
+  const t = ta ? ta.value.trim() : '';
+  if(t.length < 50) return kbIngMsg('Cole um texto um pouco maior para entrar na base.');
+  if(!kbValidDisc(kbDisc)) return kbIngMsg('Selecione uma matéria válida antes de adicionar material.');
+  const direitos = kbDireitosEscolhido();
+  if(!direitos) return kbIngMsg('Escolha antes a situação de direitos autorais deste material.');
+  const nome = 'Texto colado ' + new Date().toLocaleString('pt-BR');
+  kbRegistrarFonte(nome, t);
+  kbLibGravar({ nome: nome, tipo: 'texto', texto: t, direitos: direitos });
+  ta.value = '';
+  kbMontarEstado();
+  kbIngMsg('Texto adicionado ao material desta matéria.');
+};
 function kbMontarEstado(){
   const btn = document.getElementById('kb-btn-montar');
   if(!btn) return;
-  const ta = document.getElementById('kb-txt');
-  const pronto = !KB_ING_ATIVO && !!ta && ta.value.trim().length >= 200 && !!kbValidDisc(kbDisc);
-  btn.disabled = !pronto;
-  btn.textContent = KB_ING_ATIVO ? 'Aguardando leitura do material…' : 'Montar curso desta matéria';
+  const chars = KB_FONTES.reduce(function(a,f){ return a + f.chars; }, 0);
+  btn.disabled = KB_ING_ATIVO || chars < 200 || !kbValidDisc(kbDisc);
+  btn.textContent = KB_ING_ATIVO ? 'Aguardando leitura do material…' : 'Guardar material nos tópicos';
 }
+
 function kbBindIngest(){
   const inp = document.getElementById('kb-file');
   if(inp && !inp.dataset.bound){
@@ -1997,7 +1972,7 @@ window.kbIngestFiles = async function(files){
   kbIngProg(files.length, files.length, 'Leitura concluída');
   setTimeout(kbIngProgHide, 1200);
   kbMontarEstado();
-  kbIngMsg(n + ' arquivo(s) lido(s) direto para o material. Já dá para montar o curso.');
+  kbIngMsg(n + ' arquivo(s) lido(s). Agora é só guardar nos tópicos.');
 };
 window.kbIngestUrlAuto = async function(url){
   if(!kbValidDisc(kbDisc)) return kbIngMsg('Selecione uma matéria válida antes de carregar material.');
@@ -2021,133 +1996,101 @@ window.kbIngestUrlAuto = async function(url){
   kbMontarEstado();
 };
 
-/* ---- Montagem do curso em lotes, cobrindo todos os tópicos ---- */
+/* ---- Distribuição do material nos tópicos do edital (sem reescrever nada) ---- */
 function kbLotes(arr, tam){
   const out = [];
   for(let i = 0; i < arr.length; i += tam) out.push(arr.slice(i, i + tam));
   return out;
 }
-/* Recorta o material mantendo os trechos mais ligados aos tópicos do lote,
-   para apostilas grandes não estourarem o limite do modelo. */
-function kbMaterialLote(material, lote, limite){
-  limite = limite || 120000;
-  if(material.length <= limite) return material;
-  const termos = lote.join(' ').toLowerCase().split(/[^a-zà-ú0-9]+/).filter(function(p){ return p.length > 3; });
-  const blocos = material.split(/\n(?=#{1,3}\s)|\n\s*\n/);
-  const ranq = blocos.map(function(b, i){
-    const t = b.toLowerCase();
-    let s = 0;
-    termos.forEach(function(p){ if(t.indexOf(p) >= 0) s++; });
-    return { i: i, b: b, s: s };
-  }).sort(function(a, b){ return b.s - a.s || a.i - b.i; });
-  const sel = [];
-  let tam = 0;
-  for(const r of ranq){
-    if(tam + r.b.length > limite) continue;
-    sel.push(r); tam += r.b.length;
-    if(tam >= limite * 0.95) break;
+/* Corta o texto em trechos de ~5 mil caracteres respeitando parágrafos/títulos. */
+function kbTrechos(texto, nome){
+  const blocos = String(texto || '').split(/\n(?=#{1,3}\s)|\n\s*\n/).filter(function(b){ return b.trim(); });
+  const out = [];
+  let atual = '';
+  for(const b of blocos){
+    if((atual + '\n\n' + b).length > 5000 && atual.trim()){ out.push({ nome: nome, texto: atual.trim() }); atual = b; }
+    else atual = atual ? atual + '\n\n' + b : b;
   }
-  if(!sel.length) return material.slice(0, limite);
-  return sel.sort(function(a, b){ return a.i - b.i; }).map(function(r){ return r.b; }).join('\n\n');
+  if(atual.trim()) out.push({ nome: nome, texto: atual.trim() });
+  return out;
 }
-async function kbGerarLotes(disciplina, topicos, prefs, material, exigirTodos){
-  const lotes = kbLotes(topicos, 6);
-  let feitos = 0;
-  for(const lote of lotes){
-    kbIngProg(feitos, topicos.length, 'Gerando aulas (' + Math.min(feitos + lote.length, topicos.length) + ' de ' + topicos.length + ')');
-    kbSetBusy(true, 'Montando aulas de ' + disciplina + ' — ' + (feitos + 1) + ' a ' + Math.min(feitos + lote.length, topicos.length) + ' de ' + topicos.length + '…');
+
+let KB_GERADAS = [];
+let KB_ABERTA = -1;
+
+window.kbDistribuir = async function(){
+  const disciplina = kbValidDisc(kbDisc);
+  if(!disciplina) return kbIngMsg('Selecione uma matéria válida antes de guardar o material.');
+  if(KB_ING_ATIVO) return kbIngMsg('Aguarde a leitura do material terminar.');
+  const topicos = kbTopicList(disciplina);
+  if(!topicos.length) return kbIngMsg('Esta matéria não tem tópicos cadastrados. Grave o edital primeiro.');
+
+  let trechos = [];
+  KB_FONTES.forEach(function(f){ trechos = trechos.concat(kbTrechos(f.texto, f.nome)); });
+  if(!trechos.length) return kbIngMsg('Carregue primeiro o material (arquivo, link ou texto).');
+
+  KB_GERADAS = []; KB_ABERTA = -1;
+  const box = document.getElementById('kb-preview'); if(box) box.innerHTML = '';
+  kbSetBusy(true, 'A IA está encaixando ' + trechos.length + ' trecho(s) nos tópicos de ' + disciplina + '…');
+
+  const porTopico = {};
+  let feitos = 0, semTopico = 0;
+  for(const lote of kbLotes(trechos.map(function(t,i){ return { i:i, t:t }; }), 8)){
+    kbIngProg(feitos, trechos.length, 'Classificando trechos (' + Math.min(feitos + lote.length, trechos.length) + ' de ' + trechos.length + ')');
     try{
-      const j = await kbPost('/api/public/kb-autocourse', {
-        disciplina, topicos: lote, material: kbMaterialLote(material, lote),
-        modelo: prefs.modelo, banca: prefs.banca, cargo: prefs.cargo,
-        profundidade: prefs.prof, modo_aprovacao: prefs.aprov,
-        exigir_todos: !!exigirTodos
+      const j = await kbPost('/api/public/kb-classify', {
+        disciplina: disciplina,
+        topicos: topicos,
+        trechos: lote.map(function(x){ return { i: x.i, amostra: x.t.texto.slice(0, 2500) }; }),
       });
-      (j.aulas || []).forEach(function(a){
-        if(!a || !a.topico) return;
-        if(KB_GERADAS.some(function(x){ return x.topico === a.topico; })) return;
-        KB_GERADAS.push({ disciplina: disciplina, topico: a.topico, titulo: a.titulo || a.topico,
-          incidencia: a.incidencia || 'media', conteudo: String(a.conteudo || ''), incluir: true });
+      (j.mapa || []).forEach(function(m){
+        const src = trechos[m.i];
+        if(!src) return;
+        if(!m.topico){ semTopico++; return; }
+        (porTopico[m.topico] = porTopico[m.topico] || []).push(src);
       });
     }catch(e){
       kbIngMsg('Falha em um lote (' + e.message + '). Continuando com os demais…');
     }
     feitos += lote.length;
-    kbIngProg(feitos, topicos.length, 'Gerando aulas');
-    kbPaintPreview();
+    kbIngProg(feitos, trechos.length, 'Classificando trechos');
   }
-}
 
-window.kbMontarCurso = async function(){
-  const disciplinaSelecionada = kbValidDisc(kbDisc);
-  if(!disciplinaSelecionada) return kbIngMsg('Selecione uma matéria válida antes de montar o curso.');
-  if(KB_ING_ATIVO) return kbIngMsg('Aguarde a leitura do material terminar.');
-  const material = document.getElementById('kb-txt').value.trim();
-  if(material.length < 200) return kbIngMsg('Carregue primeiro o material (arquivo, link ou texto).');
-  const topicos = kbTopicList(disciplinaSelecionada);
-  if(!topicos.length) return kbIngMsg('Esta matéria não tem tópicos cadastrados.');
-  const val = id => (document.getElementById(id)||{}).value;
-  const prefs = { modelo: val('kb-modelo'), banca: val('kb-banca'), cargo: val('kb-cargo'), prof: val('kb-prof') || 'completo',
-    aprov: (document.getElementById('kb-aprov')||{}).checked !== false };
-  kbPrefsSave();
-  KB_GERADAS = []; KB_ABERTA = -1;
-  document.getElementById('kb-preview').innerHTML = '';
-  kbSetBusy(true, 'A IA está montando o curso completo de ' + disciplinaSelecionada + '… pode levar alguns minutos, não feche a página.');
-  try{
-    await kbGerarLotes(disciplinaSelecionada, topicos, prefs, material);
-    // Segunda passada: regera apenas os tópicos que ficaram sem aula.
-    for(let tentativa = 0; tentativa < 2; tentativa++){
-      const faltando = topicos.filter(function(t){ return !KB_GERADAS.some(function(a){ return a.topico === t; }); });
-      if(!faltando.length) break;
-      kbSetBusy(true, 'Completando ' + faltando.length + ' tópico(s) que faltaram…');
-      await kbGerarLotes(disciplinaSelecionada, faltando, prefs, material, true);
-    }
-  }catch(e){ kbIngMsg('Erro: ' + e.message); }
+  KB_GERADAS = Object.keys(porTopico).map(function(t){
+    const partes = porTopico[t];
+    const fontes = Array.from(new Set(partes.map(function(p){ return p.nome; })));
+    return {
+      disciplina: disciplina, topico: t, titulo: t, incidencia: 'media', incluir: true,
+      fontes: fontes,
+      conteudo: partes.map(function(p){ return p.texto; }).join('\n\n'),
+    };
+  }).sort(function(a,b){ return topicos.indexOf(a.topico) - topicos.indexOf(b.topico); });
+
   kbSetBusy(false);
   kbIngProgHide();
   kbMontarEstado();
-  const cobertos = topicos.filter(function(t){ return KB_GERADAS.some(function(a){ return a.topico === t; }); }).length;
-  kbIngMsg('Curso montado: ' + cobertos + ' de ' + topicos.length + ' tópico(s) com aula. Revise abaixo antes de publicar.');
+  kbIngMsg('Material distribuído em ' + KB_GERADAS.length + ' de ' + topicos.length + ' tópico(s)'
+    + (semTopico ? ' — ' + semTopico + ' trecho(s) sem tópico correspondente foram ignorados.' : '.')
+    + ' Revise abaixo e salve.');
   kbPaintPreview();
-};
-window.kbGerarFaltantes = async function(){
-  const disciplina = kbValidDisc(kbDisc);
-  if(!disciplina) return kbIngMsg('Selecione uma matéria válida.');
-  const material = document.getElementById('kb-txt').value.trim();
-  if(material.length < 200) return kbIngMsg('Carregue o material antes de completar as aulas.');
-  const topicos = kbTopicList(disciplina);
-  const faltando = topicos.filter(function(t){ return !KB_GERADAS.some(function(a){ return a.topico === t; }); });
-  if(!faltando.length) return kbIngMsg('Todos os tópicos já têm aula.');
-  const val = id => (document.getElementById(id)||{}).value;
-  const prefs = { modelo: val('kb-modelo'), banca: val('kb-banca'), cargo: val('kb-cargo'), prof: val('kb-prof') || 'completo',
-    aprov: (document.getElementById('kb-aprov')||{}).checked !== false };
-  kbSetBusy(true, 'Gerando ' + faltando.length + ' aula(s) que faltam…');
-  await kbGerarLotes(disciplina, faltando, prefs, material, true);
-  kbSetBusy(false);
-  kbIngProgHide();
-  kbMontarEstado();
-  kbPaintPreview();
-  kbIngMsg('Completado. Revise as aulas antes de publicar.');
 };
 
-let KB_GERADAS = [];
-let KB_ABERTA = -1;
 function kbPaintPreview(){
   const box = document.getElementById('kb-preview');
   if(!box) return;
   if(!KB_GERADAS.length){ box.innerHTML = ''; return; }
   const sel = KB_GERADAS.filter(function(a){ return a.incluir; }).length;
-  const semTopico = kbTopicList(kbDisc).filter(function(t){ return !KB_GERADAS.some(function(a){ return a.topico === t; }); });
+  const tops = kbTopicList(kbDisc);
+  const semMaterial = tops.filter(function(t){ return !KB_GERADAS.some(function(a){ return a.topico === t; }); });
   box.innerHTML =
     '<div style="border:1px solid #E2E8F0;border-radius:12px;overflow:hidden">' +
       '<div style="padding:9px 11px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:0.8rem">' +
-        '<b>Revisão do curso — ' + esc(kbDisc) + '</b>' +
-        '<span class="muted">' + sel + ' de ' + KB_GERADAS.length + ' aula(s) marcadas</span>' +
-        '<span style="font-size:0.72rem;font-weight:700;padding:1px 8px;border-radius:99px;background:' + (semTopico.length?'#FEE2E2':'#DCFCE7') + ';color:' + (semTopico.length?'#B91C1C':'#047857') + '">Cobertura: ' + (kbTopicList(kbDisc).length - semTopico.length) + ' de ' + kbTopicList(kbDisc).length + ' tópicos</span>' +
+        '<b>Onde o material vai entrar — ' + esc(kbDisc) + '</b>' +
+        '<span class="muted">' + sel + ' de ' + KB_GERADAS.length + ' tópico(s) marcados</span>' +
+        '<span style="font-size:0.72rem;font-weight:700;padding:1px 8px;border-radius:99px;background:' + (semMaterial.length?'#FEF3C7':'#DCFCE7') + ';color:' + (semMaterial.length?'#B45309':'#047857') + '">Cobertura: ' + (tops.length - semMaterial.length) + ' de ' + tops.length + ' tópicos</span>' +
         '<span style="flex:1"></span>' +
-        (semTopico.length ? '<button class="act" onclick="kbGerarFaltantes()">Gerar os que faltam</button>' : '') +
-        '<button class="act" onclick="kbPreviewTodas(true)">Marcar todas</button>' +
-        '<button class="act" onclick="kbPreviewTodas(false)">Desmarcar todas</button>' +
+        '<button class="act" onclick="kbPreviewTodas(true)">Marcar todos</button>' +
+        '<button class="act" onclick="kbPreviewTodas(false)">Desmarcar todos</button>' +
       '</div>' +
       '<div style="max-height:52vh;overflow:auto">' +
       KB_GERADAS.map(function(a,i){
@@ -2158,25 +2101,27 @@ function kbPaintPreview(){
             '<input type="checkbox" ' + (a.incluir?'checked':'') + ' onchange="kbPreviewToggle(' + i + ',this.checked)" style="width:auto;margin-top:3px">' +
             '<div style="flex:1;min-width:0;cursor:pointer" onclick="kbPreviewAbrir(' + i + ')">' +
               '<b>' + esc(a.topico) + '</b>' +
-              ' <span style="font-size:0.68rem;font-weight:700;padding:1px 7px;border-radius:99px;background:' + (a.incidencia==='alta'?'#FEF3C7':a.incidencia==='baixa'?'#F1F5F9':'#DBEAFE') + ';color:' + (a.incidencia==='alta'?'#B45309':a.incidencia==='baixa'?'#64748B':'#1D4ED8') + '">incidência ' + esc(a.incidencia||'media') + '</span>' +
-              (existe ? ' <span class="muted" style="color:#B45309">· sobrescreve conteúdo atual</span>' : ' <span class="muted" style="color:#047857">· novo</span>') +
-              '<br><span class="muted">' + esc(a.titulo || '') + ' — ' + String(a.conteudo.length).replace(/\B(?=(\d{3})+(?!\d))/g,'.') + ' caracteres</span>' +
-
+              (existe ? ' <span class="muted" style="color:#B45309">· soma ao conteúdo atual</span>' : ' <span class="muted" style="color:#047857">· novo</span>') +
+              '<br><span class="muted">' + esc(a.fontes.join(' · ')) + ' — ' + String(a.conteudo.length).replace(/\B(?=(\d{3})+(?!\d))/g,'.') + ' caracteres</span>' +
             '</div>' +
             '<button class="act" onclick="kbPreviewAbrir(' + i + ')">' + (aberta ? 'Fechar' : 'Revisar') + '</button>' +
           '</div>' +
           (aberta ?
             '<div style="padding:0 11px 11px">' +
-              '<input value="' + esc(a.titulo || '') + '" oninput="kbPreviewCampo(' + i + ',\'titulo\',this.value)" placeholder="Título da aula" style="margin-bottom:6px">' +
+              '<input value="' + esc(a.titulo || '') + '" oninput="kbPreviewCampo(' + i + ',\'titulo\',this.value)" placeholder="Título" style="margin-bottom:6px">' +
               '<textarea rows="14" oninput="kbPreviewCampo(' + i + ',\'conteudo\',this.value)" style="font-family:ui-monospace,monospace;font-size:0.78rem">' + esc(a.conteudo) + '</textarea>' +
             '</div>' : '') +
         '</div>';
       }).join('') +
       '</div>' +
     '</div>' +
-    (semTopico.length ? '<p class="muted" style="margin-top:8px;font-size:0.78rem;color:#B91C1C">Sem aula gerada (' + semTopico.length + '): ' + esc(semTopico.slice(0,8).join(' · ')) + (semTopico.length>8?' …':'') + '</p>' : '') +
+    (semMaterial.length ? '<p class="muted" style="margin-top:8px;font-size:0.78rem">Ainda sem material (' + semMaterial.length + '): ' + esc(semMaterial.slice(0,8).join(' · ')) + (semMaterial.length>8?' …':'') + '</p>' : '') +
+    '<div style="display:flex;gap:16px;align-items:center;margin-top:10px;flex-wrap:wrap">' +
+      '<label class="muted" style="display:flex;gap:6px;align-items:center;margin:0"><input type="radio" name="kb-mode" value="append" checked style="width:auto"> Somar ao conteúdo já existente</label>' +
+      '<label class="muted" style="display:flex;gap:6px;align-items:center;margin:0"><input type="radio" name="kb-mode" value="replace" style="width:auto"> Substituir</label>' +
+    '</div>' +
     '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
-      '<button class="act primary" onclick="kbPublicarGeradas()">Publicar ' + sel + ' aula(s) nos tópicos</button>' +
+      '<button class="act primary" onclick="kbPublicarGeradas()">Salvar em ' + sel + ' tópico(s)</button>' +
       '<button class="act" onclick="kbPreviewDescartar()">Descartar</button>' +
     '</div>';
 }
@@ -2184,22 +2129,26 @@ window.kbPreviewToggle = function(i, v){ KB_GERADAS[i].incluir = v; kbPaintPrevi
 window.kbPreviewTodas = function(v){ KB_GERADAS.forEach(function(a){ a.incluir = v; }); kbPaintPreview(); };
 window.kbPreviewAbrir = function(i){ KB_ABERTA = (KB_ABERTA === i ? -1 : i); kbPaintPreview(); };
 window.kbPreviewCampo = function(i, campo, v){ KB_GERADAS[i][campo] = v; };
-window.kbPreviewDescartar = function(){ KB_GERADAS = []; KB_ABERTA = -1; kbPaintPreview(); kbIngMsg('Curso gerado descartado.'); };
+window.kbPreviewDescartar = function(){ KB_GERADAS = []; KB_ABERTA = -1; kbPaintPreview(); kbIngMsg('Distribuição descartada.'); };
+
 window.kbPublicarGeradas = async function(){
   let lista;
   try{ lista = PXKB.filtrarAulasPublicaveis(KB_GERADAS, kbDisc, kbDiscList()); }
   catch(e){ return kbIngMsg(e.message); }
   const disciplinaSelecionada = kbValidDisc(kbDisc);
-  if(!lista.length) return kbIngMsg('Marque ao menos uma aula desta matéria para publicar.');
+  if(!lista.length) return kbIngMsg('Marque ao menos um tópico desta matéria para salvar.');
+  const modo = (document.querySelector('input[name="kb-mode"]:checked')||{}).value || 'append';
 
-  kbSetBusy(true, 'Salvando ' + lista.length + ' aula(s) como rascunho em ' + disciplinaSelecionada + '…');
+  kbSetBusy(true, 'Salvando material em ' + lista.length + ' tópico(s) de ' + disciplinaSelecionada + '…');
   for(const a of lista){
     const doc = kbFind(disciplinaSelecionada, a.topico);
+    const atual = doc && modo === 'append' ? String(doc.conteudo || '').trim() : '';
+    const conteudo = (atual ? atual + '\n\n' : '') + String(a.conteudo).trim();
     let payload;
     try{
-      /* Toda aula gerada por IA nasce como rascunho — só vai ao ar depois da revisão humana. */
+      /* O material entra como rascunho — só vai ao ar depois da revisão humana. */
       payload = PXKB.montarDoc({ disciplina:disciplinaSelecionada, discList:kbDiscList(), topico:a.topico,
-        titulo:a.titulo || a.topico, conteudo:String(a.conteudo).trim(), status:'rascunho', userId:PX.user.id });
+        titulo:a.titulo || a.topico, conteudo:conteudo, status:'rascunho', userId:PX.user.id });
     }catch(e){ kbSetBusy(false); return kbIngMsg(e.message); }
     const { error } = doc
       ? await PX.sb.from('knowledge_docs').update(payload).eq('id', doc.id)
@@ -2207,10 +2156,10 @@ window.kbPublicarGeradas = async function(){
     if(error){ kbSetBusy(false); kbIngMsg('Erro ao salvar "' + a.topico + '": ' + error.message); return; }
     if(!doc) await loadKB();
   }
-  await logAdmin('montar_curso_ia','knowledge_docs', null, { disciplina:disciplinaSelecionada, aulas:lista.length });
+  await logAdmin('distribuir_material','knowledge_docs', null, { disciplina:disciplinaSelecionada, topicos:lista.length });
   const n = lista.length; KB_GERADAS = []; KB_ABERTA = -1;
   await loadKB(); kbSetBusy(false); kbPaint();
-  kbIngMsg(n + ' aula(s) salvas como rascunho em ' + disciplinaSelecionada + '. Revise em "Aulas aguardando revisão" e publique.');
+  kbIngMsg('Material guardado em ' + n + ' tópico(s) como rascunho. Revise em "Aulas aguardando revisão" e publique.');
 };
 
 /* Manutenção: reindexar a base e tratar conteúdos órfãos (matéria vazia ou fora do edital). */
