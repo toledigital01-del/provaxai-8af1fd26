@@ -1753,11 +1753,17 @@ function kbEditor(){
 
       <div class="kb-soft" data-ingpane="doc" style="display:none">
         <h4>Novo material via documento</h4>
+        <p class="muted" style="margin:4px 0 0;font-size:0.78rem">Pode enviar vários arquivos de uma vez — a leitura acontece em fila, 3 por vez.</p>
         <div id="kb-drop" class="kb-drop" style="margin-top:10px">
-          <p class="muted" style="margin:0 0 10px">Arraste e solte aqui (PDF, txt, imagens de apostila/slide) ou escolha o arquivo</p>
+          <p class="muted" style="margin:0 0 10px">Arraste e solte aqui (PDF, txt, imagens de apostila/slide) ou escolha os arquivos</p>
           <input type="file" id="kb-file" multiple accept=".pdf,.txt,.md,.csv,.json,.html,.srt,.vtt,.png,.jpg,.jpeg,.webp,.gif,.bmp,.heic,image/*,application/pdf,text/*" style="width:auto;max-width:100%">
         </div>
+        <label class="muted" style="display:flex;gap:6px;align-items:center;margin:10px 0 0;font-size:0.78rem">
+          <input type="checkbox" id="kb-auto-classificar" style="width:auto"> Classificar nos tópicos automaticamente ao terminar a leitura
+        </label>
+        <div id="kb-fila"></div>
       </div>
+
 
       <div class="kb-soft" data-ingpane="drive" style="display:none">
         <h4>Google Drive</h4>
@@ -1800,6 +1806,8 @@ function kbEditor(){
   kbRenderLog();
   kbBindIngest();
   kbPaintFontes();
+  kbFilaPaint();
+  kbPaintPreview();
   kbPaintBiblioteca();
 }
 
@@ -2057,47 +2065,109 @@ function kbBindIngest(){
   kbMontarEstado();
 }
 
-/* Lê os arquivos assim que são escolhidos/soltos — sem etapa manual de extração. */
+/* ---- Fila de leitura em lote (vários arquivos de uma vez) ---- */
+let KB_FILA = [];   /* {file, nome, estado:'fila|lendo|pronto|falhou', chars, erro} */
+function kbFilaPaint(){
+  const box = document.getElementById('kb-fila');
+  if(!box) return;
+  if(!KB_FILA.length){ box.innerHTML = ''; return; }
+  const cor = { fila:'#64748B', lendo:'#1D4ED8', pronto:'#047857', falhou:'#B91C1C' };
+  const rot = { fila:'na fila', lendo:'lendo…', pronto:'pronto', falhou:'falhou' };
+  const prontos = KB_FILA.filter(function(f){ return f.estado === 'pronto'; }).length;
+  const chars = KB_FILA.reduce(function(a,f){ return a + (f.chars||0); }, 0);
+  box.innerHTML = '<div style="border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;font-size:0.78rem;margin-top:10px">' +
+    '<div style="padding:7px 10px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
+      '<b>Fila de leitura</b><span class="muted">' + prontos + ' de ' + KB_FILA.length + ' lidos · ' + chars.toLocaleString('pt-BR') + ' caracteres</span>' +
+      '<span style="flex:1"></span><button class="act" onclick="kbFilaLimpar()" style="font-size:0.72rem">Limpar fila</button>' +
+    '</div>' +
+    KB_FILA.map(function(f,i){
+      return '<div style="padding:6px 10px;display:flex;gap:8px;align-items:center;border-bottom:1px solid #F1F5F9">' +
+        '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(f.nome) + '</span>' +
+        (f.chars ? '<span class="muted">' + f.chars.toLocaleString('pt-BR') + ' car.</span>' : '') +
+        '<span style="font-weight:700;color:' + cor[f.estado] + '">' + rot[f.estado] + '</span>' +
+        (f.estado === 'falhou' ? '<button class="act" onclick="kbFilaRetry(' + i + ')" style="font-size:0.72rem">Tentar de novo</button>' : '') +
+        (f.estado === 'fila' || f.estado === 'falhou' ? '<button class="act" onclick="kbFilaRemover(' + i + ')" style="font-size:0.72rem">Remover</button>' : '') +
+      '</div>' + (f.erro ? '<div class="muted" style="padding:0 10px 6px;color:#B91C1C;font-size:0.72rem">' + esc(f.erro) + '</div>' : '');
+    }).join('') + '</div>';
+}
+window.kbFilaLimpar = function(){ if(KB_ING_ATIVO) return; KB_FILA = []; kbFilaPaint(); };
+window.kbFilaRemover = function(i){ if(KB_ING_ATIVO) return; KB_FILA.splice(i,1); kbFilaPaint(); };
+window.kbFilaRetry = function(i){ const f = KB_FILA[i]; if(!f || KB_ING_ATIVO) return; f.estado = 'fila'; f.erro = ''; kbFilaPaint(); kbFilaProcessar(); };
+
+/* Lê um arquivo e já grava na biblioteca da matéria. */
+async function kbLerArquivo(item, direitos){
+  const f = item.file;
+  let texto = '', origem = f.name;
+  if(kbEhTextoSimples(f)){
+    texto = (await f.text()).trim();
+  }else{
+    const b64 = await new Promise((res,rej)=>{ const r = new FileReader(); r.onload=()=>res(String(r.result)); r.onerror=rej; r.readAsDataURL(f); });
+    const j = await kbPost('/api/public/kb-ingest', { tipo: kbEhImagem(f) ? 'imagem' : 'auto', nome:f.name, mime:f.type || '', arquivo_base64:b64 });
+    texto = j.texto; origem = j.origem || f.name;
+  }
+  if(!texto) throw new Error('Não foi possível extrair texto deste arquivo.');
+  kbRegistrarFonte(origem, texto);
+  await kbLibGravar({ nome: origem, tipo: kbTipoDoc(f.name, f.type || '', ''), texto: texto, direitos: direitos });
+  return texto.length;
+}
+
+/* Processa a fila com 3 leituras em paralelo; falhas não param o restante. */
+async function kbFilaProcessar(){
+  if(KB_ING_ATIVO) return;
+  const direitos = kbDireitosEscolhido();
+  if(!direitos) return kbIngMsg('Escolha antes a situação de direitos autorais deste material.');
+  if(!kbValidDisc(kbDisc)) return kbIngMsg('Selecione uma matéria válida antes de carregar material.');
+  const pendentes = KB_FILA.filter(function(f){ return f.estado === 'fila'; });
+  if(!pendentes.length) return;
+
+  KB_ING_ATIVO = true;
+  kbMontarEstado();
+  kbSetBusy(true, 'Lendo ' + pendentes.length + ' arquivo(s)…');
+  const total = pendentes.length;
+  let feitos = 0;
+  kbIngProg(0, total, 'Lendo arquivos');
+
+  const worker = async function(){
+    for(;;){
+      const item = KB_FILA.find(function(f){ return f.estado === 'fila'; });
+      if(!item) return;
+      item.estado = 'lendo'; item.erro = ''; kbFilaPaint();
+      try{
+        item.chars = await kbLerArquivo(item, direitos);
+        item.estado = 'pronto';
+      }catch(e){
+        item.estado = 'falhou'; item.erro = e.message || 'Erro ao ler o arquivo.';
+      }
+      feitos++;
+      kbFilaPaint();
+      kbIngProg(feitos, total, 'Lendo arquivos');
+    }
+  };
+  await Promise.all([worker(), worker(), worker()]);
+
+  KB_ING_ATIVO = false;
+  kbSetBusy(false);
+  kbIngProg(total, total, 'Leitura concluída');
+  setTimeout(kbIngProgHide, 1200);
+  kbMontarEstado();
+  const ok = KB_FILA.filter(function(f){ return f.estado === 'pronto'; }).length;
+  const bad = KB_FILA.filter(function(f){ return f.estado === 'falhou'; }).length;
+  const chars = KB_FILA.reduce(function(a,f){ return a + (f.chars||0); }, 0);
+  kbIngMsg(ok + ' arquivo(s) lido(s) · ' + chars.toLocaleString('pt-BR') + ' caracteres' + (bad ? ' · ' + bad + ' com falha' : '') + '.');
+  const auto = document.getElementById('kb-auto-classificar');
+  if(ok && auto && auto.checked) await kbDistribuir();
+}
+
+/* Coloca os arquivos escolhidos/soltos na fila e começa a leitura. */
 window.kbIngestFiles = async function(files){
   if(!files || !files.length) return;
   if(!kbValidDisc(kbDisc)) return kbIngMsg('Selecione uma matéria válida antes de carregar material.');
-  const direitos = kbDireitosEscolhido();
-  if(!direitos) return kbIngMsg('Escolha antes a situação de direitos autorais deste material.');
-  KB_ING_ATIVO = true;
-  kbSetBusy(true, 'Lendo ' + files.length + ' arquivo(s)…');
-  kbMontarEstado();
-  let n = 0, i = 0;
-  for(const f of files){
-    try{
-      kbIngProg(i, files.length, 'Lendo ' + f.name + ' (' + (i+1) + '/' + files.length + ')');
-      kbSetBusy(true, 'Lendo ' + f.name + ' (' + (i+1) + '/' + files.length + ')…');
-      let texto = '', origem = f.name;
-      if(kbEhTextoSimples(f)){
-        texto = (await f.text()).trim();
-      }else{
-        const b64 = await new Promise((res,rej)=>{ const r = new FileReader(); r.onload=()=>res(String(r.result)); r.onerror=rej; r.readAsDataURL(f); });
-        const tipo = kbEhImagem(f) ? 'imagem' : 'auto';
-        const j = await kbPost('/api/public/kb-ingest', { tipo, nome:f.name, mime:f.type || '', arquivo_base64:b64 });
-        texto = j.texto; origem = j.origem || f.name;
-      }
-      if(texto){
-        kbRegistrarFonte(origem, texto);
-        await kbLibGravar({ nome: origem, tipo: kbTipoDoc(f.name, f.type || '', ''), texto: texto, direitos: direitos });
-        n++;
-      }
-    }catch(e){
-      kbIngMsg('Erro ao ler "' + f.name + '": ' + e.message);
-    }
-    i++;
-    kbIngProg(i, files.length, 'Carregando material');
-  }
-  KB_ING_ATIVO = false;
-  kbSetBusy(false);
-  kbIngProg(files.length, files.length, 'Leitura concluída');
-  setTimeout(kbIngProgHide, 1200);
-  kbMontarEstado();
-  kbIngMsg(n + ' arquivo(s) lido(s). Agora é só guardar nos tópicos.');
+  if(!kbDireitosEscolhido()) return kbIngMsg('Escolha antes a situação de direitos autorais deste material.');
+  files.forEach(function(f){ KB_FILA.push({ file:f, nome:f.name, estado:'fila', chars:0, erro:'' }); });
+  kbFilaPaint();
+  await kbFilaProcessar();
 };
+
 window.kbIngestUrlAuto = async function(url){
   if(!kbValidDisc(kbDisc)) return kbIngMsg('Selecione uma matéria válida antes de carregar material.');
   const direitos = kbDireitosEscolhido();
@@ -2141,6 +2211,40 @@ function kbTrechos(texto, nome){
 
 let KB_GERADAS = [];
 let KB_ABERTA = -1;
+let KB_TRECHOS = [];       /* {nome, texto, sug, topico, manual, sel} */
+let KB_INCLUIR = {};       /* topico -> boolean */
+let KB_FILTRO = 'todos';
+let KB_TRECHO_ABERTO = -1;
+
+/* Classifica (ou reclassifica) apenas os índices pedidos. Trechos ajustados
+   à mão nunca entram — a escolha do usuário é definitiva. */
+async function kbClassificarIdx(idxs, disciplina, topicos, rotulo){
+  const alvo = idxs.filter(function(i){ return KB_TRECHOS[i] && !KB_TRECHOS[i].manual; });
+  if(!alvo.length) return 0;
+  let feitos = 0, ok = 0;
+  for(const lote of kbLotes(alvo, 8)){
+    kbIngProg(feitos, alvo.length, rotulo + ' (' + Math.min(feitos + lote.length, alvo.length) + ' de ' + alvo.length + ')');
+    try{
+      const j = await kbPost('/api/public/kb-classify', {
+        disciplina: disciplina,
+        topicos: topicos,
+        trechos: lote.map(function(i){ return { i: i, amostra: KB_TRECHOS[i].texto.slice(0, 2500) }; }),
+      });
+      (j.mapa || []).forEach(function(m){
+        const t = KB_TRECHOS[m.i];
+        if(!t || t.manual) return;
+        t.sug = m.topico || '';
+        t.topico = m.topico || '';
+        if(m.topico) ok++;
+      });
+    }catch(e){
+      kbIngMsg('Falha em um lote (' + e.message + '). Continuando com os demais…');
+    }
+    feitos += lote.length;
+    kbIngProg(feitos, alvo.length, rotulo);
+  }
+  return ok;
+}
 
 window.kbDistribuir = async function(){
   const disciplina = kbValidDisc(kbDisc);
@@ -2149,74 +2253,153 @@ window.kbDistribuir = async function(){
   const topicos = kbTopicList(disciplina);
   if(!topicos.length) return kbIngMsg('Esta matéria não tem tópicos cadastrados. Grave o edital primeiro.');
 
-  let trechos = [];
-  KB_FONTES.forEach(function(f){ trechos = trechos.concat(kbTrechos(f.texto, f.nome)); });
-  if(!trechos.length) return kbIngMsg('Carregue primeiro o material (arquivo, link ou texto).');
+  let brutos = [];
+  KB_FONTES.forEach(function(f){ brutos = brutos.concat(kbTrechos(f.texto, f.nome)); });
+  if(!brutos.length) return kbIngMsg('Carregue primeiro o material (arquivo, link ou texto).');
 
-  KB_GERADAS = []; KB_ABERTA = -1;
+  KB_TRECHOS = brutos.map(function(b){ return { nome:b.nome, texto:b.texto, sug:'', topico:'', manual:false, sel:false }; });
+  KB_INCLUIR = {}; KB_GERADAS = []; KB_ABERTA = -1; KB_TRECHO_ABERTO = -1; KB_FILTRO = 'todos';
   const box = document.getElementById('kb-preview'); if(box) box.innerHTML = '';
-  kbSetBusy(true, 'A IA está encaixando ' + trechos.length + ' trecho(s) nos tópicos de ' + disciplina + '…');
+  kbSetBusy(true, 'A IA está encaixando ' + KB_TRECHOS.length + ' trecho(s) nos tópicos de ' + disciplina + '…');
 
-  const porTopico = {};
-  let feitos = 0, semTopico = 0;
-  for(const lote of kbLotes(trechos.map(function(t,i){ return { i:i, t:t }; }), 8)){
-    kbIngProg(feitos, trechos.length, 'Classificando trechos (' + Math.min(feitos + lote.length, trechos.length) + ' de ' + trechos.length + ')');
-    try{
-      const j = await kbPost('/api/public/kb-classify', {
-        disciplina: disciplina,
-        topicos: topicos,
-        trechos: lote.map(function(x){ return { i: x.i, amostra: x.t.texto.slice(0, 2500) }; }),
-      });
-      (j.mapa || []).forEach(function(m){
-        const src = trechos[m.i];
-        if(!src) return;
-        if(!m.topico){ semTopico++; return; }
-        (porTopico[m.topico] = porTopico[m.topico] || []).push(src);
-      });
-    }catch(e){
-      kbIngMsg('Falha em um lote (' + e.message + '). Continuando com os demais…');
-    }
-    feitos += lote.length;
-    kbIngProg(feitos, trechos.length, 'Classificando trechos');
-  }
+  await kbClassificarIdx(KB_TRECHOS.map(function(_,i){ return i; }), disciplina, topicos, 'Classificando trechos');
 
-  KB_GERADAS = Object.keys(porTopico).map(function(t){
-    const partes = porTopico[t];
-    const fontes = Array.from(new Set(partes.map(function(p){ return p.nome; })));
-    return {
-      disciplina: disciplina, topico: t, titulo: t, incidencia: 'media', incluir: true,
-      fontes: fontes,
-      conteudo: partes.map(function(p){ return p.texto; }).join('\n\n'),
-    };
-  }).sort(function(a,b){ return topicos.indexOf(a.topico) - topicos.indexOf(b.topico); });
-
+  const sem = KB_TRECHOS.filter(function(t){ return !t.topico; }).length;
   kbSetBusy(false);
   kbIngProgHide();
   kbMontarEstado();
+  kbAgrupar();
   kbIngMsg('Material distribuído em ' + KB_GERADAS.length + ' de ' + topicos.length + ' tópico(s)'
-    + (semTopico ? ' — ' + semTopico + ' trecho(s) sem tópico correspondente foram ignorados.' : '.')
-    + ' Revise abaixo e salve.');
+    + (sem ? ' — ' + sem + ' trecho(s) ficaram sem tópico. Corrija abaixo ou reclassifique só eles.' : '.'));
   kbPaintPreview();
+};
+
+/* Junta os trechos por tópico — visão derivada, recalculada a cada ajuste. */
+function kbAgrupar(){
+  const topicos = kbTopicList(kbDisc);
+  const porTopico = {};
+  KB_TRECHOS.forEach(function(t){
+    if(!t.topico) return;
+    (porTopico[t.topico] = porTopico[t.topico] || []).push(t);
+  });
+  KB_GERADAS = Object.keys(porTopico).map(function(t){
+    const partes = porTopico[t];
+    if(KB_INCLUIR[t] === undefined) KB_INCLUIR[t] = true;
+    return {
+      disciplina: kbDisc, topico: t, titulo: t, incidencia: 'media', incluir: !!KB_INCLUIR[t],
+      fontes: Array.from(new Set(partes.map(function(p){ return p.nome; }))),
+      conteudo: partes.map(function(p){ return p.texto; }).join('\n\n'),
+    };
+  }).sort(function(a,b){ return topicos.indexOf(a.topico) - topicos.indexOf(b.topico); });
+}
+
+window.kbTrechoTopico = function(i, v){
+  const t = KB_TRECHOS[i]; if(!t) return;
+  t.topico = v;
+  t.manual = (v !== t.sug);
+  kbAgrupar(); kbPaintPreview();
+};
+window.kbTrechoSel = function(i, v){ if(KB_TRECHOS[i]) KB_TRECHOS[i].sel = v; kbPaintPreview(); };
+window.kbTrechoAbrir = function(i){ KB_TRECHO_ABERTO = (KB_TRECHO_ABERTO === i ? -1 : i); kbPaintPreview(); };
+window.kbTrechoFiltro = function(f){ KB_FILTRO = f; kbPaintPreview(); };
+window.kbTrechoSelTodos = function(v){
+  kbTrechosVisiveis().forEach(function(x){ KB_TRECHOS[x.i].sel = v; });
+  kbPaintPreview();
+};
+function kbTrechosVisiveis(){
+  return KB_TRECHOS.map(function(t,i){ return { t:t, i:i }; }).filter(function(x){
+    if(KB_FILTRO === 'sem') return !x.t.topico;
+    if(KB_FILTRO === 'manual') return x.t.manual;
+    return true;
+  });
+}
+window.kbReclassificarSelecionados = async function(){
+  const disciplina = kbValidDisc(kbDisc);
+  if(!disciplina) return kbIngMsg('Selecione uma matéria válida.');
+  const idxs = KB_TRECHOS.map(function(t,i){ return t.sel ? i : -1; }).filter(function(i){ return i >= 0; });
+  if(!idxs.length) return kbIngMsg('Marque os trechos que a IA deve reclassificar.');
+  const alvo = idxs.filter(function(i){ return !KB_TRECHOS[i].manual; });
+  if(!alvo.length) return kbIngMsg('Os trechos marcados foram ajustados por você — a IA não vai sobrescrevê-los.');
+  kbSetBusy(true, 'Reclassificando ' + alvo.length + ' trecho(s)…');
+  await kbClassificarIdx(alvo, disciplina, kbTopicList(disciplina), 'Reclassificando');
+  kbSetBusy(false); kbIngProgHide();
+  KB_TRECHOS.forEach(function(t){ t.sel = false; });
+  kbAgrupar(); kbPaintPreview();
+  kbIngMsg(alvo.length + ' trecho(s) reclassificados. O restante do mapeamento foi preservado.');
 };
 
 function kbPaintPreview(){
   const box = document.getElementById('kb-preview');
   if(!box) return;
-  if(!KB_GERADAS.length){ box.innerHTML = ''; return; }
-  const sel = KB_GERADAS.filter(function(a){ return a.incluir; }).length;
+  if(!KB_TRECHOS.length){ box.innerHTML = ''; return; }
   const tops = kbTopicList(kbDisc);
+  const sel = KB_GERADAS.filter(function(a){ return a.incluir; }).length;
   const semMaterial = tops.filter(function(t){ return !KB_GERADAS.some(function(a){ return a.topico === t; }); });
+  const semTopico = KB_TRECHOS.filter(function(t){ return !t.topico; }).length;
+  const ajustados = KB_TRECHOS.filter(function(t){ return t.manual; }).length;
+  const marcados = KB_TRECHOS.filter(function(t){ return t.sel; }).length;
+  const vis = kbTrechosVisiveis().sort(function(a,b){
+    const pa = a.t.topico ? 1 : 0, pb = b.t.topico ? 1 : 0;
+    return pa - pb || a.i - b.i;
+  });
+  const fbtn = function(id, txt){
+    const on = KB_FILTRO === id;
+    return '<button class="act" onclick="kbTrechoFiltro(\'' + id + '\')" style="font-size:0.74rem;' + (on ? 'background:#0F172A;color:#fff;border-color:#0F172A' : '') + '">' + txt + '</button>';
+  };
+  const opts = function(t){
+    return '<option value=""' + (t.topico ? '' : ' selected') + '>— Ignorar este trecho —</option>' +
+      tops.map(function(o){ return '<option value="' + esc(o) + '"' + (o === t.topico ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('');
+  };
+
   box.innerHTML =
     '<div style="border:1px solid #E2E8F0;border-radius:12px;overflow:hidden">' +
       '<div style="padding:9px 11px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:0.8rem">' +
-        '<b>Onde o material vai entrar — ' + esc(kbDisc) + '</b>' +
+        '<b>Revisão do mapeamento — ' + esc(kbDisc) + '</b>' +
+        '<span class="muted">' + KB_TRECHOS.length + ' trecho(s)</span>' +
+        (semTopico ? '<span style="font-size:0.72rem;font-weight:700;padding:1px 8px;border-radius:99px;background:#FEF3C7;color:#B45309">' + semTopico + ' sem tópico</span>' : '') +
+        (ajustados ? '<span style="font-size:0.72rem;font-weight:700;padding:1px 8px;border-radius:99px;background:#DBEAFE;color:#1D4ED8">' + ajustados + ' ajustado(s) por você</span>' : '') +
+        '<span style="flex:1"></span>' +
+        fbtn('todos','Todos') + fbtn('sem','Sem tópico') + fbtn('manual','Ajustados por mim') +
+      '</div>' +
+      '<div style="padding:8px 11px;border-bottom:1px solid #F1F5F9;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:0.78rem">' +
+        '<button class="act" onclick="kbTrechoSelTodos(true)" style="font-size:0.74rem">Marcar visíveis</button>' +
+        '<button class="act" onclick="kbTrechoSelTodos(false)" style="font-size:0.74rem">Desmarcar</button>' +
+        '<button class="act primary" onclick="kbReclassificarSelecionados()" style="font-size:0.74rem"' + (marcados ? '' : ' disabled') + '>Reclassificar só o que eu marquei' + (marcados ? ' (' + marcados + ')' : '') + '</button>' +
+      '</div>' +
+      '<div style="max-height:52vh;overflow:auto">' +
+      (vis.length ? vis.map(function(x){
+        const t = x.t, i = x.i, aberto = KB_TRECHO_ABERTO === i;
+        return '<div style="border-bottom:1px solid #F1F5F9;padding:9px 11px;font-size:0.79rem">' +
+          '<div style="display:flex;gap:8px;align-items:flex-start">' +
+            '<input type="checkbox" ' + (t.sel?'checked':'') + ' onchange="kbTrechoSel(' + i + ',this.checked)" style="width:auto;margin-top:4px">' +
+            '<div style="flex:1;min-width:0">' +
+              '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">' +
+                '<span class="muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px">' + esc(t.nome) + '</span>' +
+                '<span class="muted">· ' + t.texto.length.toLocaleString('pt-BR') + ' car.</span>' +
+                (t.manual ? '<span style="font-size:0.7rem;font-weight:700;padding:1px 7px;border-radius:99px;background:#DBEAFE;color:#1D4ED8">ajustado por você</span>' : '') +
+                (!t.topico ? '<span style="font-size:0.7rem;font-weight:700;padding:1px 7px;border-radius:99px;background:#FEF3C7;color:#B45309">sem tópico</span>' : '') +
+              '</div>' +
+              '<div class="muted" style="margin:3px 0 6px;cursor:pointer" onclick="kbTrechoAbrir(' + i + ')">' + esc(t.texto.slice(0,160).replace(/\s+/g,' ')) + '…</div>' +
+              '<select onchange="kbTrechoTopico(' + i + ',this.value)" style="font-size:0.78rem">' + opts(t) + '</select>' +
+            '</div>' +
+            '<button class="act" onclick="kbTrechoAbrir(' + i + ')" style="font-size:0.74rem">' + (aberto ? 'Fechar' : 'Ver') + '</button>' +
+          '</div>' +
+          (aberto ? '<pre style="margin:8px 0 0;max-height:220px;overflow:auto;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:9px;white-space:pre-wrap;font-size:0.74rem">' + esc(t.texto) + '</pre>' : '') +
+        '</div>';
+      }).join('') : '<p class="muted" style="padding:12px">Nenhum trecho neste filtro.</p>') +
+      '</div>' +
+    '</div>' +
+
+    '<div style="border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;margin-top:12px">' +
+      '<div style="padding:9px 11px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:0.8rem">' +
+        '<b>Onde o material vai entrar</b>' +
         '<span class="muted">' + sel + ' de ' + KB_GERADAS.length + ' tópico(s) marcados</span>' +
         '<span style="font-size:0.72rem;font-weight:700;padding:1px 8px;border-radius:99px;background:' + (semMaterial.length?'#FEF3C7':'#DCFCE7') + ';color:' + (semMaterial.length?'#B45309':'#047857') + '">Cobertura: ' + (tops.length - semMaterial.length) + ' de ' + tops.length + ' tópicos</span>' +
         '<span style="flex:1"></span>' +
         '<button class="act" onclick="kbPreviewTodas(true)">Marcar todos</button>' +
         '<button class="act" onclick="kbPreviewTodas(false)">Desmarcar todos</button>' +
       '</div>' +
-      '<div style="max-height:52vh;overflow:auto">' +
+      '<div style="max-height:38vh;overflow:auto">' +
       KB_GERADAS.map(function(a,i){
         const existe = !!kbFind(kbDisc, a.topico);
         const aberta = KB_ABERTA === i;
@@ -2226,7 +2409,7 @@ function kbPaintPreview(){
             '<div style="flex:1;min-width:0;cursor:pointer" onclick="kbPreviewAbrir(' + i + ')">' +
               '<b>' + esc(a.topico) + '</b>' +
               (existe ? ' <span class="muted" style="color:#B45309">· soma ao conteúdo atual</span>' : ' <span class="muted" style="color:#047857">· novo</span>') +
-              '<br><span class="muted">' + esc(a.fontes.join(' · ')) + ' — ' + String(a.conteudo.length).replace(/\B(?=(\d{3})+(?!\d))/g,'.') + ' caracteres</span>' +
+              '<br><span class="muted">' + esc(a.fontes.join(' · ')) + ' — ' + a.conteudo.length.toLocaleString('pt-BR') + ' caracteres</span>' +
             '</div>' +
             '<button class="act" onclick="kbPreviewAbrir(' + i + ')">' + (aberta ? 'Fechar' : 'Revisar') + '</button>' +
           '</div>' +
@@ -2249,11 +2432,12 @@ function kbPaintPreview(){
       '<button class="act" onclick="kbPreviewDescartar()">Descartar</button>' +
     '</div>';
 }
-window.kbPreviewToggle = function(i, v){ KB_GERADAS[i].incluir = v; kbPaintPreview(); };
-window.kbPreviewTodas = function(v){ KB_GERADAS.forEach(function(a){ a.incluir = v; }); kbPaintPreview(); };
+window.kbPreviewToggle = function(i, v){ KB_GERADAS[i].incluir = v; KB_INCLUIR[KB_GERADAS[i].topico] = v; kbPaintPreview(); };
+window.kbPreviewTodas = function(v){ KB_GERADAS.forEach(function(a){ a.incluir = v; KB_INCLUIR[a.topico] = v; }); kbPaintPreview(); };
 window.kbPreviewAbrir = function(i){ KB_ABERTA = (KB_ABERTA === i ? -1 : i); kbPaintPreview(); };
 window.kbPreviewCampo = function(i, campo, v){ KB_GERADAS[i][campo] = v; };
-window.kbPreviewDescartar = function(){ KB_GERADAS = []; KB_ABERTA = -1; kbPaintPreview(); kbIngMsg('Distribuição descartada.'); };
+window.kbPreviewDescartar = function(){ KB_GERADAS = []; KB_TRECHOS = []; KB_INCLUIR = {}; KB_ABERTA = -1; KB_TRECHO_ABERTO = -1; kbPaintPreview(); kbIngMsg('Distribuição descartada.'); };
+
 
 window.kbPublicarGeradas = async function(){
   let lista;
@@ -2281,7 +2465,7 @@ window.kbPublicarGeradas = async function(){
     if(!doc) await loadKB();
   }
   await logAdmin('distribuir_material','knowledge_docs', null, { disciplina:disciplinaSelecionada, topicos:lista.length });
-  const n = lista.length; KB_GERADAS = []; KB_ABERTA = -1;
+  const n = lista.length; KB_GERADAS = []; KB_TRECHOS = []; KB_INCLUIR = {}; KB_ABERTA = -1; KB_TRECHO_ABERTO = -1;
   await loadKB(); kbSetBusy(false); kbPaint();
   kbIngMsg('Material guardado em ' + n + ' tópico(s) como rascunho. Revise em "Aulas aguardando revisão" e publique.');
 };
