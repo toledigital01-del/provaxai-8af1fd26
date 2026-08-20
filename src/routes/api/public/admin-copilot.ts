@@ -41,7 +41,7 @@ export const Route = createFileRoute('/api/public/admin-copilot')({
           '"Matéria — tópicos que faltam: X, Y, Z. Anexar: <documento/trecho concreto>". Nomeie a fonte de forma específica',
           '(ex.: CTB arts. 161-255, Lei 9.784/1999, súmulas do STJ sobre o tema, apostila própria do capítulo, jurisprudência recente),',
           'nunca respostas genéricas como "adicione mais material". Priorize as matérias com mais tópicos descobertos e',
-          'aponte também documentos já enviados que estão sem tópico atribuído ou retidos por direitos autorais.',
+          'aponte também documentos já enviados que ainda estão sem tópico atribuído.',
           body.contexto ? `\n--- ESTADO ATUAL DO PAINEL ---\n${body.contexto}` : '',
         ].join('\n')
 
