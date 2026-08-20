@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.kb_material_retido(text, text);

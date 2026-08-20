@@ -1233,10 +1233,6 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_support: { Args: never; Returns: boolean }
-      kb_material_retido: {
-        Args: { _curso?: string; _disciplina: string }
-        Returns: number
-      }
     }
     Enums: {
       app_role: "admin" | "suporte" | "aluno"
