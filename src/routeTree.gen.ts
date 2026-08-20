@@ -16,6 +16,7 @@ import { Route as ApiPublicAiStatusRouteImport } from './routes/api/public/ai-st
 import { Route as ApiPublicAiTestRouteImport } from './routes/api/public/ai-test'
 import { Route as ApiPublicAthenaRouteImport } from './routes/api/public/athena'
 import { Route as ApiPublicKbAutocourseRouteImport } from './routes/api/public/kb-autocourse'
+import { Route as ApiPublicKbClassifyRouteImport } from './routes/api/public/kb-classify'
 import { Route as ApiPublicKbDriveRouteImport } from './routes/api/public/kb-drive'
 import { Route as ApiPublicKbEditalRouteImport } from './routes/api/public/kb-edital'
 import { Route as ApiPublicKbIngestRouteImport } from './routes/api/public/kb-ingest'
@@ -60,6 +61,11 @@ const ApiPublicAthenaRoute = ApiPublicAthenaRouteImport.update({
 const ApiPublicKbAutocourseRoute = ApiPublicKbAutocourseRouteImport.update({
   id: '/api/public/kb-autocourse',
   path: '/api/public/kb-autocourse',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicKbClassifyRoute = ApiPublicKbClassifyRouteImport.update({
+  id: '/api/public/kb-classify',
+  path: '/api/public/kb-classify',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicKbDriveRoute = ApiPublicKbDriveRouteImport.update({
@@ -116,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/api/public/ai-test': typeof ApiPublicAiTestRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
+  '/api/public/kb-classify': typeof ApiPublicKbClassifyRoute
   '/api/public/kb-drive': typeof ApiPublicKbDriveRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
@@ -134,6 +141,7 @@ export interface FileRoutesByTo {
   '/api/public/ai-test': typeof ApiPublicAiTestRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
+  '/api/public/kb-classify': typeof ApiPublicKbClassifyRoute
   '/api/public/kb-drive': typeof ApiPublicKbDriveRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
@@ -153,6 +161,7 @@ export interface FileRoutesById {
   '/api/public/ai-test': typeof ApiPublicAiTestRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
+  '/api/public/kb-classify': typeof ApiPublicKbClassifyRoute
   '/api/public/kb-drive': typeof ApiPublicKbDriveRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
@@ -173,6 +182,7 @@ export interface FileRouteTypes {
     | '/api/public/ai-test'
     | '/api/public/athena'
     | '/api/public/kb-autocourse'
+    | '/api/public/kb-classify'
     | '/api/public/kb-drive'
     | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
@@ -191,6 +201,7 @@ export interface FileRouteTypes {
     | '/api/public/ai-test'
     | '/api/public/athena'
     | '/api/public/kb-autocourse'
+    | '/api/public/kb-classify'
     | '/api/public/kb-drive'
     | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
@@ -209,6 +220,7 @@ export interface FileRouteTypes {
     | '/api/public/ai-test'
     | '/api/public/athena'
     | '/api/public/kb-autocourse'
+    | '/api/public/kb-classify'
     | '/api/public/kb-drive'
     | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
@@ -228,6 +240,7 @@ export interface RootRouteChildren {
   ApiPublicAiTestRoute: typeof ApiPublicAiTestRoute
   ApiPublicAthenaRoute: typeof ApiPublicAthenaRoute
   ApiPublicKbAutocourseRoute: typeof ApiPublicKbAutocourseRoute
+  ApiPublicKbClassifyRoute: typeof ApiPublicKbClassifyRoute
   ApiPublicKbDriveRoute: typeof ApiPublicKbDriveRoute
   ApiPublicKbEditalRoute: typeof ApiPublicKbEditalRoute
   ApiPublicKbIngestRoute: typeof ApiPublicKbIngestRoute
@@ -288,6 +301,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/kb-autocourse'
       fullPath: '/api/public/kb-autocourse'
       preLoaderRoute: typeof ApiPublicKbAutocourseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/kb-classify': {
+      id: '/api/public/kb-classify'
+      path: '/api/public/kb-classify'
+      fullPath: '/api/public/kb-classify'
+      preLoaderRoute: typeof ApiPublicKbClassifyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/kb-drive': {
@@ -364,6 +384,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAiTestRoute: ApiPublicAiTestRoute,
   ApiPublicAthenaRoute: ApiPublicAthenaRoute,
   ApiPublicKbAutocourseRoute: ApiPublicKbAutocourseRoute,
+  ApiPublicKbClassifyRoute: ApiPublicKbClassifyRoute,
   ApiPublicKbDriveRoute: ApiPublicKbDriveRoute,
   ApiPublicKbEditalRoute: ApiPublicKbEditalRoute,
   ApiPublicKbIngestRoute: ApiPublicKbIngestRoute,
