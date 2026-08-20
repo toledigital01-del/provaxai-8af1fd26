@@ -1027,7 +1027,7 @@ async function viewConhecimento(){
     <section data-step="revisao">
       <div class="kb-block">
         <h3>Revisar e publicar</h3>
-        <p class="kb-sub">Tudo que a IA gerou e ainda não foi revisado/publicado. O aluno não vê nada desta lista.</p>
+        <p class="kb-sub">Aulas com conteúdo salvo que ainda estão em rascunho. Confira o texto e publique — só o que estiver publicado chega ao aluno.</p>
         <div id="kb-fila"></div>
       </div>
     </section>
@@ -1136,7 +1136,7 @@ function kbCoberturaDetalhe(discs){
   const pct = totalTop ? Math.round(totalOk / totalTop * 100) : 0;
   return '<hr class="kb-hr"><h4>Checklist do edital</h4>' +
     '<p class="muted" style="margin:4px 0 10px">' + totalOk + ' de ' + totalTop + ' tópicos do edital já têm material (' + pct + '%). ' +
-    'Vermelho = nenhum material; amarelo = material em rascunho/revisão; verde = publicado para o aluno.</p>' + blocos;
+    'Vermelho = nenhum material; amarelo = em rascunho (aluno não vê); verde = publicado para o aluno.</p>' + blocos;
 }
 
 /* ---- Fila de aulas em rascunho/revisado (ainda invisíveis para o aluno) ---- */
@@ -1144,24 +1144,37 @@ function kbPaintFila(){
   const box = document.getElementById('kb-fila');
   if(!box) return;
   const pend = KB_DOCS.filter(function(d){ return (d.conteudo||'').trim() && kbStatusDoc(d) !== 'publicado'; });
-  if(!pend.length){ box.innerHTML = '<p class="muted">Nada pendente — todas as aulas com conteúdo já estão publicadas.</p>'; return; }
+  const pubs = KB_DOCS.filter(function(d){ return (d.conteudo||'').trim() && kbStatusDoc(d) === 'publicado'; });
+  const rodape = '<p class="muted" id="kb-fila-msg" style="margin-top:12px;min-height:18px"></p>' +
+    '<p class="muted" style="font-size:0.78rem">' + pubs.length + ' aula(s) já publicadas para o aluno.</p>';
+  if(!pend.length){
+    box.innerHTML = '<p class="muted">Nada pendente — todas as aulas com conteúdo já estão publicadas.</p>' + rodape;
+    return;
+  }
   const porDisc = {};
   pend.forEach(function(d){ (porDisc[d.disciplina] = porDisc[d.disciplina] || []).push(d); });
-  box.innerHTML = Object.keys(porDisc).sort().map(function(d){
+  box.innerHTML = '<p class="muted" style="margin:0 0 16px;max-width:75ch;font-size:0.82rem">' +
+      'Cada linha é uma aula já escrita mas <b>ainda invisível para o aluno</b>. ' +
+      'Use <b>Abrir e conferir</b> para ler/editar o texto no passo 2, ou <b>Publicar</b> para liberar na hora.' +
+    '</p>' +
+    Object.keys(porDisc).sort().map(function(d){
     return '<div style="margin-bottom:22px">' +
-      '<div style="display:flex;align-items:baseline;gap:8px;padding:0 2px 8px;border-bottom:1px solid #EEF1F6">' +
+      '<div style="display:flex;align-items:center;gap:8px;padding:0 2px 8px;border-bottom:1px solid #EEF1F6;flex-wrap:wrap">' +
         '<h4 style="margin:0">' + esc(d) + '</h4>' +
-        '<span class="muted" style="font-size:0.75rem">' + porDisc[d].length + ' pendente(s)</span>' +
+        '<span class="muted" style="font-size:0.75rem;flex:1">' + porDisc[d].length + ' aula(s) aguardando publicação</span>' +
+        '<button class="act primary" onclick="kbPublicarDisc(\'' + escJs(d) + '\')">Publicar todas</button>' +
       '</div>' +
       porDisc[d].map(function(x){
-        const st = KB_STATUS[kbStatusDoc(x)];
-        return '<div style="padding:11px 2px;display:flex;gap:12px;align-items:center;border-bottom:1px solid #F5F7FA;font-size:0.82rem">' +
-          '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(x.topico || 'Visão geral da matéria') + '</span>' +
-          '<span class="kb-tag' + (kbStatusDoc(x)==='revisado'?' is-wait':'') + '">' + st.rotulo + '</span>' +
-          '<button class="act" onclick="kbAbrirDoc(\'' + escJs(x.disciplina) + '\',' + (x.topico ? "'" + escJs(x.topico) + "'" : 'null') + ')">Revisar</button>' +
+        const chars = (x.conteudo||'').length;
+        return '<div style="padding:11px 2px;display:flex;gap:10px;align-items:center;border-bottom:1px solid #F5F7FA;font-size:0.82rem;flex-wrap:wrap">' +
+          '<span style="flex:1;min-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(x.topico || 'Visão geral da matéria') + '</span>' +
+          '<span class="muted" style="font-size:0.72rem">' + chars.toLocaleString('pt-BR') + ' caracteres' + (x.updated_at ? ' · ' + dt(x.updated_at) : '') + '</span>' +
+          '<span class="kb-tag is-wait">Rascunho</span>' +
+          '<button class="act" onclick="kbAbrirDoc(\'' + escJs(x.disciplina) + '\',' + (x.topico ? "'" + escJs(x.topico) + "'" : 'null') + ')">Abrir e conferir</button>' +
+          '<button class="act primary" onclick="kbPublicarDoc(\'' + x.id + '\',true)">Publicar</button>' +
         '</div>';
       }).join('') + '</div>';
-  }).join('');
+  }).join('') + rodape;
 }
 window.kbAbrirDoc = function(d, t){
   const disc = kbValidDisc(d);
@@ -2760,7 +2773,7 @@ window.kbSave = async function(){
   await loadKB(); kbPaint();
   document.getElementById('kb-msg').textContent = 'Conteúdo salvo em ' + disciplinaSelecionada + '. A Athena já usa este material.';
 };
-/* Muda o status da aula selecionada (rascunho → revisado → publicado). */
+/* Muda o status da aula selecionada (rascunho ↔ publicado). */
 window.kbSetStatus = async function(status){
   const doc = kbFind(kbDisc, kbTopic);
   const msg = document.getElementById('kb-msg');
@@ -2773,8 +2786,34 @@ window.kbSetStatus = async function(status){
   await loadKB(); kbPaint();
   const m2 = document.getElementById('kb-msg');
   if(m2) m2.textContent = status === 'publicado' ? 'Aula publicada — já aparece para os alunos.'
-    : status === 'revisado' ? 'Aula marcada como revisada. Publique quando quiser liberar.'
     : 'Aula voltou para rascunho e saiu do ar.';
+};
+/* Publica (ou despublica) direto da lista de revisão, sem abrir o editor. */
+window.kbPublicarDoc = async function(id, publicar){
+  const box = document.getElementById('kb-fila-msg');
+  if(box) box.textContent = publicar ? 'Publicando…' : 'Despublicando…';
+  const { error } = await PX.sb.from('knowledge_docs')
+    .update({ status: publicar ? 'publicado' : 'rascunho', publicado: !!publicar }).eq('id', id);
+  if(error){ if(box) box.textContent = 'Erro: ' + error.message; return; }
+  await logAdmin('status_conhecimento','knowledge_docs', id, { status: publicar ? 'publicado' : 'rascunho' });
+  await loadKB(); kbPaint();
+  const b2 = document.getElementById('kb-fila-msg');
+  if(b2) b2.textContent = publicar ? 'Aula publicada — já aparece para o aluno.' : 'Aula despublicada.';
+};
+/* Publica de uma vez todas as aulas pendentes de uma matéria. */
+window.kbPublicarDisc = async function(d){
+  const pend = KB_DOCS.filter(function(x){ return x.disciplina === d && (x.conteudo||'').trim() && kbStatusDoc(x) !== 'publicado'; });
+  if(!pend.length) return;
+  if(!confirm('Publicar ' + pend.length + ' aula(s) de ' + d + ' para os alunos?')) return;
+  const box = document.getElementById('kb-fila-msg');
+  if(box) box.textContent = 'Publicando ' + pend.length + ' aula(s)…';
+  const { error } = await PX.sb.from('knowledge_docs')
+    .update({ status:'publicado', publicado:true }).in('id', pend.map(function(x){ return x.id; }));
+  if(error){ if(box) box.textContent = 'Erro: ' + error.message; return; }
+  await logAdmin('publicar_materia','knowledge_docs', null, { disciplina:d, total:pend.length });
+  await loadKB(); kbPaint();
+  const b2 = document.getElementById('kb-fila-msg');
+  if(b2) b2.textContent = pend.length + ' aula(s) de ' + d + ' publicadas.';
 };
 window.kbDelete = async function(id){
   if(!confirm('Excluir este conteúdo da base?')) return;
@@ -2925,8 +2964,7 @@ function copDiagnostico(){
       const faltam = tops.filter(function(t){ return !((kbFind(d,t)||{}).conteudo||'').trim(); });
       const docs = KB_LIB.filter(function(x){ return x.discipline_nome === d; });
       const semTopico = docs.filter(function(x){ return !x.topic_nome; }).length;
-      const retidos = docs.filter(function(x){ return x.status_direitos === 'terceiro_verificar'; }).length;
-      return { disc:d, total:tops.length, faltam:faltam, docs:docs.length, semTopico:semTopico, retidos:retidos,
+      return { disc:d, total:tops.length, faltam:faltam, docs:docs.length, semTopico:semTopico,
                nomes: docs.slice(0,8).map(function(x){ return x.nome_arquivo; }) };
     });
   }catch(e){ return []; }
@@ -2934,7 +2972,7 @@ function copDiagnostico(){
 function copContexto(){
   const linhas = copDiagnostico().map(function(c){
     return c.disc + ': ' + (c.total - c.faltam.length) + '/' + c.total + ' tópicos com material, ' + c.docs +
-      ' documentos-fonte (' + c.semTopico + ' ainda sem tópico atribuído, ' + c.retidos + ' retidos por direitos autorais).' +
+      ' documentos-fonte (' + c.semTopico + ' ainda sem tópico atribuído).' +
       ' Documentos: ' + (c.nomes.length ? c.nomes.join(' | ') : 'nenhum') + '.' +
       ' Tópicos sem material: ' + (c.faltam.length ? c.faltam.slice(0,25).join('; ') : 'nenhum');
   });
@@ -2957,7 +2995,6 @@ window.copRecomendar = async function(){
       if(!c.docs) acoes.push('anexe o primeiro material desta matéria (PDF da apostila, lei seca ou aula em texto)');
       if(c.semTopico) acoes.push(c.semTopico + ' documento(s) já enviados estão sem tópico — use "Distribuir com IA" ou ajuste manualmente');
       if(c.faltam.length) acoes.push('faltam ' + c.faltam.length + ' de ' + c.total + ' tópicos com material');
-      if(c.retidos) acoes.push(c.retidos + ' documento(s) retidos por direitos autorais — troque por fonte própria ou de domínio público');
       return '<div style="margin-top:10px;border-top:1px solid #E2E8F0;padding-top:8px">' +
         '<div><b>' + esc(c.disc) + '</b></div>' +
         '<div class="muted">' + esc(acoes.join(' · ')) + '</div>' +
