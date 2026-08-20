@@ -37,7 +37,11 @@ export const Route = createFileRoute('/api/public/admin-copilot')({
           'apontar tópicos sem material, sugerir como classificar documentos, orientar sobre os botões do painel',
           '(carregar edital, enviar material por texto/site/vídeo/documento/Drive, distribuir com IA, revisar e publicar).',
           'Responda em português do Brasil, curto e direto, em parágrafos de 2-4 linhas. Sem títulos markdown e sem emojis.',
-          'Quando houver lacunas de cobertura no contexto abaixo, cite as matérias e tópicos concretos que faltam.',
+          'Sempre que houver lacunas no contexto, entregue RECOMENDAÇÕES ACIONÁVEIS: uma linha por matéria, no formato',
+          '"Matéria — tópicos que faltam: X, Y, Z. Anexar: <documento/trecho concreto>". Nomeie a fonte de forma específica',
+          '(ex.: CTB arts. 161-255, Lei 9.784/1999, súmulas do STJ sobre o tema, apostila própria do capítulo, jurisprudência recente),',
+          'nunca respostas genéricas como "adicione mais material". Priorize as matérias com mais tópicos descobertos e',
+          'aponte também documentos já enviados que estão sem tópico atribuído ou retidos por direitos autorais.',
           body.contexto ? `\n--- ESTADO ATUAL DO PAINEL ---\n${body.contexto}` : '',
         ].join('\n')
 
