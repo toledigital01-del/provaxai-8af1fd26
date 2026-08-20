@@ -1795,15 +1795,8 @@ window.kbDriveImportar = async function(){
   }catch(e){ setMsg(e.message); return 0; }
 };
 
-/* Importa a pasta do Drive e, terminando bem, já dispara a montagem do curso
-   com as preferências (banca, cargo, profundidade, modo aprovação) da tela. */
-window.kbDriveImportarEMontar = async function(){
-  const msg = document.getElementById('kb-drive-msg');
-  const n = await window.kbDriveImportar();
-  if(!n) return;
-  if(msg) msg.textContent = n + ' arquivo(s) importados. Montando o curso com IA…';
-  await window.kbMontarCurso();
-};
+
+
 
 
 
