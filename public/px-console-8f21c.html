@@ -2367,8 +2367,8 @@ window.kbExportLog = function(formato){
       KB_LOG_ROWS.map(function(r){ return '<tr>' + cols.map(function(c){ return '<td>' + esc(String(r[c] == null ? '' : r[c])) + '</td>'; }).join('') + '</tr>'; }).join('') +
       '</tbody></table>' : '<p>Nenhum documento individual registrado nesta operação.</p>') +
     '<h2>Log completo</h2><pre>' + esc(KB_LOG.join('\n')) + '</pre>' +
-    '</body>
-</html>';
+    '</body></html>';
+
   const w = window.open('', '_blank');
   if(!w) return kbOrfMsg('Libere os pop-ups para gerar o PDF.');
   w.document.write(html);
