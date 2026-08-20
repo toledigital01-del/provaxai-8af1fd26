@@ -962,13 +962,20 @@ async function viewConhecimento(){
 
     <section data-step="conteudo">
       <div class="kb-block">
-        <h3>Base de conhecimento da Athena IA</h3>
-        <p class="kb-sub">Escolha a matéria, depois o tópico. Tudo que estiver aqui vira a fonte de verdade da Athena e aparece para o aluno quando a aula estiver publicada.</p>
+        <div id="kb-voltar" style="display:none;margin-bottom:12px">
+          <button class="act" onclick="kbFecharDisc()">← Todas as matérias</button>
+        </div>
+        <div id="kb-cards-wrap">
+          <h3>Matérias do edital</h3>
+          <p class="kb-sub">Uma caixa por matéria. Abra a caixa da matéria para carregar o material dela — a IA guarda cada trecho no tópico certo e ele vira a referência da aula com a Athena.</p>
+          <div id="kb-cards"></div>
+        </div>
         <div style="display:grid;grid-template-columns:minmax(180px,240px) minmax(200px,280px) 1fr;gap:20px;align-items:start" id="kb-grid">
           <div id="kb-discs"></div><div id="kb-topics"></div><div id="kb-editor"></div>
         </div>
       </div>
     </section>
+
 
     <section data-step="revisao">
       <div class="kb-block">
