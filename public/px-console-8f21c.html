@@ -2463,7 +2463,7 @@ window.kbPublicarGeradas = async function(){
     if(!doc) await loadKB();
   }
   await logAdmin('distribuir_material','knowledge_docs', null, { disciplina:disciplinaSelecionada, topicos:lista.length });
-  const n = lista.length; KB_GERADAS = []; KB_ABERTA = -1;
+  const n = lista.length; KB_GERADAS = []; KB_TRECHOS = []; KB_INCLUIR = {}; KB_ABERTA = -1; KB_TRECHO_ABERTO = -1;
   await loadKB(); kbSetBusy(false); kbPaint();
   kbIngMsg('Material guardado em ' + n + ' tópico(s) como rascunho. Revise em "Aulas aguardando revisão" e publique.');
 };
