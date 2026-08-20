@@ -2918,19 +2918,79 @@ function copBolha(role, txt){
   box.scrollTop = box.scrollHeight;
   return d;
 }
-function copContexto(){
+/** Diagnóstico de cobertura por matéria, usado tanto no contexto da IA quanto nas recomendações. */
+function copDiagnostico(){
   try{
-    const discs = kbDiscList();
-    const linhas = discs.map(function(d){
+    return kbDiscList().map(function(d){
       const tops = kbTopicList(d);
       const faltam = tops.filter(function(t){ return !((kbFind(d,t)||{}).conteudo||'').trim(); });
-      const fontes = KB_LIB.filter(function(x){ return x.discipline_nome === d; }).length;
-      return d + ': ' + (tops.length - faltam.length) + '/' + tops.length + ' tópicos com material, ' + fontes +
-        ' documentos-fonte. Sem material: ' + (faltam.length ? faltam.slice(0,20).join('; ') : 'nenhum');
+      const docs = KB_LIB.filter(function(x){ return x.discipline_nome === d; });
+      const semTopico = docs.filter(function(x){ return !x.topic_nome; }).length;
+      const retidos = docs.filter(function(x){ return x.status_direitos === 'terceiro_verificar'; }).length;
+      return { disc:d, total:tops.length, faltam:faltam, docs:docs.length, semTopico:semTopico, retidos:retidos,
+               nomes: docs.slice(0,8).map(function(x){ return x.nome_arquivo; }) };
     });
-    return 'Curso prf-2021. Matérias e cobertura:\n' + linhas.join('\n');
-  }catch(e){ return ''; }
+  }catch(e){ return []; }
 }
+function copContexto(){
+  const linhas = copDiagnostico().map(function(c){
+    return c.disc + ': ' + (c.total - c.faltam.length) + '/' + c.total + ' tópicos com material, ' + c.docs +
+      ' documentos-fonte (' + c.semTopico + ' ainda sem tópico atribuído, ' + c.retidos + ' retidos por direitos autorais).' +
+      ' Documentos: ' + (c.nomes.length ? c.nomes.join(' | ') : 'nenhum') + '.' +
+      ' Tópicos sem material: ' + (c.faltam.length ? c.faltam.slice(0,25).join('; ') : 'nenhum');
+  });
+  return linhas.length ? 'Curso prf-2021. Matérias e cobertura:\n' + linhas.join('\n') : '';
+}
+/** Painel de recomendações acionáveis: lacunas concretas + o que anexar, com atalho para a matéria/tópico. */
+window.copRecomendar = async function(){
+  const p = document.getElementById('cop-panel');
+  if(p.style.display === 'none') copToggle();
+  const diag = copDiagnostico().filter(function(c){ return c.faltam.length || c.semTopico || !c.docs; });
+  const box = document.getElementById('cop-msgs');
+  const card = document.createElement('div');
+  card.style.cssText = 'align-self:stretch;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:12px';
+  if(!diag.length){
+    card.innerHTML = '<b>Cobertura completa.</b><div class="muted">Todos os tópicos do edital já têm material vinculado.</div>';
+  } else {
+    const ordenado = diag.slice().sort(function(a,b){ return b.faltam.length - a.faltam.length; }).slice(0,6);
+    card.innerHTML = '<b style="font-size:0.86rem">O que falta para completar o edital</b>' + ordenado.map(function(c){
+      const acoes = [];
+      if(!c.docs) acoes.push('anexe o primeiro material desta matéria (PDF da apostila, lei seca ou aula em texto)');
+      if(c.semTopico) acoes.push(c.semTopico + ' documento(s) já enviados estão sem tópico — use "Distribuir com IA" ou ajuste manualmente');
+      if(c.faltam.length) acoes.push('faltam ' + c.faltam.length + ' de ' + c.total + ' tópicos com material');
+      if(c.retidos) acoes.push(c.retidos + ' documento(s) retidos por direitos autorais — troque por fonte própria ou de domínio público');
+      return '<div style="margin-top:10px;border-top:1px solid #E2E8F0;padding-top:8px">' +
+        '<div><b>' + esc(c.disc) + '</b></div>' +
+        '<div class="muted">' + esc(acoes.join(' · ')) + '</div>' +
+        (c.faltam.length ? '<div class="muted" style="margin-top:4px">Tópicos: ' + esc(c.faltam.slice(0,6).join(' · ')) +
+          (c.faltam.length > 6 ? ' e mais ' + (c.faltam.length - 6) : '') + '</div>' : '') +
+        '<button class="act" style="margin-top:6px" onclick="copIr(\'' + escJs(c.disc) + '\',\'' + escJs(c.faltam[0] || '') + '\')">Abrir matéria</button>' +
+        '</div>';
+    }).join('');
+  }
+  box.appendChild(card);
+  box.scrollTop = box.scrollHeight;
+
+  const pend = copBolha('assistant','Analisando quais documentos anexar…');
+  try{
+    const j = await kbPost('/api/public/admin-copilot', {
+      pergunta: 'Com base na cobertura atual, liste recomendações acionáveis: para cada matéria com lacuna, diga exatamente quais tópicos faltam e que tipo de documento ou trecho eu devo anexar (lei, súmula, apostila, jurisprudência, aula em texto) para fechar essa lacuna. Priorize as maiores lacunas e seja concreto.',
+      contexto: copContexto().slice(0, 20000),
+    });
+    pend.textContent = j.resposta;
+    COP_HIST.push({ role:'assistant', content:j.resposta });
+  }catch(e){
+    pend.textContent = e.message || 'Não consegui gerar as recomendações agora.';
+  }
+};
+window.copIr = function(disc, topico){
+  try{
+    if(typeof kbSetStep === 'function') kbSetStep('conteudo');
+    kbSelDisc(disc);
+    if(topico) kbSelTopic(topico);
+    copToggle();
+  }catch(e){}
+};
 window.copEnviar = async function(){
   const inp = document.getElementById('cop-in');
   const q = inp.value.trim();
