@@ -1972,7 +1972,7 @@ window.kbIngestFiles = async function(files){
   kbIngProg(files.length, files.length, 'Leitura concluída');
   setTimeout(kbIngProgHide, 1200);
   kbMontarEstado();
-  kbIngMsg(n + ' arquivo(s) lido(s) direto para o material. Já dá para montar o curso.');
+  kbIngMsg(n + ' arquivo(s) lido(s). Agora é só guardar nos tópicos.');
 };
 window.kbIngestUrlAuto = async function(url){
   if(!kbValidDisc(kbDisc)) return kbIngMsg('Selecione uma matéria válida antes de carregar material.');
