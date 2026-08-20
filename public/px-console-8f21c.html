@@ -2367,82 +2367,7 @@ window.kbExportLog = function(formato){
       KB_LOG_ROWS.map(function(r){ return '<tr>' + cols.map(function(c){ return '<td>' + esc(String(r[c] == null ? '' : r[c])) + '</td>'; }).join('') + '</tr>'; }).join('') +
       '</tbody></table>' : '<p>Nenhum documento individual registrado nesta operação.</p>') +
     '<h2>Log completo</h2><pre>' + esc(KB_LOG.join('\n')) + '</pre>' +
-    '
-<!-- Copiloto de IA do painel (não é a Athena dos alunos) -->
-<div id="cop-fab" style="position:fixed;right:20px;bottom:20px;z-index:70">
-  <button onclick="copToggle()" style="width:56px;height:56px;border-radius:99px;border:none;background:#0B2A5B;color:#fff;font-size:1.3rem;cursor:pointer;box-shadow:0 10px 24px rgba(11,42,91,.28)" title="Copiloto do painel">✦</button>
-</div>
-<div id="cop-panel" style="display:none;position:fixed;right:20px;bottom:88px;width:min(380px,calc(100vw - 32px));height:min(520px,calc(100vh - 130px));background:#fff;border:1px solid #E2E8F0;border-radius:16px;box-shadow:0 24px 60px rgba(15,23,42,.18);z-index:70;flex-direction:column;overflow:hidden">
-  <div style="display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid #EEF1F6">
-    <b style="flex:1;font-size:0.88rem">Copiloto do painel</b>
-    <button class="act" onclick="copToggle()">Fechar</button>
-  </div>
-  <div id="cop-msgs" style="flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px;font-size:0.84rem;line-height:1.5"></div>
-  <div style="display:flex;gap:8px;padding:10px;border-top:1px solid #EEF1F6">
-    <input id="cop-in" placeholder="Pergunte sobre o edital, cobertura, material…" style="flex:1">
-    <button class="act primary" onclick="copEnviar()">Enviar</button>
-  </div>
-</div>
-<script>
-let COP_HIST = [];
-window.copToggle = function(){
-  const p = document.getElementById('cop-panel');
-  const abrir = p.style.display === 'none';
-  p.style.display = abrir ? 'flex' : 'none';
-  if(abrir){
-    if(!COP_HIST.length) copBolha('assistant','Sou o copiloto do painel. Posso conferir a cobertura do edital, dizer quais tópicos ainda estão sem material e orientar em cada etapa daqui.');
-    document.getElementById('cop-in').focus();
-  }
-};
-function copBolha(role, txt){
-  const box = document.getElementById('cop-msgs');
-  const d = document.createElement('div');
-  d.style.cssText = role === 'user'
-    ? 'align-self:flex-end;max-width:85%;background:#0B2A5B;color:#fff;padding:9px 12px;border-radius:14px 14px 4px 14px;white-space:pre-wrap'
-    : 'align-self:flex-start;max-width:90%;background:#F1F5F9;color:#0F172A;padding:9px 12px;border-radius:14px 14px 14px 4px;white-space:pre-wrap';
-  d.textContent = txt;
-  box.appendChild(d);
-  box.scrollTop = box.scrollHeight;
-  return d;
-}
-function copContexto(){
-  try{
-    const discs = kbDiscList();
-    const linhas = discs.map(function(d){
-      const tops = kbTopicList(d);
-      const faltam = tops.filter(function(t){ return !((kbFind(d,t)||{}).conteudo||'').trim(); });
-      const fontes = KB_LIB.filter(function(x){ return x.discipline_nome === d; }).length;
-      return d + ': ' + (tops.length - faltam.length) + '/' + tops.length + ' tópicos com material, ' + fontes +
-        ' documentos-fonte. Sem material: ' + (faltam.length ? faltam.slice(0,20).join('; ') : 'nenhum');
-    });
-    return 'Curso prf-2021. Matérias e cobertura:\n' + linhas.join('\n');
-  }catch(e){ return ''; }
-}
-window.copEnviar = async function(){
-  const inp = document.getElementById('cop-in');
-  const q = inp.value.trim();
-  if(!q) return;
-  inp.value = '';
-  copBolha('user', q);
-  COP_HIST.push({ role:'user', content:q });
-  const pend = copBolha('assistant', 'Pensando…');
-  try{
-    const j = await kbPost('/api/public/admin-copilot', {
-      pergunta: q,
-      contexto: copContexto().slice(0, 20000),
-      historico: COP_HIST.slice(-8),
-    });
-    pend.textContent = j.resposta;
-    COP_HIST.push({ role:'assistant', content:j.resposta });
-  }catch(e){
-    pend.textContent = e.message || 'Não consegui responder agora.';
-  }
-};
-document.addEventListener('keydown', function(e){
-  if(e.key === 'Enter' && document.activeElement && document.activeElement.id === 'cop-in'){ e.preventDefault(); copEnviar(); }
-});
-</script>
-</body>
+    '</body>
 </html>';
   const w = window.open('', '_blank');
   if(!w) return kbOrfMsg('Libere os pop-ups para gerar o PDF.');
@@ -2746,6 +2671,81 @@ async function boot(){
 boot();
 
 
+</script>
+
+<!-- Copiloto de IA do painel (não é a Athena dos alunos) -->
+<div id="cop-fab" style="position:fixed;right:20px;bottom:20px;z-index:70">
+  <button onclick="copToggle()" style="width:56px;height:56px;border-radius:99px;border:none;background:#0B2A5B;color:#fff;font-size:1.3rem;cursor:pointer;box-shadow:0 10px 24px rgba(11,42,91,.28)" title="Copiloto do painel">✦</button>
+</div>
+<div id="cop-panel" style="display:none;position:fixed;right:20px;bottom:88px;width:min(380px,calc(100vw - 32px));height:min(520px,calc(100vh - 130px));background:#fff;border:1px solid #E2E8F0;border-radius:16px;box-shadow:0 24px 60px rgba(15,23,42,.18);z-index:70;flex-direction:column;overflow:hidden">
+  <div style="display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid #EEF1F6">
+    <b style="flex:1;font-size:0.88rem">Copiloto do painel</b>
+    <button class="act" onclick="copToggle()">Fechar</button>
+  </div>
+  <div id="cop-msgs" style="flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px;font-size:0.84rem;line-height:1.5"></div>
+  <div style="display:flex;gap:8px;padding:10px;border-top:1px solid #EEF1F6">
+    <input id="cop-in" placeholder="Pergunte sobre o edital, cobertura, material…" style="flex:1">
+    <button class="act primary" onclick="copEnviar()">Enviar</button>
+  </div>
+</div>
+<script>
+let COP_HIST = [];
+window.copToggle = function(){
+  const p = document.getElementById('cop-panel');
+  const abrir = p.style.display === 'none';
+  p.style.display = abrir ? 'flex' : 'none';
+  if(abrir){
+    if(!COP_HIST.length) copBolha('assistant','Sou o copiloto do painel. Posso conferir a cobertura do edital, dizer quais tópicos ainda estão sem material e orientar em cada etapa daqui.');
+    document.getElementById('cop-in').focus();
+  }
+};
+function copBolha(role, txt){
+  const box = document.getElementById('cop-msgs');
+  const d = document.createElement('div');
+  d.style.cssText = role === 'user'
+    ? 'align-self:flex-end;max-width:85%;background:#0B2A5B;color:#fff;padding:9px 12px;border-radius:14px 14px 4px 14px;white-space:pre-wrap'
+    : 'align-self:flex-start;max-width:90%;background:#F1F5F9;color:#0F172A;padding:9px 12px;border-radius:14px 14px 14px 4px;white-space:pre-wrap';
+  d.textContent = txt;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+  return d;
+}
+function copContexto(){
+  try{
+    const discs = kbDiscList();
+    const linhas = discs.map(function(d){
+      const tops = kbTopicList(d);
+      const faltam = tops.filter(function(t){ return !((kbFind(d,t)||{}).conteudo||'').trim(); });
+      const fontes = KB_LIB.filter(function(x){ return x.discipline_nome === d; }).length;
+      return d + ': ' + (tops.length - faltam.length) + '/' + tops.length + ' tópicos com material, ' + fontes +
+        ' documentos-fonte. Sem material: ' + (faltam.length ? faltam.slice(0,20).join('; ') : 'nenhum');
+    });
+    return 'Curso prf-2021. Matérias e cobertura:\n' + linhas.join('\n');
+  }catch(e){ return ''; }
+}
+window.copEnviar = async function(){
+  const inp = document.getElementById('cop-in');
+  const q = inp.value.trim();
+  if(!q) return;
+  inp.value = '';
+  copBolha('user', q);
+  COP_HIST.push({ role:'user', content:q });
+  const pend = copBolha('assistant', 'Pensando…');
+  try{
+    const j = await kbPost('/api/public/admin-copilot', {
+      pergunta: q,
+      contexto: copContexto().slice(0, 20000),
+      historico: COP_HIST.slice(-8),
+    });
+    pend.textContent = j.resposta;
+    COP_HIST.push({ role:'assistant', content:j.resposta });
+  }catch(e){
+    pend.textContent = e.message || 'Não consegui responder agora.';
+  }
+};
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Enter' && document.activeElement && document.activeElement.id === 'cop-in'){ e.preventDefault(); copEnviar(); }
+});
 </script>
 </body>
 </html>
