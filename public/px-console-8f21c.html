@@ -619,11 +619,12 @@ async function viewConfig(){
   view.innerHTML = `
   <div class="card">
     <h2>Integrações de IA</h2>
-    <p class="muted">Cole aqui as chaves de cada serviço. Elas ficam gravadas em área restrita a administradores e nunca aparecem para os alunos.</p>
+    <p class="muted">Cole aqui as chaves de cada serviço. Elas ficam gravadas em área restrita a administradores e nunca aparecem para os alunos. A etiqueta azul mostra que existe chave gravada (com os primeiros e últimos caracteres e a data); use “Testar” para confirmar se ela ainda é válida.</p>
+    <button class="act" style="margin-bottom:10px" onclick="cfgTestarTodas()">Testar todas as chaves</button>
     <div class="grid">
-      ${lista.map(c=>`<div class="row">
+      ${lista.map(c=>`<div class="row" data-keyrow="${c.env}">
         <div>
-          <label class="muted"><b>${esc(c.nome)}</b> ${c.extra?'':cfgPill(!!conect[c.id])} ${salvas[c.env]?'<span class="tag">chave salva no painel</span>':''}</label>
+          <label class="muted"><b>${esc(c.nome)}</b> ${c.extra?'':cfgPill(!!conect[c.id])} ${cfgOrigem(c, salvas[c.env], !!conect[c.id])}</label>
           <input id="key-${c.env}" type="password" autocomplete="new-password" placeholder="${salvas[c.env]?'•••••••••• (cole uma nova para trocar)':esc(c.exemplo)}">
           <div class="muted">${esc(c.env)} — ${esc(c.dica)}</div>
         </div>
@@ -632,7 +633,7 @@ async function viewConfig(){
           <button class="act" onclick="cfgTestarChave('${c.env}')">Testar</button>
           ${salvas[c.env]?`<button class="act" onclick="cfgApagarChave('${c.env}')">Remover</button>`:''}
           ${c.extra?`<button class="act" onclick="cfgRemoverIntegracao('${c.env}')">Excluir integração</button>`:''}
-          <div class="muted" id="teste-${c.env}" style="margin-top:6px"></div>
+          <div class="muted" id="teste-${c.env}" style="margin-top:6px">${salvas[c.env]||conect[c.id]?'validade não verificada — clique em “Testar”':''}</div>
         </div>
       </div>`).join('')}
     </div>
