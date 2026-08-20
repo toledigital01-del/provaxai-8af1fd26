@@ -1877,29 +1877,37 @@ window.kbFonteRemover = function(i){
   const f = KB_FONTES[i];
   if(!f) return;
   KB_FONTES.splice(i,1);
-  const ta = document.getElementById('kb-txt');
-  if(ta && f.bloco) ta.value = ta.value.split(f.bloco).join('').replace(/\n{4,}/g,'\n\n');
   kbPaintFontes();
   kbMontarEstado();
   kbIngMsg('Fonte "' + f.nome + '" removida do material.');
 };
+/* Guarda o texto fiel da fonte na memória da tela (não mexe na aula do tópico). */
 function kbRegistrarFonte(nome, texto){
-  const ta = document.getElementById('kb-txt');
-  const antes = ta ? ta.value : '';
-  kbApplyText(texto, nome);
-  const depois = ta ? ta.value : '';
-  const bloco = depois.startsWith(antes) ? depois.slice(antes.length) : '';
-  KB_FONTES.push({ nome: nome, chars: texto.length, bloco: bloco });
+  KB_FONTES.push({ nome: nome, chars: (texto||'').length, texto: String(texto||'') });
   kbPaintFontes();
 }
+window.kbAdicionarTexto = function(){
+  const ta = document.getElementById('kb-livre');
+  const t = ta ? ta.value.trim() : '';
+  if(t.length < 50) return kbIngMsg('Cole um texto um pouco maior para entrar na base.');
+  if(!kbValidDisc(kbDisc)) return kbIngMsg('Selecione uma matéria válida antes de adicionar material.');
+  const direitos = kbDireitosEscolhido();
+  if(!direitos) return kbIngMsg('Escolha antes a situação de direitos autorais deste material.');
+  const nome = 'Texto colado ' + new Date().toLocaleString('pt-BR');
+  kbRegistrarFonte(nome, t);
+  kbLibGravar({ nome: nome, tipo: 'texto', texto: t, direitos: direitos });
+  ta.value = '';
+  kbMontarEstado();
+  kbIngMsg('Texto adicionado ao material desta matéria.');
+};
 function kbMontarEstado(){
   const btn = document.getElementById('kb-btn-montar');
   if(!btn) return;
-  const ta = document.getElementById('kb-txt');
-  const pronto = !KB_ING_ATIVO && !!ta && ta.value.trim().length >= 200 && !!kbValidDisc(kbDisc);
-  btn.disabled = !pronto;
-  btn.textContent = KB_ING_ATIVO ? 'Aguardando leitura do material…' : 'Montar curso desta matéria';
+  const chars = KB_FONTES.reduce(function(a,f){ return a + f.chars; }, 0);
+  btn.disabled = KB_ING_ATIVO || chars < 200 || !kbValidDisc(kbDisc);
+  btn.textContent = KB_ING_ATIVO ? 'Aguardando leitura do material…' : 'Guardar material nos tópicos';
 }
+
 function kbBindIngest(){
   const inp = document.getElementById('kb-file');
   if(inp && !inp.dataset.bound){
