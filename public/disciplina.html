@@ -167,6 +167,7 @@ function render() {
   }).join('') : '<div class="empty">Nenhuma aula com esse status.</div>';
 }
 render();
+window.pxRerender = function(){ render(); };
 
 document.getElementById('topics').addEventListener('click', e => {
   const chk = e.target.closest('.px-check');

@@ -41,7 +41,7 @@ const MATERIALS = [
 
 /* ---- Currículo vindo do banco (sincronizado pelo painel administrativo) ----
    px-auth.js grava o cache; aqui ele sobrescreve o currículo local. */
-(function aplicarCurriculoDoBanco(){
+function aplicarCurriculoDoBanco(){
   let cache = null;
   try { cache = JSON.parse(localStorage.getItem('px_curriculo_v1')); } catch(e) {}
   if (!cache || !cache.cursos) return;
@@ -52,7 +52,9 @@ const MATERIALS = [
     DISCIPLINAS_POR_CONCURSO[slug] = nomes;
     nomes.forEach(d => { if ((discs[d] || []).length) TOPICS[d] = discs[d]; });
   });
-})();
+}
+aplicarCurriculoDoBanco();
+
 
 /* contadores reais dos cards de concurso */
 (function atualizarContadores(){
@@ -184,7 +186,7 @@ function coberturaEdital(concursoId) {
 /* Rótulo de aula: os tópicos do edital são exibidos como "Aula 00 - Nome".
    A numeração vem do painel administrativo (campo "ordem" de cada tópico);
    se o próprio nome já vier como "Aula 03 - ...", esse número é respeitado. */
-const AULA_ORDEM = (function(){
+let AULA_ORDEM = (function(){
   try { return JSON.parse(localStorage.getItem('px_aulas_v1')) || {}; } catch(e) { return {}; }
 })();
 function aulaTitulo(nome) {
@@ -192,10 +194,10 @@ function aulaTitulo(nome) {
   return m ? m[2].trim() : String(nome || '');
 }
 function aulaNumero(disc, nome) {
-  const m = /^\s*aula\s*(\d+)\s*[-–—:.]\s*/i.exec(String(nome || ''));
-  if (m) return String(parseInt(m[1], 10)).padStart(2, '0');
   const o = (AULA_ORDEM[disc] || {})[nome];
   if (typeof o === 'number' && o >= 0) return String(o).padStart(2, '0');
+  const m = /^\s*aula\s*(\d+)\s*[-–—:.]\s*/i.exec(String(nome || ''));
+  if (m) return String(parseInt(m[1], 10)).padStart(2, '0');
   const i = (TOPICS[disc] || []).indexOf(nome);
   return i < 0 ? null : String(i).padStart(2, '0');
 }
@@ -207,6 +209,21 @@ function aulaLabel(disc, nome) {
 window.aulaNumero = aulaNumero;
 window.aulaTitulo = aulaTitulo;
 window.aulaLabel = aulaLabel;
+
+/* O painel administrativo pode reordenar/renomear as aulas a qualquer momento:
+   quando px-auth.js atualiza o cache, recarregamos currículo + numeração e
+   avisamos a tela para redesenhar (window.pxRerender). */
+function pxRecarregarCurriculo(){
+  try { AULA_ORDEM = JSON.parse(localStorage.getItem('px_aulas_v1')) || {}; } catch(e) { AULA_ORDEM = {}; }
+  aplicarCurriculoDoBanco();
+  if (typeof window.pxRerender === 'function') { try { window.pxRerender(); } catch(e) {} }
+}
+window.pxRecarregarCurriculo = pxRecarregarCurriculo;
+window.addEventListener('px:curriculo', pxRecarregarCurriculo);
+window.addEventListener('storage', function(e){
+  if (e && (e.key === 'px_aulas_v1' || e.key === 'px_curriculo_v1')) pxRecarregarCurriculo();
+});
+
 
 
 function disciplinaInfo(nome) {

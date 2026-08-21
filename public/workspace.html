@@ -298,6 +298,13 @@ document.getElementById('t-sub').innerHTML = scope === 'topico'
   ? `${dotHTML(stats.status)} ${sm.label} · ${disc}`
   : ctxLabel();
 
+window.pxRerender = function(){
+  const el = document.getElementById('t-title');
+  if (el) el.textContent = scope === 'topico' ? aulaLabel(disc, topic) : (scope === 'disc' ? disc : title);
+  const cr = document.querySelector('#crumb span:last-child');
+  if (cr && scope === 'topico') cr.textContent = aulaLabel(disc, topic);
+};
+
 /* ---------- Coluna esquerda ---------- */
 const TABS = WS_TABS;
 let tab = params.get('tab') || 'tutor';
