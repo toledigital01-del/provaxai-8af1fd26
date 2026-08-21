@@ -22,7 +22,7 @@ function extrairRoteiro(txt: string): Fala[] {
     return arr
       .filter((f) => f && typeof f.texto === 'string' && f.texto.trim())
       .map((f) => ({ who: f.who === 'Rafael' ? 'Rafael' : 'Ana', texto: String(f.texto).trim() }))
-      .slice(0, 16)
+      .slice(0, 10)
   } catch {
     return []
   }
@@ -32,8 +32,7 @@ export const Route = createFileRoute('/api/public/podcast')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const userId = await currentUser(request)
-        if (!userId) return Response.json({ error: 'Entre na sua conta para ouvir o episódio.' }, { status: 401 })
+        const userId = await currentUser(request) // null = convidado (liberado por enquanto)
 
         let body: z.infer<typeof Body>
         try {
@@ -45,7 +44,7 @@ export const Route = createFileRoute('/api/public/podcast')({
         const curso = body.curso || 'prf-2021'
         const cfg = normalizar(await getSetting('ia_athena'))
         const limite = cfg.limiteDiario ?? 0
-        if (limite > 0 && (await usosHoje(userId, 'podcast')) >= limite)
+        if (userId && limite > 0 && (await usosHoje(userId, 'podcast')) >= limite)
           return Response.json({ error: `Você atingiu o limite de ${limite} episódios hoje. Volte amanhã.` }, { status: 429 })
 
         const base = await materialIntegral(curso, body.disciplina, body.topico || null)
@@ -55,7 +54,7 @@ export const Route = createFileRoute('/api/public/podcast')({
           'Dois apresentadores conversam: Ana (professora, começa o episódio) e Rafael (aluno curioso que provoca perguntas).',
           'O episódio deve cobrir A MATÉRIA INTEIRA do material abaixo, de forma progressiva: abertura, conceitos-base,',
           'desenvolvimento por partes, exemplos, pegadinhas da banca Cebraspe e um fechamento com revisão rápida.',
-          'Escreva de 12 a 16 falas alternadas, cada uma com 3 a 6 frases, tom de conversa real e didática.',
+          'Escreva de 8 a 10 falas alternadas, cada uma com 3 a 5 frases, tom de conversa real e didática.',
           'Não invente lei, prazo, número ou julgado que não esteja no material. Não cite "o material" nem "o PDF".',
           'Responda SOMENTE com um JSON válido no formato [{"who":"Ana","texto":"..."},{"who":"Rafael","texto":"..."}] — sem markdown, sem comentários.',
           base
@@ -70,10 +69,10 @@ export const Route = createFileRoute('/api/public/podcast')({
             system,
             user: `Disciplina: ${body.disciplina}${body.topico ? ` | Tópico em foco: ${body.topico}` : ''}\n\nGere o roteiro completo em JSON.`,
             keys: await aiKeys(),
-            maxTokens: 8000,
+            maxTokens: 3000,
           })
           const roteiro = extrairRoteiro(saida || '')
-          await registrarUsoIA({
+          if (userId) await registrarUsoIA({
             user_id: userId,
             ferramenta: 'podcast',
             modelo: cfg.model,

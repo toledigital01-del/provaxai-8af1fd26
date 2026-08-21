@@ -25,8 +25,7 @@ export const Route = createFileRoute('/api/public/tts')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const userId = await currentUser(request)
-        if (!userId) return Response.json({ error: 'Entre na sua conta para ouvir o áudio.' }, { status: 401 })
+        await currentUser(request) // convidado também pode ouvir por enquanto
 
         let body: z.infer<typeof Body>
         try {

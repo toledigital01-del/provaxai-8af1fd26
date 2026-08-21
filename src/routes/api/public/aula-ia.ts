@@ -42,7 +42,7 @@ async function materialDoTopico(curso: string, disciplina: string, topico: strin
     )
     docs.forEach((d) => {
       const t = [d.sumario || '', d.conteudo || ''].join('\n').trim()
-      if (t) partes.push(`### ${d.titulo || d.topico || disciplina}\n${t.slice(0, 40000)}`)
+      if (t) partes.push(`### ${d.titulo || d.topico || disciplina}\n${t.slice(0, 12000)}`)
     })
 
     const kb = await fetch(
@@ -55,7 +55,7 @@ async function materialDoTopico(curso: string, disciplina: string, topico: strin
       .filter((d) => d.topic_nome === topico || !d.topic_nome)
       .forEach((d) => {
         const t = (d.texto_extraido || '').trim()
-        if (t) partes.push(`### ${d.nome_arquivo || 'material'}\n${t.slice(0, 40000)}`)
+        if (t) partes.push(`### ${d.nome_arquivo || 'material'}\n${t.slice(0, 12000)}`)
       })
   } else {
     const um = await fetch(
@@ -68,18 +68,17 @@ async function materialDoTopico(curso: string, disciplina: string, topico: strin
     const casa = rows.filter((d) => JSON.stringify(d.topics || []).includes(topico))
     ;(casa.length ? casa : rows.slice(0, 4)).forEach((d) => {
       const t = (d.conteudo || '').trim()
-      if (t) partes.push(`### ${d.nome || 'material do aluno'}\n${t.slice(0, 40000)}`)
+      if (t) partes.push(`### ${d.nome || 'material do aluno'}\n${t.slice(0, 12000)}`)
     })
   }
-  return partes.join('\n\n').slice(0, 180000)
+  return partes.join('\n\n').slice(0, 40000)
 }
 
 export const Route = createFileRoute('/api/public/aula-ia')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const userId = await currentUser(request)
-        if (!userId) return Response.json({ error: 'Entre na sua conta para abrir a aula.' }, { status: 401 })
+        const userId = await currentUser(request) // null = convidado (liberado por enquanto)
 
         let body: z.infer<typeof Body>
         try {
@@ -91,6 +90,8 @@ export const Route = createFileRoute('/api/public/aula-ia')({
         const curso = body.curso || 'prf-2021'
         const oficial = await cursoOficial(curso)
         const dono = oficial ? null : userId
+        if (!oficial && !userId)
+          return Response.json({ error: 'Entre na sua conta para usar seu próprio material.' }, { status: 401 })
 
         const filtroDono = dono ? `user_id=${eq(dono)}` : 'user_id=is.null'
         const cacheUrl =
@@ -112,7 +113,7 @@ export const Route = createFileRoute('/api/public/aula-ia')({
             })
         }
 
-        const material = await materialDoTopico(curso, body.disciplina, body.topico, userId, oficial)
+        const material = await materialDoTopico(curso, body.disciplina, body.topico, userId || '', oficial)
         if (material.length < 200)
           return Response.json(
             { error: 'Ainda não há material suficiente carregado para esta aula. Envie o conteúdo em "Conteúdo".' },
@@ -135,7 +136,7 @@ export const Route = createFileRoute('/api/public/aula-ia')({
           'Regras: escreva em português do Brasil, na 1ª pessoa do professor falando com o aluno;',
           'destaque em **negrito** os pontos cobrados em prova; não invente lei, número, prazo ou julgado',
           'que não esteja no material; não cite "o material" nem "o PDF" — ensine o conteúdo diretamente.',
-          'Tamanho: entre 1500 e 3500 palavras. Responda apenas com a aula em Markdown.',
+          'Tamanho: entre 700 e 1200 palavras, direto ao ponto. Responda apenas com a aula em Markdown.',
           '\n--- MATERIAL DE APOIO ---\n' + material,
         ].join('\n')
 
@@ -143,11 +144,12 @@ export const Route = createFileRoute('/api/public/aula-ia')({
         try {
           aula = await chat({
             provider: cfg.provider,
-            model: cfg.model,
+            // aula precisa sair rápido: no Lovable usamos o modelo mais veloz
+            model: cfg.provider === 'lovable' ? 'google/gemini-3-flash-preview' : cfg.model,
             system,
             user: `Disciplina: ${body.disciplina}\nTópico: ${body.topico}\n\nEscreva a aula completa.`,
             keys: await aiKeys(),
-            maxTokens: 16000,
+            maxTokens: 4000,
           })
         } catch (e) {
           const err = e as AIError
@@ -180,7 +182,7 @@ export const Route = createFileRoute('/api/public/aula-ia')({
           /* cache é best-effort */
         }
 
-        await registrarUsoIA({
+        if (userId) await registrarUsoIA({
           user_id: userId,
           ferramenta: 'aula-ia',
           modelo: cfg.model,
