@@ -181,17 +181,33 @@ function coberturaEdital(concursoId) {
 }
 
 
-/* Rótulo de aula: os tópicos do edital são exibidos como "Aula 00 - Nome". */
+/* Rótulo de aula: os tópicos do edital são exibidos como "Aula 00 - Nome".
+   A numeração vem do painel administrativo (campo "ordem" de cada tópico);
+   se o próprio nome já vier como "Aula 03 - ...", esse número é respeitado. */
+const AULA_ORDEM = (function(){
+  try { return JSON.parse(localStorage.getItem('px_aulas_v1')) || {}; } catch(e) { return {}; }
+})();
+function aulaTitulo(nome) {
+  const m = /^\s*aula\s*(\d+)\s*[-–—:.]\s*(.+)$/i.exec(String(nome || ''));
+  return m ? m[2].trim() : String(nome || '');
+}
 function aulaNumero(disc, nome) {
+  const m = /^\s*aula\s*(\d+)\s*[-–—:.]\s*/i.exec(String(nome || ''));
+  if (m) return String(parseInt(m[1], 10)).padStart(2, '0');
+  const o = (AULA_ORDEM[disc] || {})[nome];
+  if (typeof o === 'number' && o >= 0) return String(o).padStart(2, '0');
   const i = (TOPICS[disc] || []).indexOf(nome);
   return i < 0 ? null : String(i).padStart(2, '0');
 }
 function aulaLabel(disc, nome) {
   const n = aulaNumero(disc, nome);
-  return n === null ? nome : `Aula ${n} - ${nome}`;
+  const t = aulaTitulo(nome);
+  return n === null ? t : `Aula ${n} - ${t}`;
 }
 window.aulaNumero = aulaNumero;
+window.aulaTitulo = aulaTitulo;
 window.aulaLabel = aulaLabel;
+
 
 function disciplinaInfo(nome) {
   const topics = (TOPICS[nome] || []).map(t => ({ name: t, st: statusOf(t), prog: progressOf(t) }));
