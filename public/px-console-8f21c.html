@@ -2177,7 +2177,7 @@ window.kbAulaEditar = function(id){
       '</div>' +
       '<p class="muted" style="margin:0 0 14px;font-size:0.78rem">O aluno vê apenas “Aula ' + kbAulaNum(a.ordem) + '” na lista. Título, sumário e conteúdo aparecem dentro da página da aula. Aceita Markdown (## título, - lista, **negrito**).</p>' +
       '<label class="muted">Título da aula (mostrado dentro da aula)</label>' +
-      '<input id="kb-ae-tit" oninput="kbAulaModalMudou()" value="' + esc(doc.titulo || kbAulaTitulo(a.nome)) + '" style="margin-bottom:12px">' +
+      '<input id="kb-ae-tit" oninput="kbAulaModalMudou()" value="' + esc(doc.titulo || kbAulaTitulo(a.nome)).replace(/"/g,'&quot;') + '" style="margin-bottom:12px">' +
       '<label class="muted">Sumário da aula</label>' + barra('kb-ae-sum') +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">' +
         '<textarea id="kb-ae-sum" rows="6" oninput="kbAulaModalMudou()" placeholder="Ex.: - Conceito de ato administrativo&#10;- Atributos">' + esc(doc.sumario || '') + '</textarea>' +
