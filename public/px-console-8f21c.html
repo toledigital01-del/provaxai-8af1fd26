@@ -1947,6 +1947,7 @@ function kbAulasPaint(){
         '<span class="kb-tag ' + (pub ? 'is-on' : 'is-wait') + '">' + (pub ? 'publicada' : temTexto ? 'rascunho' : 'sem conteúdo') + '</span>' +
         '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaAbrir(\'' + escJs(a.nome) + '\')">Abrir</button>' +
         '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaRenomear(\'' + a.id + '\')">Renomear</button>' +
+        '<button class="act primary" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaEditar(\'' + a.id + '\')">Editar aula</button>' +
         '<button class="act danger" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaExcluir(\'' + a.id + '\')">Excluir</button>' +
       '</div>';
     }).join('') + '</div>';
