@@ -2146,6 +2146,7 @@ window.kbAulaEditar = function(id){
   KB_AULA_EDIT_SUJO = false;
   const doc = kbFind(kbDisc, a.nome) || {};
   const pub = kbStatusDoc(doc.id ? doc : null) === 'publicado';
+  const modo = doc.modo_exibicao === 'pdf' ? 'pdf' : 'texto';
   let m = document.getElementById('kb-aula-modal');
   if(!m){
     m = document.createElement('div');
