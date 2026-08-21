@@ -2263,6 +2263,26 @@ window.kbAulaModalSalvar = async function(auto, recarregar){
 };
 
 
+/* Marca de uma vez todas as aulas com PDF anexado para abrirem no modo PDF. */
+window.kbAulasTodasPdf = async function(){
+  if(!kbDisc) return;
+  const alvos = KB_AULAS
+    .map(function(a){ return kbFind(kbDisc, a.nome); })
+    .filter(function(d){ return d && String(d.pdf_url||'').trim() && d.modo_exibicao !== 'pdf'; });
+  if(!alvos.length){ kbAulaMsg('Nenhuma aula pendente: todas as aulas com PDF já estão no modo PDF.'); return; }
+  if(!confirm('Colocar ' + alvos.length + ' aula(s) desta matéria para abrir em PDF para o aluno?')) return;
+  kbAulaMsg('Atualizando ' + alvos.length + ' aula(s)…');
+  const { error } = await PX.sb.from('knowledge_docs')
+    .update({ modo_exibicao: 'pdf', updated_by: PX.user ? PX.user.id : null })
+    .in('id', alvos.map(function(d){ return d.id; }));
+  if(error){ kbAulaMsg('Erro ao atualizar: ' + error.message); return; }
+  await logAdmin('aulas_modo_pdf','knowledge_docs', null, { disciplina: kbDisc, total: alvos.length });
+  await loadKB();
+  kbPaint();
+  kbAulaMsg(alvos.length + ' aula(s) agora abrem em PDF para o aluno.');
+};
+
+
 function kbAulasRefresh(){
   if(!kbDisc) return;
   kbAulasCarregar(kbDisc).then(kbAulasPaint).catch(function(){ kbAulasPaint(); });
