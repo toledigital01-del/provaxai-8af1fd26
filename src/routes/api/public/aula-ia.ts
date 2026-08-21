@@ -156,9 +156,16 @@ export const Route = createFileRoute('/api/public/aula-ia')({
         if (!aula.trim()) return Response.json({ error: 'Não consegui montar a aula agora.' }, { status: 502 })
 
         try {
-          await fetch(`${SUPABASE_URL}/rest/v1/aulas_ia?on_conflict=course_slug,disciplina,topico,user_id`, {
+          const filtroDel =
+            `course_slug=${eq(curso)}&disciplina=${eq(body.disciplina)}&topico=${eq(body.topico)}&${filtroDono}`
+          await fetch(`${SUPABASE_URL}/rest/v1/aulas_ia?${filtroDel}`, {
+            method: 'DELETE',
+            headers: serviceHeaders({ Prefer: 'return=minimal' }),
+          })
+          await fetch(`${SUPABASE_URL}/rest/v1/aulas_ia`, {
             method: 'POST',
-            headers: serviceHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal,resolution=merge-duplicates' }),
+            headers: serviceHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+
             body: JSON.stringify({
               course_slug: curso,
               disciplina: body.disciplina,
