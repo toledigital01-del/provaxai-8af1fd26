@@ -181,6 +181,18 @@ function coberturaEdital(concursoId) {
 }
 
 
+/* Rótulo de aula: os tópicos do edital são exibidos como "Aula 00 - Nome". */
+function aulaNumero(disc, nome) {
+  const i = (TOPICS[disc] || []).indexOf(nome);
+  return i < 0 ? null : String(i).padStart(2, '0');
+}
+function aulaLabel(disc, nome) {
+  const n = aulaNumero(disc, nome);
+  return n === null ? nome : `Aula ${n} - ${nome}`;
+}
+window.aulaNumero = aulaNumero;
+window.aulaLabel = aulaLabel;
+
 function disciplinaInfo(nome) {
   const topics = (TOPICS[nome] || []).map(t => ({ name: t, st: statusOf(t), prog: progressOf(t) }));
   const pct = topics.length ? Math.round(topics.reduce((a, t) => a + t.prog, 0) / topics.length) : 0;
@@ -227,7 +239,7 @@ function searchIndex() {
       items.push({ kind: 'Disciplina', label: d, sub: m.title, href: dHref });
       (TOPICS[d] || []).forEach(t => {
         const base = `id=${encodeURIComponent(m.id)}&title=${encodeURIComponent(m.title)}&type=${encodeURIComponent(m.type)}&disc=${encodeURIComponent(d)}&topic=${encodeURIComponent(t)}`;
-        items.push({ kind: 'Tópico', label: t, sub: `${m.title} · ${d}`, href: `workspace.html?${base}` });
+        items.push({ kind: 'Aula', label: aulaLabel(d, t), sub: `${m.title} · ${d}`, href: `workspace.html?${base}` });
         items.push({ kind: 'Flashcards', label: `Flashcards de ${t}`, sub: d, href: `workspace.html?${base}&tab=flashcards` });
         items.push({ kind: 'Questões', label: `Questões de ${t}`, sub: d, href: `workspace.html?${base}&tab=questoes` });
         items.push({ kind: 'Lição', label: `Lição de ${t}`, sub: d, href: `workspace.html?${base}&tab=tutor` });

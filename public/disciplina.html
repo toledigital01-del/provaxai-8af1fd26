@@ -108,7 +108,7 @@ document.getElementById('page-back-label').textContent = 'Disciplinas';
 
 document.getElementById('d-h1').textContent = disc;
 document.getElementById('d-meta').textContent =
-  `${info.topics.length} tópicos · Índice de domínio ${info.pct}%`;
+  `${info.topics.length} aulas · Índice de domínio ${info.pct}%`;
 
 function topicHref(name) {
   return `workspace.html?${base}&disc=${encodeURIComponent(disc)}&topic=${encodeURIComponent(name)}`;
@@ -122,8 +122,8 @@ function topicHref(name) {
   const nome = last.topic;
   const t = info.topics.find(x => x.name === nome);
   document.getElementById('cont-panel').style.display = '';
-  document.getElementById('cont-topic').textContent = nome;
-  document.getElementById('cont-sub').textContent = `Último tópico aberto · ${disc}`;
+  document.getElementById('cont-topic').textContent = aulaLabel(disc, nome);
+  document.getElementById('cont-sub').textContent = `Última aula aberta · ${disc}`;
 
   const fill = document.getElementById('cont-fill');
   fill.className = 'fill ' + fillClass(t ? t.prog : 0);
@@ -150,7 +150,7 @@ function render() {
         <input type="checkbox" class="px-check" data-t="${encodeURIComponent(t.name)}" ${mk.done ? 'checked' : ''} title="Marcar como estudado">
         <a class="tlink" href="${topicHref(t.name)}">
           <span class="dot">${dotHTML(t.st)}</span>
-          <span class="tname">${t.name}</span>
+          <span class="tname">${aulaLabel(disc, t.name)}</span>
         </a>
         <span class="tstatus">${mk.done ? 'Estudado' : s.label}</span>
       </span>
@@ -164,7 +164,7 @@ function render() {
         <div class="note-actions"><button class="note-save" data-s="${encodeURIComponent(t.name)}">Salvar nota</button></div>
       </div>
     </div>`;
-  }).join('') : '<div class="empty">Nenhum tópico com esse status.</div>';
+  }).join('') : '<div class="empty">Nenhuma aula com esse status.</div>';
 }
 render();
 
