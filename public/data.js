@@ -41,7 +41,7 @@ const MATERIALS = [
 
 /* ---- Currículo vindo do banco (sincronizado pelo painel administrativo) ----
    px-auth.js grava o cache; aqui ele sobrescreve o currículo local. */
-(function aplicarCurriculoDoBanco(){
+function aplicarCurriculoDoBanco(){
   let cache = null;
   try { cache = JSON.parse(localStorage.getItem('px_curriculo_v1')); } catch(e) {}
   if (!cache || !cache.cursos) return;
@@ -52,7 +52,9 @@ const MATERIALS = [
     DISCIPLINAS_POR_CONCURSO[slug] = nomes;
     nomes.forEach(d => { if ((discs[d] || []).length) TOPICS[d] = discs[d]; });
   });
-})();
+}
+aplicarCurriculoDoBanco();
+
 
 /* contadores reais dos cards de concurso */
 (function atualizarContadores(){
