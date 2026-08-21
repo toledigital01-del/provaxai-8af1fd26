@@ -2233,11 +2233,20 @@ window.kbAulaModalSalvar = async function(auto, recarregar){
   const sumario = document.getElementById('kb-ae-sum').value;
   const conteudo = document.getElementById('kb-ae-txt').value;
   const publicar = document.getElementById('kb-ae-pub').checked;
+  const modoEl = document.querySelector('input[name="kb-ae-modo"]:checked');
+  const modo = modoEl && modoEl.value === 'pdf' ? 'pdf' : 'texto';
+  const pdfEl = document.getElementById('kb-ae-pdfurl');
+  const pdfUrl = pdfEl ? pdfEl.value.trim() : '';
+  if(modo === 'pdf' && !pdfUrl && !auto){
+    kbAulaModalEstado('Envie o PDF da aula antes de salvar no modo PDF.', '#B91C1C');
+    return;
+  }
   kbAulaModalEstado('Salvando…', '#1D4ED8');
   const doc = kbFind(kbDisc, a.nome);
   const payload = {
     course_slug: 'prf-2021', disciplina: kbDisc, topico: a.nome,
     titulo: titulo || null, sumario: sumario || null, conteudo: conteudo,
+    modo_exibicao: modo, pdf_url: pdfUrl || null,
     status: publicar ? 'publicado' : 'rascunho', publicado: publicar,
     updated_by: PX.user ? PX.user.id : null,
   };
