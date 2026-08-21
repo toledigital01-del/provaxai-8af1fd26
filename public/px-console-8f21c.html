@@ -2258,7 +2258,7 @@ window.kbAulaTab = function(tab){
   if(btn) btn.textContent = tab === 'doc' ? 'Cadastrar aula(s)' : 'Cadastrar aula';
 };
 
-/* Fila de arquivos: cada arquivo vira uma aula. */
+/* Fila de arquivos: cada arquivo vira uma aula (um por vez ou em lote). */
 let KB_AULA_FILA = [];   /* {file, nome, estado, chars, erro} */
 function kbAulaFilaPaint(){
   const box = document.getElementById('kb-aula-fila');
@@ -2266,26 +2266,52 @@ function kbAulaFilaPaint(){
   if(!KB_AULA_FILA.length){ box.innerHTML = ''; return; }
   const cor = { fila:'#64748B', lendo:'#1D4ED8', pronto:'#047857', falhou:'#B91C1C' };
   const rot = { fila:'na fila', lendo:'lendo…', pronto:'aula criada', falhou:'falhou' };
+  const prontos = KB_AULA_FILA.filter(function(f){ return f.estado === 'pronto'; }).length;
+  const chars = KB_AULA_FILA.reduce(function(a,f){ return a + (f.chars||0); }, 0);
   box.innerHTML = '<div style="border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;font-size:0.78rem;margin-top:10px">' +
-    KB_AULA_FILA.map(function(f){
+    '<div style="padding:7px 10px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
+      '<b>Fila de arquivos</b><span class="muted">' + prontos + ' de ' + KB_AULA_FILA.length + ' · ' + chars.toLocaleString('pt-BR') + ' caracteres</span>' +
+      '<span style="flex:1"></span><button class="act" onclick="kbAulaFilaLimpar()" style="font-size:0.72rem">Limpar fila</button>' +
+    '</div>' +
+    KB_AULA_FILA.map(function(f,i){
       return '<div style="padding:6px 10px;display:flex;gap:8px;align-items:center;border-bottom:1px solid #F1F5F9;background:#fff">' +
         '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(f.nome) + '</span>' +
         (f.chars ? '<span class="muted">' + f.chars.toLocaleString('pt-BR') + ' car.</span>' : '') +
         '<span style="font-weight:700;color:' + cor[f.estado] + '">' + rot[f.estado] + '</span>' +
+        (f.estado === 'fila' || f.estado === 'falhou' ? '<button class="act" onclick="kbAulaFilaRemover(' + i + ')" style="font-size:0.72rem">Remover</button>' : '') +
       '</div>' + (f.erro ? '<div class="muted" style="padding:0 10px 6px;color:#B91C1C;font-size:0.72rem">' + esc(f.erro) + '</div>' : '');
     }).join('') + '</div>';
 }
+window.kbAulaFilaLimpar = function(){ if(KB_ING_ATIVO) return; KB_AULA_FILA = []; kbAulaFilaPaint(); kbAulaMsg(''); };
+window.kbAulaFilaRemover = function(i){ if(KB_ING_ATIVO) return; KB_AULA_FILA.splice(i,1); kbAulaFilaPaint(); };
+
+/* Adiciona arquivos escolhidos ou soltos na área de arrastar. */
+function kbAulaFilaAdd(files){
+  const novos = Array.prototype.slice.call(files || []);
+  if(!novos.length) return;
+  novos.forEach(function(f){ KB_AULA_FILA.push({ file:f, nome:f.name, estado:'fila', chars:0, erro:'' }); });
+  kbAulaFilaPaint();
+  kbAulaMsg(KB_AULA_FILA.length + ' arquivo(s) na fila. Clique em “Cadastrar aula(s)”.');
+}
 function kbBindAulaFile(){
   const inp = document.getElementById('kb-aula-file');
-  if(!inp || inp.dataset.bound) return;
-  inp.dataset.bound = '1';
-  inp.addEventListener('change', function(){
-    KB_AULA_FILA = Array.prototype.slice.call(inp.files || []).map(function(f){
-      return { file:f, nome:f.name, estado:'fila', chars:0, erro:'' };
+  if(inp && !inp.dataset.bound){
+    inp.dataset.bound = '1';
+    inp.addEventListener('change', function(){ kbAulaFilaAdd(inp.files); });
+  }
+  const drop = document.getElementById('kb-aula-drop');
+  if(drop && !drop.dataset.bound){
+    drop.dataset.bound = '1';
+    ['dragenter','dragover'].forEach(function(ev){
+      drop.addEventListener(ev, function(e){ e.preventDefault(); drop.style.borderColor = '#94A9C9'; drop.style.background = '#F5F8FE'; });
     });
-    kbAulaFilaPaint();
-    kbAulaMsg(KB_AULA_FILA.length + ' arquivo(s) na fila. Clique em “Cadastrar aula(s)”.');
-  });
+    ['dragleave','drop'].forEach(function(ev){
+      drop.addEventListener(ev, function(e){ e.preventDefault(); drop.style.borderColor = ''; drop.style.background = ''; });
+    });
+    drop.addEventListener('drop', function(e){
+      kbAulaFilaAdd((e.dataTransfer && e.dataTransfer.files) || []);
+    });
+  }
 }
 
 /* Lê o texto de um arquivo (PDF, imagem, txt…). */
@@ -2348,7 +2374,9 @@ window.kbAulaCadastrar = async function(){
     if(KB_AULA_TAB === 'doc'){
       const pend = KB_AULA_FILA.filter(f => f.estado === 'fila' || f.estado === 'falhou');
       if(!pend.length) return kbAulaMsg('Escolha um ou mais arquivos antes.');
-      let feitas = 0;
+      let feitas = 0, passo = 0;
+      KB_ING_ATIVO = true;
+      kbIngProg(0, pend.length, 'Lendo arquivos');
       for(const item of pend){
         item.estado = 'lendo'; item.erro = ''; kbAulaFilaPaint();
         kbAulaMsg('Lendo ' + item.nome + '…');
@@ -2359,8 +2387,13 @@ window.kbAulaCadastrar = async function(){
           await kbAulaCriar(disc, texto, item.nome, publicar);
           item.estado = 'pronto'; feitas++;
         }catch(e){ item.estado = 'falhou'; item.erro = e.message || String(e); }
+        passo++;
         kbAulaFilaPaint();
+        kbIngProg(passo, pend.length, 'Lendo arquivos');
       }
+      KB_ING_ATIVO = false;
+      kbIngProg(pend.length, pend.length, 'Leitura concluída');
+      setTimeout(kbIngProgHide, 1200);
       try{ if(PX.syncCurriculo) await PX.syncCurriculo(); }catch(e){}
       kbPaint(); kbPane('aulas');
       return kbAulaMsg(feitas + ' aula(s) cadastrada(s)' + (publicar ? ' e publicada(s).' : ' como rascunho.'));
@@ -2387,7 +2420,7 @@ window.kbAulaCadastrar = async function(){
     kbPaint();
     kbPane('aulas');
     kbAulaMsg('Aula ' + kbAulaNum(n) + (publicar ? ' publicada — já aparece no painel do aluno.' : ' salva como rascunho.'));
-  }catch(e){ kbAulaMsg('Erro: ' + (e.message || e)); }
+  }catch(e){ KB_ING_ATIVO = false; kbIngProgHide(); kbAulaMsg('Erro: ' + (e.message || e)); }
 };
 
 
