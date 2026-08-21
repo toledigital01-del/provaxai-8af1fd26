@@ -16,6 +16,7 @@ import { Route as ApiPublicAdminDeleteUserRouteImport } from './routes/api/publi
 import { Route as ApiPublicAiStatusRouteImport } from './routes/api/public/ai-status'
 import { Route as ApiPublicAiTestRouteImport } from './routes/api/public/ai-test'
 import { Route as ApiPublicAthenaRouteImport } from './routes/api/public/athena'
+import { Route as ApiPublicAulaIaRouteImport } from './routes/api/public/aula-ia'
 import { Route as ApiPublicKbAulaRouteImport } from './routes/api/public/kb-aula'
 import { Route as ApiPublicKbAutocourseRouteImport } from './routes/api/public/kb-autocourse'
 import { Route as ApiPublicKbClassifyRouteImport } from './routes/api/public/kb-classify'
@@ -63,6 +64,11 @@ const ApiPublicAiTestRoute = ApiPublicAiTestRouteImport.update({
 const ApiPublicAthenaRoute = ApiPublicAthenaRouteImport.update({
   id: '/api/public/athena',
   path: '/api/public/athena',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAulaIaRoute = ApiPublicAulaIaRouteImport.update({
+  id: '/api/public/aula-ia',
+  path: '/api/public/aula-ia',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicKbAulaRoute = ApiPublicKbAulaRouteImport.update({
@@ -134,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/ai-test': typeof ApiPublicAiTestRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
+  '/api/public/aula-ia': typeof ApiPublicAulaIaRoute
   '/api/public/kb-aula': typeof ApiPublicKbAulaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-classify': typeof ApiPublicKbClassifyRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/ai-test': typeof ApiPublicAiTestRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
+  '/api/public/aula-ia': typeof ApiPublicAulaIaRoute
   '/api/public/kb-aula': typeof ApiPublicKbAulaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-classify': typeof ApiPublicKbClassifyRoute
@@ -177,6 +185,7 @@ export interface FileRoutesById {
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/ai-test': typeof ApiPublicAiTestRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
+  '/api/public/aula-ia': typeof ApiPublicAulaIaRoute
   '/api/public/kb-aula': typeof ApiPublicKbAulaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-classify': typeof ApiPublicKbClassifyRoute
@@ -200,6 +209,7 @@ export interface FileRouteTypes {
     | '/api/public/ai-status'
     | '/api/public/ai-test'
     | '/api/public/athena'
+    | '/api/public/aula-ia'
     | '/api/public/kb-aula'
     | '/api/public/kb-autocourse'
     | '/api/public/kb-classify'
@@ -221,6 +231,7 @@ export interface FileRouteTypes {
     | '/api/public/ai-status'
     | '/api/public/ai-test'
     | '/api/public/athena'
+    | '/api/public/aula-ia'
     | '/api/public/kb-aula'
     | '/api/public/kb-autocourse'
     | '/api/public/kb-classify'
@@ -242,6 +253,7 @@ export interface FileRouteTypes {
     | '/api/public/ai-status'
     | '/api/public/ai-test'
     | '/api/public/athena'
+    | '/api/public/aula-ia'
     | '/api/public/kb-aula'
     | '/api/public/kb-autocourse'
     | '/api/public/kb-classify'
@@ -264,6 +276,7 @@ export interface RootRouteChildren {
   ApiPublicAiStatusRoute: typeof ApiPublicAiStatusRoute
   ApiPublicAiTestRoute: typeof ApiPublicAiTestRoute
   ApiPublicAthenaRoute: typeof ApiPublicAthenaRoute
+  ApiPublicAulaIaRoute: typeof ApiPublicAulaIaRoute
   ApiPublicKbAulaRoute: typeof ApiPublicKbAulaRoute
   ApiPublicKbAutocourseRoute: typeof ApiPublicKbAutocourseRoute
   ApiPublicKbClassifyRoute: typeof ApiPublicKbClassifyRoute
@@ -327,6 +340,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/athena'
       fullPath: '/api/public/athena'
       preLoaderRoute: typeof ApiPublicAthenaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/aula-ia': {
+      id: '/api/public/aula-ia'
+      path: '/api/public/aula-ia'
+      fullPath: '/api/public/aula-ia'
+      preLoaderRoute: typeof ApiPublicAulaIaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/kb-aula': {
@@ -424,6 +444,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAiStatusRoute: ApiPublicAiStatusRoute,
   ApiPublicAiTestRoute: ApiPublicAiTestRoute,
   ApiPublicAthenaRoute: ApiPublicAthenaRoute,
+  ApiPublicAulaIaRoute: ApiPublicAulaIaRoute,
   ApiPublicKbAulaRoute: ApiPublicKbAulaRoute,
   ApiPublicKbAutocourseRoute: ApiPublicKbAutocourseRoute,
   ApiPublicKbClassifyRoute: ApiPublicKbClassifyRoute,
