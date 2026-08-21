@@ -203,8 +203,7 @@ function aulaNumero(disc, nome) {
 }
 function aulaLabel(disc, nome) {
   const n = aulaNumero(disc, nome);
-  const t = aulaTitulo(nome);
-  return n === null ? t : `Aula ${n} - ${t}`;
+  return n === null ? aulaTitulo(nome) : `Aula ${n}`;
 }
 window.aulaNumero = aulaNumero;
 window.aulaTitulo = aulaTitulo;
