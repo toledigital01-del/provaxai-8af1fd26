@@ -629,33 +629,6 @@ async function carregarConteudoKB() {
 }
 
 
-/* Material completo da matéria, exibido dentro da própria aula da Athena */
-async function carregarMaterialInline() {
-  const box = document.getElementById('mat-inline');
-  if (!box) return;
-  const alvo = disc;
-  if (!alvo) return;
-  let r = { status: 0, rows: [] };
-  try { r = await PX.materialCompleto(alvo, id); } catch (e) {}
-  if (r.status === 401 && window.PX && PX.ready) {
-    try { await PX.ready; r = await PX.materialCompleto(alvo, id); } catch (e) {}
-  }
-  const el = document.getElementById('mat-inline');
-  if (!el) return;
-  const rows = (r.rows || []).filter(d => (d.texto_extraido || '').trim());
-  if (!rows.length) { el.innerHTML = ''; return; }
-  const doTopico = rows.filter(d => d.topic_nome === topic);
-  const lista = doTopico.length ? doTopico : rows;
-  el.innerHTML = `<section style="margin-top:26px;padding-top:18px;border-top:1px solid var(--line);">
-      <h3 style="margin:0 0 4px">Material completo</h3>
-      <p style="margin:0 0 12px;color:var(--muted);font-size:0.82rem;">Texto integral do material de apoio de ${esc(alvo)}, sem cortes.</p>
-      ${lista.map(d => `<article style="margin-top:18px;">
-        <h4 style="margin:0 0 2px">${esc(d.nome_arquivo || 'Material')}</h4>
-        <p style="margin:0 0 8px;color:var(--muted);font-size:0.78rem;">${esc(d.topic_nome || 'Material geral da matéria')}</p>
-        ${PX.kbHTML(d.texto_extraido || '')}
-      </article>`).join('')}
-    </section>`;
-}
 
 function renderPane() {
   const p = document.getElementById('pane');
@@ -675,7 +648,6 @@ function renderPane() {
     p.innerHTML = `<div class="pane prose">
       <h3>${aulaLabel(disc, topic)}</h3>
       <div id="kb-conteudo"><p style="color:var(--muted)">Carregando o material desta aula…</p></div>
-      <div id="mat-inline"></div>
       <p style="margin-top:16px;color:var(--muted);font-size:0.85rem;">Dúvidas? Use o chat da Athena no painel à direita.</p>
       <div class="fixa">
         <div class="lbl">Fixação Imediata</div>
@@ -690,7 +662,7 @@ function renderPane() {
     document.getElementById('fx-f').onclick = () => goTab('flashcards');
     document.getElementById('fx-r').onclick = () => { rzOn = true; goTab('resumo'); };
     carregarConteudoKB();
-    carregarMaterialInline();
+
 
   } else if (tab === 'resumo') {
 
