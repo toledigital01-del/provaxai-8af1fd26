@@ -1,0 +1,1 @@
+ALTER TABLE public.knowledge_docs ADD COLUMN IF NOT EXISTS sumario text;

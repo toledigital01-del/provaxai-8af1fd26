@@ -1947,6 +1947,7 @@ function kbAulasPaint(){
         '<span class="kb-tag ' + (pub ? 'is-on' : 'is-wait') + '">' + (pub ? 'publicada' : temTexto ? 'rascunho' : 'sem conteúdo') + '</span>' +
         '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaAbrir(\'' + escJs(a.nome) + '\')">Abrir</button>' +
         '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaRenomear(\'' + a.id + '\')">Renomear</button>' +
+        '<button class="act primary" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaEditar(\'' + a.id + '\')">Editar aula</button>' +
         '<button class="act danger" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaExcluir(\'' + a.id + '\')">Excluir</button>' +
       '</div>';
     }).join('') + '</div>';
@@ -2034,6 +2035,78 @@ window.kbAulaExcluir = async function(id){
   kbPaint();
   kbAulaMsg('Aula excluída.');
 };
+/* ---- Modal de edição da aula: sumário + conteúdo, sem depender da lista ---- */
+let KB_AULA_EDIT = null;
+window.kbAulaEditar = function(id){
+  const a = KB_AULAS.find(x => x.id === id);
+  if(!a) return;
+  KB_AULA_EDIT = a;
+  const doc = kbFind(kbDisc, a.nome) || {};
+  const pub = kbStatusDoc(doc.id ? doc : null) === 'publicado';
+  let m = document.getElementById('kb-aula-modal');
+  if(!m){
+    m = document.createElement('div');
+    m.id = 'kb-aula-modal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.55);display:flex;align-items:flex-start;justify-content:center;padding:32px 16px;overflow:auto';
+    document.body.appendChild(m);
+  }
+  m.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  m.innerHTML =
+    '<div style="background:#fff;border-radius:16px;max-width:900px;width:100%;padding:22px 24px;box-shadow:0 20px 60px rgba(15,23,42,.3)">' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">' +
+        '<b style="color:#1E3A8A;font-size:1rem">Aula ' + kbAulaNum(a.ordem) + '</b>' +
+        '<span class="kb-tag ' + (pub ? 'is-on' : 'is-wait') + '">' + (pub ? 'publicada' : 'rascunho') + '</span>' +
+        '<span style="flex:1"></span>' +
+        '<button class="act" onclick="kbAulaModalFechar()">Fechar</button>' +
+      '</div>' +
+      '<p class="muted" style="margin:0 0 14px;font-size:0.78rem">O aluno vê apenas “Aula ' + kbAulaNum(a.ordem) + '” na lista. O título e o sumário abaixo aparecem dentro da página da aula.</p>' +
+      '<label class="muted">Título da aula (mostrado dentro da aula)</label>' +
+      '<input id="kb-ae-tit" value="' + esc(doc.titulo || kbAulaTitulo(a.nome)) + '" style="margin-bottom:12px">' +
+      '<label class="muted">Sumário da aula</label>' +
+      '<textarea id="kb-ae-sum" rows="6" placeholder="Ex.: - Conceito de ato administrativo&#10;- Atributos&#10;- Espécies" style="margin-bottom:12px">' + esc(doc.sumario || '') + '</textarea>' +
+      '<label class="muted">Conteúdo completo da aula</label>' +
+      '<textarea id="kb-ae-txt" rows="16" style="min-height:340px;line-height:1.55">' + esc(doc.conteudo || '') + '</textarea>' +
+      '<div class="kb-actions" style="margin-top:14px">' +
+        '<label class="muted" style="display:flex;gap:6px;align-items:center;margin:0;font-size:0.8rem"><input type="checkbox" id="kb-ae-pub" ' + (pub ? 'checked' : '') + ' style="width:auto"> Publicado para os alunos</label>' +
+        '<span style="flex:1"></span>' +
+        '<button class="act primary" onclick="kbAulaModalSalvar()">Salvar aula</button>' +
+      '</div>' +
+      '<p class="muted" id="kb-ae-msg" style="margin-top:10px;font-size:0.78rem"></p>' +
+    '</div>';
+};
+window.kbAulaModalFechar = function(){
+  const m = document.getElementById('kb-aula-modal');
+  if(m) m.style.display = 'none';
+  document.body.style.overflow = '';
+  KB_AULA_EDIT = null;
+};
+window.kbAulaModalSalvar = async function(){
+  const a = KB_AULA_EDIT;
+  if(!a) return;
+  const msg = document.getElementById('kb-ae-msg');
+  const titulo = document.getElementById('kb-ae-tit').value.trim();
+  const sumario = document.getElementById('kb-ae-sum').value;
+  const conteudo = document.getElementById('kb-ae-txt').value;
+  const publicar = document.getElementById('kb-ae-pub').checked;
+  if(msg) msg.textContent = 'Salvando…';
+  const doc = kbFind(kbDisc, a.nome);
+  const payload = {
+    course_slug: 'prf-2021', disciplina: kbDisc, topico: a.nome,
+    titulo: titulo || null, sumario: sumario || null, conteudo: conteudo,
+    status: publicar ? 'publicado' : 'rascunho', publicado: publicar,
+    updated_by: PX.user ? PX.user.id : null,
+  };
+  const { error } = doc
+    ? await PX.sb.from('knowledge_docs').update(payload).eq('id', doc.id)
+    : await PX.sb.from('knowledge_docs').insert(payload);
+  if(error){ if(msg) msg.textContent = 'Erro: ' + error.message; return; }
+  await logAdmin('salvar_aula','knowledge_docs', doc ? doc.id : null, { disciplina: kbDisc, aula: a.nome, publicado: publicar });
+  await loadKB();
+  kbPaint();
+  if(msg) msg.textContent = publicar ? 'Aula salva e publicada para os alunos.' : 'Aula salva como rascunho.';
+};
+
 function kbAulasRefresh(){
   if(!kbDisc) return;
   kbAulasCarregar(kbDisc).then(kbAulasPaint).catch(function(){ kbAulasPaint(); });

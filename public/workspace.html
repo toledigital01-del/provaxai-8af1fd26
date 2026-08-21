@@ -588,7 +588,14 @@ async function carregarConteudoKB() {
   if (!document.getElementById('kb-conteudo')) return;
   const doc = res.doc;
   if (doc && (doc.conteudo || '').trim()) {
-    box.innerHTML = (doc.titulo ? '<h3>' + doc.titulo + '</h3>' : '') + PX.kbHTML(doc.conteudo);
+    const tituloAula = (doc.titulo || '').trim() || (typeof aulaTitulo === 'function' ? aulaTitulo(topic) : topic);
+    const sum = (doc.sumario || '').trim();
+    box.innerHTML =
+      (tituloAula ? '<h3 style="margin:0 0 6px">' + esc(tituloAula) + '</h3>' : '') +
+      (sum ? '<section class="aula-sumario" style="margin:10px 0 20px;padding:14px 16px;border:1px solid var(--line);border-left:3px solid var(--brand,#154C9B);border-radius:12px;background:var(--surface,#F8FAFC);">' +
+        '<div style="font-size:0.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Sumário da aula</div>' +
+        PX.kbHTML(sum) + '</section>' : '') +
+      PX.kbHTML(doc.conteudo);
     return;
   }
   const btn = (txt, href) => '<p style="margin:12px 0 0"><a class="btn-primary" style="display:inline-block;text-decoration:none;padding:9px 16px;border-radius:10px" href="' + href + '">' + txt + '</a></p>';

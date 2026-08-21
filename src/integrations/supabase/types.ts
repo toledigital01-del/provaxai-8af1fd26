@@ -516,6 +516,7 @@ export type Database = {
           ordem: number
           publicado: boolean
           status: string
+          sumario: string | null
           titulo: string | null
           topico: string | null
           updated_at: string
@@ -530,6 +531,7 @@ export type Database = {
           ordem?: number
           publicado?: boolean
           status?: string
+          sumario?: string | null
           titulo?: string | null
           topico?: string | null
           updated_at?: string
@@ -544,6 +546,7 @@ export type Database = {
           ordem?: number
           publicado?: boolean
           status?: string
+          sumario?: string | null
           titulo?: string | null
           topico?: string | null
           updated_at?: string
