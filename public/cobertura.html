@@ -94,7 +94,10 @@ function href(disc, topic) {
   return topic ? `workspace.html?${base}&topic=${encodeURIComponent(topic)}` : `disciplina.html?${base}`;
 }
 
+let FILTRO_ATUAL = 'all';
+window.pxRerender = function(){ render(FILTRO_ATUAL); };
 function render(f) {
+  FILTRO_ATUAL = f;
   const html = AGG.discs.map((d, i) => {
     const tops = d.topics.filter(t => f === 'all' || t.st === f);
     if (!tops.length) return '';
