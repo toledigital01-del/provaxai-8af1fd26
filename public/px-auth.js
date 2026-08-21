@@ -76,20 +76,29 @@
       ]);
       if (!cursos || !discs || !discs.length) return;
       const porDisc = {};
-      (tops || []).forEach(t => { (porDisc[t.discipline_id] = porDisc[t.discipline_id] || []).push(t.nome); });
+      const ordemDisc = {};
+      (tops || []).forEach(t => {
+        (porDisc[t.discipline_id] = porDisc[t.discipline_id] || []).push(t.nome);
+        (ordemDisc[t.discipline_id] = ordemDisc[t.discipline_id] || {})[t.nome] =
+          typeof t.ordem === 'number' ? t.ordem : null;
+      });
       const slugDe = {};
       cursos.forEach(c => { slugDe[c.id] = c.slug; });
       const out = {};
       const pesos = {};
+      const aulas = {};
       discs.forEach(d => {
         if (typeof d.peso === 'number') pesos[d.nome] = { peso: d.peso, incidencia: d.incidencia };
         const slug = slugDe[d.course_id];
         if (!slug) return;
         out[slug] = out[slug] || {};
         out[slug][d.nome] = porDisc[d.id] || [];
+        aulas[d.nome] = ordemDisc[d.id] || {};
       });
       localStorage.setItem('px_curriculo_v1', JSON.stringify({ cursos: out, ts: Date.now() }));
       localStorage.setItem('px_pesos_v1', JSON.stringify(pesos));
+      localStorage.setItem('px_aulas_v1', JSON.stringify(aulas));
+
 
     } catch (e) { /* mantém o currículo em cache */ }
   };
