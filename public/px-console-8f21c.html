@@ -2178,17 +2178,29 @@ window.kbAulaEditar = function(id){
       '<p class="muted" style="margin:0 0 14px;font-size:0.78rem">O aluno vê apenas “Aula ' + kbAulaNum(a.ordem) + '” na lista. Título, sumário e conteúdo aparecem dentro da página da aula. Aceita Markdown (## título, - lista, **negrito**).</p>' +
       '<label class="muted">Título da aula (mostrado dentro da aula)</label>' +
       '<input id="kb-ae-tit" oninput="kbAulaModalMudou()" value="' + esc(doc.titulo || kbAulaTitulo(a.nome)).replace(/"/g,'&quot;') + '" style="margin-bottom:12px">' +
+      '<label class="muted">Como o aluno vê esta aula</label>' +
+      '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin:4px 0 10px;font-size:0.85rem">' +
+        '<label style="display:flex;gap:6px;align-items:center"><input type="radio" name="kb-ae-modo" value="texto" ' + (modo === 'texto' ? 'checked' : '') + ' onchange="kbAulaModoMudou()" style="width:auto"> Conteúdo em texto (padrão)</label>' +
+        '<label style="display:flex;gap:6px;align-items:center"><input type="radio" name="kb-ae-modo" value="pdf" ' + (modo === 'pdf' ? 'checked' : '') + ' onchange="kbAulaModoMudou()" style="width:auto"> Exibir o PDF da aula</label>' +
+      '</div>' +
+      '<div id="kb-ae-pdfbox" style="display:' + (modo === 'pdf' ? '' : 'none') + ';border:1px solid #E2E8F0;background:#F8FAFC;border-radius:12px;padding:12px;margin-bottom:12px">' +
+        '<label class="muted">PDF da aula</label>' +
+        '<input type="file" id="kb-ae-pdf" accept="application/pdf,.pdf" onchange="kbAulaPdfUpload()" style="width:auto;max-width:100%">' +
+        '<p class="muted" id="kb-ae-pdfinfo" style="margin:8px 0 0;font-size:0.78rem">' + (doc.pdf_url ? 'Arquivo atual: ' + esc(String(doc.pdf_url).split('/').pop()) : 'Nenhum PDF enviado ainda.') + '</p>' +
+        '<input type="hidden" id="kb-ae-pdfurl" value="' + esc(doc.pdf_url || '').replace(/"/g,'&quot;') + '">' +
+      '</div>' +
       '<label class="muted">Sumário da aula</label>' + barra('kb-ae-sum') +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">' +
         '<textarea id="kb-ae-sum" rows="6" oninput="kbAulaModalMudou()" placeholder="Ex.: - Conceito de ato administrativo&#10;- Atributos">' + esc(doc.sumario || '') + '</textarea>' +
         '<div id="kb-ae-sum-prev" style="' + prev + ';max-height:180px"></div>' +
       '</div>' +
-      '<label class="muted">Conteúdo completo da aula</label>' + barra('kb-ae-txt') +
+      '<label class="muted">Conteúdo completo da aula <span id="kb-ae-txthint" style="font-weight:400">' + (modo === 'pdf' ? '(opcional no modo PDF — fica como versão em texto alternativa)' : '') + '</span></label>' + barra('kb-ae-txt') +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
         '<textarea id="kb-ae-txt" rows="16" oninput="kbAulaModalMudou()" style="min-height:340px;line-height:1.55">' + esc(doc.conteudo || '') + '</textarea>' +
         '<div id="kb-ae-txt-prev" style="' + prev + ';max-height:420px"></div>' +
       '</div>' +
       '<input type="checkbox" id="kb-ae-pub" ' + (pub ? 'checked' : '') + ' style="display:none">' +
+
       '<div class="kb-actions" style="margin-top:14px">' +
         '<button class="act" onclick="kbAulaModalSalvar(false)">Salvar rascunho</button>' +
         (pub
