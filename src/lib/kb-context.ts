@@ -60,11 +60,11 @@ export async function materialIntegral(curso: string, disciplina: string, topico
 
   kd.forEach((d) => {
     const t = [d.sumario || '', d.conteudo || ''].join('\n').trim()
-    if (t) partes.push(`### ${d.titulo || d.topico || disciplina}\n${t.slice(0, 20000)}`)
+    if (t) partes.push(`### ${d.titulo || d.topico || disciplina}\n${t.slice(0, 8000)}`)
   })
   kb.forEach((d) => {
     const t = (d.texto_extraido || '').trim()
-    if (t) partes.push(`### ${d.nome_arquivo || 'material'}\n${t.slice(0, 20000)}`)
+    if (t) partes.push(`### ${d.nome_arquivo || 'material'}\n${t.slice(0, 8000)}`)
   })
-  return partes.join('\n\n').slice(0, 120000)
+  return partes.join('\n\n').slice(0, 30000)
 }
