@@ -574,8 +574,62 @@ async function carregarQuestoes() {
   if (tab === 'questoes' || tab === 'simulados') renderPane();
 }
 
+/* Mostra o PDF da aula dentro da própria página (funciona no celular, onde o
+   iframe de PDF costuma falhar): renderiza cada página em uma imagem. */
+let PDFJS_CARREGANDO = null;
+function carregarPdfJs() {
+  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if (PDFJS_CARREGANDO) return PDFJS_CARREGANDO;
+  PDFJS_CARREGANDO = new Promise(function (resolve, reject) {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload = function () {
+      try {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+          'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      } catch (e) {}
+      resolve(window.pdfjsLib);
+    };
+    s.onerror = function () { reject(new Error('pdfjs')); };
+    document.head.appendChild(s);
+  });
+  return PDFJS_CARREGANDO;
+}
+
+async function abrirPdfNaPagina(url, box) {
+  if (!box) return;
+  box.innerHTML = '<p style="color:var(--muted);padding:16px">Carregando o PDF…</p>';
+  try {
+    const lib = await carregarPdfJs();
+    const pdf = await lib.getDocument({ url: url }).promise;
+    if (!box.isConnected) return;
+    box.innerHTML = '';
+    const largura = Math.max(320, box.clientWidth - 20);
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const base = page.getViewport({ scale: 1 });
+      const escala = (largura / base.width) * Math.min(window.devicePixelRatio || 1, 2);
+      const vp = page.getViewport({ scale: escala });
+      const canvas = document.createElement('canvas');
+      canvas.width = vp.width; canvas.height = vp.height;
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
+      canvas.style.display = 'block';
+      canvas.style.margin = '0 auto 10px';
+      canvas.style.borderRadius = '8px';
+      canvas.style.boxShadow = '0 1px 4px rgba(15,23,42,.15)';
+      box.appendChild(canvas);
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+      if (!box.isConnected) return;
+    }
+  } catch (e) {
+    box.innerHTML = '<div style="padding:16px;color:var(--muted)">Não consegui exibir o PDF aqui. ' +
+      '<a href="' + url + '" target="_blank" rel="noopener" style="color:var(--brand,#154C9B);font-weight:600">Abrir o arquivo</a></div>';
+  }
+}
 
 async function carregarConteudoKB() {
+
   const box = document.getElementById('kb-conteudo');
   if (!box) return;
   let res = { status: 0, doc: null };
