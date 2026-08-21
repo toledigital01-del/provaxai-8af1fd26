@@ -39,8 +39,6 @@ async function doCache(hash: string): Promise<Response | null> {
     headers: serviceHeaders(),
   }).catch(() => null)
   if (!r || !r.ok || !r.body) return null
-  // marca o reaproveitamento (best-effort, não bloqueia o áudio)
-  fetch(`${SUPABASE_URL}/rest/v1/rpc/noop`, { method: 'POST', headers: serviceHeaders() }).catch(() => {})
   return new Response(r.body, { headers: { ...MP3, 'X-Px-Cache': 'hit' } })
 }
 
