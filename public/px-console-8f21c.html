@@ -1746,6 +1746,31 @@ function kbEditor(){
     <p class="muted" id="kb-msg" style="margin-top:10px">${doc.updated_at?'Atualizado em '+dt(doc.updated_at):'Sem conteúdo cadastrado.'}${doc.id&&st==='rascunho'?' · Ainda em rascunho: publique para liberar ao aluno.':''}</p>
     </div>
 
+    <div data-pane="aulas" style="display:none;margin-top:4px">
+      <h4>Aulas de ${esc(kbDisc || 'sua matéria')}</h4>
+      <p class="muted" style="margin:0 0 14px;max-width:72ch">Cadastre uma aula por vez. Cole o material (ou envie o arquivo) e a IA identifica o número da aula e o título — a aula entra numerada (Aula 00, 01, 02…) e aparece assim no painel do aluno.</p>
+
+      <div class="kb-soft">
+        <label class="muted">Material desta aula</label>
+        <textarea id="kb-aula-txt" rows="8" placeholder="Cole aqui o conteúdo completo da aula (ex.: “Aula 03 – Ato administrativo …”)" style="margin-top:6px"></textarea>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px">
+          <input type="file" id="kb-aula-file" accept=".pdf,.txt,.md,.csv,.html,.srt,.vtt,.png,.jpg,.jpeg,.webp,image/*,application/pdf,text/*" style="width:auto;max-width:100%">
+          <span class="muted" style="font-size:0.75rem">Opcional: o arquivo é lido e o texto entra no campo acima.</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px">
+          <input id="kb-aula-num" type="number" min="0" max="999" placeholder="Nº (auto)" style="width:120px">
+          <input id="kb-aula-tit" placeholder="Título da aula (deixe vazio para a IA identificar)" style="flex:1;min-width:220px">
+          <label class="muted" style="display:flex;gap:6px;align-items:center;margin:0;font-size:0.78rem">
+            <input type="checkbox" id="kb-aula-pub" checked style="width:auto"> Publicar para os alunos
+          </label>
+          <button class="act primary" onclick="kbAulaCadastrar()">Identificar e cadastrar aula</button>
+        </div>
+        <p class="muted" id="kb-aula-msg" style="margin:10px 0 0;font-size:0.78rem"></p>
+      </div>
+
+      <div id="kb-aulas-lista" style="margin-top:16px"></div>
+    </div>
+
 
     <div data-pane="manut" style="display:none;margin-top:4px">
       <h4>Manutenção da base</h4>
