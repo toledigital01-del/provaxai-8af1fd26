@@ -1906,6 +1906,7 @@ function kbAulasPaint(){
     '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 8px">' +
       '<p class="muted" style="margin:0;flex:1;min-width:200px;font-size:0.75rem">Arraste pelo ⠿ para mudar a ordem — ou clique no número da aula para digitar a posição dela.</p>' +
       '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasTodasPdf()">Exibir todas em PDF</button>' +
+      '<button class="act danger" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasExcluirTodas()">Excluir todas as aulas</button>' +
     '</div>' +
 
     '<div class="kb-surface" id="kb-aulas-dnd" style="font-size:0.8125rem">' +
@@ -1928,6 +1929,30 @@ function kbAulasPaint(){
     }).join('') + '</div>';
   kbAulasBindDnD();
 }
+
+
+/* Excluir todas as aulas da matéria (aulas + conteúdo + PDFs anexados). */
+window.kbAulasExcluirTodas = async function(){
+  if(!KB_AULAS.length) return alert('Não há aulas cadastradas nesta matéria.');
+  const nomes = KB_AULAS.map(function(a){ return a.nome; });
+  if(!confirm('Excluir TODAS as ' + KB_AULAS.length + ' aulas de ' + kbDisc + '?\n\nO conteúdo e os PDFs dessas aulas serão apagados. Esta ação não pode ser desfeita.')) return;
+  if(prompt('Para confirmar, digite EXCLUIR') !== 'EXCLUIR') return;
+  const docs = KB_DOCS.filter(function(d){ return d.disciplina === kbDisc && nomes.indexOf(d.topico || '') >= 0; });
+  const pdfs = docs.map(function(d){ return d.pdf_url; }).filter(function(u){ return String(u||'').trim(); });
+  if(pdfs.length){ try{ await PX.sb.storage.from('aulas-pdf').remove(pdfs); }catch(e){} }
+  if(docs.length){
+    const r = await PX.sb.from('knowledge_docs').delete().in('id', docs.map(function(d){ return d.id; }));
+    if(r.error) return alert('Erro ao apagar o conteúdo: ' + r.error.message);
+  }
+  const r2 = await PX.sb.from('topics').delete().in('id', KB_AULAS.map(function(a){ return a.id; })).select('id');
+  if(r2.error) return alert('Erro ao apagar as aulas: ' + r2.error.message);
+  if(!r2.data || !r2.data.length) return alert('Nada foi apagado — sua sessão de administrador expirou.');
+  await logAdmin('excluir_todas_aulas','topics', null, { disciplina: kbDisc, total: nomes.length });
+  await kbAulasCarregar(kbDisc);
+  await loadKB();
+  kbPaint();
+  alert('Todas as aulas de ' + kbDisc + ' foram excluídas.');
+};
 
 /* Reordenação por arrastar: solta na posição nova e renumera 00,01,02… */
 let KB_DRAG_IDX = null;
