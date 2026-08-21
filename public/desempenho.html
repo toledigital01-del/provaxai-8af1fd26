@@ -199,7 +199,7 @@
             const s = topicStats(t.name);
             return `<div class="trow" onclick="toggleTopico(this)" data-disc="${encodeURIComponent(d.name)}" data-topic="${encodeURIComponent(t.name)}">
               ${dotHTML(t.st)}
-              <div class="tn">${t.name}</div>
+              <div class="tn">${aulaLabel(d.name, t.name)}</div>
               <div class="mini">${s.acertos}% acertos</div>
               <div class="mini">${s.questoes} questões</div>
               <div class="track"><div class="fill ${fillClass(t.prog)}" style="width:${t.prog}%"></div></div>

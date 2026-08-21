@@ -108,7 +108,7 @@ function render(f) {
       <div class="chap-b">${tops.map(t => `
         <a class="trow" href="${href(d.name, t.name)}">
           ${dotHTML(t.st)}
-          <span class="tn">${t.name}</span>
+          <span class="tn">${aulaLabel(d.name, t.name)}</span>
           <span class="badge" style="background:${STATUS_META[t.st].color}1A;color:${STATUS_META[t.st].color}">${STATUS_META[t.st].label}</span>
         </a>`).join('')}</div>
     </div>`;

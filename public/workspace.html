@@ -289,11 +289,11 @@ document.getElementById('crumb').innerHTML =
   (allDiscs.length > 1 ? `<a href="disciplinas.html?${base}">${title}</a>` : `<span>${title}</span>`) +
   (scope === 'geral' ? '' :
     `<span class="sep">/</span><a href="${discHref}">${disc}</a>` +
-    (scope === 'topico' ? `<span class="sep">/</span><span>${topic}</span>` : ''));
+    (scope === 'topico' ? `<span class="sep">/</span><span>${aulaLabel(disc, topic)}</span>` : ''));
 
 const stats = topicStats(scope === 'topico' ? topic : disc);
 const sm = STATUS_META[stats.status];
-document.getElementById('t-title').textContent = scope === 'topico' ? topic : (scope === 'disc' ? disc : title);
+document.getElementById('t-title').textContent = scope === 'topico' ? aulaLabel(disc, topic) : (scope === 'disc' ? disc : title);
 document.getElementById('t-sub').innerHTML = scope === 'topico'
   ? `${dotHTML(stats.status)} ${sm.label} · ${disc}`
   : ctxLabel();
@@ -634,14 +634,14 @@ function renderPane() {
         <div class="cesp-head"><b>Aulas com Athena IA</b><span>${ctxLabel()} — escolha um tópico para abrir a aula completa.</span></div>
         ${scopePickerHTML()}
         <div class="qbox" style="padding:0;overflow:hidden;margin-top:16px;">
-          ${pool.slice(0, 24).map(o => `<a class="rev-row" style="text-decoration:none;color:inherit;" href="workspace.html?${base}&disc=${encodeURIComponent(o.d)}&topic=${encodeURIComponent(o.t)}&tab=tutor"><span>${dotHTML(statusOf(o.t))} ${o.t}</span><span class="rev-when">${o.d}</span></a>`).join('')}
+          ${pool.slice(0, 24).map(o => `<a class="rev-row" style="text-decoration:none;color:inherit;" href="workspace.html?${base}&disc=${encodeURIComponent(o.d)}&topic=${encodeURIComponent(o.t)}&tab=tutor"><span>${dotHTML(statusOf(o.t))} ${aulaLabel(o.d, o.t)}</span><span class="rev-when">${o.d}</span></a>`).join('')}
         </div>
       </div>`;
       mountScopePicker();
       return;
     }
     p.innerHTML = `<div class="pane prose">
-      <h3>Aula com Athena IA — ${topic}</h3>
+      <h3>${aulaLabel(disc, topic)}</h3>
       <div id="kb-conteudo"><p style="color:var(--muted)">Carregando o material desta aula…</p></div>
       <div id="mat-inline"></div>
       <p style="margin-top:16px;color:var(--muted);font-size:0.85rem;">Dúvidas? Use o chat da Athena no painel à direita.</p>
