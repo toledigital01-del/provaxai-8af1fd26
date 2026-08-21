@@ -1044,7 +1044,9 @@ function renderPane() {
     const audio = podState.audio || (podState.audio = new Audio());
     audio.pause();
     const cache = podState.cacheAudio || (podState.cacheAudio = {});
+    const pend = podState.pendAudio || (podState.pendAudio = {});
     let idx = 0, rate = 1;
+
     const seek = document.getElementById('pod-seek');
     const cur = document.getElementById('pod-cur'), left = document.getElementById('pod-left');
     const play = document.getElementById('pod-play');
