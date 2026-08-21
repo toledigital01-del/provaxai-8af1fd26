@@ -1903,7 +1903,11 @@ function kbAulasPaint(){
   if(!KB_AULAS.length){ box.innerHTML = '<p class="muted" style="font-size:0.8rem">Nenhuma aula cadastrada nesta matéria ainda — cadastre a Aula 00 acima.</p>'; return; }
   const ordenadas = KB_AULAS.slice().sort((a,b)=>a.ordem-b.ordem);
   box.innerHTML =
-    '<p class="muted" style="margin:0 0 8px;font-size:0.75rem">Arraste pelo ⠿ para mudar a ordem — ou clique no número da aula para digitar a posição dela.</p>' +
+    '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 8px">' +
+      '<p class="muted" style="margin:0;flex:1;min-width:200px;font-size:0.75rem">Arraste pelo ⠿ para mudar a ordem — ou clique no número da aula para digitar a posição dela.</p>' +
+      '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasTodasPdf()">Exibir todas em PDF</button>' +
+    '</div>' +
+
     '<div class="kb-surface" id="kb-aulas-dnd" style="font-size:0.8125rem">' +
     ordenadas.map(function(a, i){
       const doc = kbFind(kbDisc, a.nome) || {};
