@@ -1820,8 +1820,8 @@ function kbEditor(){
 
       <div id="kb-aulas-lista" style="margin-top:16px"></div>
 
-      <details class="kb-soft" style="padding:12px 14px;margin-top:16px">
-        <summary style="cursor:pointer;font-weight:650;font-size:0.85rem;color:#1E3A8A">Documentos-fonte já enviados</summary>
+      <details class="kb-soft" open style="padding:12px 14px;margin-top:16px">
+        <summary style="cursor:pointer;font-weight:650;font-size:0.85rem;color:#1E3A8A">Anexos desta matéria (PDFs das aulas e documentos-fonte)</summary>
         <div id="kb-biblioteca" style="margin-top:12px"></div>
       </details>
     </div>
@@ -1906,6 +1906,7 @@ function kbAulasPaint(){
     '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 8px">' +
       '<p class="muted" style="margin:0;flex:1;min-width:200px;font-size:0.75rem">Arraste pelo ⠿ para mudar a ordem — ou clique no número da aula para digitar a posição dela.</p>' +
       '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasTodasPdf()">Exibir todas em PDF</button>' +
+      '<button class="act danger" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasExcluirTodas()">Excluir todas as aulas</button>' +
     '</div>' +
 
     '<div class="kb-surface" id="kb-aulas-dnd" style="font-size:0.8125rem">' +
@@ -1918,6 +1919,7 @@ function kbAulasPaint(){
         '<button class="act" title="Clique para mudar o número desta aula" onclick="kbAulaNumeroEditar(\'' + a.id + '\')" style="font-weight:700;color:#1E3A8A;min-width:74px;font-size:0.8125rem;padding:3px 8px">Aula ' + kbAulaNum(a.ordem) + '</button>' +
 
         '<span style="flex:1;min-width:120px">' + esc(kbAulaTitulo(a.nome)) + '</span>' +
+        (String(doc.pdf_url||'').trim() ? '<span class="kb-tag is-on" title="' + esc(String(doc.pdf_url).split('/').pop()) + '">PDF' + (doc.modo_exibicao === 'pdf' ? ' ativo' : ' anexado') + '</span>' : '') +
         '<span class="kb-tag ' + (pub ? 'is-on' : 'is-wait') + '">' + (pub ? 'publicada' : temTexto ? 'rascunho' : 'sem conteúdo') + '</span>' +
         '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaAbrir(\'' + escJs(a.nome) + '\')">Abrir</button>' +
         '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaRenomear(\'' + a.id + '\')">Renomear</button>' +
@@ -1927,6 +1929,30 @@ function kbAulasPaint(){
     }).join('') + '</div>';
   kbAulasBindDnD();
 }
+
+
+/* Excluir todas as aulas da matéria (aulas + conteúdo + PDFs anexados). */
+window.kbAulasExcluirTodas = async function(){
+  if(!KB_AULAS.length) return alert('Não há aulas cadastradas nesta matéria.');
+  const nomes = KB_AULAS.map(function(a){ return a.nome; });
+  if(!confirm('Excluir TODAS as ' + KB_AULAS.length + ' aulas de ' + kbDisc + '?\n\nO conteúdo e os PDFs dessas aulas serão apagados. Esta ação não pode ser desfeita.')) return;
+  if(prompt('Para confirmar, digite EXCLUIR') !== 'EXCLUIR') return;
+  const docs = KB_DOCS.filter(function(d){ return d.disciplina === kbDisc && nomes.indexOf(d.topico || '') >= 0; });
+  const pdfs = docs.map(function(d){ return d.pdf_url; }).filter(function(u){ return String(u||'').trim(); });
+  if(pdfs.length){ try{ await PX.sb.storage.from('aulas-pdf').remove(pdfs); }catch(e){} }
+  if(docs.length){
+    const r = await PX.sb.from('knowledge_docs').delete().in('id', docs.map(function(d){ return d.id; }));
+    if(r.error) return alert('Erro ao apagar o conteúdo: ' + r.error.message);
+  }
+  const r2 = await PX.sb.from('topics').delete().in('id', KB_AULAS.map(function(a){ return a.id; })).select('id');
+  if(r2.error) return alert('Erro ao apagar as aulas: ' + r2.error.message);
+  if(!r2.data || !r2.data.length) return alert('Nada foi apagado — sua sessão de administrador expirou.');
+  await logAdmin('excluir_todas_aulas','topics', null, { disciplina: kbDisc, total: nomes.length });
+  await kbAulasCarregar(kbDisc);
+  await loadKB();
+  kbPaint();
+  alert('Todas as aulas de ' + kbDisc + ' foram excluídas.');
+};
 
 /* Reordenação por arrastar: solta na posição nova e renumera 00,01,02… */
 let KB_DRAG_IDX = null;
@@ -2532,9 +2558,32 @@ function kbPaintBiblioteca(){
   const box = document.getElementById('kb-biblioteca');
   if(!box) return;
   const lista = KB_LIB.filter(function(d){ return d.discipline_nome === kbDisc; });
-  if(!lista.length){ box.innerHTML = '<p class="muted" style="font-size:0.78rem">Nenhum documento-fonte guardado para esta matéria ainda.</p>'; return; }
-  box.innerHTML = '<div class="kb-surface" style="font-size:0.8125rem">' +
-
+  /* PDFs anexados diretamente às aulas também são anexos desta matéria. */
+  const pdfs = KB_DOCS.filter(function(d){ return d.disciplina === kbDisc && String(d.pdf_url||'').trim(); });
+  if(!lista.length && !pdfs.length){
+    box.innerHTML = '<p class="muted" style="font-size:0.78rem">Nenhum anexo nesta matéria ainda — envie um PDF em “Editar aula” ou um documento-fonte acima.</p>';
+    return;
+  }
+  const cab = '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 8px">' +
+      '<p class="muted" style="margin:0;flex:1;min-width:180px;font-size:0.75rem">' +
+        (pdfs.length ? pdfs.length + ' PDF(s) anexado(s) às aulas' : '') +
+        (pdfs.length && lista.length ? ' · ' : '') +
+        (lista.length ? lista.length + ' documento(s)-fonte' : '') +
+      '</p>' +
+      '<button class="act danger" style="font-size:0.75rem;padding:4px 10px" onclick="kbAnexosExcluirTodos()">Excluir todos os anexos</button>' +
+    '</div>';
+  const linhaPdf = function(d){
+    const nome = String(d.pdf_url).split('/').pop();
+    return '<div style="padding:11px 13px;border-bottom:1px solid #F5F7FA;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#F8FAFF">' +
+      '<span class="kb-tag is-on">PDF da aula</span>' +
+      '<span style="flex:1;min-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(d.titulo || d.topico || nome) + '</span>' +
+      '<span class="muted" style="font-size:0.75rem">' + esc(nome) + '</span>' +
+      '<button class="act" onclick="kbPdfAbrir(\'' + escJs(d.pdf_url) + '\')">Abrir PDF</button>' +
+      '<button class="act danger" onclick="kbPdfRemover(\'' + d.id + '\')">Remover PDF</button>' +
+    '</div>';
+  };
+  box.innerHTML = cab + '<div class="kb-surface" style="font-size:0.8125rem">' +
+    pdfs.map(linhaPdf).join('') +
     lista.map(function(d){
       return '<div style="padding:11px 13px;border-bottom:1px solid #F5F7FA;display:flex;gap:10px;align-items:center;flex-wrap:wrap">' +
         '<span style="flex:1;min-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
@@ -2546,6 +2595,49 @@ function kbPaintBiblioteca(){
       '</div>';
     }).join('') + '</div>';
 }
+window.kbPdfAbrir = async function(caminho){
+  let url = '';
+  if(/^https?:\/\//i.test(caminho)) url = caminho;
+  else {
+    const r = await PX.sb.storage.from('aulas-pdf').createSignedUrl(caminho, 3600);
+    url = (r && r.data && r.data.signedUrl) || '';
+  }
+  if(!url) return alert('Não consegui abrir este PDF agora. Recarregue a página e tente de novo.');
+  window.open(url, '_blank', 'noopener');
+};
+window.kbPdfRemover = async function(id){
+  const doc = KB_DOCS.find(function(x){ return x.id === id; });
+  if(!doc) return;
+  if(!confirm('Remover o PDF anexado desta aula? A aula volta a exibir o conteúdo em texto.')) return;
+  try{ await PX.sb.storage.from('aulas-pdf').remove([doc.pdf_url]); }catch(e){}
+  const { data, error } = await PX.sb.from('knowledge_docs')
+    .update({ pdf_url: null, modo_exibicao: 'texto' }).eq('id', id).select('id');
+  if(error) return alert('Erro ao remover: ' + error.message);
+  if(!data || !data.length) return alert('Nada foi alterado — sua sessão de administrador expirou.');
+  await loadKB(); kbPaint();
+};
+window.kbAnexosExcluirTodos = async function(){
+  const pdfs = KB_DOCS.filter(function(d){ return d.disciplina === kbDisc && String(d.pdf_url||'').trim(); });
+  const docs = KB_LIB.filter(function(d){ return d.discipline_nome === kbDisc; });
+  const total = pdfs.length + docs.length;
+  if(!total) return alert('Não há anexos nesta matéria.');
+  if(!confirm('Excluir TODOS os anexos de ' + kbDisc + '?\n\n' + pdfs.length + ' PDF(s) de aula e ' + docs.length + ' documento(s)-fonte serão apagados. O texto das aulas continua.')) return;
+  if(pdfs.length){
+    try{ await PX.sb.storage.from('aulas-pdf').remove(pdfs.map(function(d){ return d.pdf_url; })); }catch(e){}
+    const r = await PX.sb.from('knowledge_docs').update({ pdf_url: null, modo_exibicao: 'texto' })
+      .in('id', pdfs.map(function(d){ return d.id; })).select('id');
+    if(r.error) return alert('Erro ao limpar os PDFs: ' + r.error.message);
+    if(!r.data || !r.data.length) return alert('Nada foi alterado — sua sessão de administrador expirou.');
+  }
+  if(docs.length){
+    const r2 = await PX.sb.from('kb_documentos').delete().in('id', docs.map(function(d){ return d.id; }));
+    if(r2.error) return alert('Erro ao remover documentos-fonte: ' + r2.error.message);
+  }
+  await logAdmin('excluir_anexos','kb_documentos', null, { disciplina: kbDisc, pdfs: pdfs.length, fontes: docs.length });
+  await loadKB();
+  kbPaint();
+  alert('Pronto! ' + total + ' anexo(s) excluído(s) de ' + kbDisc + '.');
+};
 /* Reprocessar = jogar de volta o texto fiel guardado para o material desta matéria. */
 window.kbLibReprocessar = function(id){
   const d = KB_LIB.find(function(x){ return x.id === id; });
