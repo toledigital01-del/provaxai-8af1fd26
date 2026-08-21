@@ -1748,25 +1748,59 @@ function kbEditor(){
 
     <div data-pane="aulas" style="display:none;margin-top:4px">
       <h4>Aulas de ${esc(kbDisc || 'sua matéria')}</h4>
-      <p class="muted" style="margin:0 0 14px;max-width:72ch">Cole o material (ou envie o arquivo) de uma aula: a IA identifica o número e o título, e a aula entra numerada (Aula 00, 01, 02…) no painel do aluno. Na lista abaixo você pode arrastar para reordenar, renomear ou excluir.</p>
+      <p class="muted" style="margin:0 0 14px;max-width:72ch">Envie o material de uma aula (texto, arquivo, site, vídeo ou Drive). Cada envio vira uma aula numerada (Aula 00, 01, 02…) no painel do aluno. No modo lote, cada arquivo vira uma aula. Na lista abaixo você pode arrastar para reordenar, renomear, editar ou excluir.</p>
 
       <div class="kb-soft">
-        <label class="muted">Material desta aula</label>
-        <textarea id="kb-aula-txt" rows="8" placeholder="Cole aqui o conteúdo completo da aula (ex.: “Aula 03 – Ato administrativo …”)" style="margin-top:6px"></textarea>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px">
-          <input type="file" id="kb-aula-file" accept=".pdf,.txt,.md,.csv,.html,.srt,.vtt,.png,.jpg,.jpeg,.webp,image/*,application/pdf,text/*" style="width:auto;max-width:100%">
-          <span class="muted" style="font-size:0.75rem">Opcional: o arquivo é lido e o texto entra no campo acima.</span>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;background:#F1F4F9;border-radius:11px;padding:4px;margin-bottom:12px">
+          <button class="act" data-aulatab="texto" onclick="kbAulaTab('texto')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Texto</button>
+          <button class="act" data-aulatab="doc" onclick="kbAulaTab('doc')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Arquivos (1 ou vários)</button>
+          <button class="act" data-aulatab="site" onclick="kbAulaTab('site')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Website</button>
+          <button class="act" data-aulatab="video" onclick="kbAulaTab('video')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Vídeo</button>
+          <button class="act" data-aulatab="drive" onclick="kbAulaTab('drive')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Google Drive</button>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px">
-          <input id="kb-aula-num" type="number" min="0" max="999" placeholder="Nº (auto)" style="width:120px">
-          <input id="kb-aula-tit" placeholder="Título da aula (deixe vazio para a IA identificar)" style="flex:1;min-width:220px">
+
+        <div data-aulapane="texto">
+          <label class="muted">Material desta aula</label>
+          <textarea id="kb-aula-txt" rows="8" placeholder="Cole aqui o conteúdo completo da aula" style="margin-top:6px"></textarea>
+        </div>
+
+        <div data-aulapane="doc" style="display:none">
+          <label class="muted">Arquivos da(s) aula(s)</label>
+          <p class="muted" style="margin:4px 0 8px;font-size:0.76rem">Um arquivo = uma aula. Selecione vários para cadastrar em lote (leitura 3 por vez).</p>
+          <input type="file" id="kb-aula-file" multiple accept=".pdf,.txt,.md,.csv,.html,.srt,.vtt,.png,.jpg,.jpeg,.webp,image/*,application/pdf,text/*" style="width:auto;max-width:100%">
+          <div id="kb-aula-fila"></div>
+        </div>
+
+        <div data-aulapane="site" style="display:none">
+          <label class="muted">Link do site</label>
+          <input id="kb-aula-url" placeholder="https://…" style="margin-top:6px">
+        </div>
+
+        <div data-aulapane="video" style="display:none">
+          <label class="muted">Link do vídeo (YouTube)</label>
+          <input id="kb-aula-video" placeholder="https://youtube.com/…" style="margin-top:6px">
+        </div>
+
+        <div data-aulapane="drive" style="display:none">
+          <label class="muted">Pasta do Google Drive</label>
+          <p class="muted" style="margin:4px 0 8px;font-size:0.76rem">Cada arquivo da pasta entra na biblioteca desta matéria.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <input id="kb-drive-url" placeholder="Cole o link da pasta do Google Drive" style="flex:1;min-width:220px">
+            <button class="act" onclick="kbDriveImportar()">Importar pasta</button>
+          </div>
+          <p class="muted" id="kb-drive-msg" style="margin-top:8px;font-size:0.76rem"></p>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px">
           <label class="muted" style="display:flex;gap:6px;align-items:center;margin:0;font-size:0.78rem">
-            <input type="checkbox" id="kb-aula-pub" checked style="width:auto"> Publicar para os alunos
+            <input type="checkbox" id="kb-aula-pub" style="width:auto"> Publicar para os alunos (sem marcar, entra como rascunho)
           </label>
-          <button class="act primary" onclick="kbAulaCadastrar()">Identificar e cadastrar aula</button>
+          <span style="flex:1"></span>
+          <button class="act primary" data-aulasend onclick="kbAulaCadastrar()">Cadastrar aula</button>
         </div>
         <p class="muted" id="kb-aula-msg" style="margin:10px 0 0;font-size:0.78rem"></p>
       </div>
+
 
       <div id="kb-aulas-lista" style="margin-top:16px"></div>
     </div>
