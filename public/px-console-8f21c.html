@@ -1714,7 +1714,6 @@ function kbEditor(){
 
       <div style="display:flex;gap:4px;margin-top:12px;background:#F1F4F9;border-radius:11px;padding:4px;flex-wrap:wrap">
         <button class="act" data-panebtn="aulas" onclick="kbPane('aulas')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Aulas da matéria</button>
-        <button class="act" data-panebtn="ia" onclick="kbPane('ia')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Material da matéria</button>
         <button class="act" data-panebtn="manut" onclick="kbPane('manut')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Manutenção${orfaos.length?' ('+orfaos.length+')':''}</button>
       </div>
 
@@ -1749,7 +1748,7 @@ function kbEditor(){
 
     <div data-pane="aulas" style="display:none;margin-top:4px">
       <h4>Aulas de ${esc(kbDisc || 'sua matéria')}</h4>
-      <p class="muted" style="margin:0 0 14px;max-width:72ch">Cadastre uma aula por vez. Cole o material (ou envie o arquivo) e a IA identifica o número da aula e o título — a aula entra numerada (Aula 00, 01, 02…) e aparece assim no painel do aluno.</p>
+      <p class="muted" style="margin:0 0 14px;max-width:72ch">Cole o material (ou envie o arquivo) de uma aula: a IA identifica o número e o título, e a aula entra numerada (Aula 00, 01, 02…) no painel do aluno. Na lista abaixo você pode arrastar para reordenar, renomear ou excluir.</p>
 
       <div class="kb-soft">
         <label class="muted">Material desta aula</label>
@@ -1796,7 +1795,10 @@ function kbEditor(){
     </div>
 
 
-    <div data-pane="ia" style="display:none;margin-top:4px">
+    <div data-pane="aulas" style="display:none;margin-top:18px">
+     <details class="kb-soft" style="padding:12px 14px">
+      <summary style="cursor:pointer;font-weight:650;font-size:0.85rem;color:#1E3A8A">Envio em lote e outras fontes (Drive, site, vídeo, vários arquivos)</summary>
+      <div style="margin-top:14px">
       <div id="kb-cob-ia" style="margin:0 0 14px;padding:10px 13px;border:1px solid #E9EDF3;border-radius:10px;background:#F8FAFF;font-size:0.8rem;line-height:1.5"></div>
       <h4>Base de conhecimento de ${esc(kbDisc || 'sua matéria')}</h4>
       <p class="muted" style="margin:0 0 16px;max-width:70ch">Suba o material desta matéria (PDF, texto, imagem, vídeo ou link). A IA <b>não reescreve nada</b>: ela apenas guarda cada trecho no tópico certo do edital.</p>
@@ -1876,6 +1878,8 @@ function kbEditor(){
         <h4>Documentos-fonte já enviados</h4>
         <div id="kb-biblioteca" style="margin-top:10px"></div>
       </div>
+      </div>
+     </details>
     </div>`;
 
   kbPane(KB_PANE);
@@ -1928,19 +1932,108 @@ function kbAulasPaint(){
   const box = document.getElementById('kb-aulas-lista');
   if(!box) return;
   if(!KB_AULAS.length){ box.innerHTML = '<p class="muted" style="font-size:0.8rem">Nenhuma aula cadastrada nesta matéria ainda — cadastre a Aula 00 acima.</p>'; return; }
-  box.innerHTML = '<div class="kb-surface" style="font-size:0.8125rem">' +
-    KB_AULAS.slice().sort((a,b)=>a.ordem-b.ordem).map(function(a){
+  const ordenadas = KB_AULAS.slice().sort((a,b)=>a.ordem-b.ordem);
+  box.innerHTML =
+    '<p class="muted" style="margin:0 0 8px;font-size:0.75rem">Arraste pelo ⠿ para mudar a ordem das aulas — a numeração é renumerada automaticamente.</p>' +
+    '<div class="kb-surface" id="kb-aulas-dnd" style="font-size:0.8125rem">' +
+    ordenadas.map(function(a, i){
       const doc = kbFind(kbDisc, a.nome) || {};
       const pub = kbStatusDoc(doc.id ? doc : null) === 'publicado';
       const temTexto = !!String(doc.conteudo||'').trim();
-      return '<div style="display:flex;gap:10px;align-items:center;padding:9px 12px;border-bottom:1px solid #EEF1F6">' +
+      return '<div class="kb-aula-row" draggable="true" data-idx="' + i + '" data-id="' + a.id + '" style="display:flex;gap:10px;align-items:center;padding:9px 12px;border-bottom:1px solid #EEF1F6;background:#fff">' +
+        '<span class="kb-aula-grip" title="Arraste para reordenar" style="cursor:grab;color:#94A3B8;user-select:none">⠿</span>' +
         '<b style="font-weight:700;color:#1E3A8A;min-width:62px">Aula ' + kbAulaNum(a.ordem) + '</b>' +
-        '<span style="flex:1">' + esc(kbAulaTitulo(a.nome)) + '</span>' +
+        '<span style="flex:1;min-width:120px">' + esc(kbAulaTitulo(a.nome)) + '</span>' +
         '<span class="kb-tag ' + (pub ? 'is-on' : 'is-wait') + '">' + (pub ? 'publicada' : temTexto ? 'rascunho' : 'sem conteúdo') + '</span>' +
-        '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbSelTopic(\'' + escJs(a.nome) + '\')">Abrir</button>' +
+        '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaAbrir(\'' + escJs(a.nome) + '\')">Abrir</button>' +
+        '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaRenomear(\'' + a.id + '\')">Renomear</button>' +
+        '<button class="act danger" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaExcluir(\'' + a.id + '\')">Excluir</button>' +
       '</div>';
     }).join('') + '</div>';
+  kbAulasBindDnD();
 }
+
+/* Reordenação por arrastar: solta na posição nova e renumera 00,01,02… */
+let KB_DRAG_IDX = null;
+function kbAulasBindDnD(){
+  const lista = document.getElementById('kb-aulas-dnd');
+  if(!lista) return;
+  lista.querySelectorAll('.kb-aula-row').forEach(function(row){
+    row.addEventListener('dragstart', function(e){
+      KB_DRAG_IDX = parseInt(row.dataset.idx, 10);
+      row.style.opacity = '.45';
+      try{ e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', row.dataset.idx); }catch(x){}
+    });
+    row.addEventListener('dragend', function(){ row.style.opacity = ''; lista.querySelectorAll('.kb-aula-row').forEach(r=>r.style.borderTop=''); });
+    row.addEventListener('dragover', function(e){ e.preventDefault(); row.style.borderTop = '2px solid #2563EB'; });
+    row.addEventListener('dragleave', function(){ row.style.borderTop = ''; });
+    row.addEventListener('drop', function(e){
+      e.preventDefault();
+      row.style.borderTop = '';
+      const destino = parseInt(row.dataset.idx, 10);
+      if(KB_DRAG_IDX == null || destino === KB_DRAG_IDX) return;
+      kbAulasMover(KB_DRAG_IDX, destino);
+      KB_DRAG_IDX = null;
+    });
+  });
+}
+async function kbAulasMover(de, para){
+  const ordenadas = KB_AULAS.slice().sort((a,b)=>a.ordem-b.ordem);
+  const [item] = ordenadas.splice(de, 1);
+  ordenadas.splice(para, 0, item);
+  ordenadas.forEach(function(a, i){ a.ordem = i; });
+  KB_AULAS = ordenadas;
+  kbAulasPaint();
+  kbAulaMsg('Salvando nova ordem…');
+  for(const a of ordenadas){
+    const up = await PX.sb.from('topics').update({ ordem: a.ordem }).eq('id', a.id);
+    if(up.error){ return kbAulaMsg('Erro ao salvar a ordem: ' + up.error.message); }
+  }
+  await logAdmin('reordenar_aulas','topics', null, { disciplina: kbDisc });
+  try{ if(PX.syncCurriculo) await PX.syncCurriculo(); }catch(e){}
+  kbAulaMsg('Ordem das aulas atualizada.');
+}
+
+window.kbAulaAbrir = function(nome){ kbSelTopic(nome); kbPane('conteudo'); };
+
+window.kbAulaRenomear = async function(id){
+  const a = KB_AULAS.find(x => x.id === id);
+  if(!a) return;
+  const novo = prompt('Novo título da aula:', kbAulaTitulo(a.nome));
+  if(novo == null) return;
+  const titulo = kbAulaTitulo(String(novo).trim());
+  if(!titulo) return;
+  const up = await PX.sb.from('topics').update({ nome: titulo }).eq('id', id);
+  if(up.error) return kbAulaMsg('Erro ao renomear: ' + up.error.message);
+  await PX.sb.from('knowledge_docs').update({ topico: titulo }).eq('course_slug','prf-2021').eq('disciplina', kbDisc).eq('topico', a.nome);
+  await logAdmin('renomear_aula','topics', id, { de: a.nome, para: titulo });
+  try{ if(PX.syncCurriculo) await PX.syncCurriculo(); }catch(e){}
+  if(kbTopic === a.nome) kbTopic = titulo;
+  await loadKB();
+  await kbAulasCarregar(kbDisc);
+  kbPaint();
+  kbAulaMsg('Aula renomeada para “' + titulo + '”.');
+};
+
+window.kbAulaExcluir = async function(id){
+  const a = KB_AULAS.find(x => x.id === id);
+  if(!a) return;
+  if(!confirm('Excluir a aula “' + kbAulaTitulo(a.nome) + '” e o conteúdo dela? Esta ação não pode ser desfeita.')) return;
+  await PX.sb.from('knowledge_docs').delete().eq('course_slug','prf-2021').eq('disciplina', kbDisc).eq('topico', a.nome);
+  const del = await PX.sb.from('topics').delete().eq('id', id);
+  if(del.error) return kbAulaMsg('Erro ao excluir: ' + del.error.message);
+  await logAdmin('excluir_aula','topics', id, { disciplina: kbDisc, aula: a.nome });
+  if(kbTopic === a.nome) kbTopic = null;
+  await loadKB();
+  await kbAulasCarregar(kbDisc);
+  /* renumera as restantes para não deixar buraco na sequência */
+  const rest = KB_AULAS.slice().sort((x,y)=>x.ordem-y.ordem);
+  for(let i=0;i<rest.length;i++){ if(rest[i].ordem !== i){ rest[i].ordem = i; await PX.sb.from('topics').update({ ordem: i }).eq('id', rest[i].id); } }
+  KB_AULAS = rest;
+  try{ if(PX.syncCurriculo) await PX.syncCurriculo(); }catch(e){}
+  kbPaint();
+  kbAulaMsg('Aula excluída.');
+};
 function kbAulasRefresh(){
   if(!kbDisc) return;
   kbAulasCarregar(kbDisc).then(kbAulasPaint).catch(function(){ kbAulasPaint(); });
@@ -2029,7 +2122,7 @@ window.kbAulaCadastrar = async function(){
   if(q.error) return kbAulaMsg('Aula criada, mas o conteúdo não salvou: ' + q.error.message);
 
   await logAdmin('cadastrar_aula','topics', null, { disciplina: disc, numero: numero, titulo: titulo, publicado: publicar });
-  try{ await PX.syncCurriculo(); }catch(e){}
+  try{ if(PX.syncCurriculo) await PX.syncCurriculo(); }catch(e){}
   await loadKB();
   const ta = document.getElementById('kb-aula-txt'); if(ta) ta.value = '';
   const ni = document.getElementById('kb-aula-num'); if(ni) ni.value = '';
