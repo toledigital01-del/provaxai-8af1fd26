@@ -51,7 +51,7 @@
     var key = (curso || 'prf-2021') + '|' + disciplina;
     if (cache[key]) return cache[key];
     var qs =
-      'select=titulo,sumario,topico,conteudo&course_slug=eq.' +
+      'select=titulo,sumario,topico,conteudo,modo_exibicao,pdf_url&course_slug=eq.' +
       encodeURIComponent(curso || 'prf-2021') +
       '&disciplina=eq.' + encodeURIComponent(disciplina) +
       '&publicado=is.true';
