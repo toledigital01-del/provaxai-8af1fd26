@@ -688,6 +688,36 @@ async function carregarConteudoKB() {
 }
 
 
+/* Aula explicada pela Athena: gerada uma única vez por tópico (curso oficial)
+   ou a partir do material do próprio aluno (pastas dele). */
+async function carregarAulaIA(regerar) {
+  const box = document.getElementById('kb-conteudo');
+  if (!box) return;
+  box.innerHTML = '<p style="color:var(--muted)">A Athena está preparando a aula deste tópico… isso pode levar alguns instantes.</p>';
+  let r = {};
+  try {
+    r = await PX.iaPost('aula-ia', { curso: id, disciplina: disc, topico: topic, regerar: !!regerar });
+  } catch (e) { r = { erro: 'Falha de conexão.' }; }
+  if (!document.getElementById('kb-conteudo')) return;
+  if (r && r.aula) {
+    box.innerHTML = PX.kbHTML(r.aula) +
+      '<p style="margin:18px 0 0;font-size:0.8rem;color:var(--muted)">' +
+        'Não encontrou o que procurava? <button class="btn-secondary" style="padding:4px 10px;font-size:0.8rem" onclick="carregarAulaIA(true)">Gerar novamente</button> ' +
+        'ou veja o <a href="#" onclick="goTab(\'conteudo\');return false" style="color:var(--brand,#154C9B);font-weight:600">material original</a>.' +
+      '</p>';
+    return;
+  }
+  const msg = (r && r.erro) || 'Não consegui montar a aula agora.';
+  if (r && r.status === 401) {
+    box.innerHTML = kbAvisoHTML('Entre para ver esta aula', 'A aula da Athena é liberada para alunos logados.',
+      '<p style="margin:12px 0 0"><a class="btn-primary" style="display:inline-block;text-decoration:none;padding:9px 16px;border-radius:10px" href="login.html?next=' + encodeURIComponent(location.pathname + location.search) + '">Entrar na minha conta</a></p>');
+  } else {
+    box.innerHTML = kbAvisoHTML('Aula ainda não disponível', esc(msg),
+      '<p style="margin:12px 0 0"><button class="btn-secondary" onclick="carregarAulaIA(true)">Tentar de novo</button> ' +
+      '<button class="btn-secondary" onclick="goTab(\'conteudo\')">Ver conteúdo</button></p>');
+  }
+}
+
 
 function renderPane() {
   const p = document.getElementById('pane');
