@@ -721,6 +721,8 @@ async function carregarAulaIA(regerar) {
 
 function renderPane() {
   const p = document.getElementById('pane');
+  if (tab !== 'podcast' && podState && podState.audio) { try { podState.audio.pause(); } catch (e) {} }
+
   if (tab === 'conteudo' || tab === 'tutor') {
     const ehAula = tab === 'tutor';
     if (scope !== 'topico') {
