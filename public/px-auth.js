@@ -109,15 +109,20 @@
     } catch (e) { /* mantém o currículo em cache */ }
   };
 
-  /* revalida a numeração das aulas quando o aluno volta para a aba */
+  /* revalida a numeração das aulas quando o aluno volta para a aba
+     e também de tempos em tempos, para refletir reordenações do admin */
   let _lastSync = Date.now();
+  function _revalidar() {
+    if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+    if (Date.now() - _lastSync < 15000) return;
+    _lastSync = Date.now();
+    PX.syncCurriculo();
+  }
   if (typeof document !== 'undefined') {
     document.addEventListener('visibilitychange', function () {
-      if (document.visibilityState !== 'visible') return;
-      if (Date.now() - _lastSync < 30000) return;
-      _lastSync = Date.now();
-      PX.syncCurriculo();
+      if (document.visibilityState === 'visible') _revalidar();
     });
+    setInterval(_revalidar, 20000);
   }
 
   /* progresso real do aluno usado pelas telas (data.js lê este cache) */
