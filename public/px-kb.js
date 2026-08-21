@@ -157,11 +157,13 @@
   /* Chamada autenticada aos endpoints de IA do Prova X (/api/public/...) */
   PX.iaPost = async function (rota, dados) {
     try {
-      var tk = await PX.token();
-      if (!tk) return { erro: 'Entre na sua conta para usar esta ferramenta.', status: 401 };
+      var tk = null;
+      try { tk = await PX.token(); } catch (e) { tk = null; }
+      var cab = { 'Content-Type': 'application/json' };
+      if (tk) cab.Authorization = 'Bearer ' + tk;
       var r = await fetch('/api/public/' + rota, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tk },
+        headers: cab,
         body: JSON.stringify(dados || {}),
       });
       var j = await r.json();
@@ -186,8 +188,17 @@
       if (li) { if (!lista) { out.push('<ul>'); lista = true; } out.push('<li>' + inline(li[1]) + '</li>'); return; }
       if (lista) { out.push('</ul>'); lista = false; }
       if (!l) return;
-      var h = l.match(/^(#{1,4})\s+(.*)$/);
-      if (h) { out.push('<h3>' + inline(h[2]) + '</h3>'); return; }
+      var h = l.match(/^(#{1,6})\s+(.*)$/);
+      if (h) {
+        var n = Math.min(h[1].length, 4);
+        var estilo = n === 1
+          ? 'font-size:1.45rem;font-weight:800;margin:6px 0 14px;line-height:1.25'
+          : n === 2
+            ? 'font-size:1.12rem;font-weight:800;margin:26px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--line,#e2e8f0)'
+            : 'font-size:1rem;font-weight:700;margin:20px 0 8px;color:var(--brand,#154C9B)';
+        out.push('<h' + (n + 1) + ' style="' + estilo + '">' + inline(h[2]) + '</h' + (n + 1) + '>');
+        return;
+      }
       out.push('<p>' + inline(l) + '</p>');
     });
     if (lista) out.push('</ul>');
@@ -195,6 +206,7 @@
       return t.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/(^|\W)\*(\S.*?\S|\S)\*/g, '$1<i>$2</i>');
     }
     return out.join('');
+
   };
 
   /* Pergunta à Athena usando a base de conhecimento como fonte */
