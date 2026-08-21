@@ -513,7 +513,9 @@ export type Database = {
           created_at: string
           disciplina: string
           id: string
+          modo_exibicao: string
           ordem: number
+          pdf_url: string | null
           publicado: boolean
           status: string
           sumario: string | null
@@ -528,7 +530,9 @@ export type Database = {
           created_at?: string
           disciplina: string
           id?: string
+          modo_exibicao?: string
           ordem?: number
+          pdf_url?: string | null
           publicado?: boolean
           status?: string
           sumario?: string | null
@@ -543,7 +547,9 @@ export type Database = {
           created_at?: string
           disciplina?: string
           id?: string
+          modo_exibicao?: string
           ordem?: number
+          pdf_url?: string | null
           publicado?: boolean
           status?: string
           sumario?: string | null
