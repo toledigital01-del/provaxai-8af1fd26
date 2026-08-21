@@ -1012,7 +1012,7 @@ function renderPane() {
       }
       return;
     }
-    const roteiro = podState.roteiro.map(l => ({ who: l.who, me: l.who === 'Rafael', txt: esc(l.texto) }));
+    const falas = podState.roteiro.map(l => ({ who: l.who === 'Rafael' ? 'Rafael' : 'Ana', me: l.who === 'Rafael', texto: l.texto }));
 
     p.innerHTML = `<div class="pane">
       <div class="pod">
@@ -1020,14 +1020,14 @@ function renderPane() {
           <div class="pod-hosts"><span class="pod-av a">A</span><span class="pod-av s">R</span></div>
           <div class="pod-id">
             <b>${topic}</b>
-            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> ${fmt(dur)} · ${disc}</span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> ${falas.length} falas · ${disc}</span>
           </div>
           <button class="pod-hand" id="pod-hand">✋ Levantar a mão</button>
         </div>
-        <input class="pod-range" id="pod-seek" type="range" min="0" max="${dur}" value="0" step="1">
-        <div class="pod-times"><span id="pod-cur">0:00</span><span id="pod-left">-${fmt(dur)}</span></div>
+        <input class="pod-range" id="pod-seek" type="range" min="0" max="1000" value="0" step="1">
+        <div class="pod-times"><span id="pod-cur">Fala 1 de ${falas.length}</span><span id="pod-left"></span></div>
         <div class="pod-ctrl">
-          <div class="pod-vol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9v6h4l5 4V5L8 9H4z"/></svg><input class="pod-range sm" type="range" min="0" max="100" value="70"></div>
+          <div class="pod-vol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9v6h4l5 4V5L8 9H4z"/></svg><input class="pod-range sm" id="pod-vol" type="range" min="0" max="100" value="90"></div>
           <div class="pod-mid">
             <button class="pod-skip" id="pod-prev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 5v14L9 12l10-7z"/><path d="M5 5v14"/></svg></button>
             <button class="pod-play" id="pod-play">▶</button>
@@ -1037,38 +1037,95 @@ function renderPane() {
         </div>
       </div>
 
-      <div class="pod-script">
-        ${roteiro.map(l => `
-          <div class="pod-line ${l.me ? 'me' : ''}">
+      <div class="pod-script" id="pod-script">
+        ${falas.map((l, i) => `
+          <div class="pod-line ${l.me ? 'me' : ''}" data-i="${i}" style="cursor:pointer;opacity:.62;transition:opacity .2s">
             <span class="pod-av ${l.me ? 's' : 'a'}">${l.who[0]}</span>
-            <div class="pod-b"><span class="pod-who">${l.who}</span><div class="pod-msg">${l.txt}</div></div>
+            <div class="pod-b"><span class="pod-who">${l.who}</span><div class="pod-msg">${esc(l.texto)}</div></div>
           </div>`).join('')}
       </div>
 
       <div class="pod-foot">
-        <button title="Baixar episódio" onclick="alert('Download do episódio em breve!')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg></button>
         <button title="Gerar novo episódio" id="pod-new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></button>
       </div>
     </div>`;
 
-    let t = 0, timer = null, rate = 1;
+    const audio = podState.audio || (podState.audio = new Audio());
+    audio.pause();
+    const cache = podState.cacheAudio || (podState.cacheAudio = {});
+    let idx = 0, rate = 1;
     const seek = document.getElementById('pod-seek');
     const cur = document.getElementById('pod-cur'), left = document.getElementById('pod-left');
     const play = document.getElementById('pod-play');
-    const paint = () => { seek.value = t; cur.textContent = fmt(t); left.textContent = '-' + fmt(dur - t); seek.style.setProperty('--p', (t/dur*100) + '%'); };
-    const stop = () => { clearInterval(timer); timer = null; play.textContent = '▶'; };
-    play.onclick = () => {
-      if (timer) return stop();
-      play.textContent = '❚❚';
-      timer = setInterval(() => { t = Math.min(dur, t + rate); paint(); if (t >= dur) stop(); }, 1000);
+    const linhas = Array.from(document.querySelectorAll('#pod-script .pod-line'));
+
+    const marcar = () => {
+      linhas.forEach((el, i) => { el.style.opacity = i === idx ? '1' : '.62'; });
+      cur.textContent = `Fala ${idx + 1} de ${falas.length}`;
+      if (linhas[idx]) linhas[idx].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     };
-    seek.oninput = () => { t = +seek.value; paint(); };
-    document.getElementById('pod-prev').onclick = () => { t = Math.max(0, t - 15); paint(); };
-    document.getElementById('pod-next').onclick = () => { t = Math.min(dur, t + 15); paint(); };
-    document.getElementById('pod-rate').onclick = e => { rate = rate === 1 ? 1.5 : rate === 1.5 ? 2 : 1; e.target.textContent = rate + 'x'; };
-    document.getElementById('pod-hand').onclick = () => { stop(); document.getElementById('side-msg') && document.getElementById('side-msg').focus(); };
-    document.getElementById('pod-new').onclick = () => { stop(); podState = { state: 'idle', roteiro: [], erro: '' }; renderPane(); };
-    paint();
+    const paint = () => {
+      const d = audio.duration || 0, t = audio.currentTime || 0;
+      const pct = d ? (t / d) * 1000 : 0;
+      seek.value = pct; seek.style.setProperty('--p', (pct / 10) + '%');
+    };
+
+    async function carregar(i) {
+      if (cache[i]) return cache[i];
+      const tk = await PX.token();
+      if (!tk) throw new Error('Entre na sua conta para ouvir o áudio.');
+      const r = await fetch('/api/public/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tk },
+        body: JSON.stringify({ texto: falas[i].texto.slice(0, 3500), voz: falas[i].me ? 'rafael' : 'ana' }),
+      });
+      if (!r.ok) {
+        let msg = 'Não consegui gerar o áudio agora.';
+        try { msg = (await r.json()).error || msg; } catch (e) {}
+        throw new Error(msg);
+      }
+      cache[i] = URL.createObjectURL(await r.blob());
+      return cache[i];
+    }
+
+    async function tocar(i) {
+      idx = Math.max(0, Math.min(falas.length - 1, i));
+      marcar();
+      left.textContent = 'carregando voz…';
+      try {
+        const src = await carregar(idx);
+        audio.src = src;
+        audio.playbackRate = rate;
+        audio.volume = (document.getElementById('pod-vol').value || 90) / 100;
+        await audio.play();
+        left.textContent = '';
+        play.textContent = '❚❚';
+        if (idx + 1 < falas.length) carregar(idx + 1).catch(() => {});
+      } catch (e) {
+        play.textContent = '▶';
+        left.textContent = e.message || 'Falha no áudio.';
+      }
+    }
+
+    audio.ontimeupdate = paint;
+    audio.onended = () => { if (idx + 1 < falas.length) tocar(idx + 1); else { play.textContent = '▶'; left.textContent = 'fim do episódio'; } };
+    play.onclick = () => {
+      if (!audio.paused) { audio.pause(); play.textContent = '▶'; return; }
+      if (audio.src && audio.currentTime > 0 && !audio.ended) { audio.play(); play.textContent = '❚❚'; return; }
+      tocar(idx);
+    };
+    seek.oninput = () => { if (audio.duration) audio.currentTime = (seek.value / 1000) * audio.duration; };
+    document.getElementById('pod-vol').oninput = e => { audio.volume = e.target.value / 100; };
+    document.getElementById('pod-prev').onclick = () => tocar(idx - 1);
+    document.getElementById('pod-next').onclick = () => tocar(idx + 1);
+    linhas.forEach(el => { el.onclick = () => tocar(+el.dataset.i); });
+    document.getElementById('pod-rate').onclick = e => {
+      rate = rate === 1 ? 1.25 : rate === 1.25 ? 1.5 : 1; audio.playbackRate = rate; e.target.textContent = rate + 'x';
+    };
+    document.getElementById('pod-hand').onclick = () => { audio.pause(); play.textContent = '▶'; const m = document.getElementById('side-msg'); if (m) m.focus(); };
+    document.getElementById('pod-new').onclick = () => { audio.pause(); podState = { state: 'idle', roteiro: [], erro: '' }; renderPane(); };
+    marcar();
+
 
   } else if (tab === 'evolucao') {
     p.innerHTML = `<div class="pane">
