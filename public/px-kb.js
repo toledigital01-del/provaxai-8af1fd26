@@ -188,8 +188,17 @@
       if (li) { if (!lista) { out.push('<ul>'); lista = true; } out.push('<li>' + inline(li[1]) + '</li>'); return; }
       if (lista) { out.push('</ul>'); lista = false; }
       if (!l) return;
-      var h = l.match(/^(#{1,4})\s+(.*)$/);
-      if (h) { out.push('<h3>' + inline(h[2]) + '</h3>'); return; }
+      var h = l.match(/^(#{1,6})\s+(.*)$/);
+      if (h) {
+        var n = Math.min(h[1].length, 4);
+        var estilo = n === 1
+          ? 'font-size:1.45rem;font-weight:800;margin:6px 0 14px;line-height:1.25'
+          : n === 2
+            ? 'font-size:1.12rem;font-weight:800;margin:26px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--line,#e2e8f0)'
+            : 'font-size:1rem;font-weight:700;margin:20px 0 8px;color:var(--brand,#154C9B)';
+        out.push('<h' + (n + 1) + ' style="' + estilo + '">' + inline(h[2]) + '</h' + (n + 1) + '>');
+        return;
+      }
       out.push('<p>' + inline(l) + '</p>');
     });
     if (lista) out.push('</ul>');
@@ -197,6 +206,7 @@
       return t.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/(^|\W)\*(\S.*?\S|\S)\*/g, '$1<i>$2</i>');
     }
     return out.join('');
+
   };
 
   /* Pergunta à Athena usando a base de conhecimento como fonte */
