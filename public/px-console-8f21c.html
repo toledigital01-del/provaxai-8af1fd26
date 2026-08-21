@@ -2226,6 +2226,8 @@ window.kbAulaModalSalvar = async function(auto, recarregar){
   const pdfUrl = pdfEl ? pdfEl.value.trim() : '';
   if(modo === 'pdf' && !pdfUrl && !auto){
     kbAulaModalEstado('Envie o PDF da aula antes de salvar no modo PDF.', '#B91C1C');
+    if(msg) msg.textContent = 'Envie o arquivo PDF no campo acima e tente salvar de novo.';
+    alert('Você escolheu "Exibir o PDF da aula", mas nenhum PDF foi enviado ainda.\n\nEnvie o arquivo no campo "PDF da aula" e clique em salvar novamente.');
     return;
   }
   kbAulaModalEstado('Salvando…', '#1D4ED8');
@@ -2264,7 +2266,8 @@ window.kbAulaModalSalvar = async function(auto, recarregar){
     kbPaint();
     if(recarregar) kbAulaEditar(a.id);
   }
-  if(msg && !auto) msg.textContent = publicar ? 'Aula publicada para os alunos.' : 'Aula salva como rascunho.';
+  if(msg && !auto) msg.textContent = (publicar ? 'Aula publicada para os alunos' : 'Aula salva como rascunho') +
+    (modo === 'pdf' ? ' — o aluno abre esta aula em PDF.' : ' — o aluno vê o conteúdo em texto.');
 };
 
 
