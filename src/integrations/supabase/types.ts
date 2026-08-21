@@ -146,6 +146,45 @@ export type Database = {
         }
         Relationships: []
       }
+      aulas_ia: {
+        Row: {
+          conteudo: string
+          course_slug: string
+          created_at: string
+          disciplina: string
+          id: string
+          modelo: string | null
+          titulo: string | null
+          topico: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          conteudo: string
+          course_slug: string
+          created_at?: string
+          disciplina: string
+          id?: string
+          modelo?: string | null
+          titulo?: string | null
+          topico: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          conteudo?: string
+          course_slug?: string
+          created_at?: string
+          disciplina?: string
+          id?: string
+          modelo?: string | null
+          titulo?: string | null
+          topico?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       coupons: {
         Row: {
           ativo: boolean
