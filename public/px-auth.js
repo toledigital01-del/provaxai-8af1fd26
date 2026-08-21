@@ -95,13 +95,30 @@
         out[slug][d.nome] = porDisc[d.id] || [];
         aulas[d.nome] = ordemDisc[d.id] || {};
       });
+      const curJson = JSON.stringify(out);
+      const aulasJson = JSON.stringify(aulas);
+      const mudou = localStorage.getItem('px_curriculo_cursos_v1') !== curJson ||
+                    localStorage.getItem('px_aulas_v1') !== aulasJson;
       localStorage.setItem('px_curriculo_v1', JSON.stringify({ cursos: out, ts: Date.now() }));
+      localStorage.setItem('px_curriculo_cursos_v1', curJson);
       localStorage.setItem('px_pesos_v1', JSON.stringify(pesos));
-      localStorage.setItem('px_aulas_v1', JSON.stringify(aulas));
-
-
+      localStorage.setItem('px_aulas_v1', aulasJson);
+      if (mudou && typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('px:curriculo'));
+      }
     } catch (e) { /* mantém o currículo em cache */ }
   };
+
+  /* revalida a numeração das aulas quando o aluno volta para a aba */
+  let _lastSync = Date.now();
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState !== 'visible') return;
+      if (Date.now() - _lastSync < 30000) return;
+      _lastSync = Date.now();
+      PX.syncCurriculo();
+    });
+  }
 
   /* progresso real do aluno usado pelas telas (data.js lê este cache) */
   PX.syncProgresso = async function () {
