@@ -1646,14 +1646,19 @@ window.kbPane = p => {
 function kbAjustarColunas(){
   const grid = document.getElementById('kb-grid');
   const cols = document.getElementById('kb-topics');
+  const discs = document.getElementById('kb-discs');
   if(!grid || !cols) return;
+  /* A lista lateral de matérias é redundante: os cartões de matéria já ficam
+     na tela anterior, com o botão "voltar". Fica sempre oculta. */
+  if(discs) discs.style.display = 'none';
   const estreito = window.matchMedia('(max-width:820px)').matches;
   const esconder = KB_PANE === 'ia' || KB_PANE === 'aulas';
   cols.style.display = esconder ? 'none' : '';
   grid.style.gridTemplateColumns = estreito ? '1fr'
-    : esconder ? 'minmax(180px,240px) 1fr'
-    : 'minmax(180px,240px) minmax(200px,280px) 1fr';
+    : esconder ? '1fr'
+    : 'minmax(200px,280px) 1fr';
 }
+
 
 /* Cobertura da matéria mostrada dentro do painel de upload. */
 function kbCoberturaDisc(d){
