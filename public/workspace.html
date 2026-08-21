@@ -738,24 +738,13 @@ function renderPane() {
       return;
     }
     p.innerHTML = `<div class="pane prose">
-      <h3>${aulaLabel(disc, topic)}</h3>
       ${ehAula
-        ? '<p style="margin:-4px 0 14px;color:var(--muted);font-size:0.85rem;">Aula explicada pela Athena a partir do material deste tópico.</p>'
-        : '<p style="margin:-4px 0 14px;color:var(--muted);font-size:0.85rem;">Material original publicado para este tópico.</p>'}
+        ? '<p style="margin:0 0 14px;color:var(--muted);font-size:0.85rem;">Aula explicada pela Athena a partir do material deste tópico.</p>'
+        : '<p style="margin:0 0 14px;color:var(--muted);font-size:0.85rem;">Material original publicado para este tópico.</p>'}
       <div id="kb-conteudo"><p style="color:var(--muted)">${ehAula ? 'Preparando sua aula…' : 'Carregando o material desta aula…'}</p></div>
       <p style="margin-top:16px;color:var(--muted);font-size:0.85rem;">Dúvidas? Use o chat da Athena no painel à direita.</p>
-      <div class="fixa">
-        <div class="lbl">Fixação Imediata</div>
-        <div class="btns">
-          <button class="btn-primary" id="fx-q">Praticar Questões deste Tópico</button>
-          <button class="btn-secondary" id="fx-f">Ver Flashcards desta Aula</button>
-          <button class="btn-secondary" id="fx-r">Gerar Resumo Inteligente</button>
-        </div>
-      </div>
     </div>`;
-    document.getElementById('fx-q').onclick = () => goTab('questoes');
-    document.getElementById('fx-f').onclick = () => goTab('flashcards');
-    document.getElementById('fx-r').onclick = () => { rzOn = true; goTab('resumo'); };
+
     if (ehAula) carregarAulaIA(); else carregarConteudoKB();
 
 
