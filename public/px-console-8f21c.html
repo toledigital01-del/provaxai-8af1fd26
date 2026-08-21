@@ -1990,7 +1990,7 @@ async function kbAulasMover(de, para){
     if(up.error){ return kbAulaMsg('Erro ao salvar a ordem: ' + up.error.message); }
   }
   await logAdmin('reordenar_aulas','topics', null, { disciplina: kbDisc });
-  try{ await PX.syncCurriculo(); }catch(e){}
+  try{ if(PX.syncCurriculo) await PX.syncCurriculo(); }catch(e){}
   kbAulaMsg('Ordem das aulas atualizada.');
 }
 
@@ -2007,7 +2007,7 @@ window.kbAulaRenomear = async function(id){
   if(up.error) return kbAulaMsg('Erro ao renomear: ' + up.error.message);
   await PX.sb.from('knowledge_docs').update({ topico: titulo }).eq('course_slug','prf-2021').eq('disciplina', kbDisc).eq('topico', a.nome);
   await logAdmin('renomear_aula','topics', id, { de: a.nome, para: titulo });
-  try{ await PX.syncCurriculo(); }catch(e){}
+  try{ if(PX.syncCurriculo) await PX.syncCurriculo(); }catch(e){}
   if(kbTopic === a.nome) kbTopic = titulo;
   await loadKB();
   await kbAulasCarregar(kbDisc);
@@ -2030,7 +2030,7 @@ window.kbAulaExcluir = async function(id){
   const rest = KB_AULAS.slice().sort((x,y)=>x.ordem-y.ordem);
   for(let i=0;i<rest.length;i++){ if(rest[i].ordem !== i){ rest[i].ordem = i; await PX.sb.from('topics').update({ ordem: i }).eq('id', rest[i].id); } }
   KB_AULAS = rest;
-  try{ await PX.syncCurriculo(); }catch(e){}
+  try{ if(PX.syncCurriculo) await PX.syncCurriculo(); }catch(e){}
   kbPaint();
   kbAulaMsg('Aula excluída.');
 };
@@ -2122,7 +2122,7 @@ window.kbAulaCadastrar = async function(){
   if(q.error) return kbAulaMsg('Aula criada, mas o conteúdo não salvou: ' + q.error.message);
 
   await logAdmin('cadastrar_aula','topics', null, { disciplina: disc, numero: numero, titulo: titulo, publicado: publicar });
-  try{ await PX.syncCurriculo(); }catch(e){}
+  try{ if(PX.syncCurriculo) await PX.syncCurriculo(); }catch(e){}
   await loadKB();
   const ta = document.getElementById('kb-aula-txt'); if(ta) ta.value = '';
   const ni = document.getElementById('kb-aula-num'); if(ni) ni.value = '';
