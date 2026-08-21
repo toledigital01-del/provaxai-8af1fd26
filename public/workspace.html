@@ -643,13 +643,13 @@ async function carregarConteudoKB() {
   const doc = res.doc;
   const modoPdf = doc && doc.modo_exibicao === 'pdf' && (doc.pdf_url || '').trim();
   if (doc && (modoPdf || (doc.conteudo || '').trim())) {
-    const tituloAula = (doc.titulo || '').trim() || (typeof aulaTitulo === 'function' ? aulaTitulo(topic) : topic);
     const sum = (doc.sumario || '').trim();
+    // O número/nome da aula já aparece no cabeçalho da página — não repetimos aqui.
     const cabecalho =
-      (tituloAula ? '<h3 style="margin:0 0 6px">' + esc(tituloAula) + '</h3>' : '') +
-      (sum ? '<section class="aula-sumario" style="margin:10px 0 20px;padding:14px 16px;border:1px solid var(--line);border-left:3px solid var(--brand,#154C9B);border-radius:12px;background:var(--surface,#F8FAFC);">' +
+      (sum ? '<section class="aula-sumario" style="margin:0 0 20px;padding:14px 16px;border:1px solid var(--line);border-left:3px solid var(--brand,#154C9B);border-radius:12px;background:var(--surface,#F8FAFC);">' +
         '<div style="font-size:0.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Sumário da aula</div>' +
         PX.kbHTML(sum) + '</section>' : '');
+
     if (modoPdf) {
       box.innerHTML = cabecalho + '<p style="color:var(--muted)">Abrindo o PDF da aula…</p>';
       let url = '';
@@ -738,24 +738,13 @@ function renderPane() {
       return;
     }
     p.innerHTML = `<div class="pane prose">
-      <h3>${aulaLabel(disc, topic)}</h3>
       ${ehAula
-        ? '<p style="margin:-4px 0 14px;color:var(--muted);font-size:0.85rem;">Aula explicada pela Athena a partir do material deste tópico.</p>'
-        : '<p style="margin:-4px 0 14px;color:var(--muted);font-size:0.85rem;">Material original publicado para este tópico.</p>'}
+        ? '<p style="margin:0 0 14px;color:var(--muted);font-size:0.85rem;">Aula explicada pela Athena a partir do material deste tópico.</p>'
+        : '<p style="margin:0 0 14px;color:var(--muted);font-size:0.85rem;">Material original publicado para este tópico.</p>'}
       <div id="kb-conteudo"><p style="color:var(--muted)">${ehAula ? 'Preparando sua aula…' : 'Carregando o material desta aula…'}</p></div>
       <p style="margin-top:16px;color:var(--muted);font-size:0.85rem;">Dúvidas? Use o chat da Athena no painel à direita.</p>
-      <div class="fixa">
-        <div class="lbl">Fixação Imediata</div>
-        <div class="btns">
-          <button class="btn-primary" id="fx-q">Praticar Questões deste Tópico</button>
-          <button class="btn-secondary" id="fx-f">Ver Flashcards desta Aula</button>
-          <button class="btn-secondary" id="fx-r">Gerar Resumo Inteligente</button>
-        </div>
-      </div>
     </div>`;
-    document.getElementById('fx-q').onclick = () => goTab('questoes');
-    document.getElementById('fx-f').onclick = () => goTab('flashcards');
-    document.getElementById('fx-r').onclick = () => { rzOn = true; goTab('resumo'); };
+
     if (ehAula) carregarAulaIA(); else carregarConteudoKB();
 
 
