@@ -1712,9 +1712,11 @@ function kbEditor(){
       </div>
 
       <div style="display:flex;gap:4px;margin-top:12px;background:#F1F4F9;border-radius:11px;padding:4px;flex-wrap:wrap">
+        <button class="act" data-panebtn="aulas" onclick="kbPane('aulas')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Aulas da matéria</button>
         <button class="act" data-panebtn="ia" onclick="kbPane('ia')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Material da matéria</button>
         <button class="act" data-panebtn="manut" onclick="kbPane('manut')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Manutenção${orfaos.length?' ('+orfaos.length+')':''}</button>
       </div>
+
     </div>
     <div data-pane="conteudo">
     <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
