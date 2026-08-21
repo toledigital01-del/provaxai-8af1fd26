@@ -96,6 +96,20 @@
     return { status: res.status, doc: doc, total: docs.length };
   };
 
+  /* Link temporário (assinado) para abrir o PDF de uma aula guardado no armazenamento */
+  PX.pdfAulaUrl = async function (caminho) {
+    if (!caminho) return '';
+    if (/^https?:\/\//i.test(caminho)) return caminho;
+    try {
+      await waitForSessao();
+      if (PX.ready) await PX.ready;
+      if (!PX.sb) return '';
+      var r = await PX.sb.storage.from('aulas-pdf').createSignedUrl(caminho, 3600);
+      return (r && r.data && r.data.signedUrl) || '';
+    } catch (e) { return ''; }
+  };
+
+
 
   /* Leitura autenticada genérica de uma tabela do banco (mesmo padrão do kbFetch) */
   async function tabela(path) {
