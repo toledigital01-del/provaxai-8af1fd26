@@ -1063,21 +1063,26 @@ function renderPane() {
 
     async function carregar(i) {
       if (cache[i]) return cache[i];
-      const tk = await PX.token();
-      if (!tk) throw new Error('Entre na sua conta para ouvir o áudio.');
-      const r = await fetch('/api/public/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tk },
-        body: JSON.stringify({ texto: falas[i].texto.slice(0, 3500), voz: falas[i].me ? 'rafael' : 'ana' }),
-      });
-      if (!r.ok) {
-        let msg = 'Não consegui gerar o áudio agora.';
-        try { msg = (await r.json()).error || msg; } catch (e) {}
-        throw new Error(msg);
-      }
-      cache[i] = URL.createObjectURL(await r.blob());
-      return cache[i];
+      if (pend[i]) return pend[i];
+      const tk = await PX.token().catch(function(){ return null; });
+      pend[i] = (async function(){
+        const r = await fetch('/api/public/tts', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, tk ? { Authorization: 'Bearer ' + tk } : {}),
+          body: JSON.stringify({ texto: falas[i].texto.slice(0, 3500), voz: falas[i].me ? 'rafael' : 'ana' }),
+        });
+        if (!r.ok) {
+          let msg = 'Não consegui gerar o áudio agora.';
+          try { msg = (await r.json()).error || msg; } catch (e) {}
+          throw new Error(msg);
+        }
+        cache[i] = URL.createObjectURL(await r.blob());
+        return cache[i];
+      })();
+      pend[i].catch(function(){ pend[i] = null; });
+      return pend[i];
     }
+
 
     async function tocar(i) {
       idx = Math.max(0, Math.min(falas.length - 1, i));
