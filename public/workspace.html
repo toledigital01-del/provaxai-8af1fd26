@@ -1098,7 +1098,7 @@ function renderPane() {
         await audio.play();
         left.textContent = '';
         play.textContent = '❚❚';
-        if (idx + 1 < falas.length) carregar(idx + 1).then(function(){ if (idx + 2 < falas.length) carregar(idx + 2).catch(function(){}); }).catch(function(){});
+        for (let k = 1; k <= 3; k++) { if (idx + k < falas.length) carregar(idx + k).catch(function(){}); }
       } catch (e) {
         play.textContent = '▶';
         left.textContent = e.message || 'Falha no áudio.';
