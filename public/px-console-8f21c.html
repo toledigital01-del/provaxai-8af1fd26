@@ -2237,12 +2237,17 @@ window.kbAulaModalSalvar = async function(auto, recarregar){
     status: publicar ? 'publicado' : 'rascunho', publicado: publicar,
     updated_by: PX.user ? PX.user.id : null,
   };
-  const { error } = doc
-    ? await PX.sb.from('knowledge_docs').update(payload).eq('id', doc.id)
-    : await PX.sb.from('knowledge_docs').insert(payload);
-  if(error){
+  const resp = doc
+    ? await PX.sb.from('knowledge_docs').update(payload).eq('id', doc.id).select('id')
+    : await PX.sb.from('knowledge_docs').insert(payload).select('id');
+  if(resp.error){
     kbAulaModalEstado('Falha ao salvar — tente de novo.', '#B91C1C');
-    if(msg) msg.textContent = 'Erro: ' + error.message;
+    if(msg) msg.textContent = 'Erro: ' + resp.error.message;
+    return;
+  }
+  if(!resp.data || !resp.data.length){
+    kbAulaModalEstado('Nada foi salvo — sua sessão de administrador expirou.', '#B91C1C');
+    if(msg) msg.textContent = 'Entre novamente como administrador e repita a alteração.';
     return;
   }
   KB_AULA_EDIT_SUJO = false;
@@ -2266,20 +2271,36 @@ window.kbAulaModalSalvar = async function(auto, recarregar){
 /* Marca de uma vez todas as aulas com PDF anexado para abrirem no modo PDF. */
 window.kbAulasTodasPdf = async function(){
   if(!kbDisc) return;
-  const alvos = KB_AULAS
-    .map(function(a){ return kbFind(kbDisc, a.nome); })
-    .filter(function(d){ return d && String(d.pdf_url||'').trim() && d.modo_exibicao !== 'pdf'; });
-  if(!alvos.length){ kbAulaMsg('Nenhuma aula pendente: todas as aulas com PDF já estão no modo PDF.'); return; }
-  if(!confirm('Colocar ' + alvos.length + ' aula(s) desta matéria para abrir em PDF para o aluno?')) return;
-  kbAulaMsg('Atualizando ' + alvos.length + ' aula(s)…');
-  const { error } = await PX.sb.from('knowledge_docs')
+  const docs = KB_AULAS.map(function(a){ return kbFind(kbDisc, a.nome); }).filter(Boolean);
+  const comPdf = docs.filter(function(d){ return String(d.pdf_url||'').trim(); });
+  const semPdf = docs.length - comPdf.length;
+  if(!comPdf.length){
+    alert('Nenhuma aula desta matéria tem PDF anexado ainda. Envie o PDF em "Editar aula" e depois use este botão.');
+    kbAulaMsg('Nenhuma aula com PDF anexado nesta matéria.');
+    return;
+  }
+  const faltam = comPdf.filter(function(d){ return d.modo_exibicao !== 'pdf'; });
+  if(!confirm('Colocar ' + comPdf.length + ' aula(s) de ' + kbDisc + ' para o aluno ver em PDF?' +
+      (semPdf ? '\n\n' + semPdf + ' aula(s) sem PDF anexado ficarão como estão.' : ''))) return;
+  kbAulaMsg('Atualizando ' + comPdf.length + ' aula(s)…');
+  const { data, error } = await PX.sb.from('knowledge_docs')
     .update({ modo_exibicao: 'pdf', updated_by: PX.user ? PX.user.id : null })
-    .in('id', alvos.map(function(d){ return d.id; }));
-  if(error){ kbAulaMsg('Erro ao atualizar: ' + error.message); return; }
-  await logAdmin('aulas_modo_pdf','knowledge_docs', null, { disciplina: kbDisc, total: alvos.length });
+    .in('id', comPdf.map(function(d){ return d.id; }))
+    .select('id');
+  if(error){ alert('Erro ao atualizar: ' + error.message); kbAulaMsg('Erro ao atualizar: ' + error.message); return; }
+  if(!data || !data.length){
+    alert('Nada foi alterado — sua sessão de administrador expirou. Entre novamente e repita.');
+    kbAulaMsg('Nada foi alterado: sessão de administrador expirada.');
+    return;
+  }
+  await logAdmin('aulas_modo_pdf','knowledge_docs', null, { disciplina: kbDisc, total: data.length });
   await loadKB();
   kbPaint();
-  kbAulaMsg(alvos.length + ' aula(s) agora abrem em PDF para o aluno.');
+  const aviso = data.length + ' aula(s) de ' + kbDisc + ' agora abrem em PDF para o aluno' +
+    (faltam.length ? ' (' + faltam.length + ' foram alteradas agora).' : '.') +
+    (semPdf ? '\n' + semPdf + ' aula(s) sem PDF continuam em texto.' : '');
+  alert('Pronto! ' + aviso);
+  kbAulaMsg(aviso.replace('\n', ' '));
 };
 
 
