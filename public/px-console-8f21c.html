@@ -1766,9 +1766,18 @@ function kbEditor(){
 
         <div data-aulapane="doc" style="display:none">
           <label class="muted">Arquivos da(s) aula(s)</label>
-          <p class="muted" style="margin:4px 0 8px;font-size:0.76rem">Um arquivo = uma aula. Selecione vários para cadastrar em lote (leitura 3 por vez).</p>
-          <input type="file" id="kb-aula-file" multiple accept=".pdf,.txt,.md,.csv,.html,.srt,.vtt,.png,.jpg,.jpeg,.webp,image/*,application/pdf,text/*" style="width:auto;max-width:100%">
+          <p class="muted" style="margin:4px 0 8px;font-size:0.76rem">Um arquivo = uma aula. Envie um por vez ou vários de uma vez (envio em lote) — PDF, texto ou imagem de apostila/slide.</p>
+          <div id="kb-aula-drop" class="kb-drop">
+            <p class="muted" style="margin:0 0 10px">Arraste e solte os arquivos aqui ou escolha abaixo</p>
+            <input type="file" id="kb-aula-file" multiple accept=".pdf,.txt,.md,.csv,.html,.srt,.vtt,.png,.jpg,.jpeg,.webp,image/*,application/pdf,text/*" style="width:auto;max-width:100%">
+          </div>
           <div id="kb-aula-fila"></div>
+          <div id="kb-ing-prog-wrap" style="display:none;margin-top:12px">
+            <div style="height:6px;border-radius:99px;background:#EEF1F6;overflow:hidden">
+              <div id="kb-ing-prog-bar" style="height:100%;width:0%;background:#2563EB;border-radius:99px;transition:width .2s"></div>
+            </div>
+            <p class="muted" id="kb-ing-prog-txt" style="margin:6px 0 0"></p>
+          </div>
         </div>
 
         <div data-aulapane="site" style="display:none">
@@ -1802,9 +1811,15 @@ function kbEditor(){
       </div>
 
 
-      <div id="kb-aulas-lista" style="margin-top:16px"></div>
-    </div>
+      <div id="kb-cob-ia" style="margin:16px 0 0;padding:10px 13px;border:1px solid #E9EDF3;border-radius:10px;background:#F8FAFF;font-size:0.8rem;line-height:1.5"></div>
 
+      <div id="kb-aulas-lista" style="margin-top:16px"></div>
+
+      <details class="kb-soft" style="padding:12px 14px;margin-top:16px">
+        <summary style="cursor:pointer;font-weight:650;font-size:0.85rem;color:#1E3A8A">Documentos-fonte já enviados</summary>
+        <div id="kb-biblioteca" style="margin-top:12px"></div>
+      </details>
+    </div>
 
     <div data-pane="manut" style="display:none;margin-top:4px">
       <h4>Manutenção da base</h4>
@@ -1829,83 +1844,7 @@ function kbEditor(){
     </div>
 
 
-    <div data-pane="aulas" style="display:none;margin-top:18px">
-     <details class="kb-soft" style="padding:12px 14px">
-      <summary style="cursor:pointer;font-weight:650;font-size:0.85rem;color:#1E3A8A">Envio em lote e outras fontes (Drive, site, vídeo, vários arquivos)</summary>
-      <div style="margin-top:14px">
-      <div id="kb-cob-ia" style="margin:0 0 14px;padding:10px 13px;border:1px solid #E9EDF3;border-radius:10px;background:#F8FAFF;font-size:0.8rem;line-height:1.5"></div>
-      <h4>Base de conhecimento de ${esc(kbDisc || 'sua matéria')}</h4>
-      <p class="muted" style="margin:0 0 16px;max-width:70ch">Suba o material desta matéria (PDF, texto, imagem, vídeo ou link). A IA <b>não reescreve nada</b>: ela apenas guarda cada trecho no tópico certo do edital.</p>
-
-      <label class="muted">Envie o material</label>
-      <div style="display:flex;gap:4px;flex-wrap:wrap;background:#F1F4F9;border-radius:11px;padding:4px;margin-bottom:12px">
-        <button class="act" data-ingtab="texto" onclick="kbIngTab('texto')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Texto</button>
-        <button class="act" data-ingtab="site" onclick="kbIngTab('site')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Website</button>
-        <button class="act" data-ingtab="video" onclick="kbIngTab('video')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Vídeo</button>
-        <button class="act" data-ingtab="doc" onclick="kbIngTab('doc')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Documento</button>
-        
-      </div>
-
-      <div class="kb-soft" data-ingpane="texto">
-        <h4>Novo material via texto</h4>
-        <textarea id="kb-livre" rows="5" placeholder="Cole aqui o texto que deve entrar na base desta matéria" style="margin-top:8px"></textarea>
-        <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="act primary" onclick="kbAdicionarTexto()">Cadastrar</button></div>
-      </div>
-
-      <div class="kb-soft" data-ingpane="site" style="display:none">
-        <h4>Novo material via website</h4>
-        <p class="muted" style="margin:4px 0 10px;font-size:0.78rem">Cole a URL da página e aperte Enter para a IA ler o conteúdo.</p>
-        <input id="kb-url" placeholder="https://…">
-      </div>
-
-      <div class="kb-soft" data-ingpane="video" style="display:none">
-        <h4>Novo material via vídeo</h4>
-        <p class="muted" style="margin:4px 0 10px;font-size:0.78rem">Cole a URL de um vídeo (YouTube) e aperte Enter — a transcrição entra na base.</p>
-        <input id="kb-url-video" placeholder="https://youtube.com/…">
-      </div>
-
-      <div class="kb-soft" data-ingpane="doc" style="display:none">
-        <h4>Novo material via documento</h4>
-        <p class="muted" style="margin:4px 0 0;font-size:0.78rem">Pode enviar vários arquivos de uma vez — a leitura acontece em fila, 3 por vez.</p>
-        <div id="kb-drop" class="kb-drop" style="margin-top:10px">
-          <p class="muted" style="margin:0 0 10px">Arraste e solte aqui (PDF, txt, imagens de apostila/slide) ou escolha os arquivos</p>
-          <input type="file" id="kb-file" multiple accept=".pdf,.txt,.md,.csv,.json,.html,.srt,.vtt,.png,.jpg,.jpeg,.webp,.gif,.bmp,.heic,image/*,application/pdf,text/*" style="width:auto;max-width:100%">
-        </div>
-        <label class="muted" style="display:flex;gap:6px;align-items:center;margin:10px 0 0;font-size:0.78rem">
-          <input type="checkbox" id="kb-auto-classificar" style="width:auto"> Classificar nos tópicos automaticamente ao terminar a leitura
-        </label>
-        <div id="kb-fila"></div>
-      </div>
-
-
-
-
-      <div id="kb-ing-prog-wrap" style="display:none;margin-top:14px">
-        <div style="height:6px;border-radius:99px;background:#EEF1F6;overflow:hidden">
-          <div id="kb-ing-prog-bar" style="height:100%;width:0%;background:#2563EB;border-radius:99px;transition:width .2s"></div>
-        </div>
-        <p class="muted" id="kb-ing-prog-txt" style="margin:6px 0 0"></p>
-      </div>
-      <div id="kb-fontes" style="margin-top:12px"></div>
-
-      <hr class="kb-hr">
-
-      <h4>3. Guardar nos tópicos do edital</h4>
-      <p class="muted" style="margin:0 0 12px;max-width:70ch">A IA lê cada trecho do material carregado e o encaixa no tópico oficial correspondente. O texto é guardado como está, em rascunho, para você revisar e publicar.</p>
-      <div class="kb-actions">
-        <button class="act primary" id="kb-btn-montar" onclick="kbDistribuir()">Guardar material nos tópicos</button>
-      </div>
-
-      <p class="muted" id="kb-ing" style="margin-top:10px"></p>
-      <div id="kb-preview" style="margin-top:12px"></div>
-
-      <div style="margin-top:20px">
-        <h4>Documentos-fonte já enviados</h4>
-        <div id="kb-biblioteca" style="margin-top:10px"></div>
-      </div>
-      </div>
-     </details>
-    </div>`;
+    `;
 
   kbPane(KB_PANE);
   kbPrefsLoad();
