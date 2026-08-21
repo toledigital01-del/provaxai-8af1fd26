@@ -2062,10 +2062,84 @@ window.kbAulaExcluir = async function(id){
 };
 /* ---- Modal de edição da aula: sumário + conteúdo, sem depender da lista ---- */
 let KB_AULA_EDIT = null;
+/* Markdown simples -> HTML, para a pré-visualização do modal. */
+function kbMD(md){
+  const e = function(s){ return String(s).replace(/[&<>]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]; }); };
+  const inline = function(t){
+    return t.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
+            .replace(/(^|[^*])\*([^*]+)\*/g,'$1<i>$2</i>')
+            .replace(/`([^`]+)`/g,'<code style="background:#F1F5F9;padding:1px 4px;border-radius:4px">$1</code>');
+  };
+  const out = []; let ul = false, ol = false;
+  e(md || '').split(/\r?\n/).forEach(function(ln){
+    const l = ln.trim();
+    const li = l.match(/^[-*]\s+(.*)$/);
+    const oli = l.match(/^\d+[.)]\s+(.*)$/);
+    if(li){ if(ol){ out.push('</ol>'); ol=false; } if(!ul){ out.push('<ul>'); ul=true; } return out.push('<li>'+inline(li[1])+'</li>'); }
+    if(oli){ if(ul){ out.push('</ul>'); ul=false; } if(!ol){ out.push('<ol>'); ol=true; } return out.push('<li>'+inline(oli[1])+'</li>'); }
+    if(ul){ out.push('</ul>'); ul=false; }
+    if(ol){ out.push('</ol>'); ol=false; }
+    if(!l) return;
+    const h = l.match(/^(#{1,4})\s+(.*)$/);
+    if(h) return out.push('<h' + Math.min(h[1].length+2,5) + ' style="margin:12px 0 6px;color:#1E3A8A">' + inline(h[2]) + '</h' + Math.min(h[1].length+2,5) + '>');
+    if(/^>\s?/.test(l)) return out.push('<blockquote style="margin:8px 0;padding-left:10px;border-left:3px solid #CBD5E1;color:#475569">'+inline(l.replace(/^>\s?/,''))+'</blockquote>');
+    out.push('<p style="margin:6px 0">' + inline(l) + '</p>');
+  });
+  if(ul) out.push('</ul>');
+  if(ol) out.push('</ol>');
+  return out.join('');
+}
+
+/* Insere marcação Markdown ao redor da seleção do campo. */
+window.kbMDIns = function(alvo, antes, depois, prefixoLinha){
+  const ta = document.getElementById(alvo);
+  if(!ta) return;
+  const ini = ta.selectionStart, fim = ta.selectionEnd;
+  const sel = ta.value.slice(ini, fim);
+  let novo;
+  if(prefixoLinha){
+    const linhas = (sel || 'texto').split(/\n/).map(function(l){ return antes + l; }).join('\n');
+    novo = ta.value.slice(0, ini) + linhas + ta.value.slice(fim);
+  }else{
+    novo = ta.value.slice(0, ini) + antes + (sel || 'texto') + depois + ta.value.slice(fim);
+  }
+  ta.value = novo;
+  ta.focus();
+  kbAulaModalMudou();
+};
+
+let KB_AULA_EDIT_TIMER = null;
+let KB_AULA_EDIT_SUJO = false;
+
+function kbAulaModalPreview(){
+  const s = document.getElementById('kb-ae-sum-prev');
+  const c = document.getElementById('kb-ae-txt-prev');
+  if(s) s.innerHTML = kbMD((document.getElementById('kb-ae-sum')||{}).value || '') || '<span class="muted">Sem sumário.</span>';
+  if(c) c.innerHTML = kbMD((document.getElementById('kb-ae-txt')||{}).value || '') || '<span class="muted">Sem conteúdo.</span>';
+}
+function kbAulaModalEstado(texto, cor){
+  const el = document.getElementById('kb-ae-auto');
+  if(el){ el.textContent = texto; el.style.color = cor || '#64748B'; }
+}
+/* Autosave: 1,5 s depois da última tecla o rascunho é gravado sozinho. */
+window.kbAulaModalMudou = function(){
+  kbAulaModalPreview();
+  KB_AULA_EDIT_SUJO = true;
+  kbAulaModalEstado('Alterações não salvas…', '#B45309');
+  if(KB_AULA_EDIT_TIMER) clearTimeout(KB_AULA_EDIT_TIMER);
+  KB_AULA_EDIT_TIMER = setTimeout(function(){ kbAulaModalSalvar(true); }, 1500);
+};
+window.kbAulaModalPub = function(pub){
+  const el = document.getElementById('kb-ae-pub');
+  if(el) el.checked = !!pub;
+  kbAulaModalSalvar(false, true);
+};
+
 window.kbAulaEditar = function(id){
   const a = KB_AULAS.find(x => x.id === id);
   if(!a) return;
   KB_AULA_EDIT = a;
+  KB_AULA_EDIT_SUJO = false;
   const doc = kbFind(kbDisc, a.nome) || {};
   const pub = kbStatusDoc(doc.id ? doc : null) === 'publicado';
   let m = document.getElementById('kb-aula-modal');
@@ -2077,44 +2151,72 @@ window.kbAulaEditar = function(id){
   }
   m.style.display = 'flex';
   document.body.style.overflow = 'hidden';
+  const barra = function(alvo){
+    return '<div style="display:flex;gap:4px;flex-wrap:wrap;margin:6px 0">' +
+      '<button class="act" style="font-size:0.72rem;padding:3px 8px" onclick="kbMDIns(\'' + alvo + '\',\'**\',\'**\')"><b>N</b></button>' +
+      '<button class="act" style="font-size:0.72rem;padding:3px 8px" onclick="kbMDIns(\'' + alvo + '\',\'*\',\'*\')"><i>I</i></button>' +
+      '<button class="act" style="font-size:0.72rem;padding:3px 8px" onclick="kbMDIns(\'' + alvo + '\',\'## \',\'\',1)">Título</button>' +
+      '<button class="act" style="font-size:0.72rem;padding:3px 8px" onclick="kbMDIns(\'' + alvo + '\',\'- \',\'\',1)">Lista</button>' +
+      '<button class="act" style="font-size:0.72rem;padding:3px 8px" onclick="kbMDIns(\'' + alvo + '\',\'> \',\'\',1)">Citação</button>' +
+      '<button class="act" style="font-size:0.72rem;padding:3px 8px" onclick="kbMDIns(\'' + alvo + '\',\'`\',\'`\')">Código</button>' +
+    '</div>';
+  };
+  const prev = 'border:1px solid #E2E8F0;border-radius:10px;background:#F8FAFC;padding:10px 12px;overflow:auto;font-size:0.82rem;line-height:1.55';
   m.innerHTML =
-    '<div style="background:#fff;border-radius:16px;max-width:900px;width:100%;padding:22px 24px;box-shadow:0 20px 60px rgba(15,23,42,.3)">' +
-      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">' +
+    '<div style="background:#fff;border-radius:16px;max-width:1080px;width:100%;padding:22px 24px;box-shadow:0 20px 60px rgba(15,23,42,.3)">' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap">' +
         '<b style="color:#1E3A8A;font-size:1rem">Aula ' + kbAulaNum(a.ordem) + '</b>' +
-        '<span class="kb-tag ' + (pub ? 'is-on' : 'is-wait') + '">' + (pub ? 'publicada' : 'rascunho') + '</span>' +
+        '<span id="kb-ae-badge" class="kb-tag ' + (pub ? 'is-on' : 'is-wait') + '">' + (pub ? 'Publicada — visível ao aluno' : 'Rascunho — só você vê') + '</span>' +
+        '<span class="muted" id="kb-ae-auto" style="font-size:0.75rem">Salvamento automático ativo.</span>' +
         '<span style="flex:1"></span>' +
         '<button class="act" onclick="kbAulaModalFechar()">Fechar</button>' +
       '</div>' +
-      '<p class="muted" style="margin:0 0 14px;font-size:0.78rem">O aluno vê apenas “Aula ' + kbAulaNum(a.ordem) + '” na lista. O título e o sumário abaixo aparecem dentro da página da aula.</p>' +
+      '<p class="muted" style="margin:0 0 14px;font-size:0.78rem">O aluno vê apenas “Aula ' + kbAulaNum(a.ordem) + '” na lista. Título, sumário e conteúdo aparecem dentro da página da aula. Aceita Markdown (## título, - lista, **negrito**).</p>' +
       '<label class="muted">Título da aula (mostrado dentro da aula)</label>' +
-      '<input id="kb-ae-tit" value="' + esc(doc.titulo || kbAulaTitulo(a.nome)) + '" style="margin-bottom:12px">' +
-      '<label class="muted">Sumário da aula</label>' +
-      '<textarea id="kb-ae-sum" rows="6" placeholder="Ex.: - Conceito de ato administrativo&#10;- Atributos&#10;- Espécies" style="margin-bottom:12px">' + esc(doc.sumario || '') + '</textarea>' +
-      '<label class="muted">Conteúdo completo da aula</label>' +
-      '<textarea id="kb-ae-txt" rows="16" style="min-height:340px;line-height:1.55">' + esc(doc.conteudo || '') + '</textarea>' +
+      '<input id="kb-ae-tit" oninput="kbAulaModalMudou()" value="' + esc(doc.titulo || kbAulaTitulo(a.nome)) + '" style="margin-bottom:12px">' +
+      '<label class="muted">Sumário da aula</label>' + barra('kb-ae-sum') +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">' +
+        '<textarea id="kb-ae-sum" rows="6" oninput="kbAulaModalMudou()" placeholder="Ex.: - Conceito de ato administrativo&#10;- Atributos">' + esc(doc.sumario || '') + '</textarea>' +
+        '<div id="kb-ae-sum-prev" style="' + prev + ';max-height:180px"></div>' +
+      '</div>' +
+      '<label class="muted">Conteúdo completo da aula</label>' + barra('kb-ae-txt') +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+        '<textarea id="kb-ae-txt" rows="16" oninput="kbAulaModalMudou()" style="min-height:340px;line-height:1.55">' + esc(doc.conteudo || '') + '</textarea>' +
+        '<div id="kb-ae-txt-prev" style="' + prev + ';max-height:420px"></div>' +
+      '</div>' +
+      '<input type="checkbox" id="kb-ae-pub" ' + (pub ? 'checked' : '') + ' style="display:none">' +
       '<div class="kb-actions" style="margin-top:14px">' +
-        '<label class="muted" style="display:flex;gap:6px;align-items:center;margin:0;font-size:0.8rem"><input type="checkbox" id="kb-ae-pub" ' + (pub ? 'checked' : '') + ' style="width:auto"> Publicado para os alunos</label>' +
+        '<button class="act" onclick="kbAulaModalSalvar(false)">Salvar rascunho</button>' +
+        (pub
+          ? '<button class="act" onclick="kbAulaModalPub(false)">Despublicar</button>'
+          : '<button class="act primary" onclick="kbAulaModalPub(true)">Publicar para os alunos</button>') +
         '<span style="flex:1"></span>' +
-        '<button class="act primary" onclick="kbAulaModalSalvar()">Salvar aula</button>' +
       '</div>' +
       '<p class="muted" id="kb-ae-msg" style="margin-top:10px;font-size:0.78rem"></p>' +
     '</div>';
+  kbAulaModalPreview();
 };
 window.kbAulaModalFechar = function(){
+  if(KB_AULA_EDIT_TIMER){ clearTimeout(KB_AULA_EDIT_TIMER); KB_AULA_EDIT_TIMER = null; }
+  if(KB_AULA_EDIT_SUJO && !confirm('Há alterações ainda não salvas. Fechar mesmo assim?')) return;
   const m = document.getElementById('kb-aula-modal');
   if(m) m.style.display = 'none';
   document.body.style.overflow = '';
   KB_AULA_EDIT = null;
+  KB_AULA_EDIT_SUJO = false;
 };
-window.kbAulaModalSalvar = async function(){
+window.kbAulaModalSalvar = async function(auto, recarregar){
   const a = KB_AULA_EDIT;
   if(!a) return;
+  const campoTit = document.getElementById('kb-ae-tit');
+  if(!campoTit) return;
+  if(KB_AULA_EDIT_TIMER){ clearTimeout(KB_AULA_EDIT_TIMER); KB_AULA_EDIT_TIMER = null; }
   const msg = document.getElementById('kb-ae-msg');
-  const titulo = document.getElementById('kb-ae-tit').value.trim();
+  const titulo = campoTit.value.trim();
   const sumario = document.getElementById('kb-ae-sum').value;
   const conteudo = document.getElementById('kb-ae-txt').value;
   const publicar = document.getElementById('kb-ae-pub').checked;
-  if(msg) msg.textContent = 'Salvando…';
+  kbAulaModalEstado('Salvando…', '#1D4ED8');
   const doc = kbFind(kbDisc, a.nome);
   const payload = {
     course_slug: 'prf-2021', disciplina: kbDisc, topico: a.nome,
@@ -2125,12 +2227,28 @@ window.kbAulaModalSalvar = async function(){
   const { error } = doc
     ? await PX.sb.from('knowledge_docs').update(payload).eq('id', doc.id)
     : await PX.sb.from('knowledge_docs').insert(payload);
-  if(error){ if(msg) msg.textContent = 'Erro: ' + error.message; return; }
-  await logAdmin('salvar_aula','knowledge_docs', doc ? doc.id : null, { disciplina: kbDisc, aula: a.nome, publicado: publicar });
+  if(error){
+    kbAulaModalEstado('Falha ao salvar — tente de novo.', '#B91C1C');
+    if(msg) msg.textContent = 'Erro: ' + error.message;
+    return;
+  }
+  KB_AULA_EDIT_SUJO = false;
+  const hora = new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+  kbAulaModalEstado((auto ? 'Salvo automaticamente às ' : 'Salvo às ') + hora, '#047857');
+  const badge = document.getElementById('kb-ae-badge');
+  if(badge){
+    badge.className = 'kb-tag ' + (publicar ? 'is-on' : 'is-wait');
+    badge.textContent = publicar ? 'Publicada — visível ao aluno' : 'Rascunho — só você vê';
+  }
+  await logAdmin('salvar_aula','knowledge_docs', doc ? doc.id : null, { disciplina: kbDisc, aula: a.nome, publicado: publicar, auto: !!auto });
   await loadKB();
-  kbPaint();
-  if(msg) msg.textContent = publicar ? 'Aula salva e publicada para os alunos.' : 'Aula salva como rascunho.';
+  if(!auto){
+    kbPaint();
+    if(recarregar) kbAulaEditar(a.id);
+  }
+  if(msg && !auto) msg.textContent = publicar ? 'Aula publicada para os alunos.' : 'Aula salva como rascunho.';
 };
+
 
 function kbAulasRefresh(){
   if(!kbDisc) return;
