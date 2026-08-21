@@ -719,6 +719,42 @@ export type Database = {
         }
         Relationships: []
       }
+      podcasts_ia: {
+        Row: {
+          course_slug: string
+          created_at: string
+          disciplina: string
+          id: string
+          modelo: string | null
+          roteiro: Json
+          topico: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          course_slug: string
+          created_at?: string
+          disciplina: string
+          id?: string
+          modelo?: string | null
+          roteiro: Json
+          topico?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          course_slug?: string
+          created_at?: string
+          disciplina?: string
+          id?: string
+          modelo?: string | null
+          roteiro?: Json
+          topico?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1193,6 +1229,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tts_cache: {
+        Row: {
+          caminho: string
+          caracteres: number
+          created_at: string
+          hash: string
+          provedor: string | null
+          usos: number
+          voz: string
+        }
+        Insert: {
+          caminho: string
+          caracteres?: number
+          created_at?: string
+          hash: string
+          provedor?: string | null
+          usos?: number
+          voz: string
+        }
+        Update: {
+          caminho?: string
+          caracteres?: number
+          created_at?: string
+          hash?: string
+          provedor?: string | null
+          usos?: number
+          voz?: string
+        }
+        Relationships: []
       }
       user_materials: {
         Row: {

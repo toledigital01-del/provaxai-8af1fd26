@@ -71,7 +71,7 @@ async function materialDoTopico(curso: string, disciplina: string, topico: strin
       if (t) partes.push(`### ${d.nome || 'material do aluno'}\n${t.slice(0, 12000)}`)
     })
   }
-  return partes.join('\n\n').slice(0, 40000)
+  return partes.join('\n\n').slice(0, 120000)
 }
 
 export const Route = createFileRoute('/api/public/aula-ia')({
@@ -132,11 +132,12 @@ export const Route = createFileRoute('/api/public/aula-ia')({
           '## Exemplos e aplicações práticas',
           '## Pegadinhas da banca e palavras-armadilha',
           '## Esquema de revisão (mapa em tópicos curtos)',
-          '## Fixação — 5 assertivas certo/errado com gabarito comentado',
+          '## Fixação — 10 assertivas certo/errado no estilo Cebraspe, com gabarito comentado',
           'Regras: escreva em português do Brasil, na 1ª pessoa do professor falando com o aluno;',
           'destaque em **negrito** os pontos cobrados em prova; não invente lei, número, prazo ou julgado',
           'que não esteja no material; não cite "o material" nem "o PDF" — ensine o conteúdo diretamente.',
-          'Tamanho: entre 700 e 1200 palavras, direto ao ponto. Responda apenas com a aula em Markdown.',
+          'Tamanho: aula completa e aprofundada, entre 2.500 e 4.000 palavras, sem resumir nem pular partes do material.',
+          'Responda apenas com a aula em Markdown.',
           '\n--- MATERIAL DE APOIO ---\n' + material,
         ].join('\n')
 
@@ -144,12 +145,11 @@ export const Route = createFileRoute('/api/public/aula-ia')({
         try {
           aula = await chat({
             provider: cfg.provider,
-            // aula precisa sair rápido: no Lovable usamos o modelo mais veloz
-            model: cfg.provider === 'lovable' ? 'google/gemini-3-flash-preview' : cfg.model,
+            model: cfg.model,
             system,
             user: `Disciplina: ${body.disciplina}\nTópico: ${body.topico}\n\nEscreva a aula completa.`,
             keys: await aiKeys(),
-            maxTokens: 4000,
+            maxTokens: 16000,
           })
         } catch (e) {
           const err = e as AIError
