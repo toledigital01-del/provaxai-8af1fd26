@@ -1748,25 +1748,59 @@ function kbEditor(){
 
     <div data-pane="aulas" style="display:none;margin-top:4px">
       <h4>Aulas de ${esc(kbDisc || 'sua matéria')}</h4>
-      <p class="muted" style="margin:0 0 14px;max-width:72ch">Cole o material (ou envie o arquivo) de uma aula: a IA identifica o número e o título, e a aula entra numerada (Aula 00, 01, 02…) no painel do aluno. Na lista abaixo você pode arrastar para reordenar, renomear ou excluir.</p>
+      <p class="muted" style="margin:0 0 14px;max-width:72ch">Envie o material de uma aula (texto, arquivo, site, vídeo ou Drive). Cada envio vira uma aula numerada (Aula 00, 01, 02…) no painel do aluno. No modo lote, cada arquivo vira uma aula. Na lista abaixo você pode arrastar para reordenar, renomear, editar ou excluir.</p>
 
       <div class="kb-soft">
-        <label class="muted">Material desta aula</label>
-        <textarea id="kb-aula-txt" rows="8" placeholder="Cole aqui o conteúdo completo da aula (ex.: “Aula 03 – Ato administrativo …”)" style="margin-top:6px"></textarea>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px">
-          <input type="file" id="kb-aula-file" accept=".pdf,.txt,.md,.csv,.html,.srt,.vtt,.png,.jpg,.jpeg,.webp,image/*,application/pdf,text/*" style="width:auto;max-width:100%">
-          <span class="muted" style="font-size:0.75rem">Opcional: o arquivo é lido e o texto entra no campo acima.</span>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;background:#F1F4F9;border-radius:11px;padding:4px;margin-bottom:12px">
+          <button class="act" data-aulatab="texto" onclick="kbAulaTab('texto')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Texto</button>
+          <button class="act" data-aulatab="doc" onclick="kbAulaTab('doc')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Arquivos (1 ou vários)</button>
+          <button class="act" data-aulatab="site" onclick="kbAulaTab('site')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Website</button>
+          <button class="act" data-aulatab="video" onclick="kbAulaTab('video')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Vídeo</button>
+          <button class="act" data-aulatab="drive" onclick="kbAulaTab('drive')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Google Drive</button>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px">
-          <input id="kb-aula-num" type="number" min="0" max="999" placeholder="Nº (auto)" style="width:120px">
-          <input id="kb-aula-tit" placeholder="Título da aula (deixe vazio para a IA identificar)" style="flex:1;min-width:220px">
+
+        <div data-aulapane="texto">
+          <label class="muted">Material desta aula</label>
+          <textarea id="kb-aula-txt" rows="8" placeholder="Cole aqui o conteúdo completo da aula" style="margin-top:6px"></textarea>
+        </div>
+
+        <div data-aulapane="doc" style="display:none">
+          <label class="muted">Arquivos da(s) aula(s)</label>
+          <p class="muted" style="margin:4px 0 8px;font-size:0.76rem">Um arquivo = uma aula. Selecione vários para cadastrar em lote (leitura 3 por vez).</p>
+          <input type="file" id="kb-aula-file" multiple accept=".pdf,.txt,.md,.csv,.html,.srt,.vtt,.png,.jpg,.jpeg,.webp,image/*,application/pdf,text/*" style="width:auto;max-width:100%">
+          <div id="kb-aula-fila"></div>
+        </div>
+
+        <div data-aulapane="site" style="display:none">
+          <label class="muted">Link do site</label>
+          <input id="kb-aula-url" placeholder="https://…" style="margin-top:6px">
+        </div>
+
+        <div data-aulapane="video" style="display:none">
+          <label class="muted">Link do vídeo (YouTube)</label>
+          <input id="kb-aula-video" placeholder="https://youtube.com/…" style="margin-top:6px">
+        </div>
+
+        <div data-aulapane="drive" style="display:none">
+          <label class="muted">Pasta do Google Drive</label>
+          <p class="muted" style="margin:4px 0 8px;font-size:0.76rem">Cada arquivo da pasta entra na biblioteca desta matéria.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <input id="kb-drive-url" placeholder="Cole o link da pasta do Google Drive" style="flex:1;min-width:220px">
+            <button class="act" onclick="kbDriveImportar()">Importar pasta</button>
+          </div>
+          <p class="muted" id="kb-drive-msg" style="margin-top:8px;font-size:0.76rem"></p>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px">
           <label class="muted" style="display:flex;gap:6px;align-items:center;margin:0;font-size:0.78rem">
-            <input type="checkbox" id="kb-aula-pub" checked style="width:auto"> Publicar para os alunos
+            <input type="checkbox" id="kb-aula-pub" style="width:auto"> Publicar para os alunos (sem marcar, entra como rascunho)
           </label>
-          <button class="act primary" onclick="kbAulaCadastrar()">Identificar e cadastrar aula</button>
+          <span style="flex:1"></span>
+          <button class="act primary" data-aulasend onclick="kbAulaCadastrar()">Cadastrar aula</button>
         </div>
         <p class="muted" id="kb-aula-msg" style="margin:10px 0 0;font-size:0.78rem"></p>
       </div>
+
 
       <div id="kb-aulas-lista" style="margin-top:16px"></div>
     </div>
@@ -1809,7 +1843,7 @@ function kbEditor(){
         <button class="act" data-ingtab="site" onclick="kbIngTab('site')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Website</button>
         <button class="act" data-ingtab="video" onclick="kbIngTab('video')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Vídeo</button>
         <button class="act" data-ingtab="doc" onclick="kbIngTab('doc')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Documento</button>
-        <button class="act" data-ingtab="drive" onclick="kbIngTab('drive')" style="border:none;border-radius:8px;font-size:0.8rem;font-weight:600;background:transparent">Google Drive</button>
+        
       </div>
 
       <div class="kb-soft" data-ingpane="texto">
@@ -1844,15 +1878,6 @@ function kbEditor(){
       </div>
 
 
-      <div class="kb-soft" data-ingpane="drive" style="display:none">
-        <h4>Google Drive</h4>
-        <p class="muted" style="margin:0 0 12px;font-size:0.78rem">Importa uma pasta inteira do Drive (com subpastas) para o material desta matéria. Os arquivos entram direto na biblioteca desta matéria.</p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <input id="kb-drive-url" placeholder="Cole o link da pasta do Google Drive" style="flex:1;min-width:220px">
-          <button class="act" onclick="kbDriveImportar()">Importar pasta</button>
-        </div>
-        <p class="muted" id="kb-drive-msg" style="margin-top:8px;font-size:0.76rem"></p>
-      </div>
 
 
       <div id="kb-ing-prog-wrap" style="display:none;margin-top:14px">
@@ -1892,6 +1917,10 @@ function kbEditor(){
   kbPaintBiblioteca();
   kbAulasRefresh();
   kbBindAulaFile();
+  kbAulaTab(KB_AULA_TAB);
+  kbAulaFilaPaint();
+
+
 }
 
 /* =========================================================
@@ -2037,10 +2066,84 @@ window.kbAulaExcluir = async function(id){
 };
 /* ---- Modal de edição da aula: sumário + conteúdo, sem depender da lista ---- */
 let KB_AULA_EDIT = null;
+/* Markdown simples -> HTML, para a pré-visualização do modal. */
+function kbMD(md){
+  const e = function(s){ return String(s).replace(/[&<>]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]; }); };
+  const inline = function(t){
+    return t.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
+            .replace(/(^|[^*])\*([^*]+)\*/g,'$1<i>$2</i>')
+            .replace(/`([^`]+)`/g,'<code style="background:#F1F5F9;padding:1px 4px;border-radius:4px">$1</code>');
+  };
+  const out = []; let ul = false, ol = false;
+  e(md || '').split(/\r?\n/).forEach(function(ln){
+    const l = ln.trim();
+    const li = l.match(/^[-*]\s+(.*)$/);
+    const oli = l.match(/^\d+[.)]\s+(.*)$/);
+    if(li){ if(ol){ out.push('</ol>'); ol=false; } if(!ul){ out.push('<ul>'); ul=true; } return out.push('<li>'+inline(li[1])+'</li>'); }
+    if(oli){ if(ul){ out.push('</ul>'); ul=false; } if(!ol){ out.push('<ol>'); ol=true; } return out.push('<li>'+inline(oli[1])+'</li>'); }
+    if(ul){ out.push('</ul>'); ul=false; }
+    if(ol){ out.push('</ol>'); ol=false; }
+    if(!l) return;
+    const h = l.match(/^(#{1,4})\s+(.*)$/);
+    if(h) return out.push('<h' + Math.min(h[1].length+2,5) + ' style="margin:12px 0 6px;color:#1E3A8A">' + inline(h[2]) + '</h' + Math.min(h[1].length+2,5) + '>');
+    if(/^>\s?/.test(l)) return out.push('<blockquote style="margin:8px 0;padding-left:10px;border-left:3px solid #CBD5E1;color:#475569">'+inline(l.replace(/^>\s?/,''))+'</blockquote>');
+    out.push('<p style="margin:6px 0">' + inline(l) + '</p>');
+  });
+  if(ul) out.push('</ul>');
+  if(ol) out.push('</ol>');
+  return out.join('');
+}
+
+/* Insere marcação Markdown ao redor da seleção do campo. */
+window.kbMDIns = function(alvo, antes, depois, prefixoLinha){
+  const ta = document.getElementById(alvo);
+  if(!ta) return;
+  const ini = ta.selectionStart, fim = ta.selectionEnd;
+  const sel = ta.value.slice(ini, fim);
+  let novo;
+  if(prefixoLinha){
+    const linhas = (sel || 'texto').split(/\n/).map(function(l){ return antes + l; }).join('\n');
+    novo = ta.value.slice(0, ini) + linhas + ta.value.slice(fim);
+  }else{
+    novo = ta.value.slice(0, ini) + antes + (sel || 'texto') + depois + ta.value.slice(fim);
+  }
+  ta.value = novo;
+  ta.focus();
+  kbAulaModalMudou();
+};
+
+let KB_AULA_EDIT_TIMER = null;
+let KB_AULA_EDIT_SUJO = false;
+
+function kbAulaModalPreview(){
+  const s = document.getElementById('kb-ae-sum-prev');
+  const c = document.getElementById('kb-ae-txt-prev');
+  if(s) s.innerHTML = kbMD((document.getElementById('kb-ae-sum')||{}).value || '') || '<span class="muted">Sem sumário.</span>';
+  if(c) c.innerHTML = kbMD((document.getElementById('kb-ae-txt')||{}).value || '') || '<span class="muted">Sem conteúdo.</span>';
+}
+function kbAulaModalEstado(texto, cor){
+  const el = document.getElementById('kb-ae-auto');
+  if(el){ el.textContent = texto; el.style.color = cor || '#64748B'; }
+}
+/* Autosave: 1,5 s depois da última tecla o rascunho é gravado sozinho. */
+window.kbAulaModalMudou = function(){
+  kbAulaModalPreview();
+  KB_AULA_EDIT_SUJO = true;
+  kbAulaModalEstado('Alterações não salvas…', '#B45309');
+  if(KB_AULA_EDIT_TIMER) clearTimeout(KB_AULA_EDIT_TIMER);
+  KB_AULA_EDIT_TIMER = setTimeout(function(){ kbAulaModalSalvar(true); }, 1500);
+};
+window.kbAulaModalPub = function(pub){
+  const el = document.getElementById('kb-ae-pub');
+  if(el) el.checked = !!pub;
+  kbAulaModalSalvar(false, true);
+};
+
 window.kbAulaEditar = function(id){
   const a = KB_AULAS.find(x => x.id === id);
   if(!a) return;
   KB_AULA_EDIT = a;
+  KB_AULA_EDIT_SUJO = false;
   const doc = kbFind(kbDisc, a.nome) || {};
   const pub = kbStatusDoc(doc.id ? doc : null) === 'publicado';
   let m = document.getElementById('kb-aula-modal');
@@ -2052,44 +2155,72 @@ window.kbAulaEditar = function(id){
   }
   m.style.display = 'flex';
   document.body.style.overflow = 'hidden';
+  const barra = function(alvo){
+    return '<div style="display:flex;gap:4px;flex-wrap:wrap;margin:6px 0">' +
+      '<button class="act" style="font-size:0.72rem;padding:3px 8px" onclick="kbMDIns(\'' + alvo + '\',\'**\',\'**\')"><b>N</b></button>' +
+      '<button class="act" style="font-size:0.72rem;padding:3px 8px" onclick="kbMDIns(\'' + alvo + '\',\'*\',\'*\')"><i>I</i></button>' +
+      '<button class="act" style="font-size:0.72rem;padding:3px 8px" onclick="kbMDIns(\'' + alvo + '\',\'## \',\'\',1)">Título</button>' +
+      '<button class="act" style="font-size:0.72rem;padding:3px 8px" onclick="kbMDIns(\'' + alvo + '\',\'- \',\'\',1)">Lista</button>' +
+      '<button class="act" style="font-size:0.72rem;padding:3px 8px" onclick="kbMDIns(\'' + alvo + '\',\'> \',\'\',1)">Citação</button>' +
+      '<button class="act" style="font-size:0.72rem;padding:3px 8px" onclick="kbMDIns(\'' + alvo + '\',\'`\',\'`\')">Código</button>' +
+    '</div>';
+  };
+  const prev = 'border:1px solid #E2E8F0;border-radius:10px;background:#F8FAFC;padding:10px 12px;overflow:auto;font-size:0.82rem;line-height:1.55';
   m.innerHTML =
-    '<div style="background:#fff;border-radius:16px;max-width:900px;width:100%;padding:22px 24px;box-shadow:0 20px 60px rgba(15,23,42,.3)">' +
-      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">' +
+    '<div style="background:#fff;border-radius:16px;max-width:1080px;width:100%;padding:22px 24px;box-shadow:0 20px 60px rgba(15,23,42,.3)">' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap">' +
         '<b style="color:#1E3A8A;font-size:1rem">Aula ' + kbAulaNum(a.ordem) + '</b>' +
-        '<span class="kb-tag ' + (pub ? 'is-on' : 'is-wait') + '">' + (pub ? 'publicada' : 'rascunho') + '</span>' +
+        '<span id="kb-ae-badge" class="kb-tag ' + (pub ? 'is-on' : 'is-wait') + '">' + (pub ? 'Publicada — visível ao aluno' : 'Rascunho — só você vê') + '</span>' +
+        '<span class="muted" id="kb-ae-auto" style="font-size:0.75rem">Salvamento automático ativo.</span>' +
         '<span style="flex:1"></span>' +
         '<button class="act" onclick="kbAulaModalFechar()">Fechar</button>' +
       '</div>' +
-      '<p class="muted" style="margin:0 0 14px;font-size:0.78rem">O aluno vê apenas “Aula ' + kbAulaNum(a.ordem) + '” na lista. O título e o sumário abaixo aparecem dentro da página da aula.</p>' +
+      '<p class="muted" style="margin:0 0 14px;font-size:0.78rem">O aluno vê apenas “Aula ' + kbAulaNum(a.ordem) + '” na lista. Título, sumário e conteúdo aparecem dentro da página da aula. Aceita Markdown (## título, - lista, **negrito**).</p>' +
       '<label class="muted">Título da aula (mostrado dentro da aula)</label>' +
-      '<input id="kb-ae-tit" value="' + esc(doc.titulo || kbAulaTitulo(a.nome)) + '" style="margin-bottom:12px">' +
-      '<label class="muted">Sumário da aula</label>' +
-      '<textarea id="kb-ae-sum" rows="6" placeholder="Ex.: - Conceito de ato administrativo&#10;- Atributos&#10;- Espécies" style="margin-bottom:12px">' + esc(doc.sumario || '') + '</textarea>' +
-      '<label class="muted">Conteúdo completo da aula</label>' +
-      '<textarea id="kb-ae-txt" rows="16" style="min-height:340px;line-height:1.55">' + esc(doc.conteudo || '') + '</textarea>' +
+      '<input id="kb-ae-tit" oninput="kbAulaModalMudou()" value="' + esc(doc.titulo || kbAulaTitulo(a.nome)).replace(/"/g,'&quot;') + '" style="margin-bottom:12px">' +
+      '<label class="muted">Sumário da aula</label>' + barra('kb-ae-sum') +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">' +
+        '<textarea id="kb-ae-sum" rows="6" oninput="kbAulaModalMudou()" placeholder="Ex.: - Conceito de ato administrativo&#10;- Atributos">' + esc(doc.sumario || '') + '</textarea>' +
+        '<div id="kb-ae-sum-prev" style="' + prev + ';max-height:180px"></div>' +
+      '</div>' +
+      '<label class="muted">Conteúdo completo da aula</label>' + barra('kb-ae-txt') +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+        '<textarea id="kb-ae-txt" rows="16" oninput="kbAulaModalMudou()" style="min-height:340px;line-height:1.55">' + esc(doc.conteudo || '') + '</textarea>' +
+        '<div id="kb-ae-txt-prev" style="' + prev + ';max-height:420px"></div>' +
+      '</div>' +
+      '<input type="checkbox" id="kb-ae-pub" ' + (pub ? 'checked' : '') + ' style="display:none">' +
       '<div class="kb-actions" style="margin-top:14px">' +
-        '<label class="muted" style="display:flex;gap:6px;align-items:center;margin:0;font-size:0.8rem"><input type="checkbox" id="kb-ae-pub" ' + (pub ? 'checked' : '') + ' style="width:auto"> Publicado para os alunos</label>' +
+        '<button class="act" onclick="kbAulaModalSalvar(false)">Salvar rascunho</button>' +
+        (pub
+          ? '<button class="act" onclick="kbAulaModalPub(false)">Despublicar</button>'
+          : '<button class="act primary" onclick="kbAulaModalPub(true)">Publicar para os alunos</button>') +
         '<span style="flex:1"></span>' +
-        '<button class="act primary" onclick="kbAulaModalSalvar()">Salvar aula</button>' +
       '</div>' +
       '<p class="muted" id="kb-ae-msg" style="margin-top:10px;font-size:0.78rem"></p>' +
     '</div>';
+  kbAulaModalPreview();
 };
 window.kbAulaModalFechar = function(){
+  if(KB_AULA_EDIT_TIMER){ clearTimeout(KB_AULA_EDIT_TIMER); KB_AULA_EDIT_TIMER = null; }
+  if(KB_AULA_EDIT_SUJO && !confirm('Há alterações ainda não salvas. Fechar mesmo assim?')) return;
   const m = document.getElementById('kb-aula-modal');
   if(m) m.style.display = 'none';
   document.body.style.overflow = '';
   KB_AULA_EDIT = null;
+  KB_AULA_EDIT_SUJO = false;
 };
-window.kbAulaModalSalvar = async function(){
+window.kbAulaModalSalvar = async function(auto, recarregar){
   const a = KB_AULA_EDIT;
   if(!a) return;
+  const campoTit = document.getElementById('kb-ae-tit');
+  if(!campoTit) return;
+  if(KB_AULA_EDIT_TIMER){ clearTimeout(KB_AULA_EDIT_TIMER); KB_AULA_EDIT_TIMER = null; }
   const msg = document.getElementById('kb-ae-msg');
-  const titulo = document.getElementById('kb-ae-tit').value.trim();
+  const titulo = campoTit.value.trim();
   const sumario = document.getElementById('kb-ae-sum').value;
   const conteudo = document.getElementById('kb-ae-txt').value;
   const publicar = document.getElementById('kb-ae-pub').checked;
-  if(msg) msg.textContent = 'Salvando…';
+  kbAulaModalEstado('Salvando…', '#1D4ED8');
   const doc = kbFind(kbDisc, a.nome);
   const payload = {
     course_slug: 'prf-2021', disciplina: kbDisc, topico: a.nome,
@@ -2100,110 +2231,183 @@ window.kbAulaModalSalvar = async function(){
   const { error } = doc
     ? await PX.sb.from('knowledge_docs').update(payload).eq('id', doc.id)
     : await PX.sb.from('knowledge_docs').insert(payload);
-  if(error){ if(msg) msg.textContent = 'Erro: ' + error.message; return; }
-  await logAdmin('salvar_aula','knowledge_docs', doc ? doc.id : null, { disciplina: kbDisc, aula: a.nome, publicado: publicar });
+  if(error){
+    kbAulaModalEstado('Falha ao salvar — tente de novo.', '#B91C1C');
+    if(msg) msg.textContent = 'Erro: ' + error.message;
+    return;
+  }
+  KB_AULA_EDIT_SUJO = false;
+  const hora = new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+  kbAulaModalEstado((auto ? 'Salvo automaticamente às ' : 'Salvo às ') + hora, '#047857');
+  const badge = document.getElementById('kb-ae-badge');
+  if(badge){
+    badge.className = 'kb-tag ' + (publicar ? 'is-on' : 'is-wait');
+    badge.textContent = publicar ? 'Publicada — visível ao aluno' : 'Rascunho — só você vê';
+  }
+  await logAdmin('salvar_aula','knowledge_docs', doc ? doc.id : null, { disciplina: kbDisc, aula: a.nome, publicado: publicar, auto: !!auto });
   await loadKB();
-  kbPaint();
-  if(msg) msg.textContent = publicar ? 'Aula salva e publicada para os alunos.' : 'Aula salva como rascunho.';
+  if(!auto){
+    kbPaint();
+    if(recarregar) kbAulaEditar(a.id);
+  }
+  if(msg && !auto) msg.textContent = publicar ? 'Aula publicada para os alunos.' : 'Aula salva como rascunho.';
 };
+
 
 function kbAulasRefresh(){
   if(!kbDisc) return;
   kbAulasCarregar(kbDisc).then(kbAulasPaint).catch(function(){ kbAulasPaint(); });
 }
 function kbAulaMsg(t){ const el = document.getElementById('kb-aula-msg'); if(el) el.textContent = t; }
+
+/* ---- Abas de origem do material da aula (texto, arquivos, site, vídeo, Drive) ---- */
+let KB_AULA_TAB = 'texto';
+window.kbAulaTab = function(tab){
+  KB_AULA_TAB = tab;
+  document.querySelectorAll('[data-aulapane]').forEach(function(p){ p.style.display = p.dataset.aulapane === tab ? '' : 'none'; });
+  document.querySelectorAll('[data-aulatab]').forEach(function(b){
+    const on = b.dataset.aulatab === tab;
+    b.style.background = on ? '#fff' : 'transparent';
+    b.style.boxShadow = on ? '0 1px 2px rgba(15,23,42,.12)' : 'none';
+    b.style.color = on ? '#1E3A8A' : '#475569';
+  });
+  const btn = document.querySelector('[data-aulasend]');
+  if(btn) btn.style.display = tab === 'drive' ? 'none' : '';
+  if(btn) btn.textContent = tab === 'doc' ? 'Cadastrar aula(s)' : 'Cadastrar aula';
+};
+
+/* Fila de arquivos: cada arquivo vira uma aula. */
+let KB_AULA_FILA = [];   /* {file, nome, estado, chars, erro} */
+function kbAulaFilaPaint(){
+  const box = document.getElementById('kb-aula-fila');
+  if(!box) return;
+  if(!KB_AULA_FILA.length){ box.innerHTML = ''; return; }
+  const cor = { fila:'#64748B', lendo:'#1D4ED8', pronto:'#047857', falhou:'#B91C1C' };
+  const rot = { fila:'na fila', lendo:'lendo…', pronto:'aula criada', falhou:'falhou' };
+  box.innerHTML = '<div style="border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;font-size:0.78rem;margin-top:10px">' +
+    KB_AULA_FILA.map(function(f){
+      return '<div style="padding:6px 10px;display:flex;gap:8px;align-items:center;border-bottom:1px solid #F1F5F9;background:#fff">' +
+        '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(f.nome) + '</span>' +
+        (f.chars ? '<span class="muted">' + f.chars.toLocaleString('pt-BR') + ' car.</span>' : '') +
+        '<span style="font-weight:700;color:' + cor[f.estado] + '">' + rot[f.estado] + '</span>' +
+      '</div>' + (f.erro ? '<div class="muted" style="padding:0 10px 6px;color:#B91C1C;font-size:0.72rem">' + esc(f.erro) + '</div>' : '');
+    }).join('') + '</div>';
+}
 function kbBindAulaFile(){
   const inp = document.getElementById('kb-aula-file');
   if(!inp || inp.dataset.bound) return;
   inp.dataset.bound = '1';
-  inp.addEventListener('change', async function(){
-    const f = inp.files && inp.files[0];
-    if(!f) return;
-    kbAulaMsg('Lendo ' + f.name + '…');
-    try{
-      let texto = '';
-      if(kbEhTextoSimples(f)) texto = (await f.text()).trim();
-      else{
-        const b64 = await new Promise((res,rej)=>{ const r = new FileReader(); r.onload=()=>res(String(r.result)); r.onerror=rej; r.readAsDataURL(f); });
-        const j = await kbPost('/api/public/kb-ingest', { tipo: kbEhImagem(f) ? 'imagem' : 'auto', nome:f.name, mime:f.type||'', arquivo_base64:b64 });
-        texto = j.texto || '';
-      }
-      if(!texto) throw new Error('Não consegui extrair texto deste arquivo.');
-      const ta = document.getElementById('kb-aula-txt');
-      if(ta) ta.value = texto;
-      kbAulaMsg('Arquivo lido (' + texto.length.toLocaleString('pt-BR') + ' caracteres). Agora clique em “Identificar e cadastrar aula”.');
-    }catch(e){ kbAulaMsg('Erro: ' + (e.message || e)); }
+  inp.addEventListener('change', function(){
+    KB_AULA_FILA = Array.prototype.slice.call(inp.files || []).map(function(f){
+      return { file:f, nome:f.name, estado:'fila', chars:0, erro:'' };
+    });
+    kbAulaFilaPaint();
+    kbAulaMsg(KB_AULA_FILA.length + ' arquivo(s) na fila. Clique em “Cadastrar aula(s)”.');
   });
 }
 
-window.kbAulaCadastrar = async function(){
-  const disc = kbValidDisc(kbDisc);
-  if(!disc) return kbAulaMsg('Escolha uma matéria antes.');
-  const texto = String((document.getElementById('kb-aula-txt')||{}).value || '').trim();
-  if(texto.length < 20) return kbAulaMsg('Cole o material da aula (ou envie um arquivo) antes de cadastrar.');
-  let numero = parseInt((document.getElementById('kb-aula-num')||{}).value, 10);
-  let titulo = String((document.getElementById('kb-aula-tit')||{}).value || '').trim();
-  const publicar = !!(document.getElementById('kb-aula-pub')||{}).checked;
+/* Lê o texto de um arquivo (PDF, imagem, txt…). */
+async function kbAulaLerArquivo(f){
+  if(kbEhTextoSimples(f)) return (await f.text()).trim();
+  const b64 = await new Promise((res,rej)=>{ const r = new FileReader(); r.onload=()=>res(String(r.result)); r.onerror=rej; r.readAsDataURL(f); });
+  const j = await kbPost('/api/public/kb-ingest', { tipo: kbEhImagem(f) ? 'imagem' : 'auto', nome:f.name, mime:f.type||'', arquivo_base64:b64 });
+  return String(j.texto || '').trim();
+}
 
+/* Título automático: primeira linha útil do material, ou o nome do arquivo. */
+function kbAulaTituloAuto(texto, origem, numero){
+  const linha = String(texto || '').split(/\r?\n/).map(s => s.trim()).find(s => s.length > 3);
+  let t = kbAulaTitulo(String(linha || '').replace(/^#+\s*/, '')).trim();
+  if(!t && origem) t = kbAulaTitulo(String(origem).replace(/\.[a-z0-9]+$/i, '')).trim();
+  if(!t) t = 'Aula ' + kbAulaNum(numero);
+  return t.slice(0, 90);
+}
+
+/* Cria (ou atualiza) uma aula com o texto recebido. Devolve o número usado. */
+async function kbAulaCriar(disc, texto, origem, publicar){
   await kbAulasCarregar(disc);
-
-  if(!titulo || !Number.isInteger(numero)){
-    kbAulaMsg('A IA está identificando o número e o título da aula…');
-    try{
-      const j = await kbPost('/api/public/kb-aula', {
-        disciplina: disc, texto: texto.slice(0, 20000),
-        aulas: KB_AULAS.map(a => ({ numero: a.ordem, titulo: kbAulaTitulo(a.nome) })),
-      });
-      if(!titulo) titulo = j.titulo;
-      if(!Number.isInteger(numero)) numero = j.numero;
-    }catch(e){ return kbAulaMsg('Erro da IA: ' + (e.message || e)); }
-  }
-  titulo = kbAulaTitulo(titulo).trim();
-  if(!titulo) return kbAulaMsg('Informe o título da aula.');
-  if(!Number.isInteger(numero) || numero < 0) numero = KB_AULAS.length ? Math.max.apply(null, KB_AULAS.map(a=>a.ordem)) + 1 : 0;
-
-  kbAulaMsg('Cadastrando Aula ' + kbAulaNum(numero) + ' - ' + titulo + '…');
+  const numero = KB_AULAS.length ? Math.max.apply(null, KB_AULAS.map(a=>a.ordem)) + 1 : 0;
+  const titulo = kbAulaTituloAuto(texto, origem, numero);
   const discId = await kbDiscId(disc);
-  if(!discId) return kbAulaMsg('Não encontrei esta matéria no curso.');
+  if(!discId) throw new Error('Não encontrei esta matéria no curso.');
 
-  // mesma aula (por número ou por título) é atualizada em vez de duplicada
-  const existente = KB_AULAS.find(a => a.ordem === numero || kbAulaTitulo(a.nome).toLowerCase() === titulo.toLowerCase());
+  const existente = KB_AULAS.find(a => kbAulaTitulo(a.nome).toLowerCase() === titulo.toLowerCase());
   let nomeTopico = titulo;
   if(existente){
     nomeTopico = existente.nome;
-    const up = await PX.sb.from('topics').update({ nome: titulo, ordem: numero }).eq('id', existente.id);
-    if(up.error) return kbAulaMsg('Erro ao atualizar a aula: ' + up.error.message);
-    if(existente.nome !== titulo){
-      await PX.sb.from('knowledge_docs').update({ topico: titulo }).eq('course_slug','prf-2021').eq('disciplina', disc).eq('topico', existente.nome);
-      nomeTopico = titulo;
-    }
   }else{
     const ins = await PX.sb.from('topics').insert({ discipline_id: discId, nome: titulo, ordem: numero, dificuldade: 'media' });
-    if(ins.error) return kbAulaMsg('Erro ao criar a aula: ' + ins.error.message);
+    if(ins.error) throw new Error('Erro ao criar a aula: ' + ins.error.message);
   }
+  const ordem = existente ? existente.ordem : numero;
 
   const payload = {
     course_slug: 'prf-2021', disciplina: disc, topico: nomeTopico,
-    titulo: 'Aula ' + kbAulaNum(numero) + ' - ' + titulo,
+    titulo: titulo,
     conteudo: texto, status: publicar ? 'publicado' : 'rascunho',
-    publicado: publicar, updated_by: PX.user ? PX.user.id : null,
+    publicado: !!publicar, updated_by: PX.user ? PX.user.id : null,
   };
   const atual = kbFind(disc, nomeTopico);
   const q = atual
     ? await PX.sb.from('knowledge_docs').update(payload).eq('id', atual.id)
     : await PX.sb.from('knowledge_docs').insert(payload);
-  if(q.error) return kbAulaMsg('Aula criada, mas o conteúdo não salvou: ' + q.error.message);
-
-  await logAdmin('cadastrar_aula','topics', null, { disciplina: disc, numero: numero, titulo: titulo, publicado: publicar });
-  try{ if(PX.syncCurriculo) await PX.syncCurriculo(); }catch(e){}
+  if(q.error) throw new Error('Aula criada, mas o conteúdo não salvou: ' + q.error.message);
+  await logAdmin('cadastrar_aula','topics', null, { disciplina: disc, numero: ordem, titulo: titulo, publicado: !!publicar });
   await loadKB();
-  const ta = document.getElementById('kb-aula-txt'); if(ta) ta.value = '';
-  const ni = document.getElementById('kb-aula-num'); if(ni) ni.value = '';
-  const ti = document.getElementById('kb-aula-tit'); if(ti) ti.value = '';
-  kbPaint();
-  kbPane('aulas');
-  kbAulaMsg('Aula ' + kbAulaNum(numero) + ' - ' + titulo + (publicar ? ' publicada — já aparece no painel do aluno.' : ' salva como rascunho.'));
+  return ordem;
+}
+
+window.kbAulaCadastrar = async function(){
+  const disc = kbValidDisc(kbDisc);
+  if(!disc) return kbAulaMsg('Escolha uma matéria antes.');
+  const publicar = !!(document.getElementById('kb-aula-pub')||{}).checked;
+
+  try{
+    if(KB_AULA_TAB === 'doc'){
+      const pend = KB_AULA_FILA.filter(f => f.estado === 'fila' || f.estado === 'falhou');
+      if(!pend.length) return kbAulaMsg('Escolha um ou mais arquivos antes.');
+      let feitas = 0;
+      for(const item of pend){
+        item.estado = 'lendo'; item.erro = ''; kbAulaFilaPaint();
+        kbAulaMsg('Lendo ' + item.nome + '…');
+        try{
+          const texto = await kbAulaLerArquivo(item.file);
+          if(texto.length < 20) throw new Error('Não consegui extrair texto deste arquivo.');
+          item.chars = texto.length;
+          await kbAulaCriar(disc, texto, item.nome, publicar);
+          item.estado = 'pronto'; feitas++;
+        }catch(e){ item.estado = 'falhou'; item.erro = e.message || String(e); }
+        kbAulaFilaPaint();
+      }
+      try{ if(PX.syncCurriculo) await PX.syncCurriculo(); }catch(e){}
+      kbPaint(); kbPane('aulas');
+      return kbAulaMsg(feitas + ' aula(s) cadastrada(s)' + (publicar ? ' e publicada(s).' : ' como rascunho.'));
+    }
+
+    let texto = '', origem = '';
+    if(KB_AULA_TAB === 'texto'){
+      texto = String((document.getElementById('kb-aula-txt')||{}).value || '').trim();
+    }else{
+      const campo = KB_AULA_TAB === 'video' ? 'kb-aula-video' : 'kb-aula-url';
+      const url = String((document.getElementById(campo)||{}).value || '').trim();
+      if(!url) return kbAulaMsg('Cole o link antes de cadastrar.');
+      kbAulaMsg('Lendo o conteúdo do link…');
+      const j = await kbPost('/api/public/kb-ingest', { tipo: KB_AULA_TAB === 'video' ? 'video' : 'url', url });
+      texto = String(j.texto || '').trim();
+      origem = j.origem || url;
+    }
+    if(texto.length < 20) return kbAulaMsg('Material muito curto — cole o conteúdo da aula antes de cadastrar.');
+
+    kbAulaMsg('Cadastrando aula…');
+    const n = await kbAulaCriar(disc, texto, origem, publicar);
+    try{ if(PX.syncCurriculo) await PX.syncCurriculo(); }catch(e){}
+    ['kb-aula-txt','kb-aula-url','kb-aula-video'].forEach(function(id){ const el = document.getElementById(id); if(el) el.value = ''; });
+    kbPaint();
+    kbPane('aulas');
+    kbAulaMsg('Aula ' + kbAulaNum(n) + (publicar ? ' publicada — já aparece no painel do aluno.' : ' salva como rascunho.'));
+  }catch(e){ kbAulaMsg('Erro: ' + (e.message || e)); }
 };
+
 
 
 
