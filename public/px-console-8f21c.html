@@ -1820,8 +1820,8 @@ function kbEditor(){
 
       <div id="kb-aulas-lista" style="margin-top:16px"></div>
 
-      <details class="kb-soft" style="padding:12px 14px;margin-top:16px">
-        <summary style="cursor:pointer;font-weight:650;font-size:0.85rem;color:#1E3A8A">Documentos-fonte já enviados</summary>
+      <details class="kb-soft" open style="padding:12px 14px;margin-top:16px">
+        <summary style="cursor:pointer;font-weight:650;font-size:0.85rem;color:#1E3A8A">Anexos desta matéria (PDFs das aulas e documentos-fonte)</summary>
         <div id="kb-biblioteca" style="margin-top:12px"></div>
       </details>
     </div>
@@ -2571,7 +2571,12 @@ function kbPaintBiblioteca(){
     }).join('') + '</div>';
 }
 window.kbPdfAbrir = async function(caminho){
-  const url = await PX.pdfAulaUrl(caminho);
+  let url = '';
+  if(/^https?:\/\//i.test(caminho)) url = caminho;
+  else {
+    const r = await PX.sb.storage.from('aulas-pdf').createSignedUrl(caminho, 3600);
+    url = (r && r.data && r.data.signedUrl) || '';
+  }
   if(!url) return alert('Não consegui abrir este PDF agora. Recarregue a página e tente de novo.');
   window.open(url, '_blank', 'noopener');
 };
