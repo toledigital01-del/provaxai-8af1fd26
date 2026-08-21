@@ -1960,7 +1960,24 @@ async function kbAulasMover(de, para){
   kbAulaMsg('Ordem das aulas atualizada.');
 }
 
+/* Editar o número da aula: o valor digitado vira a posição dela na sequência
+   e as demais são renumeradas automaticamente (00, 01, 02…). */
+window.kbAulaNumeroEditar = async function(id){
+  const ordenadas = KB_AULAS.slice().sort((a,b)=>a.ordem-b.ordem);
+  const de = ordenadas.findIndex(x => x.id === id);
+  if(de < 0) return;
+  const max = ordenadas.length - 1;
+  const resp = prompt('Número desta aula (0 a ' + max + '):', String(ordenadas[de].ordem));
+  if(resp == null) return;
+  const n = parseInt(String(resp).replace(/\D/g,''), 10);
+  if(!Number.isFinite(n)) return kbAulaMsg('Digite apenas números.');
+  const para = Math.max(0, Math.min(max, n));
+  if(para === de) return;
+  await kbAulasMover(de, para);
+};
+
 window.kbAulaAbrir = function(nome){ kbSelTopic(nome); kbPane('conteudo'); };
+
 
 window.kbAulaRenomear = async function(id){
   const a = KB_AULAS.find(x => x.id === id);
