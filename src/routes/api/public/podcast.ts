@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
 import { getSetting, aiKeys, currentUser, usosHoje, registrarUsoIA } from '@/lib/px-server'
-import { fetchKnowledge, baseTexto, fonteInstrucao } from '@/lib/kb-context'
+import { materialIntegral } from '@/lib/kb-context'
 import { chat, normalizar, AIError } from '@/lib/ai-gateway'
 
 const Body = z.object({
@@ -22,7 +22,7 @@ function extrairRoteiro(txt: string): Fala[] {
     return arr
       .filter((f) => f && typeof f.texto === 'string' && f.texto.trim())
       .map((f) => ({ who: f.who === 'Rafael' ? 'Rafael' : 'Ana', texto: String(f.texto).trim() }))
-      .slice(0, 8)
+      .slice(0, 16)
   } catch {
     return []
   }
@@ -48,15 +48,19 @@ export const Route = createFileRoute('/api/public/podcast')({
         if (limite > 0 && (await usosHoje(userId, 'podcast')) >= limite)
           return Response.json({ error: `Você atingiu o limite de ${limite} episódios hoje. Volte amanhã.` }, { status: 429 })
 
-        const docs = await fetchKnowledge(curso, body.disciplina, body.topico)
-        const base = baseTexto(docs, body.disciplina)
+        const base = await materialIntegral(curso, body.disciplina, body.topico || null)
 
         const system = [
           'Você roteiriza um podcast de estudos para concursos da plataforma Prova X, em português do Brasil.',
-          'Dois apresentadores conversam sobre o tópico: Ana e Rafael, alternando as falas, começando pela Ana.',
-          'Escreva de 4 a 6 falas, cada uma com 2 a 4 linhas, tom de conversa real, focado no que a banca Cebraspe cobra.',
+          'Dois apresentadores conversam: Ana (professora, começa o episódio) e Rafael (aluno curioso que provoca perguntas).',
+          'O episódio deve cobrir A MATÉRIA INTEIRA do material abaixo, de forma progressiva: abertura, conceitos-base,',
+          'desenvolvimento por partes, exemplos, pegadinhas da banca Cebraspe e um fechamento com revisão rápida.',
+          'Escreva de 12 a 16 falas alternadas, cada uma com 3 a 6 frases, tom de conversa real e didática.',
+          'Não invente lei, prazo, número ou julgado que não esteja no material. Não cite "o material" nem "o PDF".',
           'Responda SOMENTE com um JSON válido no formato [{"who":"Ana","texto":"..."},{"who":"Rafael","texto":"..."}] — sem markdown, sem comentários.',
-          fonteInstrucao(base),
+          base
+            ? '\n--- MATERIAL DA MATÉRIA ---\n' + base
+            : 'ATENÇÃO: ainda não há material cadastrado para esta matéria. Diga isso na primeira fala e faça um episódio curto e geral.',
         ].join('\n')
 
         try {
@@ -64,8 +68,9 @@ export const Route = createFileRoute('/api/public/podcast')({
             provider: cfg.provider,
             model: cfg.model,
             system,
-            user: `Disciplina: ${body.disciplina}${body.topico ? ` | Tópico: ${body.topico}` : ''}\n\nGere o roteiro em JSON.`,
+            user: `Disciplina: ${body.disciplina}${body.topico ? ` | Tópico em foco: ${body.topico}` : ''}\n\nGere o roteiro completo em JSON.`,
             keys: await aiKeys(),
+            maxTokens: 8000,
           })
           const roteiro = extrairRoteiro(saida || '')
           await registrarUsoIA({
@@ -78,7 +83,7 @@ export const Route = createFileRoute('/api/public/podcast')({
             resposta: saida || '',
           })
           if (!roteiro.length) return Response.json({ error: 'Não consegui gerar o episódio agora.' }, { status: 502 })
-          return Response.json({ roteiro, fontes: docs.length, modelo: cfg.model })
+          return Response.json({ roteiro, fontes: base ? 1 : 0, modelo: cfg.model })
         } catch (e) {
           const err = e as AIError
           return Response.json({ error: err.message || 'Não consegui gerar o episódio agora.' }, { status: err.status || 502 })
