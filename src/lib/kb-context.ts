@@ -33,3 +33,38 @@ export function fonteInstrucao(base: string) {
     : 'ATENÇÃO: ainda NÃO há material oficial cadastrado para este tópico. Avise isso claramente na sua resposta, ' +
         'de forma curta, e trabalhe apenas com o que o edital indica — nunca invente conteúdo detalhado como se fosse oficial.'
 }
+
+/** Texto integral da matéria (documentos publicados + arquivos da base),
+ *  usado quando a IA precisa cobrir a disciplina inteira e não só um tópico. */
+export async function materialIntegral(curso: string, disciplina: string, topico?: string | null) {
+  const eq = (v: string) => `eq.${encodeURIComponent(v)}`
+  const partes: string[] = []
+
+  const kd = (await fetch(
+    `${SUPABASE_URL}/rest/v1/knowledge_docs?select=titulo,sumario,topico,conteudo&course_slug=${eq(curso)}&disciplina=${eq(disciplina)}&limit=40`,
+    { headers: serviceHeaders() },
+  )
+    .then((r) => (r.ok ? r.json() : []))
+    .catch(() => [])) as Array<{ titulo?: string; sumario?: string; topico?: string; conteudo?: string }>
+
+  const kb = (await fetch(
+    `${SUPABASE_URL}/rest/v1/kb_documentos?select=nome_arquivo,topic_nome,texto_extraido&course_slug=${eq(curso)}&discipline_nome=${eq(disciplina)}&limit=40`,
+    { headers: serviceHeaders() },
+  )
+    .then((r) => (r.ok ? r.json() : []))
+    .catch(() => [])) as Array<{ nome_arquivo?: string; topic_nome?: string; texto_extraido?: string }>
+
+  const peso = (t?: string) => (topico && t === topico ? 0 : !t ? 1 : 2)
+  kd.sort((a, b) => peso(a.topico) - peso(b.topico))
+  kb.sort((a, b) => peso(a.topic_nome) - peso(b.topic_nome))
+
+  kd.forEach((d) => {
+    const t = [d.sumario || '', d.conteudo || ''].join('\n').trim()
+    if (t) partes.push(`### ${d.titulo || d.topico || disciplina}\n${t.slice(0, 20000)}`)
+  })
+  kb.forEach((d) => {
+    const t = (d.texto_extraido || '').trim()
+    if (t) partes.push(`### ${d.nome_arquivo || 'material'}\n${t.slice(0, 20000)}`)
+  })
+  return partes.join('\n\n').slice(0, 120000)
+}
