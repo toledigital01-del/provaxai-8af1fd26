@@ -157,11 +157,13 @@
   /* Chamada autenticada aos endpoints de IA do Prova X (/api/public/...) */
   PX.iaPost = async function (rota, dados) {
     try {
-      var tk = await PX.token();
-      if (!tk) return { erro: 'Entre na sua conta para usar esta ferramenta.', status: 401 };
+      var tk = null;
+      try { tk = await PX.token(); } catch (e) { tk = null; }
+      var cab = { 'Content-Type': 'application/json' };
+      if (tk) cab.Authorization = 'Bearer ' + tk;
       var r = await fetch('/api/public/' + rota, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tk },
+        headers: cab,
         body: JSON.stringify(dados || {}),
       });
       var j = await r.json();
