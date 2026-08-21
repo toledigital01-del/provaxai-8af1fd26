@@ -51,7 +51,7 @@
     var key = (curso || 'prf-2021') + '|' + disciplina;
     if (cache[key]) return cache[key];
     var qs =
-      'select=titulo,sumario,topico,conteudo&course_slug=eq.' +
+      'select=titulo,sumario,topico,conteudo,modo_exibicao,pdf_url&course_slug=eq.' +
       encodeURIComponent(curso || 'prf-2021') +
       '&disciplina=eq.' + encodeURIComponent(disciplina) +
       '&publicado=is.true';
@@ -95,6 +95,20 @@
       null;
     return { status: res.status, doc: doc, total: docs.length };
   };
+
+  /* Link temporário (assinado) para abrir o PDF de uma aula guardado no armazenamento */
+  PX.pdfAulaUrl = async function (caminho) {
+    if (!caminho) return '';
+    if (/^https?:\/\//i.test(caminho)) return caminho;
+    try {
+      await waitForSessao();
+      if (PX.ready) await PX.ready;
+      if (!PX.sb) return '';
+      var r = await PX.sb.storage.from('aulas-pdf').createSignedUrl(caminho, 3600);
+      return (r && r.data && r.data.signedUrl) || '';
+    } catch (e) { return ''; }
+  };
+
 
 
   /* Leitura autenticada genérica de uma tabela do banco (mesmo padrão do kbFetch) */
