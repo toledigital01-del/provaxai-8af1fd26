@@ -110,6 +110,7 @@ export const Route = createFileRoute('/api/public/podcast')({
             pergunta: 'podcast',
             resposta: saida || '',
           })
+          if (!roteiro.length) { console.error('roteiro vazio; saida:', (saida||'').slice(0,600)) }
           if (!roteiro.length) return Response.json({ error: 'Não consegui gerar o episódio agora.' }, { status: 502 })
 
           // 2) Guarda o roteiro para os próximos alunos ouvirem sem gerar de novo.
