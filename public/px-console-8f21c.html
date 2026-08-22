@@ -2495,7 +2495,7 @@ window.kbAulaCadastrar = async function(){
           const texto = await kbAulaLerArquivo(item.file);
           if(texto.length < 20) throw new Error('Não consegui extrair texto deste arquivo.');
           item.chars = texto.length;
-          await kbAulaCriar(disc, texto, item.nome, publicar);
+          await kbAulaCriar(disc, texto, item.nome, publicar, item.file);
           item.estado = 'pronto'; feitas++;
         }catch(e){ item.estado = 'falhou'; item.erro = e.message || String(e); }
         passo++;
@@ -2506,8 +2506,14 @@ window.kbAulaCadastrar = async function(){
       kbIngProg(pend.length, pend.length, 'Leitura concluída');
       setTimeout(kbIngProgHide, 1200);
       try{ if(PX.syncCurriculo) await PX.syncCurriculo(); }catch(e){}
+      /* Tira da fila o que já virou aula — só sobra o que falhou, sem lista repetida. */
+      KB_AULA_FILA = KB_AULA_FILA.filter(function(f){ return f.estado !== 'pronto'; });
+      const inpDoc = document.getElementById('kb-aula-file');
+      if(inpDoc) inpDoc.value = '';
       kbPaint(); kbPane('aulas');
-      return kbAulaMsg(feitas + ' aula(s) cadastrada(s)' + (publicar ? ' e publicada(s).' : ' como rascunho.'));
+      kbAulaFilaPaint();
+      return kbAulaMsg(feitas + ' aula(s) cadastrada(s)' + (publicar ? ' e publicada(s).' : ' como rascunho.') +
+        ' Os PDFs enviados ficaram anexados às aulas — use “Exibir todas em PDF” para o aluno abrir o arquivo original.');
     }
 
     let texto = '', origem = '';
