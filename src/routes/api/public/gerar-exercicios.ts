@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { getSetting, aiKeys, requireAdmin, serviceHeaders, SUPABASE_URL } from '@/lib/px-server'
+import { currentUser, requireAdmin, serviceHeaders, SUPABASE_URL } from '@/lib/px-server'
 import { materialIntegral } from '@/lib/kb-context'
-import { chat, normalizar, AIError } from '@/lib/ai-gateway'
+import { AIError } from '@/lib/ai-gateway'
+import { agentChat } from '@/lib/ai-router'
 
 /* Gera e GRAVA questões (certo/errado, estilo Cebraspe) e flashcards oficiais
    de uma aula. Uso exclusivo do painel administrativo: o conteúdo é criado
@@ -67,7 +68,7 @@ export const Route = createFileRoute('/api/public/gerar-exercicios')({
         if (material.length < 200)
           return Response.json({ error: 'Sem material suficiente nesta aula.' }, { status: 422 })
 
-        const cfg = normalizar(await getSetting('ia_athena'))
+        const agente = body.tipo === 'questoes' ? ('geracao_questoes' as const) : ('flashcards' as const)
         const system =
           body.tipo === 'questoes'
             ? [
@@ -87,15 +88,20 @@ export const Route = createFileRoute('/api/public/gerar-exercicios')({
               ].join('\n')
 
         let saida = ''
+        let modeloUsado = ''
         try {
-          saida = await chat({
-            provider: cfg.provider,
-            model: cfg.model,
+          const r = await agentChat({
+            agent: agente,
             system: system + '\n\n--- MATERIAL DA AULA ---\n' + material.slice(0, 60000),
             user: `Disciplina: ${body.disciplina} | Aula: ${body.topico}\n\nGere o JSON.`,
-            keys: await aiKeys(),
             maxTokens: 8000,
+            userId: await currentUser(request),
+            ferramenta: body.tipo,
+            disciplina: body.disciplina,
+            topico: body.topico,
           })
+          saida = r.texto
+          modeloUsado = r.model
         } catch (e) {
           const err = e as AIError
           return Response.json({ error: err.message || 'Falha na IA.' }, { status: err.status || 502 })
@@ -149,7 +155,7 @@ export const Route = createFileRoute('/api/public/gerar-exercicios')({
         if (!ins.ok)
           return Response.json({ error: 'Não consegui salvar os itens gerados.' }, { status: 500 })
 
-        return Response.json({ ok: true, cache: false, criados: linhas.length, modelo: cfg.model })
+        return Response.json({ ok: true, cache: false, criados: linhas.length, modelo: modeloUsado })
       },
     },
   },

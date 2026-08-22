@@ -68,7 +68,8 @@ function tipoValido(t?: string): t is TipoModulo {
 
 async function carregarCtx(curso: string, disciplina: string, topico: string, body: z.infer<typeof Body>) {
   const material = await materialIntegral(curso, disciplina, topico)
-  const cfg = normalizar(await getSetting('ia_athena'))
+  const rotaBase = await rotaDoAgente('geracao_aulas')
+  const rotas = await rotasPacote()
   const salva = await lerConfig(curso, disciplina, topico)
   const instrucoes = (body.config?.instrucoes ?? salva.instrucoes ?? '').trim()
   const questoes = body.config?.questoes ?? salva.questoes
@@ -79,8 +80,9 @@ async function carregarCtx(curso: string, disciplina: string, topico: string, bo
     material,
     instrucoes,
     questoes,
-    provider: cfg.provider,
-    model: cfg.model,
+    provider: rotaBase.provider,
+    model: rotaBase.model,
+    rotas,
     keys: await aiKeys(),
   }
 }

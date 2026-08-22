@@ -51,17 +51,24 @@ export class AIError extends Error {
 // ar, sem chave). Só entra em jogo quando existe uma chave salva pra ele.
 const FALLBACK_ORDER: Provider[] = ['gemini', 'anthropic', 'openai', 'lovable']
 
-/** Uma chamada de chat, com a mesma assinatura para todos os provedores.
- *  Se o provedor configurado falhar por falta de crédito/disponibilidade,
- *  tenta automaticamente o próximo provedor que tiver chave salva. */
-export async function chat(opts: {
+export type Uso = { entrada: number; saida: number }
+export type ChatResultado = { texto: string; provider: Provider; model: string; usage: Uso }
+
+type ChatOpts = {
   provider: Provider
   model: string
   system: string
   user: string
   keys: Keys
-  maxTokens?: number
-}): Promise<string> {
+  maxTokens?: number | undefined
+  /** Rota de fallback preferida (configurada no painel); tentada antes da ordem padrão. */
+  fallbackPrimeiro?: { provider: Provider; model: string } | undefined
+}
+
+/** Chamada de chat completa: devolve texto, rota efetiva e uso de tokens.
+ *  Se o provedor configurado falhar por falta de crédito/disponibilidade,
+ *  tenta a rota de fallback do painel e depois os demais provedores com chave. */
+export async function chatEx(opts: ChatOpts): Promise<ChatResultado> {
   const tentar = async (provider: Provider, model: string) =>
     callProvider({ ...opts, provider, model })
 
@@ -69,13 +76,20 @@ export async function chat(opts: {
     return await tentar(opts.provider, opts.model)
   } catch (e) {
     const err = e as AIError
-    if (!(err instanceof AIError) || ![402, 429, 503].includes(err.status)) throw err
+    if (!(err instanceof AIError) || ![402, 429, 502, 503].includes(err.status)) throw err
 
+    const candidatas: Array<{ provider: Provider; model: string }> = []
+    if (opts.fallbackPrimeiro && opts.fallbackPrimeiro.provider !== opts.provider)
+      candidatas.push(opts.fallbackPrimeiro)
     for (const fallback of FALLBACK_ORDER) {
       if (fallback === opts.provider) continue
-      if (!keyDe(fallback, opts.keys)) continue
+      if (candidatas.some((c) => c.provider === fallback)) continue
+      candidatas.push({ provider: fallback, model: MODELOS[fallback][0]! })
+    }
+    for (const c of candidatas) {
+      if (!keyDe(c.provider, opts.keys)) continue
       try {
-        return await tentar(fallback, MODELOS[fallback][0]!)
+        return await tentar(c.provider, c.model)
       } catch {
         continue
       }
@@ -84,16 +98,14 @@ export async function chat(opts: {
   }
 }
 
-async function callProvider(opts: {
-  provider: Provider
-  model: string
-  system: string
-  user: string
-  keys: Keys
-  maxTokens?: number
-}): Promise<string> {
+/** Uma chamada de chat, com a mesma assinatura para todos os provedores. */
+export async function chat(opts: ChatOpts): Promise<string> {
+  return (await chatEx(opts)).texto
+}
+
+async function callProvider(opts: ChatOpts & { provider: Provider }): Promise<ChatResultado> {
   const key = keyDe(opts.provider, opts.keys)
-  if (!key) throw new AIError(503, 'A IA escolhida não está conectada. Configure a chave em Configurações.')
+  if (!key) throw new AIError(503, 'A IA escolhida não está conectada. Configure a chave na Central de IA.')
 
   if (opts.provider === 'anthropic') {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -106,9 +118,14 @@ async function callProvider(opts: {
         messages: [{ role: 'user', content: opts.user }],
       }),
     })
-    if (!r.ok) throw new AIError(r.status === 429 ? 429 : 502, 'A IA (Anthropic) não respondeu agora.')
+    if (!r.ok) throw new AIError(r.status === 429 ? 429 : r.status === 402 ? 402 : 502, 'A IA (Anthropic) não respondeu agora.')
     const j = (await r.json()) as any
-    return (j?.content || []).map((p: any) => p?.text || '').join('') || ''
+    return {
+      texto: (j?.content || []).map((p: any) => p?.text || '').join('') || '',
+      provider: opts.provider,
+      model: opts.model,
+      usage: { entrada: j?.usage?.input_tokens || 0, saida: j?.usage?.output_tokens || 0 },
+    }
   }
 
   if (opts.provider === 'gemini') {
@@ -125,7 +142,15 @@ async function callProvider(opts: {
     )
     if (!r.ok) throw new AIError(r.status === 429 ? 429 : 502, 'A IA (Gemini) não respondeu agora.')
     const j = (await r.json()) as any
-    return (j?.candidates?.[0]?.content?.parts || []).map((p: any) => p?.text || '').join('') || ''
+    return {
+      texto: (j?.candidates?.[0]?.content?.parts || []).map((p: any) => p?.text || '').join('') || '',
+      provider: opts.provider,
+      model: opts.model,
+      usage: {
+        entrada: j?.usageMetadata?.promptTokenCount || 0,
+        saida: j?.usageMetadata?.candidatesTokenCount || 0,
+      },
+    }
   }
 
   const url =
@@ -149,5 +174,10 @@ async function callProvider(opts: {
   if (r.status === 402) throw new AIError(402, 'Créditos de IA esgotados.')
   if (!r.ok) throw new AIError(502, 'A IA não respondeu agora.')
   const j = (await r.json()) as any
-  return j?.choices?.[0]?.message?.content || ''
+  return {
+    texto: j?.choices?.[0]?.message?.content || '',
+    provider: opts.provider,
+    model: opts.model,
+    usage: { entrada: j?.usage?.prompt_tokens || 0, saida: j?.usage?.completion_tokens || 0 },
+  }
 }

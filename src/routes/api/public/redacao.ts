@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { getSetting, aiKeys, currentUser, usosHoje, registrarUsoIA } from '@/lib/px-server'
+import { currentUser, usosHoje } from '@/lib/px-server'
 import { fetchKnowledge, baseTexto, fonteInstrucao } from '@/lib/kb-context'
-import { chat, normalizar, AIError } from '@/lib/ai-gateway'
+import { AIError } from '@/lib/ai-gateway'
+import { agentChat, rotaDoAgente } from '@/lib/ai-router'
 
 const Body = z.object({
   disciplina: z.string().min(1).max(200),
@@ -26,8 +27,8 @@ export const Route = createFileRoute('/api/public/redacao')({
         }
 
         const curso = body.curso || 'prf-2021'
-        const cfg = normalizar(await getSetting('ia_athena'))
-        const limite = cfg.limiteDiario ?? 0
+        const rota = await rotaDoAgente('revisao')
+        const limite = rota.limiteDiario
         if (limite > 0 && (await usosHoje(userId, 'redacao')) >= limite)
           return Response.json({ error: `Você atingiu o limite de ${limite} correções hoje. Volte amanhã.` }, { status: 429 })
 
@@ -46,24 +47,18 @@ export const Route = createFileRoute('/api/public/redacao')({
         ].join('\n')
 
         try {
-          const feedback = await chat({
-            provider: cfg.provider,
-            model: cfg.model,
+          const r = await agentChat({
+            agent: 'revisao',
             system,
             user: `Disciplina: ${body.disciplina}${body.topico ? ` | Tópico: ${body.topico}` : ''}\n\nRESPOSTA DO ALUNO:\n${body.texto}`,
-            keys: await aiKeys(),
-          })
-          await registrarUsoIA({
-            user_id: userId,
+            userId,
             ferramenta: 'redacao',
-            modelo: cfg.model,
-            discipline_nome: body.disciplina,
-            topic_nome: body.topico ?? null,
-            pergunta: body.texto,
-            resposta: feedback || '',
+            disciplina: body.disciplina,
+            topico: body.topico ?? null,
           })
+          const feedback = r.texto
           if (!feedback) return Response.json({ error: 'Não consegui corrigir agora.' }, { status: 502 })
-          return Response.json({ feedback, fontes: docs.length, modelo: cfg.model })
+          return Response.json({ feedback, fontes: docs.length, modelo: r.model })
         } catch (e) {
           const err = e as AIError
           return Response.json({ error: err.message || 'Não consegui corrigir agora.' }, { status: err.status || 502 })

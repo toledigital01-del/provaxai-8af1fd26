@@ -143,10 +143,16 @@ export async function registrarUsoIA(reg: {
   user_id: string
   ferramenta: string
   modelo?: string
+  agent_slug?: string
+  provider?: string
   discipline_nome?: string | null
   topic_nome?: string | null
   pergunta?: string
   resposta?: string
+  tokens_entrada?: number
+  tokens_saida?: number
+  duracao_ms?: number
+  sucesso?: boolean
 }) {
   try {
     await fetch(`${SUPABASE_URL}/rest/v1/ai_logs`, {

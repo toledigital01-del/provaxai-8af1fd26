@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ApiPublicAdminCopilotRouteImport } from './routes/api/public/admin-copilot'
 import { Route as ApiPublicAdminDeleteUserRouteImport } from './routes/api/public/admin-delete-user'
+import { Route as ApiPublicAiCentralRouteImport } from './routes/api/public/ai-central'
 import { Route as ApiPublicAiStatusRouteImport } from './routes/api/public/ai-status'
 import { Route as ApiPublicAiTestRouteImport } from './routes/api/public/ai-test'
 import { Route as ApiPublicAthenaRouteImport } from './routes/api/public/athena'
@@ -54,6 +55,11 @@ const ApiPublicAdminDeleteUserRoute =
     path: '/api/public/admin-delete-user',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicAiCentralRoute = ApiPublicAiCentralRouteImport.update({
+  id: '/api/public/ai-central',
+  path: '/api/public/ai-central',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAiStatusRoute = ApiPublicAiStatusRouteImport.update({
   id: '/api/public/ai-status',
   path: '/api/public/ai-status',
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/public/admin-copilot': typeof ApiPublicAdminCopilotRoute
   '/api/public/admin-delete-user': typeof ApiPublicAdminDeleteUserRoute
+  '/api/public/ai-central': typeof ApiPublicAiCentralRoute
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/ai-test': typeof ApiPublicAiTestRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
@@ -181,6 +188,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/public/admin-copilot': typeof ApiPublicAdminCopilotRoute
   '/api/public/admin-delete-user': typeof ApiPublicAdminDeleteUserRoute
+  '/api/public/ai-central': typeof ApiPublicAiCentralRoute
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/ai-test': typeof ApiPublicAiTestRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
@@ -207,6 +215,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/public/admin-copilot': typeof ApiPublicAdminCopilotRoute
   '/api/public/admin-delete-user': typeof ApiPublicAdminDeleteUserRoute
+  '/api/public/ai-central': typeof ApiPublicAiCentralRoute
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/ai-test': typeof ApiPublicAiTestRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
@@ -234,6 +243,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/api/public/admin-copilot'
     | '/api/public/admin-delete-user'
+    | '/api/public/ai-central'
     | '/api/public/ai-status'
     | '/api/public/ai-test'
     | '/api/public/athena'
@@ -259,6 +269,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/api/public/admin-copilot'
     | '/api/public/admin-delete-user'
+    | '/api/public/ai-central'
     | '/api/public/ai-status'
     | '/api/public/ai-test'
     | '/api/public/athena'
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/api/public/admin-copilot'
     | '/api/public/admin-delete-user'
+    | '/api/public/ai-central'
     | '/api/public/ai-status'
     | '/api/public/ai-test'
     | '/api/public/athena'
@@ -310,6 +322,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiPublicAdminCopilotRoute: typeof ApiPublicAdminCopilotRoute
   ApiPublicAdminDeleteUserRoute: typeof ApiPublicAdminDeleteUserRoute
+  ApiPublicAiCentralRoute: typeof ApiPublicAiCentralRoute
   ApiPublicAiStatusRoute: typeof ApiPublicAiStatusRoute
   ApiPublicAiTestRoute: typeof ApiPublicAiTestRoute
   ApiPublicAthenaRoute: typeof ApiPublicAthenaRoute
@@ -359,6 +372,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/admin-delete-user'
       fullPath: '/api/public/admin-delete-user'
       preLoaderRoute: typeof ApiPublicAdminDeleteUserRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/ai-central': {
+      id: '/api/public/ai-central'
+      path: '/api/public/ai-central'
+      fullPath: '/api/public/ai-central'
+      preLoaderRoute: typeof ApiPublicAiCentralRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/ai-status': {
@@ -502,6 +522,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiPublicAdminCopilotRoute: ApiPublicAdminCopilotRoute,
   ApiPublicAdminDeleteUserRoute: ApiPublicAdminDeleteUserRoute,
+  ApiPublicAiCentralRoute: ApiPublicAiCentralRoute,
   ApiPublicAiStatusRoute: ApiPublicAiStatusRoute,
   ApiPublicAiTestRoute: ApiPublicAiTestRoute,
   ApiPublicAthenaRoute: ApiPublicAthenaRoute,

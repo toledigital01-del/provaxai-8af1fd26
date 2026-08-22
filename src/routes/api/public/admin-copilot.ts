@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { getSetting, aiKeys, requireAdmin } from '@/lib/px-server'
-import { chat, normalizar, AIError } from '@/lib/ai-gateway'
+import { requireAdmin, currentUser } from '@/lib/px-server'
+import { AIError } from '@/lib/ai-gateway'
+import { agentChat } from '@/lib/ai-router'
 
 /* Copiloto do painel administrativo. IA separada da Athena (usa a config "ia_sistema"):
    ajuda o admin a organizar o edital, cobrir tópicos e operar a base de conhecimento. */
@@ -28,8 +29,6 @@ export const Route = createFileRoute('/api/public/admin-copilot')({
           return Response.json({ error: 'Requisição inválida.' }, { status: 400 })
         }
 
-        const cfg = normalizar(await getSetting('ia_sistema'))
-
         const system = [
           'Você é o copiloto administrativo do Prova X (plataforma de estudos para concursos).',
           'Fala com o ADMINISTRADOR da plataforma, nunca com o aluno. Você não é a Athena.',
@@ -51,15 +50,16 @@ export const Route = createFileRoute('/api/public/admin-copilot')({
         ].join('\n\n')
 
         try {
-          const resposta = await chat({
-            provider: cfg.provider,
-            model: cfg.model,
+          const userId = await currentUser(request)
+          const r = await agentChat({
+            agent: 'assistente_admin',
             system,
             user,
-            keys: await aiKeys(),
             maxTokens: 2000,
+            userId,
+            ferramenta: 'admin_copilot',
           })
-          return Response.json({ resposta: resposta || 'Não consegui responder agora.', modelo: cfg.model })
+          return Response.json({ resposta: r.texto || 'Não consegui responder agora.', modelo: r.model })
         } catch (e) {
           const err = e as AIError
           return Response.json({ error: err.message || 'A IA não respondeu agora.' }, { status: err.status || 502 })

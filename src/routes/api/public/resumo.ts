@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { getSetting, aiKeys, currentUser, usosHoje, registrarUsoIA, serviceHeaders, SUPABASE_URL } from '@/lib/px-server'
+import { currentUser, usosHoje, serviceHeaders, SUPABASE_URL } from '@/lib/px-server'
 import { fetchKnowledge, baseTexto, fonteInstrucao } from '@/lib/kb-context'
-import { chat, normalizar, AIError } from '@/lib/ai-gateway'
+import { AIError } from '@/lib/ai-gateway'
+import { agentChat, rotaDoAgente } from '@/lib/ai-router'
 import { lerRecurso, salvarRecurso } from '@/lib/aula-recursos'
 
 const Body = z.object({
@@ -65,8 +66,8 @@ export const Route = createFileRoute('/api/public/resumo')({
             })
         }
 
-        const cfg = normalizar(await getSetting('ia_athena'))
-        const limite = cfg.limiteDiario ?? 0
+        const rota = await rotaDoAgente('resumos')
+        const limite = rota.limiteDiario
         if (limite > 0 && (await usosHoje(userId, 'resumo')) >= limite)
           return Response.json({ error: `Você atingiu o limite de ${limite} resumos hoje. Volte amanhã.` }, { status: 429 })
 
@@ -83,28 +84,22 @@ export const Route = createFileRoute('/api/public/resumo')({
         ].join('\n')
 
         try {
-          const resumo = await chat({
-            provider: cfg.provider,
-            model: cfg.model,
+          const r = await agentChat({
+            agent: 'resumos',
             system,
             user: `Disciplina: ${body.disciplina}${body.topico ? ` | Tópico: ${body.topico}` : ''}\n\nGere o resumo.`,
-            keys: await aiKeys(),
-          })
-          await registrarUsoIA({
-            user_id: userId,
+            userId,
             ferramenta: 'resumo',
-            modelo: cfg.model,
-            discipline_nome: body.disciplina,
-            topic_nome: body.topico ?? null,
-            pergunta: 'resumo',
-            resposta: resumo || '',
+            disciplina: body.disciplina,
+            topico: body.topico ?? null,
           })
+          const resumo = r.texto
           if (!resumo) return Response.json({ error: 'Não consegui gerar o resumo agora.' }, { status: 502 })
-          await salvarRecurso(curso, body.disciplina, body.topico, 'resumo', { resumo, fontes: docs.length }, cfg.model)
+          await salvarRecurso(curso, body.disciplina, body.topico, 'resumo', { resumo, fontes: docs.length }, r.model)
           return Response.json({
             resumo,
             fontes: docs.length,
-            modelo: cfg.model,
+            modelo: r.model,
             cache: false,
             extras: await extrasPublicados(curso, body.disciplina, body.topico),
           })

@@ -302,6 +302,8 @@ export type GerarCtx = {
   questoes?: QuestoesCfg | undefined
   provider: Provider
   model: string
+  /** Rotas por módulo (Central de IA): quando presente, cada módulo usa seu agente. */
+  rotas?: Partial<Record<TipoModulo, { provider: Provider; model: string }>> | undefined
   keys: Keys
 }
 
@@ -321,8 +323,15 @@ function promptBase(ctx: GerarCtx, regras: string[]) {
     .join('\n')
 }
 
+/** Aplica ao contexto a rota do agente dono do módulo, quando configurada. */
+function rotear(ctx: GerarCtx, tipo: TipoModulo): GerarCtx {
+  const r = ctx.rotas?.[tipo]
+  return r ? { ...ctx, provider: r.provider, model: r.model } : ctx
+}
+
 /** Gera UM módulo da aula. Devolve { conteudo, meta } pronto para salvarVersao. */
-export async function gerarModulo(tipo: TipoModulo, ctx: GerarCtx): Promise<{ conteudo: string; meta: Record<string, unknown> }> {
+export async function gerarModulo(tipo: TipoModulo, ctx0: GerarCtx): Promise<{ conteudo: string; meta: Record<string, unknown> }> {
+  const ctx = rotear(ctx0, tipo)
   const user = `Disciplina: ${ctx.disciplina} | Aula: ${ctx.topico}\n\nGere o conteúdo agora.`
 
   if (tipo === 'aula') {
@@ -503,7 +512,8 @@ export async function gerarModulo(tipo: TipoModulo, ctx: GerarCtx): Promise<{ co
 }
 
 /** Acrescenta conteúdo novo ao módulo, sem apagar o que já existe. */
-export async function acrescentarModulo(tipo: TipoModulo, ctx: GerarCtx, atual: string, instrucao: string) {
+export async function acrescentarModulo(tipo: TipoModulo, ctx0: GerarCtx, atual: string, instrucao: string) {
+  const ctx = rotear(ctx0, tipo)
   const formato = MODULOS.find((m) => m.tipo === tipo)?.formato
   const system = [
     'Você é a Athena, professora de concursos da plataforma Prova X.',
@@ -534,7 +544,8 @@ export async function acrescentarModulo(tipo: TipoModulo, ctx: GerarCtx, atual: 
 }
 
 /** Melhora/reescreve o conteúdo atual seguindo a instrução do administrador. */
-export async function melhorarModulo(tipo: TipoModulo, ctx: GerarCtx, atual: string, instrucao: string) {
+export async function melhorarModulo(tipo: TipoModulo, ctx0: GerarCtx, atual: string, instrucao: string) {
+  const ctx = rotear(ctx0, tipo)
   const formato = MODULOS.find((m) => m.tipo === tipo)?.formato
   const system = [
     'Você é a Athena, professora de concursos da plataforma Prova X.',

@@ -44,44 +44,157 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_agent_settings: {
+        Row: {
+          agent_slug: string
+          custom_model: string | null
+          fallback_ativo: boolean
+          fallback_model: string | null
+          fallback_provider: string | null
+          limite_diario: number
+          model: string
+          prompt_extra: string | null
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          agent_slug: string
+          custom_model?: string | null
+          fallback_ativo?: boolean
+          fallback_model?: string | null
+          fallback_provider?: string | null
+          limite_diario?: number
+          model?: string
+          prompt_extra?: string | null
+          provider?: string
+          updated_at?: string
+        }
+        Update: {
+          agent_slug?: string
+          custom_model?: string | null
+          fallback_ativo?: boolean
+          fallback_model?: string | null
+          fallback_provider?: string | null
+          limite_diario?: number
+          model?: string
+          prompt_extra?: string | null
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_settings_agent_slug_fkey"
+            columns: ["agent_slug"]
+            isOneToOne: true
+            referencedRelation: "ai_agents"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      ai_agents: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          grupo: string
+          nome: string
+          slug: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          grupo?: string
+          nome: string
+          slug: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          grupo?: string
+          nome?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      ai_integrations: {
+        Row: {
+          nome: string
+          provedor: string
+          teste_detalhe: string | null
+          teste_ok: boolean | null
+          ultimo_teste: string | null
+          updated_at: string
+        }
+        Insert: {
+          nome: string
+          provedor: string
+          teste_detalhe?: string | null
+          teste_ok?: boolean | null
+          ultimo_teste?: string | null
+          updated_at?: string
+        }
+        Update: {
+          nome?: string
+          provedor?: string
+          teste_detalhe?: string | null
+          teste_ok?: boolean | null
+          ultimo_teste?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_logs: {
         Row: {
+          agent_slug: string | null
           created_at: string
           custo_cents: number
           discipline_nome: string | null
+          duracao_ms: number | null
           ferramenta: string | null
           id: string
           modelo: string | null
           pergunta: string | null
+          provider: string | null
           resposta: string | null
+          sucesso: boolean
           tokens_entrada: number
           tokens_saida: number
           topic_nome: string | null
           user_id: string | null
         }
         Insert: {
+          agent_slug?: string | null
           created_at?: string
           custo_cents?: number
           discipline_nome?: string | null
+          duracao_ms?: number | null
           ferramenta?: string | null
           id?: string
           modelo?: string | null
           pergunta?: string | null
+          provider?: string | null
           resposta?: string | null
+          sucesso?: boolean
           tokens_entrada?: number
           tokens_saida?: number
           topic_nome?: string | null
           user_id?: string | null
         }
         Update: {
+          agent_slug?: string | null
           created_at?: string
           custo_cents?: number
           discipline_nome?: string | null
+          duracao_ms?: number | null
           ferramenta?: string | null
           id?: string
           modelo?: string | null
           pergunta?: string | null
+          provider?: string | null
           resposta?: string | null
+          sucesso?: boolean
           tokens_entrada?: number
           tokens_saida?: number
           topic_nome?: string | null

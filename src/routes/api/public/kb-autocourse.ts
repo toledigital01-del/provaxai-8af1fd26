@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { getSetting, aiKeys, requireAdmin } from '@/lib/px-server'
-import { chat, normalizar, AIError, MODELOS, type Provider } from '@/lib/ai-gateway'
+import { aiKeys, requireAdmin } from '@/lib/px-server'
+import { chat, AIError, MODELOS, type Provider } from '@/lib/ai-gateway'
+import { rotaDoAgente } from '@/lib/ai-router'
 
 const Body = z.object({
   disciplina: z.string().min(1).max(200),
@@ -32,8 +33,8 @@ export const Route = createFileRoute('/api/public/kb-autocourse')({
           return Response.json({ error: 'Requisição inválida.' }, { status: 400 })
         }
 
-        // IA do sistema definida em Configurações; o painel pode sobrescrever pontualmente.
-        const salvo = normalizar(await getSetting('ia_sistema'))
+        // Rota do agente administrativo definida na Central de IA; o painel pode sobrescrever pontualmente.
+        const salvo = await rotaDoAgente('assistente_admin')
         const provider: Provider = body.provider || salvo.provider
         const modelo = MODELOS[provider].includes(body.modelo || '')
           ? (body.modelo as string)

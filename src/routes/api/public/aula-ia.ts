@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { getSetting, aiKeys, currentUser, registrarUsoIA, serviceHeaders, SUPABASE_URL } from '@/lib/px-server'
-import { chat, normalizar, AIError } from '@/lib/ai-gateway'
+import { currentUser, serviceHeaders, SUPABASE_URL } from '@/lib/px-server'
+import { AIError } from '@/lib/ai-gateway'
+import { agentChat } from '@/lib/ai-router'
 
 /* Aula explicada pela Athena, gerada a partir do material carregado.
    - Cursos oficiais (slug existente em `courses`): a aula é gerada UMA vez e
@@ -120,7 +121,6 @@ export const Route = createFileRoute('/api/public/aula-ia')({
             { status: 422 },
           )
 
-        const cfg = normalizar(await getSetting('ia_athena'))
         const system = [
           'Você é a Athena, professora experiente de cursinho para concursos públicos (banca Cebraspe).',
           'Sua tarefa: transformar o material bruto abaixo em uma AULA EXPOSITIVA completa, como se você estivesse',
@@ -146,15 +146,20 @@ export const Route = createFileRoute('/api/public/aula-ia')({
         ].join('\n')
 
         let aula = ''
+        let modeloUsado = ''
         try {
-          aula = await chat({
-            provider: cfg.provider,
-            model: cfg.model,
+          const r = await agentChat({
+            agent: 'geracao_aulas',
             system,
             user: `Disciplina: ${body.disciplina}\nTópico: ${body.topico}\n\nEscreva a aula completa.`,
-            keys: await aiKeys(),
             maxTokens: 16000,
+            userId,
+            ferramenta: 'aula-ia',
+            disciplina: body.disciplina,
+            topico: body.topico,
           })
+          aula = r.texto
+          modeloUsado = r.model
         } catch (e) {
           const err = e as AIError
           return Response.json({ error: err.message || 'Não consegui montar a aula agora.' }, { status: err.status || 502 })
@@ -179,24 +184,14 @@ export const Route = createFileRoute('/api/public/aula-ia')({
               user_id: dono,
               titulo: body.topico,
               conteudo: aula,
-              modelo: cfg.model,
+              modelo: modeloUsado,
             }),
           })
         } catch {
           /* cache é best-effort */
         }
 
-        if (userId) await registrarUsoIA({
-          user_id: userId,
-          ferramenta: 'aula-ia',
-          modelo: cfg.model,
-          discipline_nome: body.disciplina,
-          topic_nome: body.topico,
-          pergunta: 'aula',
-          resposta: aula,
-        })
-
-        return Response.json({ aula, titulo: body.topico, modelo: cfg.model, cache: false, compartilhada: oficial })
+        return Response.json({ aula, titulo: body.topico, modelo: modeloUsado, cache: false, compartilhada: oficial })
       },
     },
   },
