@@ -3545,21 +3545,25 @@ function kbIaApi(payload){
 function kbIaJsonBonito(tipo, conteudo){
   try{
     const j = JSON.parse(conteudo);
-    if(tipo === 'flashcards' && j.flashcards)
-      return j.flashcards.map(function(f,i){ return '<div style="padding:8px 0;border-bottom:1px solid #F1F5F9"><b>'+(i+1)+'. '+esc(f.frente||'')+'</b><br><span style="color:#475569">'+esc(f.verso||'')+'</span></div>'; }).join('');
-    if(tipo === 'questions' && j.questoes)
-      return j.questoes.map(function(q,i){
-        const itens = (q.itens||[]).map(function(it,k){
-          const gab = (q.gabarito||'').split(';')[k]||'';
-          return '<div style="padding:6px 10px;border-left:3px solid '+(gab==='C'?'#10B981':'#EF4444')+';margin:6px 0;background:#F8FAFC;border-radius:6px">'+esc(it||'')+' <b>('+(gab||'?')+')</b>'+(it.comentario?'<br><span style="color:#64748B;font-size:0.82rem">'+esc(it.comentario)+'</span>':'')+'</div>';
-        }).join('');
-        return '<div style="margin-bottom:14px"><b>'+(i+1)+'. '+esc(q.enunciado||'')+'</b>'+itens+'</div>';
+    const arr = Array.isArray(j) ? j : (j.questoes || j.flashcards || j.falas || j.frases || []);
+    if(tipo === 'flashcards')
+      return arr.map(function(f,i){ return '<div style="padding:8px 0;border-bottom:1px solid #F1F5F9"><b>'+(i+1)+'. '+esc(f.frente||'')+'</b><br><span style="color:#475569">'+esc(f.verso||'')+'</span></div>'; }).join('');
+    if(tipo === 'questions')
+      return arr.map(function(q,i){
+        const gab = String(q.gabarito||'?').toUpperCase();
+        return '<div style="margin-bottom:10px;padding:8px 12px;border-left:3px solid '+(gab==='C'?'#10B981':'#EF4444')+';background:#F8FAFC;border-radius:6px">'
+          + '<b>'+(i+1)+'. '+esc(q.enunciado||'')+'</b> <b style="color:'+(gab==='C'?'#047857':'#B91C1C')+'">('+gab+')</b>'
+          + (q.comentario ? '<br><span style="color:#64748B;font-size:0.82rem">'+esc(q.comentario)+'</span>' : '')
+          + '</div>';
       }).join('');
-    if(tipo === 'podcast' && j.falas)
-      return '<div style="margin-bottom:8px;color:#64748B">Duração estimada: '+(j.duracao_estimada_min||'—')+' min</div>' + j.falas.map(function(f){ return '<div style="margin:6px 0"><b style="color:#3730A3">'+esc(f.quem==='B'?'Bia (co-host)':'Ana (host)')+':</b> '+esc(f.fala||'')+'</div>'; }).join('');
-    if(tipo === 'lacunas' && j.frases)
-      return j.frases.map(function(f,i){
-        return '<div style="padding:8px 0;border-bottom:1px solid #F1F5F9"><b>'+(i+1)+'.</b> '+esc((f.com_lacuna||'').replace(/____+/g,'〔____〕'))+'<br><span style="color:#059669;font-size:0.84rem">Resposta: '+esc((f.respostas||[]).join(' / '))+'</span></div>';
+    if(tipo === 'podcast')
+      return arr.map(function(f){
+        const quem = f.who || f.quem || 'Ana';
+        return '<div style="margin:6px 0"><b style="color:#3730A3">'+esc(quem)+':</b> '+esc(f.texto || f.fala || '')+'</div>';
+      }).join('');
+    if(tipo === 'lacunas')
+      return arr.map(function(f,i){
+        return '<div style="padding:8px 0;border-bottom:1px solid #F1F5F9"><b>'+(i+1)+'.</b> '+esc((f.frase || f.com_lacuna || '').replace(/___+/g,'〔____〕'))+'<br><span style="color:#059669;font-size:0.84rem">Resposta: '+esc((f.respostas||[]).join(' / '))+'</span></div>';
       }).join('');
     return '<pre style="white-space:pre-wrap;font-size:0.8rem">'+esc(JSON.stringify(j,null,2))+'</pre>';
   }catch(e){
@@ -3570,15 +3574,14 @@ function kbIaInfoLinha(tipo, v){
   if(!v) return '';
   let det;
   const m = v.meta || {};
-  if(tipo === 'questions') det = (m.itens ? m.itens + ' itens' : (m.questoes||0) + ' questões');
-  else if(tipo === 'flashcards') det = (m.flashcards||0) + ' flashcards';
-  else if(tipo === 'lacunas') det = (m.frases||0) + ' frases';
-  else if(tipo === 'podcast') det = (m.falas||0) + ' falas · ~' + (m.duracao_min||'—') + ' min';
-  else if(tipo === 'summary' || tipo === 'review') det = (m.topicos||0) + ' tópicos';
-  else det = (v.conteudo||'').length.toLocaleString('pt-BR') + ' caracteres';
-  const dt = v.updated_at ? new Date(v.updated_at).toLocaleString('pt-BR') : '';
-  const origem = { ia:'gerado pela IA', edicao:'editado manualmente', sistema:'migrado do conteúdo em uso' }[v.origem] || v.origem || '';
-  return det + ' · ' + dt + (origem ? ' · ' + origem : '');
+  if(tipo === 'questions') det = (m.itens||0) + ' itens certo/errado';
+  else if(tipo === 'flashcards') det = (m.itens||0) + ' flashcards';
+  else if(tipo === 'lacunas') det = (m.itens||0) + ' frases';
+  else if(tipo === 'podcast') det = (m.falas||0) + ' falas · ~' + (m.minutos||'—') + ' min';
+  else det = (v.caracteres||0).toLocaleString('pt-BR') + ' caracteres';
+  const dt = v.atualizado_em ? new Date(v.atualizado_em).toLocaleString('pt-BR') : '';
+  const origem = { ia:'gerado pela IA', admin:'criado manualmente', 'ia+admin':'IA + edição manual', sistema:'migrado do conteúdo em uso' }[v.origem] || v.origem || '';
+  return det + ' · ' + dt + (origem ? ' · ' + origem : '') + (m.modelo ? ' · ' + m.modelo : '');
 }
 
 /* ---------- selo de IA na linha de cada aula ---------- */
