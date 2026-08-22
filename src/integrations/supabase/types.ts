@@ -1175,6 +1175,81 @@ export type Database = {
         }
         Relationships: []
       }
+      rag_events: {
+        Row: {
+          course_slug: string
+          created_at: string
+          disciplina: string
+          id: string
+          motivo_fallback: string | null
+          pergunta: string | null
+          rag_ativo: boolean
+          sim_max: number | null
+          sim_media: number | null
+          topico: string | null
+          trechos: number
+          user_id: string | null
+        }
+        Insert: {
+          course_slug: string
+          created_at?: string
+          disciplina: string
+          id?: string
+          motivo_fallback?: string | null
+          pergunta?: string | null
+          rag_ativo?: boolean
+          sim_max?: number | null
+          sim_media?: number | null
+          topico?: string | null
+          trechos?: number
+          user_id?: string | null
+        }
+        Update: {
+          course_slug?: string
+          created_at?: string
+          disciplina?: string
+          id?: string
+          motivo_fallback?: string | null
+          pergunta?: string | null
+          rag_ativo?: boolean
+          sim_max?: number | null
+          sim_media?: number | null
+          topico?: string | null
+          trechos?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      rag_settings: {
+        Row: {
+          course_slug: string
+          disciplina: string | null
+          id: string
+          max_chars: number
+          threshold: number
+          top_k: number
+          updated_at: string
+        }
+        Insert: {
+          course_slug: string
+          disciplina?: string | null
+          id?: string
+          max_chars?: number
+          threshold?: number
+          top_k?: number
+          updated_at?: string
+        }
+        Update: {
+          course_slug?: string
+          disciplina?: string | null
+          id?: string
+          max_chars?: number
+          threshold?: number
+          top_k?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       study_blocks: {
         Row: {
           concluido: boolean
