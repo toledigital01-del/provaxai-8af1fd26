@@ -177,9 +177,9 @@ export async function indexarEscopo(opts: { curso: string; disciplina?: string |
 export async function buscarTrechos(opts: {
   pergunta: string
   curso: string
-  disciplina?: string
-  topico?: string | null
-  max?: number
+  disciplina?: string | undefined
+  topico?: string | null | undefined
+  max?: number | undefined
 }): Promise<TrechoRag[]> {
   const [vetor] = await embedTextos([opts.pergunta])
   if (!vetor) return []
