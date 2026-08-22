@@ -3,7 +3,15 @@ import { z } from 'zod'
 import { SUPABASE_URL, currentUser, hasCourseAccess, usosHoje, serviceHeaders } from '@/lib/px-server'
 import { AIError } from '@/lib/ai-gateway'
 import { agentChat, rotaDoAgente } from '@/lib/ai-router'
-import { buscarTrechos, escopoIndexado, indexarEscopo, MAX_RAG_CHARS, type TrechoRag } from '@/lib/rag'
+import {
+  buscarTrechos,
+  configRag,
+  escopoDesatualizado,
+  indexarEscopo,
+  registrarRagEvento,
+  type RagConfig,
+  type TrechoRag,
+} from '@/lib/rag'
 
 const Body = z.object({
   disciplina: z.string().min(1).max(200),
@@ -14,15 +22,15 @@ const Body = z.object({
 
 type Fonte = { n: number; titulo: string; disciplina: string; topico: string | null; similaridade: number }
 
-/** Monta o contexto a partir dos trechos RAG, respeitando o limite rígido. */
-function montarContexto(trechos: TrechoRag[]) {
+/** Monta o contexto a partir dos trechos RAG, respeitando o limite rígido configurado. */
+function montarContexto(trechos: TrechoRag[], cfg: RagConfig) {
   let usado = 0
   const partes: string[] = []
   const fontes: Fonte[] = []
-  for (const t of trechos) {
+  for (const t of trechos.slice(0, cfg.topK)) {
     const n = fontes.length + 1
     const bloco = `### [Fonte ${n}] ${t.titulo || t.topico || t.disciplina}${t.topico ? ` · ${t.topico}` : ''}\n${t.trecho}`
-    if (usado + bloco.length > MAX_RAG_CHARS) continue
+    if (usado + bloco.length > cfg.maxChars) continue
     usado += bloco.length
     partes.push(bloco)
     fontes.push({
