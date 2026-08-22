@@ -1907,7 +1907,7 @@ function kbAulasPaint(){
       '<p class="muted" style="margin:0;flex:1;min-width:200px;font-size:0.75rem">Arraste pelo ⠿ para mudar a ordem — ou clique no número da aula para digitar a posição dela.</p>' +
       '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasPdfLote()">Anexar PDFs em lote</button>' +
       '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasTodasPdf()">Exibir todas em PDF</button>' +
-      '<button class="act primary" style="font-size:0.75rem;padding:4px 10px" onclick="kbPrepararDisc(kbDisc)">Preparar conteúdo de IA de todas</button>' +
+      '<button class="act primary" style="font-size:0.75rem;padding:4px 10px" onclick="kbIaLote()">Preparar conteúdo de IA de todas</button>' +
       '<button class="act danger" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasExcluirTodas()">Excluir todas as aulas</button>' +
     '</div>' +
 
@@ -1927,14 +1927,16 @@ function kbAulasPaint(){
               ? '<span class="kb-tag" style="background:#FEF3C7;color:#92400E;border-color:#FDE68A" title="Esta aula está no modo PDF mas nenhum arquivo foi anexado — o aluno vê o texto.">PDF faltando</span>'
               : '')) +
         '<span class="kb-tag ' + (pub ? 'is-on' : 'is-wait') + '">' + (pub ? 'publicada' : temTexto ? 'rascunho' : 'sem conteúdo') + '</span>' +
+        '<span class="kb-tag kb-ia-badge" data-topico="' + esc(a.nome).replace(/"/g,'&quot;') + '" style="display:none"></span>' +
         '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaAbrir(\'' + escJs(a.nome) + '\')">Abrir</button>' +
         '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaRenomear(\'' + a.id + '\')">Renomear</button>' +
-        '<button class="act" style="font-size:0.75rem;padding:4px 10px" title="Gera e salva aula da Athena, resumo, questões, flashcards, lacunas e podcast" onclick="kbPrepararAula(kbDisc, \'' + escJs(a.nome) + '\')">Preparar IA</button>' +
+        '<button class="act" style="font-size:0.75rem;padding:4px 10px;background:#EEF2FF;border-color:#C7D2FE;color:#3730A3" title="Abre o painel de IA desta aula: gerar, editar, versionar e publicar resumo, questões, flashcards, podcast e mais" onclick="kbIaAbrir(\'' + a.id + '\')">🤖 IA da aula</button>' +
         '<button class="act primary" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaEditar(\'' + a.id + '\')">Editar aula</button>' +
         '<button class="act danger" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaExcluir(\'' + a.id + '\')">Excluir</button>' +
       '</div>';
     }).join('') + '</div>';
   kbAulasBindDnD();
+  kbIaBadges();
 }
 
 
