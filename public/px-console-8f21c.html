@@ -3508,6 +3508,647 @@ window.copEnviar = async function(){
 document.addEventListener('keydown', function(e){
   if(e.key === 'Enter' && document.activeElement && document.activeElement.id === 'cop-in'){ e.preventDefault(); copEnviar(); }
 });
+
+/* ================================================================
+   IA DA AULA — painel de gerenciamento do pacote de conteúdo
+   inteligente de cada aula (gerar / editar / melhorar / versionar /
+   publicar). Toda a lógica de geração mora em /api/public/aula-pacote.
+   ================================================================ */
+const IA_MODULOS = [
+  { tipo:'aula', rotulo:'Aula com Athena IA', icon:'🎓', formato:'md' },
+  { tipo:'summary', rotulo:'Resumo inteligente', icon:'📖', formato:'md' },
+  { tipo:'review', rotulo:'Revisão inteligente', icon:'🧠', formato:'md' },
+  { tipo:'questions', rotulo:'Questões', icon:'❓', formato:'json' },
+  { tipo:'flashcards', rotulo:'Flashcards', icon:'🃏', formato:'json' },
+  { tipo:'lacunas', rotulo:'Preencher espaços', icon:'✏️', formato:'json' },
+  { tipo:'key_points', rotulo:'Pontos-chave', icon:'📌', formato:'md' },
+  { tipo:'traps', rotulo:'Pegadinhas de prova', icon:'⚠️', formato:'md' },
+  { tipo:'podcast', rotulo:'Podcast', icon:'🎙️', formato:'json' },
+  { tipo:'athena_knowledge', rotulo:'Base da Athena IA', icon:'🤖', formato:'md' },
+];
+const IA_MELHORAR_OPS = {
+  summary:['mais organizado','mais objetivo','mais didático','mais direcionado para prova','formato de revisão rápida'],
+  review:['mais organizado','mais objetivo','mais didático','mais direcionado para prova'],
+  key_points:['mais organizado','mais direcionado para prova','mais objetivo'],
+  traps:['mais direcionado para prova','mais didático','mais organizado'],
+  aula:['mais didático','mais direcionado para prova','mais organizado'],
+  athena_knowledge:['mais organizado','mais objetivo','mais direcionado para prova'],
+};
+let IA_AULA = null, IA_DADOS = null, IA_TAB = 'config', IA_OCUPADO = false;
+
+function kbIaMeta(tipo){ return IA_MODULOS.find(function(m){ return m.tipo === tipo; }) || { tipo:tipo, rotulo:tipo, icon:'📦', formato:'md' }; }
+function kbIaApi(payload){
+  return kbPost('/api/public/aula-pacote', Object.assign({
+    curso:'prf-2021', disciplina:kbDisc, topico:IA_AULA ? IA_AULA.nome : null,
+  }, payload));
+}
+function kbIaJsonBonito(tipo, conteudo){
+  try{
+    const j = JSON.parse(conteudo);
+    if(tipo === 'flashcards' && j.flashcards)
+      return j.flashcards.map(function(f,i){ return '<div style="padding:8px 0;border-bottom:1px solid #F1F5F9"><b>'+(i+1)+'. '+esc(f.frente||'')+'</b><br><span style="color:#475569">'+esc(f.verso||'')+'</span></div>'; }).join('');
+    if(tipo === 'questions' && j.questoes)
+      return j.questoes.map(function(q,i){
+        const itens = (q.itens||[]).map(function(it,k){
+          const gab = (q.gabarito||'').split(';')[k]||'';
+          return '<div style="padding:6px 10px;border-left:3px solid '+(gab==='C'?'#10B981':'#EF4444')+';margin:6px 0;background:#F8FAFC;border-radius:6px">'+esc(it||'')+' <b>('+(gab||'?')+')</b>'+(it.comentario?'<br><span style="color:#64748B;font-size:0.82rem">'+esc(it.comentario)+'</span>':'')+'</div>';
+        }).join('');
+        return '<div style="margin-bottom:14px"><b>'+(i+1)+'. '+esc(q.enunciado||'')+'</b>'+itens+'</div>';
+      }).join('');
+    if(tipo === 'podcast' && j.falas)
+      return '<div style="margin-bottom:8px;color:#64748B">Duração estimada: '+(j.duracao_estimada_min||'—')+' min</div>' + j.falas.map(function(f){ return '<div style="margin:6px 0"><b style="color:#3730A3">'+esc(f.quem==='B'?'Bia (co-host)':'Ana (host)')+':</b> '+esc(f.fala||'')+'</div>'; }).join('');
+    if(tipo === 'lacunas' && j.frases)
+      return j.frases.map(function(f,i){
+        return '<div style="padding:8px 0;border-bottom:1px solid #F1F5F9"><b>'+(i+1)+'.</b> '+esc((f.com_lacuna||'').replace(/____+/g,'〔____〕'))+'<br><span style="color:#059669;font-size:0.84rem">Resposta: '+esc((f.respostas||[]).join(' / '))+'</span></div>';
+      }).join('');
+    return '<pre style="white-space:pre-wrap;font-size:0.8rem">'+esc(JSON.stringify(j,null,2))+'</pre>';
+  }catch(e){
+    return '<pre style="white-space:pre-wrap;font-size:0.8rem">'+esc(conteudo)+'</pre>';
+  }
+}
+function kbIaInfoLinha(tipo, v){
+  if(!v) return '';
+  let det;
+  const m = v.meta || {};
+  if(tipo === 'questions') det = (m.itens ? m.itens + ' itens' : (m.questoes||0) + ' questões');
+  else if(tipo === 'flashcards') det = (m.flashcards||0) + ' flashcards';
+  else if(tipo === 'lacunas') det = (m.frases||0) + ' frases';
+  else if(tipo === 'podcast') det = (m.falas||0) + ' falas · ~' + (m.duracao_min||'—') + ' min';
+  else if(tipo === 'summary' || tipo === 'review') det = (m.topicos||0) + ' tópicos';
+  else det = (v.conteudo||'').length.toLocaleString('pt-BR') + ' caracteres';
+  const dt = v.updated_at ? new Date(v.updated_at).toLocaleString('pt-BR') : '';
+  const origem = { ia:'gerado pela IA', edicao:'editado manualmente', sistema:'migrado do conteúdo em uso' }[v.origem] || v.origem || '';
+  return det + ' · ' + dt + (origem ? ' · ' + origem : '');
+}
+
+/* ---------- selo de IA na linha de cada aula ---------- */
+window.kbIaBadges = async function(){
+  const spans = Array.prototype.slice.call(document.querySelectorAll('.kb-ia-badge'));
+  if(!spans.length || !kbDisc) return;
+  spans.forEach(function(s){ s.style.display = 'none'; });
+  let rows = [];
+  try{
+    const { data } = await PX.sb.from('aula_conteudos')
+      .select('topico,tipo,publicado')
+      .eq('course_slug','prf-2021').eq('disciplina', kbDisc).neq('tipo','config');
+    rows = data || [];
+  }catch(e){ return; }
+  const porTopico = {};
+  rows.forEach(function(r){
+    const t = porTopico[r.topico] = porTopico[r.topico] || { pub:{}, ras:{} };
+    (r.publicado ? t.pub : t.ras)[r.tipo] = true;
+  });
+  spans.forEach(function(s){
+    const t = porTopico[s.dataset.topico];
+    if(!t){ s.textContent = '⚠ IA não preparada'; s.style.cssText = 'font-size:0.68rem;background:#F1F5F9;color:#64748B;border-color:#E2E8F0'; s.style.display = ''; return; }
+    const pubs = Object.keys(t.pub).length;
+    const soRascunho = Object.keys(t.ras).filter(function(x){ return !t.pub[x]; }).length;
+    if(pubs >= 8){ s.textContent = '🤖 IA pronta'; s.style.cssText = 'font-size:0.68rem;background:#ECFDF5;color:#047857;border-color:#A7F3D0'; }
+    else if(soRascunho > 0){ s.textContent = '📝 IA com rascunhos'; s.style.cssText = 'font-size:0.68rem;background:#FFFBEB;color:#B45309;border-color:#FDE68A'; }
+    else if(pubs > 0){ s.textContent = '🤖 IA ' + pubs + '/10'; s.style.cssText = 'font-size:0.68rem;background:#EEF2FF;color:#3730A3;border-color:#C7D2FE'; }
+    else { s.textContent = '⚠ IA não preparada'; s.style.cssText = 'font-size:0.68rem;background:#F1F5F9;color:#64748B;border-color:#E2E8F0'; }
+    s.style.display = '';
+  });
+};
+
+/* ---------- abertura e estrutura do painel ---------- */
+window.kbIaAbrir = function(aulaId){
+  IA_AULA = KB_AULAS.find(function(a){ return a.id === aulaId; });
+  if(!IA_AULA) return;
+  IA_TAB = 'config'; IA_DADOS = null;
+  let m = document.getElementById('kb-ia-modal');
+  if(!m){
+    m = document.createElement('div');
+    m.id = 'kb-ia-modal';
+    m.className = 'kb-aula-modal';
+    document.body.appendChild(m);
+  }
+  m.style.display = 'flex';
+  m.innerHTML =
+    '<div style="background:#fff;width:min(1080px,96vw);height:92vh;border-radius:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 60px rgba(15,23,42,.35)">'
+    + '<div style="padding:14px 18px;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+    +   '<div style="flex:1;min-width:220px">'
+    +     '<div style="font-weight:800;font-size:1rem">🤖 IA DA AULA — Aula ' + String(IA_AULA.ordem).padStart(2,'0') + ' · ' + esc(IA_AULA.nome) + '</div>'
+    +     '<div class="muted" style="font-size:0.75rem" id="ia-hdr">' + esc(kbDisc) + ' · pacote de conteúdo inteligente</div>'
+    +   '</div>'
+    +   '<div id="ia-tabs" style="display:flex;gap:6px">'
+    +     ['config|⚙ Configuração','conteudos|📦 Conteúdos gerados','publicacao|🚀 Publicação'].map(function(t){
+          const p = t.split('|');
+          return '<button class="act" data-tab="'+p[0]+'" style="font-size:0.78rem;padding:6px 12px" onclick="kbIaTab(\''+p[0]+'\')">'+p[1]+'</button>';
+        }).join('')
+    +   '</div>'
+    +   '<button class="act" onclick="kbIaFechar()">Fechar</button>'
+    + '</div>'
+    + '<div id="ia-body" style="flex:1;overflow:auto;padding:18px;background:#F8FAFC">'
+    +   '<div class="muted" style="text-align:center;padding:40px">Carregando pacote da aula…</div>'
+    + '</div></div>';
+  kbIaRecarregar();
+};
+window.kbIaFechar = function(){
+  const m = document.getElementById('kb-ia-modal');
+  if(m) m.style.display = 'none';
+  IA_AULA = null; IA_DADOS = null;
+  kbIaBadges();
+};
+window.kbIaTab = function(tab){ IA_TAB = tab; kbIaPaint(); };
+async function kbIaRecarregar(){
+  try{
+    IA_DADOS = await kbIaApi({ acao:'listar' });
+  }catch(e){
+    const b = document.getElementById('ia-body');
+    if(b) b.innerHTML = '<div class="muted" style="text-align:center;padding:40px">'+esc(e.message||'Falha ao carregar.')+'</div>';
+    return;
+  }
+  kbIaPaint();
+}
+function kbIaMod(tipo){
+  const ms = (IA_DADOS && IA_DADOS.modulos) || {};
+  return ms[tipo] || { tipo:tipo, publicado:null, atual:null };
+}
+function kbIaStatusTag(m){
+  if(m.publicado && m.atual && m.atual.versao > m.publicado.versao)
+    return '<span class="kb-tag" style="background:#FFFBEB;color:#B45309;border-color:#FDE68A">✓ Publicado v' + m.publicado.versao + ' · 📝 rascunho v' + m.atual.versao + '</span>';
+  if(m.publicado)
+    return '<span class="kb-tag" style="background:#ECFDF5;color:#047857;border-color:#A7F3D0">✓ Publicado v' + m.publicado.versao + '</span>';
+  if(m.atual)
+    return '<span class="kb-tag" style="background:#FFFBEB;color:#B45309;border-color:#FDE68A">📝 Rascunho v' + m.atual.versao + '</span>';
+  return '<span class="kb-tag" style="background:#F1F5F9;color:#64748B;border-color:#E2E8F0">○ Não gerado</span>';
+}
+function kbIaPaint(){
+  const body = document.getElementById('ia-body');
+  if(!body || !IA_AULA) return;
+  Array.prototype.forEach.call(document.querySelectorAll('#ia-tabs .act'), function(b){
+    const on = b.dataset.tab === IA_TAB;
+    b.style.background = on ? '#1E3A8A' : '#fff';
+    b.style.color = on ? '#fff' : '';
+    b.style.borderColor = on ? '#1E3A8A' : '';
+  });
+  const doc = kbKbDoc(IA_AULA.nome);
+  const pdf = kbPdfDaAula(IA_AULA);
+  const ultima = (function(){
+    let u = null;
+    IA_MODULOS.forEach(function(mo){ const a = kbIaMod(mo.tipo).atual; if(a && (!u || a.updated_at > u)) u = a.updated_at; });
+    return u ? new Date(u).toLocaleString('pt-BR') : '—';
+  })();
+  const hdr = document.getElementById('ia-hdr');
+  if(hdr) hdr.textContent = kbDisc + ' · ' + (pdf ? 'PDF: ' + pdf.split('/').pop() : 'material em texto') + ' · última atualização IA: ' + ultima;
+
+  if(IA_TAB === 'config') return kbIaPaintConfig(body, doc, pdf);
+  if(IA_TAB === 'conteudos') return kbIaPaintConteudos(body);
+  return kbIaPaintPublicacao(body);
+}
+
+/* ---------- ABA 1 — CONFIGURAÇÃO ---------- */
+function kbIaPaintConfig(body, doc, pdf){
+  const cfg = (IA_DADOS && IA_DADOS.config) || {};
+  const qc = cfg.questoes || {};
+  const sel = cfg.modulos || {};
+  const marcado = function(t){ return sel[t] !== false; };
+  body.innerHTML =
+    '<div style="max-width:820px;margin:0 auto;display:grid;gap:16px">'
+    + '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px">'
+    +   '<div style="font-weight:800;margin-bottom:8px">Material-fonte da aula</div>'
+    +   '<div class="muted" style="font-size:0.84rem">' + (pdf
+          ? '📄 <b>' + esc(pdf.split('/').pop()) + '</b> — a aula é exibida ao aluno como PDF.'
+          : (doc ? '📝 Aula em texto (' + ((doc.conteudo||'').length/1000).toFixed(1) + ' mil caracteres) — o material completo da matéria também entra na geração.' : '⚠ Esta aula ainda não tem conteúdo próprio; a IA usará o material da matéria.'))
+    +   '</div>'
+    +   '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'
+    +     (pdf ? '<button class="act" style="font-size:0.75rem" onclick="kbIaAbrirPdf()">Abrir PDF</button>' : '')
+    +     '<button class="act" style="font-size:0.75rem" onclick="kbAulaEditar(\''+IA_AULA.id+'\')">Substituir material / editar aula</button>'
+    +   '</div>'
+    + '</div>'
+    + '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px">'
+    +   '<div style="font-weight:800;margin-bottom:6px">Instruções adicionais para a IA <span class="muted" style="font-weight:400">(opcional)</span></div>'
+    +   '<textarea id="ia-cfg-inst" rows="3" style="width:100%;font-size:0.86rem" placeholder="Ex.: priorize jurisprudência recente; foque em prazos e exceções; use linguagem direta.">' + esc(cfg.instrucoes||'') + '</textarea>'
+    + '</div>'
+    + '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px">'
+    +   '<div style="font-weight:800;margin-bottom:8px">Módulos a gerar</div>'
+    +   '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px 14px">'
+    +   IA_MODULOS.map(function(mo){
+          return '<label style="font-size:0.83rem;display:flex;gap:6px;align-items:center"><input type="checkbox" class="ia-cfg-mod" value="'+mo.tipo+'"'+(marcado(mo.tipo)?' checked':'')+'> '+mo.icon+' '+mo.rotulo+'</label>';
+        }).join('')
+    +   '</div>'
+    + '</div>'
+    + '<div id="ia-cfg-questoes" style="background:#fff;border:1px solid #C7D2FE;border-radius:12px;padding:14px 16px">'
+    +   '<div style="font-weight:800;margin-bottom:8px">❓ Configuração das questões</div>'
+    +   '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:0.84rem">'
+    +     '<label>Quantidade: <input id="ia-qtd" type="number" min="1" max="60" value="'+(qc.quantidade||10)+'" style="width:64px"></label>'
+    +     '<label>Dificuldade: <select id="ia-dific">'
+    +       ['misto|Equilibrada','facil|Mais fáceis','medio|Intermediárias','dificil|Mais difíceis','adaptativa|Adaptativa ao aluno'].map(function(o){
+            const p = o.split('|'); return '<option value="'+p[0]+'"'+((qc.dificuldade||'misto')===p[0]?' selected':'')+'>'+p[1]+'</option>';
+          }).join('')
+    +     '</select></label>'
+    +     '<label><input id="ia-coment" type="checkbox"'+(qc.comentarios !== false ? ' checked':'')+'> Comentário automático em cada questão</label>'
+    +   '</div>'
+    +   '<div style="margin-top:8px;font-size:0.84rem;display:flex;gap:12px;flex-wrap:wrap"><span class="muted">Priorizar:</span>'
+    +     ['legislacao|Legislação','jurisprudencia|Jurisprudência','pegadinhas|Pegadinhas da banca','casos|Casos práticos'].map(function(o){
+          const p = o.split('|'); const on = (qc.prioridades||[]).indexOf(p[0]) >= 0;
+          return '<label><input type="checkbox" class="ia-prio" value="'+p[0]+'"'+(on?' checked':'')+'> '+p[1]+'</label>';
+        }).join('')
+    +   '</div>'
+    + '</div>'
+    + '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
+    +   '<button class="act" style="font-size:0.8rem" onclick="kbIaSalvarConfig(false)">Salvar configuração</button>'
+    +   '<button class="act primary" id="ia-btn-gerar" style="font-size:0.86rem;padding:10px 18px" onclick="kbIaGerarTudo()">▶ GERAR CONTEÚDOS DA AULA</button>'
+    +   '<span class="muted" style="font-size:0.75rem">O que já tiver versão é gerado como nova versão — o histórico nunca é apagado.</span>'
+    + '</div>'
+    + '<div id="ia-progresso" style="display:none;background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px 16px"></div>'
+    + '</div>';
+}
+function kbIaLerConfig(){
+  const modulos = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.ia-cfg-mod'), function(c){ modulos[c.value] = c.checked; });
+  return {
+    instrucoes: (document.getElementById('ia-cfg-inst')||{}).value || '',
+    modulos: modulos,
+    questoes: {
+      quantidade: Number((document.getElementById('ia-qtd')||{}).value || 10),
+      dificuldade: (document.getElementById('ia-dific')||{}).value || 'misto',
+      comentarios: !!((document.getElementById('ia-coment')||{}).checked),
+      prioridades: Array.prototype.map.call(document.querySelectorAll('.ia-prio:checked'), function(c){ return c.value; }),
+    },
+  };
+}
+window.kbIaSalvarConfig = async function(avisar){
+  try{
+    const cfg = kbIaLerConfig();
+    await kbIaApi({ acao:'salvar-config', config: cfg });
+    if(IA_DADOS) IA_DADOS.config = cfg;
+    if(avisar !== false) toast('Configuração da aula salva.');
+    return true;
+  }catch(e){ toast(e.message || 'Falha ao salvar configuração.'); return false; }
+};
+window.kbIaAbrirPdf = async function(){
+  const pdf = kbPdfDaAula(IA_AULA);
+  if(!pdf) return;
+  try{
+    const r = await PX.sb.storage.from('aulas-pdf').createSignedUrl(pdf, 600);
+    if(r && r.data && r.data.signedUrl) window.open(r.data.signedUrl, '_blank');
+    else toast('Não consegui abrir o PDF agora.');
+  }catch(e){ toast('Não consegui abrir o PDF agora.'); }
+};
+window.kbIaGerarTudo = async function(){
+  if(IA_OCUPADO) return;
+  if(!(await kbIaSalvarConfig(false))) return;
+  const cfg = kbIaLerConfig();
+  const tipos = IA_MODULOS.filter(function(mo){ return cfg.modulos[mo.tipo] !== false; }).map(function(mo){ return mo.tipo; });
+  if(!tipos.length){ toast('Marque ao menos um módulo para gerar.'); return; }
+  IA_OCUPADO = true;
+  const btn = document.getElementById('ia-btn-gerar');
+  if(btn){ btn.disabled = true; btn.textContent = 'Gerando…'; }
+  const prog = document.getElementById('ia-progresso');
+  if(prog){ prog.style.display = 'block'; prog.innerHTML = tipos.map(function(t){
+    const mo = kbIaMeta(t);
+    return '<div id="ia-prog-'+t+'" style="font-size:0.83rem;padding:4px 0">○ '+mo.icon+' '+mo.rotulo+'</div>';
+  }).join(''); }
+  for(const t of tipos){
+    const linha = document.getElementById('ia-prog-'+t);
+    if(linha) linha.innerHTML = '⏳ ' + linha.textContent.slice(2) + ' — gerando…';
+    try{
+      const tem = !!kbIaMod(t).atual;
+      const r = await kbIaApi({ acao: tem ? 'regenerar' : 'gerar', tipo: t, modo: tem ? 'original' : undefined, instrucoes: cfg.instrucoes || undefined, questoes: cfg.questoes });
+      if(linha) linha.innerHTML = '✓ ' + linha.textContent.slice(2).split(' — ')[0] + (r.cache ? ' — já estava pronto' : ' — v' + (r.versao||'?') + ' gerada');
+    }catch(e){
+      if(linha) linha.innerHTML = '✕ ' + linha.textContent.slice(2).split(' — ')[0] + ' — ' + esc(e.message || 'falhou');
+    }
+  }
+  IA_OCUPADO = false;
+  await kbIaRecarregar();
+  toast('Geração concluída. Revise em "Conteúdos gerados" e publique na aba "Publicação".');
+};
+
+/* ---------- ABA 2 — CONTEÚDOS GERADOS ---------- */
+function kbIaPaintConteudos(body){
+  body.innerHTML = '<div style="display:grid;gap:12px;max-width:920px;margin:0 auto">'
+    + IA_MODULOS.map(function(mo){
+      const m = kbIaMod(mo.tipo);
+      const v = m.atual;
+      return '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px">'
+        + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+        +   '<span style="font-weight:800;font-size:0.95rem">'+mo.icon+' '+mo.rotulo+'</span>'
+        +   kbIaStatusTag(m)
+        +   '<span style="flex:1"></span>'
+        +   (v ? '<button class="act" style="font-size:0.72rem" onclick="kbIaVer(\''+mo.tipo+'\')">Visualizar</button>'
+              + '<button class="act" style="font-size:0.72rem" onclick="kbIaEditar(\''+mo.tipo+'\')">Editar</button>'
+              + '<button class="act" style="font-size:0.72rem" onclick="kbIaSub(\''+mo.tipo+'\',\'melhorar\')">Melhorar com IA</button>'
+              + '<button class="act" style="font-size:0.72rem" onclick="kbIaSub(\''+mo.tipo+'\',\'acrescentar\')">Acrescentar</button>'
+              + '<button class="act" style="font-size:0.72rem" onclick="kbIaSub(\''+mo.tipo+'\',\'regenerar\')">Regenerar</button>'
+              + '<button class="act" style="font-size:0.72rem" onclick="kbIaHistorico(\''+mo.tipo+'\')">Histórico</button>'
+            : '<button class="act primary" style="font-size:0.72rem" onclick="kbIaGerarUm(\''+mo.tipo+'\')">Gerar agora</button>')
+        + '</div>'
+        + (v ? '<div class="muted" style="font-size:0.74rem;margin-top:6px">'+kbIaInfoLinha(mo.tipo, v)+'</div>' : '')
+        + '<div id="ia-sub-'+mo.tipo+'"></div>'
+        + '</div>';
+    }).join('') + '</div>';
+}
+window.kbIaGerarUm = async function(tipo){
+  if(IA_OCUPADO) return;
+  IA_OCUPADO = true;
+  try{
+    const cfg = (IA_DADOS && IA_DADOS.config) || {};
+    const r = await kbIaApi({ acao:'gerar', tipo: tipo, instrucoes: cfg.instrucoes || undefined, questoes: cfg.questoes });
+    toast(r.cache ? 'Este conteúdo já existia — versão mantida.' : 'Versão ' + (r.versao||1) + ' gerada.');
+  }catch(e){ toast(e.message || 'Não consegui gerar agora.'); }
+  IA_OCUPADO = false;
+  await kbIaRecarregar();
+};
+window.kbIaVer = function(tipo, versaoConteudo, versaoNum){
+  const mo = kbIaMeta(tipo);
+  const m = kbIaMod(tipo);
+  const conteudo = versaoConteudo != null ? versaoConteudo : (m.atual ? m.atual.conteudo : '');
+  const num = versaoNum != null ? versaoNum : (m.atual ? m.atual.versao : 0);
+  kbIaViewer(mo.icon + ' ' + mo.rotulo + ' — v' + num,
+    mo.formato === 'json' ? kbIaJsonBonito(tipo, conteudo) : '<div class="prose" style="font-size:0.9rem">'+kbMD(conteudo)+'</div>');
+};
+function kbIaViewer(titulo, html){
+  let v = document.getElementById('kb-ia-view');
+  if(!v){
+    v = document.createElement('div');
+    v.id = 'kb-ia-view';
+    v.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:60;display:none;align-items:center;justify-content:center';
+    document.body.appendChild(v);
+  }
+  v.style.display = 'flex';
+  v.innerHTML = '<div style="background:#fff;width:min(860px,94vw);max-height:88vh;border-radius:14px;display:flex;flex-direction:column;overflow:hidden">'
+    + '<div style="padding:12px 16px;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;gap:10px">'
+    +   '<b style="flex:1">'+esc(titulo)+'</b><button class="act" onclick="document.getElementById(\'kb-ia-view\').style.display=\'none\'">Fechar</button>'
+    + '</div>'
+    + '<div style="flex:1;overflow:auto;padding:18px">'+html+'</div></div>';
+}
+
+/* ---------- editor de versão (markdown com preview ou JSON) ---------- */
+window.kbIaEditar = function(tipo){
+  const mo = kbIaMeta(tipo);
+  const m = kbIaMod(tipo);
+  if(!m.atual) return;
+  let e = document.getElementById('kb-ia-edit');
+  if(!e){
+    e = document.createElement('div');
+    e.id = 'kb-ia-edit';
+    e.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:70;display:none;align-items:center;justify-content:center';
+    document.body.appendChild(e);
+  }
+  const ehMd = mo.formato === 'md';
+  const barra = ehMd
+    ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">'
+      + [['H2','## ','','l'],['H3','### ','','l'],['Negrito','**','**'],['Itálico','*','*'],['Lista','- ','','l']].map(function(b){
+          return '<button class="act" style="font-size:0.72rem" onclick="kbIaIns(\''+b[0]+'\','+(b[3]?'true':'false')+')">'+b[0]+'</button>';
+        }).join('')
+      + '<span class="muted" style="font-size:0.72rem;align-self:center">Sumário/atalhos iguais ao editor da aula.</span></div>'
+    : '<div class="muted" style="font-size:0.75rem;margin-bottom:6px">Edite o JSON com cuidado — ao salvar, a estrutura é validada.</div>';
+  e.style.display = 'flex';
+  e.innerHTML = '<div style="background:#fff;width:min(980px,96vw);height:90vh;border-radius:14px;display:flex;flex-direction:column;overflow:hidden">'
+    + '<div style="padding:12px 16px;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+    +   '<b style="flex:1">✏️ Editar — '+mo.rotulo+' (v'+m.atual.versao+' → nova versão)</b>'
+    +   '<button class="act" onclick="document.getElementById(\'kb-ia-edit\').style.display=\'none\'">Cancelar</button>'
+    +   '<button class="act" onclick="kbIaSalvarEdicao(\''+tipo+'\',false)">Salvar rascunho</button>'
+    +   '<button class="act primary" onclick="kbIaSalvarEdicao(\''+tipo+'\',true)">Salvar e publicar</button>'
+    + '</div>'
+    + '<div style="flex:1;display:grid;grid-template-columns:'+(ehMd?'1fr 1fr':'1fr')+';gap:0;overflow:hidden">'
+    +   '<div style="padding:14px;overflow:auto;border-right:1px solid #E2E8F0">'+barra
+    +     '<textarea id="ia-ed-txt" style="width:100%;height:calc(100% - 40px);font-family:ui-monospace,monospace;font-size:0.82rem" oninput="kbIaPreview(\''+tipo+'\')">'+esc(m.atual.conteudo)+'</textarea>'
+    +   '</div>'
+    +   (ehMd ? '<div style="padding:14px;overflow:auto"><div class="muted" style="font-size:0.72rem;margin-bottom:6px">Visualização</div><div id="ia-ed-prev" class="prose" style="font-size:0.88rem"></div></div>' : '')
+    + '</div></div>';
+  kbIaPreview(tipo);
+};
+window.kbIaIns = function(qual, linha){
+  const mapa = { 'H2':['## ',''], 'H3':['### ',''], 'Negrito':['**','**'], 'Itálico':['*','*'], 'Lista':['- ',''] };
+  const p = mapa[qual]; if(!p) return;
+  const ta = document.getElementById('ia-ed-txt'); if(!ta) return;
+  const ini = ta.selectionStart, fim = ta.selectionEnd, sel = ta.value.slice(ini, fim);
+  let novo;
+  if(linha) novo = ta.value.slice(0, ini) + (sel || 'texto').split(/\n/).map(function(l){ return p[0] + l; }).join('\n') + ta.value.slice(fim);
+  else novo = ta.value.slice(0, ini) + p[0] + (sel || 'texto') + p[1] + ta.value.slice(fim);
+  ta.value = novo; ta.focus();
+  kbIaPreview();
+};
+window.kbIaPreview = function(){
+  const ta = document.getElementById('ia-ed-txt');
+  const pv = document.getElementById('ia-ed-prev');
+  if(ta && pv) pv.innerHTML = kbMD(ta.value) || '<span class="muted">Sem conteúdo.</span>';
+};
+window.kbIaSalvarEdicao = async function(tipo, publicar){
+  const ta = document.getElementById('ia-ed-txt');
+  if(!ta) return;
+  try{
+    const r = await kbIaApi({ acao:'salvar-edicao', tipo: tipo, conteudo: ta.value, publicar: !!publicar });
+    toast(publicar ? 'Versão ' + r.versao + ' publicada para os alunos.' : 'Rascunho v' + r.versao + ' salvo (alunos ainda veem a versão publicada).');
+    document.getElementById('kb-ia-edit').style.display = 'none';
+    await kbIaRecarregar();
+  }catch(e){ toast(e.message || 'Não consegui salvar.'); }
+};
+
+/* ---------- sub-painéis: melhorar / acrescentar / regenerar ---------- */
+window.kbIaSub = function(tipo, modo){
+  const box = document.getElementById('ia-sub-' + tipo);
+  if(!box) return;
+  if(box.dataset.aberto === modo){ box.innerHTML = ''; box.dataset.aberto = ''; return; }
+  box.dataset.aberto = modo;
+  const ops = modo === 'melhorar' ? (IA_MELHORAR_OPS[tipo] || ['mais organizado','mais objetivo','mais didático','mais direcionado para prova']) : [];
+  const titulos = { melhorar:'Melhorar com IA — reescreve a versão atual como nova versão', acrescentar:'Acrescentar — adiciona conteúdo sem remover o que já existe', regenerar:'Regenerar — cria nova versão a partir do material da aula' };
+  box.innerHTML = '<div style="margin-top:10px;border-top:1px dashed #E2E8F0;padding-top:10px">'
+    + '<div style="font-size:0.8rem;font-weight:700;margin-bottom:6px">'+titulos[modo]+'</div>'
+    + (ops.length ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">' + ops.map(function(o){
+        return '<button class="act" style="font-size:0.72rem" onclick="kbIaRodarIA(\''+tipo+'\',\'melhorar\',\''+escJs(o)+'\')">'+o+'</button>';
+      }).join('') + '</div>' : '')
+    + (modo === 'regenerar'
+        ? '<div style="font-size:0.8rem;display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px">'
+          + '<label><input type="radio" name="ia-modo-'+tipo+'" value="original" checked> Manter formato original</label>'
+          + '<label><input type="radio" name="ia-modo-'+tipo+'" value="otimizado"> Otimizar para prova</label>'
+          + '<label><input type="radio" name="ia-modo-'+tipo+'" value="didatico"> Versão mais didática</label></div>'
+        : '')
+    + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
+    +   '<input id="ia-sub-in-'+tipo+'" placeholder="Instrução personalizada (opcional)" style="flex:1;min-width:220px;font-size:0.8rem">'
+    +   '<button class="act primary" style="font-size:0.75rem" onclick="kbIaRodarIA(\''+tipo+'\',\''+modo+'\')">Aplicar</button>'
+    + '</div></div>';
+};
+window.kbIaRodarIA = async function(tipo, modo, instrPre){
+  if(IA_OCUPADO) return;
+  const inp = document.getElementById('ia-sub-in-' + tipo);
+  const instr = instrPre || (inp ? inp.value.trim() : '') || undefined;
+  let modoReg;
+  if(modo === 'regenerar'){
+    const r = document.querySelector('input[name="ia-modo-'+tipo+'"]:checked');
+    modoReg = r ? r.value : 'original';
+  }
+  IA_OCUPADO = true;
+  const box = document.getElementById('ia-sub-' + tipo);
+  if(box) box.querySelectorAll('button').forEach(function(b){ b.disabled = true; });
+  try{
+    const cfg = (IA_DADOS && IA_DADOS.config) || {};
+    const payload = { acao: modo === 'melhorar' ? 'melhorar' : modo === 'acrescentar' ? 'acrescentar' : 'regenerar', tipo: tipo, instrucoes: instr, questoes: cfg.questoes };
+    if(modo === 'regenerar') payload.modo = modoReg;
+    const r = await kbIaApi(payload);
+    toast('Nova versão v' + (r.versao||'?') + ' criada — revise e publique quando estiver satisfeito.');
+  }catch(e){ toast(e.message || 'A IA não conseguiu processar agora.'); }
+  IA_OCUPADO = false;
+  await kbIaRecarregar();
+};
+
+/* ---------- histórico de versões ---------- */
+window.kbIaHistorico = async function(tipo){
+  const box = document.getElementById('ia-sub-' + tipo);
+  if(!box) return;
+  if(box.dataset.aberto === 'hist'){ box.innerHTML = ''; box.dataset.aberto = ''; return; }
+  box.dataset.aberto = 'hist';
+  box.innerHTML = '<div class="muted" style="font-size:0.8rem;margin-top:10px">Carregando histórico…</div>';
+  try{
+    const j = await kbIaApi({ acao:'historico', tipo: tipo });
+    const vs = j.versoes || [];
+    if(!vs.length){ box.innerHTML = '<div class="muted" style="font-size:0.8rem;margin-top:10px">Nenhuma versão ainda.</div>'; return; }
+    box.innerHTML = '<div style="margin-top:10px;border-top:1px dashed #E2E8F0;padding-top:10px">'
+      + '<div style="font-size:0.8rem;font-weight:700;margin-bottom:6px">Histórico de versões</div>'
+      + vs.map(function(v){
+        const origem = { ia:'IA', edicao:'edição manual', sistema:'migração' }[v.origem] || v.origem || '';
+        return '<div style="display:flex;align-items:center;gap:8px;font-size:0.78rem;padding:5px 0;border-bottom:1px solid #F1F5F9;flex-wrap:wrap">'
+          + '<b>v'+v.versao+'</b>'
+          + (v.publicado ? '<span class="kb-tag" style="background:#ECFDF5;color:#047857;border-color:#A7F3D0">PUBLICADA</span>' : '')
+          + '<span class="muted">'+esc(origem)+' · '+new Date(v.criado_em).toLocaleString('pt-BR')+'</span>'
+          + '<span style="flex:1"></span>'
+          + '<button class="act" style="font-size:0.7rem" onclick=\'kbIaVer('+JSON.stringify(tipo)+','+JSON.stringify(v.conteudo)+','+v.versao+')\'>Visualizar</button>'
+          + (v.publicado ? '' : '<button class="act" style="font-size:0.7rem" onclick="kbIaRestaurar(\''+tipo+'\',\''+v.id+'\')">Restaurar</button>')
+          + '</div>';
+      }).join('') + '</div>';
+  }catch(e){
+    box.innerHTML = '<div class="muted" style="font-size:0.8rem;margin-top:10px">'+esc(e.message||'Falha ao carregar.')+'</div>';
+  }
+};
+window.kbIaRestaurar = async function(tipo, versaoId){
+  if(!confirm('Restaurar cria uma NOVA versão com o conteúdo da versão escolhida (o histórico é preservado). Continuar?')) return;
+  try{
+    const r = await kbIaApi({ acao:'restaurar', tipo: tipo, versaoId: versaoId });
+    toast('Versão v' + r.versao + ' criada a partir da restauração.');
+    await kbIaRecarregar();
+  }catch(e){ toast(e.message || 'Não consegui restaurar.'); }
+};
+
+/* ---------- ABA 3 — PUBLICAÇÃO ---------- */
+function kbIaPaintPublicacao(body){
+  const linhas = IA_MODULOS.map(function(mo){
+    const m = kbIaMod(mo.tipo);
+    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #F1F5F9;flex-wrap:wrap">'
+      + '<span style="font-weight:700;font-size:0.86rem;min-width:190px">'+mo.icon+' '+mo.rotulo+'</span>'
+      + kbIaStatusTag(m)
+      + '<span style="flex:1"></span>'
+      + (m.atual && (!m.publicado || m.atual.versao > m.publicado.versao)
+          ? '<button class="act primary" style="font-size:0.74rem" onclick="kbIaPublicar(\''+mo.tipo+'\')">Publicar v'+m.atual.versao+'</button>'
+          : '')
+      + (m.publicado ? '<button class="act" style="font-size:0.74rem" onclick="kbIaDespublicar(\''+mo.tipo+'\')">Despublicar</button>' : '')
+      + '</div>';
+  }).join('');
+  body.innerHTML = '<div style="max-width:760px;margin:0 auto">'
+    + '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 18px">'
+    + '<div style="font-weight:800;margin-bottom:4px">Publicação para os alunos</div>'
+    + '<div class="muted" style="font-size:0.8rem;margin-bottom:10px">Só o que está <b>publicado</b> aparece no painel do aluno e entra no contexto da Athena. Rascunhos ficam visíveis apenas aqui.</div>'
+    + linhas
+    + '<div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
+    +   '<button class="act primary" style="padding:10px 18px;font-size:0.86rem" onclick="kbIaPublicarTudo()">🚀 PUBLICAR TODOS OS CONTEÚDOS APROVADOS</button>'
+    +   '<span class="muted" style="font-size:0.75rem">Publica a versão mais recente de cada módulo que ainda está em rascunho.</span>'
+    + '</div></div></div>';
+}
+window.kbIaPublicar = async function(tipo){
+  try{
+    await kbIaApi({ acao:'publicar', tipo: tipo });
+    toast(kbIaMeta(tipo).rotulo + ' publicado para os alunos.');
+    await kbIaRecarregar();
+  }catch(e){ toast(e.message || 'Não consegui publicar.'); }
+};
+window.kbIaDespublicar = async function(tipo){
+  if(!confirm('Despublicar esconde este conteúdo dos alunos (o histórico é mantido). Continuar?')) return;
+  try{
+    await kbIaApi({ acao:'despublicar', tipo: tipo });
+    toast(kbIaMeta(tipo).rotulo + ' despublicado.');
+    await kbIaRecarregar();
+  }catch(e){ toast(e.message || 'Não consegui despublicar.'); }
+};
+window.kbIaPublicarTudo = async function(){
+  if(IA_OCUPADO) return;
+  IA_OCUPADO = true;
+  let feitas = 0, falhas = 0;
+  for(const mo of IA_MODULOS){
+    const m = kbIaMod(mo.tipo);
+    if(!m.atual || (m.publicado && m.publicado.versao >= m.atual.versao)) continue;
+    try{ await kbIaApi({ acao:'publicar', tipo: mo.tipo }); feitas++; }
+    catch(e){ falhas++; }
+  }
+  IA_OCUPADO = false;
+  toast(falhas ? feitas + ' módulo(s) publicados, ' + falhas + ' falharam.' : feitas ? feitas + ' módulo(s) publicados para os alunos.' : 'Nada novo para publicar.');
+  await kbIaRecarregar();
+};
+
+/* ---------- geração em lote (todas as aulas da matéria) ---------- */
+window.kbIaLote = function(){
+  if(!kbDisc){ toast('Escolha uma matéria primeiro.'); return; }
+  let m = document.getElementById('kb-ia-lote');
+  if(!m){
+    m = document.createElement('div');
+    m.id = 'kb-ia-lote';
+    m.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:60;display:none;align-items:center;justify-content:center';
+    document.body.appendChild(m);
+  }
+  m.style.display = 'flex';
+  m.innerHTML = '<div style="background:#fff;width:min(720px,94vw);max-height:88vh;border-radius:14px;display:flex;flex-direction:column;overflow:hidden">'
+    + '<div style="padding:14px 16px;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;gap:10px">'
+    +   '<b style="flex:1">📚 Preparar IA em lote — ' + esc(kbDisc) + '</b>'
+    +   '<button class="act" onclick="document.getElementById(\'kb-ia-lote\').style.display=\'none\'">Fechar</button>'
+    + '</div>'
+    + '<div style="padding:16px;overflow:auto">'
+    +   '<div style="font-weight:800;font-size:0.85rem;margin-bottom:6px">Aulas ('+KB_AULAS.length+') <label style="font-weight:400;font-size:0.75rem;margin-left:8px"><input type="checkbox" checked onchange="document.querySelectorAll(\'.ia-lote-aula\').forEach(c=>c.checked=this.checked)"> todas</label></div>'
+    +   '<div style="max-height:180px;overflow:auto;border:1px solid #E2E8F0;border-radius:10px;padding:8px 12px;margin-bottom:12px">'
+    +   KB_AULAS.map(function(a){
+          return '<label style="display:flex;gap:8px;font-size:0.8rem;padding:3px 0"><input type="checkbox" class="ia-lote-aula" value="'+esc(a.nome).replace(/"/g,'&quot;')+'" checked> Aula '+String(a.ordem).padStart(2,'0')+' · '+esc(a.nome)+'</label>';
+        }).join('')
+    +   '</div>'
+    +   '<div style="font-weight:800;font-size:0.85rem;margin-bottom:6px">Módulos</div>'
+    +   '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 12px;margin-bottom:12px">'
+    +   IA_MODULOS.map(function(mo){
+          return '<label style="font-size:0.8rem;display:flex;gap:6px;align-items:center"><input type="checkbox" class="ia-lote-mod" value="'+mo.tipo+'" checked> '+mo.icon+' '+mo.rotulo+'</label>';
+        }).join('')
+    +   '</div>'
+    +   '<div class="muted" style="font-size:0.74rem;margin-bottom:10px">O que já estiver gerado é apenas publicado (sem gastar IA de novo). As aulas rodam uma a uma, na ordem.</div>'
+    +   '<button class="act primary" id="ia-lote-btn" style="padding:10px 18px;font-size:0.86rem" onclick="kbIaLoteRodar()">▶ INICIAR GERAÇÃO EM LOTE</button>'
+    +   '<div id="ia-lote-log" style="margin-top:12px;font-size:0.78rem;max-height:200px;overflow:auto"></div>'
+    + '</div></div>';
+};
+window.kbIaLoteRodar = async function(){
+  if(IA_OCUPADO) return;
+  const aulas = Array.prototype.map.call(document.querySelectorAll('.ia-lote-aula:checked'), function(c){ return c.value; });
+  const tipos = Array.prototype.map.call(document.querySelectorAll('.ia-lote-mod:checked'), function(c){ return c.value; });
+  if(!aulas.length || !tipos.length){ toast('Marque ao menos uma aula e um módulo.'); return; }
+  const log = document.getElementById('ia-lote-log');
+  const btn = document.getElementById('ia-lote-btn');
+  IA_OCUPADO = true;
+  if(btn) btn.disabled = true;
+  const linha = function(html){
+    if(!log) return;
+    const d = document.createElement('div');
+    d.style.cssText = 'padding:2px 0;border-bottom:1px solid #F8FAFC';
+    d.innerHTML = html;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
+  };
+  if(log) log.innerHTML = '';
+  for(const nome of aulas){
+    linha('<b>▶ ' + esc(nome) + '</b>');
+    for(const t of tipos){
+      const mo = kbIaMeta(t);
+      try{
+        const r = await kbPost('/api/public/aula-pacote', {
+          acao:'gerar', curso:'prf-2021', disciplina: kbDisc, topico: nome, tipo: t, publicar: true,
+        });
+        linha('&nbsp;&nbsp;' + (r.cache ? '✓ ' : '✨ ') + mo.icon + ' ' + mo.rotulo + (r.cache ? ' — já estava pronto (publicado)' : ' — v' + (r.versao||'?') + ' gerada e publicada'));
+      }catch(e){
+        linha('&nbsp;&nbsp;✕ ' + mo.icon + ' ' + mo.rotulo + ' — ' + esc(e.message || 'falhou'));
+      }
+    }
+  }
+  linha('<b>Fila concluída.</b>');
+  IA_OCUPADO = false;
+  if(btn) btn.disabled = false;
+  kbIaBadges();
+  toast('Geração em lote concluída — confira o log.');
+};
 </script>
 </body>
 </html>
