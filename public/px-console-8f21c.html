@@ -1905,6 +1905,7 @@ function kbAulasPaint(){
   box.innerHTML =
     '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 8px">' +
       '<p class="muted" style="margin:0;flex:1;min-width:200px;font-size:0.75rem">Arraste pelo ⠿ para mudar a ordem — ou clique no número da aula para digitar a posição dela.</p>' +
+      '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasPdfLote()">Anexar PDFs em lote</button>' +
       '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasTodasPdf()">Exibir todas em PDF</button>' +
       '<button class="act danger" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasExcluirTodas()">Excluir todas as aulas</button>' +
     '</div>' +
@@ -2304,7 +2305,9 @@ window.kbAulasTodasPdf = async function(){
   const comPdf = docs.filter(function(d){ return String(d.pdf_url||'').trim(); });
   const semPdf = docs.length - comPdf.length;
   if(!comPdf.length){
-    alert('Nenhuma aula desta matéria tem PDF anexado ainda. Envie o PDF em "Editar aula" e depois use este botão.');
+    if(confirm('Nenhuma aula desta matéria tem PDF anexado ainda.\n\nQuer escolher os PDFs agora e anexá-los às aulas de uma vez?')){
+      return kbAulasPdfLote();
+    }
     kbAulaMsg('Nenhuma aula com PDF anexado nesta matéria.');
     return;
   }
@@ -2330,6 +2333,79 @@ window.kbAulasTodasPdf = async function(){
     (semPdf ? '\n' + semPdf + ' aula(s) sem PDF continuam em texto.' : '');
   alert('Pronto! ' + aviso);
   kbAulaMsg(aviso.replace('\n', ' '));
+};
+
+/* Anexa vários PDFs de uma vez às aulas já cadastradas.
+   Casa pelo número da aula no nome do arquivo (ex.: "Aula 03.pdf");
+   o que não casar entra, em ordem, nas aulas que ainda estão sem PDF. */
+window.kbAulasPdfLote = function(){
+  if(!kbDisc) return;
+  if(!KB_AULAS.length) return alert('Cadastre as aulas antes de anexar os PDFs.');
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.multiple = true; inp.accept = 'application/pdf,.pdf';
+  inp.onchange = async function(){
+    const files = Array.prototype.slice.call(inp.files || []).filter(function(f){
+      return /pdf/i.test(f.type || '') || /\.pdf$/i.test(f.name || '');
+    });
+    if(!files.length) return;
+    files.sort(function(a,b){ return a.name.localeCompare(b.name, 'pt-BR', { numeric:true }); });
+
+    const aulas = KB_AULAS.slice().sort(function(a,b){ return a.ordem - b.ordem; });
+    const usadas = {};
+    const pares = [];
+    const sobra = [];
+    files.forEach(function(f){
+      const m = /aula[\s_\-]*(\d+)/i.exec(f.name);
+      let alvo = null;
+      if(m){ const n = parseInt(m[1],10); alvo = aulas.find(function(a){ return a.ordem === n && !usadas[a.id]; }) || null; }
+      if(alvo){ usadas[alvo.id] = 1; pares.push({ aula: alvo, file: f }); } else sobra.push(f);
+    });
+    const livres = aulas.filter(function(a){
+      return !usadas[a.id] && !String((kbFind(kbDisc, a.nome)||{}).pdf_url || '').trim();
+    });
+    sobra.forEach(function(f, i){ if(livres[i]){ usadas[livres[i].id] = 1; pares.push({ aula: livres[i], file: f }); } });
+    if(!pares.length) return alert('Não consegui casar nenhum arquivo com as aulas desta matéria.');
+
+    if(!confirm('Anexar ' + pares.length + ' PDF(s) às aulas de ' + kbDisc + ' e deixar o aluno abrindo em PDF?')) return;
+    KB_ING_ATIVO = true;
+    let ok = 0, passo = 0;
+    for(const p of pares){
+      kbAulaMsg('Enviando ' + p.file.name + '…');
+      kbIngProg(passo, pares.length, 'Enviando PDFs');
+      try{
+        const limpo = p.file.name.replace(/[^\w.\-]+/g, '_');
+        const caminho = 'prf-2021/' + String(kbDisc).replace(/[^\w\-]+/g, '_') + '/' + p.aula.id + '-' + Date.now() + '-' + limpo;
+        const up = await PX.sb.storage.from('aulas-pdf').upload(caminho, p.file, { contentType:'application/pdf', upsert:true });
+        if(up.error) throw new Error(up.error.message);
+        const doc = kbFind(kbDisc, p.aula.nome);
+        if(doc){
+          const r = await PX.sb.from('knowledge_docs')
+            .update({ pdf_url: caminho, modo_exibicao: 'pdf', updated_by: PX.user ? PX.user.id : null })
+            .eq('id', doc.id).select('id');
+          if(r.error) throw new Error(r.error.message);
+          if(!r.data || !r.data.length) throw new Error('sessão de administrador expirada');
+        }else{
+          const r = await PX.sb.from('knowledge_docs').insert({
+            course_slug:'prf-2021', disciplina: kbDisc, topico: p.aula.nome, titulo: kbAulaTitulo(p.aula.nome),
+            conteudo: '', status: 'publicado', publicado: true, modo_exibicao: 'pdf', pdf_url: caminho,
+            updated_by: PX.user ? PX.user.id : null,
+          }).select('id');
+          if(r.error) throw new Error(r.error.message);
+        }
+        ok++;
+      }catch(e){ kbAulaMsg('Falha em ' + p.file.name + ': ' + (e.message || e)); }
+      passo++;
+      kbIngProg(passo, pares.length, 'Enviando PDFs');
+    }
+    KB_ING_ATIVO = false;
+    setTimeout(kbIngProgHide, 1200);
+    await logAdmin('anexar_pdfs_lote','knowledge_docs', null, { disciplina: kbDisc, total: ok });
+    await loadKB();
+    kbPaint();
+    alert(ok + ' PDF(s) anexados — essas aulas agora abrem em PDF para o aluno.');
+    kbAulaMsg(ok + ' PDF(s) anexados às aulas de ' + kbDisc + '.');
+  };
+  inp.click();
 };
 
 
@@ -2386,9 +2462,15 @@ window.kbAulaFilaRemover = function(i){ if(KB_ING_ATIVO) return; KB_AULA_FILA.sp
 function kbAulaFilaAdd(files){
   const novos = Array.prototype.slice.call(files || []);
   if(!novos.length) return;
-  novos.forEach(function(f){ KB_AULA_FILA.push({ file:f, nome:f.name, estado:'fila', chars:0, erro:'' }); });
+  let repetidos = 0;
+  novos.forEach(function(f){
+    /* Não deixa o mesmo arquivo entrar duas vezes na fila. */
+    const ja = KB_AULA_FILA.some(function(x){ return x.nome === f.name && x.file && x.file.size === f.size; });
+    if(ja){ repetidos++; return; }
+    KB_AULA_FILA.push({ file:f, nome:f.name, estado:'fila', chars:0, erro:'' });
+  });
   kbAulaFilaPaint();
-  kbAulaMsg(KB_AULA_FILA.length + ' arquivo(s) na fila. Clique em “Cadastrar aula(s)”.');
+  kbAulaMsg(KB_AULA_FILA.length + ' arquivo(s) na fila' + (repetidos ? ' (' + repetidos + ' repetido(s) ignorado(s))' : '') + '. Clique em “Cadastrar aula(s)”.');
 }
 function kbBindAulaFile(){
   const inp = document.getElementById('kb-aula-file');
@@ -2429,7 +2511,7 @@ function kbAulaTituloAuto(texto, origem, numero){
 }
 
 /* Cria (ou atualiza) uma aula com o texto recebido. Devolve o número usado. */
-async function kbAulaCriar(disc, texto, origem, publicar){
+async function kbAulaCriar(disc, texto, origem, publicar, arquivo){
   await kbAulasCarregar(disc);
   const numero = KB_AULAS.length ? Math.max.apply(null, KB_AULAS.map(a=>a.ordem)) + 1 : 0;
   const titulo = kbAulaTituloAuto(texto, origem, numero);
@@ -2438,13 +2520,26 @@ async function kbAulaCriar(disc, texto, origem, publicar){
 
   const existente = KB_AULAS.find(a => kbAulaTitulo(a.nome).toLowerCase() === titulo.toLowerCase());
   let nomeTopico = titulo;
+  let topicoId = existente ? existente.id : null;
   if(existente){
     nomeTopico = existente.nome;
   }else{
-    const ins = await PX.sb.from('topics').insert({ discipline_id: discId, nome: titulo, ordem: numero, dificuldade: 'media' });
+    const ins = await PX.sb.from('topics').insert({ discipline_id: discId, nome: titulo, ordem: numero, dificuldade: 'media' }).select('id').maybeSingle();
     if(ins.error) throw new Error('Erro ao criar a aula: ' + ins.error.message);
+    topicoId = ins.data ? ins.data.id : null;
   }
   const ordem = existente ? existente.ordem : numero;
+
+  /* Se o material enviado for um PDF, ele também fica anexado à aula,
+     para o aluno poder abrir o arquivo original (modo PDF). */
+  let pdfPath = '';
+  if(arquivo && (/pdf/i.test(arquivo.type || '') || /\.pdf$/i.test(arquivo.name || ''))){
+    const limpo = String(arquivo.name).replace(/[^\w.\-]+/g, '_');
+    const caminho = 'prf-2021/' + String(disc || 'geral').replace(/[^\w\-]+/g, '_') + '/' +
+      (topicoId || 'aula') + '-' + Date.now() + '-' + limpo;
+    const up = await PX.sb.storage.from('aulas-pdf').upload(caminho, arquivo, { contentType: 'application/pdf', upsert: true });
+    if(!up.error) pdfPath = caminho;
+  }
 
   const payload = {
     course_slug: 'prf-2021', disciplina: disc, topico: nomeTopico,
@@ -2452,12 +2547,13 @@ async function kbAulaCriar(disc, texto, origem, publicar){
     conteudo: texto, status: publicar ? 'publicado' : 'rascunho',
     publicado: !!publicar, updated_by: PX.user ? PX.user.id : null,
   };
+  if(pdfPath) payload.pdf_url = pdfPath;
   const atual = kbFind(disc, nomeTopico);
   const q = atual
     ? await PX.sb.from('knowledge_docs').update(payload).eq('id', atual.id)
     : await PX.sb.from('knowledge_docs').insert(payload);
   if(q.error) throw new Error('Aula criada, mas o conteúdo não salvou: ' + q.error.message);
-  await logAdmin('cadastrar_aula','topics', null, { disciplina: disc, numero: ordem, titulo: titulo, publicado: !!publicar });
+  await logAdmin('cadastrar_aula','topics', null, { disciplina: disc, numero: ordem, titulo: titulo, publicado: !!publicar, pdf: !!pdfPath });
   await loadKB();
   return ordem;
 }
@@ -2481,7 +2577,7 @@ window.kbAulaCadastrar = async function(){
           const texto = await kbAulaLerArquivo(item.file);
           if(texto.length < 20) throw new Error('Não consegui extrair texto deste arquivo.');
           item.chars = texto.length;
-          await kbAulaCriar(disc, texto, item.nome, publicar);
+          await kbAulaCriar(disc, texto, item.nome, publicar, item.file);
           item.estado = 'pronto'; feitas++;
         }catch(e){ item.estado = 'falhou'; item.erro = e.message || String(e); }
         passo++;
@@ -2492,8 +2588,14 @@ window.kbAulaCadastrar = async function(){
       kbIngProg(pend.length, pend.length, 'Leitura concluída');
       setTimeout(kbIngProgHide, 1200);
       try{ if(PX.syncCurriculo) await PX.syncCurriculo(); }catch(e){}
+      /* Tira da fila o que já virou aula — só sobra o que falhou, sem lista repetida. */
+      KB_AULA_FILA = KB_AULA_FILA.filter(function(f){ return f.estado !== 'pronto'; });
+      const inpDoc = document.getElementById('kb-aula-file');
+      if(inpDoc) inpDoc.value = '';
       kbPaint(); kbPane('aulas');
-      return kbAulaMsg(feitas + ' aula(s) cadastrada(s)' + (publicar ? ' e publicada(s).' : ' como rascunho.'));
+      kbAulaFilaPaint();
+      return kbAulaMsg(feitas + ' aula(s) cadastrada(s)' + (publicar ? ' e publicada(s).' : ' como rascunho.') +
+        ' Os PDFs enviados ficaram anexados às aulas — use “Exibir todas em PDF” para o aluno abrir o arquivo original.');
     }
 
     let texto = '', origem = '';
