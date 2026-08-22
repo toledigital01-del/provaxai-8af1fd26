@@ -3742,7 +3742,7 @@ function kbIaPaintConfig(body, doc, pdf){
     + '<div id="ia-cfg-questoes" style="background:#fff;border:1px solid #C7D2FE;border-radius:12px;padding:14px 16px">'
     +   '<div style="font-weight:800;margin-bottom:8px">❓ Configuração das questões</div>'
     +   '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:0.84rem">'
-    +     '<label>Quantidade: <input id="ia-qtd" type="number" min="1" max="60" value="'+(qc.quantidade||10)+'" style="width:64px"></label>'
+    +     '<label>Quantidade: <input id="ia-qtd" type="number" min="5" max="30" value="'+Math.min(30, Math.max(5, qc.quantidade||10))+'" style="width:64px"></label>'
     +     '<label>Dificuldade: <select id="ia-dific">'
     +       ['misto|Equilibrada','facil|Mais fáceis','medio|Intermediárias','dificil|Mais difíceis','adaptativa|Adaptativa ao aluno'].map(function(o){
             const p = o.split('|'); return '<option value="'+p[0]+'"'+((qc.dificuldade||'misto')===p[0]?' selected':'')+'>'+p[1]+'</option>';
@@ -3816,7 +3816,7 @@ window.kbIaGerarTudo = async function(){
     if(linha) linha.innerHTML = '⏳ ' + linha.textContent.slice(2) + ' — gerando…';
     try{
       const tem = !!kbIaMod(t).atual;
-      const r = await kbIaApi({ acao: tem ? 'regenerar' : 'gerar', tipo: t, modo: tem ? 'original' : undefined, instrucoes: cfg.instrucoes || undefined, questoes: cfg.questoes });
+      const r = await kbIaApi({ acao: tem ? 'regenerar' : 'gerar', tipo: t, modo: tem ? 'original' : undefined, config: { instrucoes: cfg.instrucoes || undefined, questoes: cfg.questoes } });
       if(linha) linha.innerHTML = '✓ ' + linha.textContent.slice(2).split(' — ')[0] + (r.cache ? ' — já estava pronto' : ' — v' + (r.versao||'?') + ' gerada');
     }catch(e){
       if(linha) linha.innerHTML = '✕ ' + linha.textContent.slice(2).split(' — ')[0] + ' — ' + esc(e.message || 'falhou');
