@@ -3744,7 +3744,7 @@ function kbIaPaintConfig(body, doc, pdf){
     +   '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:0.84rem">'
     +     '<label>Quantidade: <input id="ia-qtd" type="number" min="5" max="30" value="'+Math.min(30, Math.max(5, qc.quantidade||10))+'" style="width:64px"></label>'
     +     '<label>Dificuldade: <select id="ia-dific">'
-    +       ['misto|Equilibrada','facil|Mais fáceis','medio|Intermediárias','dificil|Mais difíceis','adaptativa|Adaptativa ao aluno'].map(function(o){
+    +       ['misto|Equilibrada','facil|Mais fáceis','medio|Intermediárias','dificil|Mais difíceis'].map(function(o){
             const p = o.split('|'); return '<option value="'+p[0]+'"'+((qc.dificuldade||'misto')===p[0]?' selected':'')+'>'+p[1]+'</option>';
           }).join('')
     +     '</select></label>'
