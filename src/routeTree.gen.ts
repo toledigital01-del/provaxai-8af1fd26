@@ -24,6 +24,7 @@ import { Route as ApiPublicKbClassifyRouteImport } from './routes/api/public/kb-
 import { Route as ApiPublicKbDriveRouteImport } from './routes/api/public/kb-drive'
 import { Route as ApiPublicKbEditalRouteImport } from './routes/api/public/kb-edital'
 import { Route as ApiPublicKbIngestRouteImport } from './routes/api/public/kb-ingest'
+import { Route as ApiPublicKbPrepararRouteImport } from './routes/api/public/kb-preparar'
 import { Route as ApiPublicLacunasRouteImport } from './routes/api/public/lacunas'
 import { Route as ApiPublicPodcastRouteImport } from './routes/api/public/podcast'
 import { Route as ApiPublicRedacaoRouteImport } from './routes/api/public/redacao'
@@ -108,6 +109,11 @@ const ApiPublicKbIngestRoute = ApiPublicKbIngestRouteImport.update({
   path: '/api/public/kb-ingest',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicKbPrepararRoute = ApiPublicKbPrepararRouteImport.update({
+  id: '/api/public/kb-preparar',
+  path: '/api/public/kb-preparar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicLacunasRoute = ApiPublicLacunasRouteImport.update({
   id: '/api/public/lacunas',
   path: '/api/public/lacunas',
@@ -155,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/api/public/kb-drive': typeof ApiPublicKbDriveRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
+  '/api/public/kb-preparar': typeof ApiPublicKbPrepararRoute
   '/api/public/lacunas': typeof ApiPublicLacunasRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
   '/api/public/redacao': typeof ApiPublicRedacaoRoute
@@ -178,6 +185,7 @@ export interface FileRoutesByTo {
   '/api/public/kb-drive': typeof ApiPublicKbDriveRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
+  '/api/public/kb-preparar': typeof ApiPublicKbPrepararRoute
   '/api/public/lacunas': typeof ApiPublicLacunasRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
   '/api/public/redacao': typeof ApiPublicRedacaoRoute
@@ -202,6 +210,7 @@ export interface FileRoutesById {
   '/api/public/kb-drive': typeof ApiPublicKbDriveRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
+  '/api/public/kb-preparar': typeof ApiPublicKbPrepararRoute
   '/api/public/lacunas': typeof ApiPublicLacunasRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
   '/api/public/redacao': typeof ApiPublicRedacaoRoute
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
     | '/api/public/kb-drive'
     | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
+    | '/api/public/kb-preparar'
     | '/api/public/lacunas'
     | '/api/public/podcast'
     | '/api/public/redacao'
@@ -250,6 +260,7 @@ export interface FileRouteTypes {
     | '/api/public/kb-drive'
     | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
+    | '/api/public/kb-preparar'
     | '/api/public/lacunas'
     | '/api/public/podcast'
     | '/api/public/redacao'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/api/public/kb-drive'
     | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
+    | '/api/public/kb-preparar'
     | '/api/public/lacunas'
     | '/api/public/podcast'
     | '/api/public/redacao'
@@ -297,6 +309,7 @@ export interface RootRouteChildren {
   ApiPublicKbDriveRoute: typeof ApiPublicKbDriveRoute
   ApiPublicKbEditalRoute: typeof ApiPublicKbEditalRoute
   ApiPublicKbIngestRoute: typeof ApiPublicKbIngestRoute
+  ApiPublicKbPrepararRoute: typeof ApiPublicKbPrepararRoute
   ApiPublicLacunasRoute: typeof ApiPublicLacunasRoute
   ApiPublicPodcastRoute: typeof ApiPublicPodcastRoute
   ApiPublicRedacaoRoute: typeof ApiPublicRedacaoRoute
@@ -412,6 +425,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicKbIngestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/kb-preparar': {
+      id: '/api/public/kb-preparar'
+      path: '/api/public/kb-preparar'
+      fullPath: '/api/public/kb-preparar'
+      preLoaderRoute: typeof ApiPublicKbPrepararRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/lacunas': {
       id: '/api/public/lacunas'
       path: '/api/public/lacunas'
@@ -473,6 +493,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicKbDriveRoute: ApiPublicKbDriveRoute,
   ApiPublicKbEditalRoute: ApiPublicKbEditalRoute,
   ApiPublicKbIngestRoute: ApiPublicKbIngestRoute,
+  ApiPublicKbPrepararRoute: ApiPublicKbPrepararRoute,
   ApiPublicLacunasRoute: ApiPublicLacunasRoute,
   ApiPublicPodcastRoute: ApiPublicPodcastRoute,
   ApiPublicRedacaoRoute: ApiPublicRedacaoRoute,
