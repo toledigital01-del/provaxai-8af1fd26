@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { getSetting, aiKeys, currentUser, usosHoje, registrarUsoIA } from '@/lib/px-server'
+import { getSetting, aiKeys, currentUser, usosHoje, registrarUsoIA, serviceHeaders, SUPABASE_URL } from '@/lib/px-server'
 import { fetchKnowledge, baseTexto, fonteInstrucao } from '@/lib/kb-context'
 import { chat, normalizar, AIError } from '@/lib/ai-gateway'
 import { lerRecurso, salvarRecurso } from '@/lib/aula-recursos'
@@ -11,6 +11,30 @@ const Body = z.object({
   curso: z.string().max(80).optional(),
   regerar: z.boolean().optional(),
 })
+
+/* Módulos extras publicados pelo admin no pacote da aula (revisão inteligente,
+   pontos-chave e pegadinhas) — prontos, sem custo de geração para o aluno. */
+async function extrasPublicados(curso: string, disciplina: string, topico?: string | null) {
+  if (!topico) return {}
+  try {
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/aula_recursos?select=tipo,dados&course_slug=eq.${encodeURIComponent(curso)}` +
+        `&disciplina=${encodeURIComponent(disciplina)}&topico=eq.${encodeURIComponent(topico)}` +
+        `&tipo=in.(revisao,pontos,pegadinhas)`,
+      { headers: serviceHeaders() },
+    )
+    if (!r.ok) return {}
+    const rows = (await r.json()) as Array<{ tipo: string; dados: { conteudo?: string } }>
+    const out: Record<string, string> = {}
+    ;(Array.isArray(rows) ? rows : []).forEach((x) => {
+      const c = (x.dados?.conteudo || '').trim()
+      if (c) out[x.tipo] = c
+    })
+    return out
+  } catch {
+    return {}
+  }
+}
 
 export const Route = createFileRoute('/api/public/resumo')({
   server: {
