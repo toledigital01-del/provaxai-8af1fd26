@@ -2512,6 +2512,9 @@ function kbAulaTituloAuto(texto, origem, numero){
   return t.slice(0, 90);
 }
 
+/* Aulas criadas na última operação (usado para preparar o conteúdo de IA). */
+let KB_AULAS_CRIADAS = [];
+
 /* Cria (ou atualiza) uma aula com o texto recebido. Devolve o número usado. */
 async function kbAulaCriar(disc, texto, origem, publicar, arquivo){
   await kbAulasCarregar(disc);
@@ -2557,6 +2560,7 @@ async function kbAulaCriar(disc, texto, origem, publicar, arquivo){
   if(q.error) throw new Error('Aula criada, mas o conteúdo não salvou: ' + q.error.message);
   await logAdmin('cadastrar_aula','topics', null, { disciplina: disc, numero: ordem, titulo: titulo, publicado: !!publicar, pdf: !!pdfPath });
   await loadKB();
+  KB_AULAS_CRIADAS.push({ disc: disc, topico: nomeTopico });
   return ordem;
 }
 
@@ -2564,6 +2568,7 @@ window.kbAulaCadastrar = async function(){
   const disc = kbValidDisc(kbDisc);
   if(!disc) return kbAulaMsg('Escolha uma matéria antes.');
   const publicar = !!(document.getElementById('kb-aula-pub')||{}).checked;
+  KB_AULAS_CRIADAS = [];
 
   try{
     if(KB_AULA_TAB === 'doc'){
@@ -2596,6 +2601,18 @@ window.kbAulaCadastrar = async function(){
       if(inpDoc) inpDoc.value = '';
       kbPaint(); kbPane('aulas');
       kbAulaFilaPaint();
+      if(publicar && KB_AULAS_CRIADAS.length){
+        prepPainel();
+        prepLog('Preparando o conteúdo de IA de ' + KB_AULAS_CRIADAS.length + ' aula(s) publicada(s)…', '#FDE68A');
+        (async function(){
+          const lista = KB_AULAS_CRIADAS.slice();
+          for(let i=0;i<lista.length;i++){
+            prepLog('— ' + (i+1) + '/' + lista.length, '#64748B');
+            await kbPrepararAula(lista[i].disc, lista[i].topico);
+          }
+          prepLog('<b>Tudo pronto — o aluno já encontra aula, resumo, questões, flashcards e podcast salvos.</b>', '#FDE68A');
+        })();
+      }
       return kbAulaMsg(feitas + ' aula(s) cadastrada(s)' + (publicar ? ' e publicada(s).' : ' como rascunho.') +
         ' Os PDFs enviados ficaram anexados às aulas — use “Exibir todas em PDF” para o aluno abrir o arquivo original.');
     }
@@ -2620,7 +2637,8 @@ window.kbAulaCadastrar = async function(){
     ['kb-aula-txt','kb-aula-url','kb-aula-video'].forEach(function(id){ const el = document.getElementById(id); if(el) el.value = ''; });
     kbPaint();
     kbPane('aulas');
-    kbAulaMsg('Aula ' + kbAulaNum(n) + (publicar ? ' publicada — já aparece no painel do aluno.' : ' salva como rascunho.'));
+    kbAulaMsg('Aula ' + kbAulaNum(n) + (publicar ? ' publicada — preparando aula da Athena, resumo, questões, flashcards, lacunas e podcast…' : ' salva como rascunho.'));
+    if(publicar && KB_AULAS_CRIADAS.length) kbPrepararAula(KB_AULAS_CRIADAS[0].disc, KB_AULAS_CRIADAS[0].topico);
   }catch(e){ KB_ING_ATIVO = false; kbIngProgHide(); kbAulaMsg('Erro: ' + (e.message || e)); }
 };
 
