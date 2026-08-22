@@ -73,6 +73,14 @@ export const Route = createFileRoute('/api/public/kb-preparar')({
           }
         }
 
+        // Registra no pacote da aula (aula_conteudos) versões publicadas do que
+        // já está no ar, para o painel "IA da Aula" enxergar o que foi preparado.
+        try {
+          await chamar('aula-pacote', { acao: 'sincronizar', ...base })
+        } catch {
+          /* sincronização é best-effort */
+        }
+
         return Response.json({
           ok: resultados.every((r) => r.ok),
           aula: body.topico,

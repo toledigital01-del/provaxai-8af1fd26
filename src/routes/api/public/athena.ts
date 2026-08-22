@@ -66,9 +66,38 @@ export const Route = createFileRoute('/api/public/athena')({
           )
 
         const docs = await fetchKnowledge(curso, body.disciplina, body.topico)
-        const base = docs
+        let base = docs
           .map((d) => `### ${d.titulo || d.topico || body.disciplina}\n${(d.conteudo || '').slice(0, 12000)}`)
           .join('\n\n')
+
+        // Conteúdo inteligente aprovado pelo administrador para esta aula
+        // (pacote publicado: resumo, pontos-chave, pegadinhas, base da Athena…).
+        if (body.topico) {
+          try {
+            const eqT = encodeURIComponent(body.topico)
+            const r = await fetch(
+              `${SUPABASE_URL}/rest/v1/aula_conteudos?select=tipo,conteudo,versao&course_slug=eq.${encodeURIComponent(curso)}` +
+                `&disciplina=${encodeURIComponent(body.disciplina)}&topico=eq.${eqT}&publicado=is.true` +
+                `&tipo=in.(summary,review,key_points,traps,athena_knowledge)&order=versao.desc`,
+              { headers: serviceHeaders() },
+            )
+            if (r.ok) {
+              const rows = (await r.json()) as Array<{ tipo: string; conteudo: string }>
+              const vistos = new Set<string>()
+              const extras = (Array.isArray(rows) ? rows : [])
+                .filter((x) => {
+                  if (vistos.has(x.tipo)) return false // só a versão publicada mais recente
+                  vistos.add(x.tipo)
+                  return (x.conteudo || '').trim()
+                })
+                .map((x) => `### ${x.tipo}\n${x.conteudo.slice(0, 8000)}`)
+                .join('\n\n')
+              if (extras) base += '\n\n--- CONTEÚDO INTELIGENTE APROVADO DESTA AULA ---\n' + extras
+            }
+          } catch {
+            /* enriquecimento é best-effort */
+          }
+        }
 
         const cfg = cfgLimite
 
