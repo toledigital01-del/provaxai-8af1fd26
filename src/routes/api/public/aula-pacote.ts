@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { requireAdmin, getSetting, aiKeys, currentUser } from '@/lib/px-server'
-import { normalizar } from '@/lib/ai-gateway'
+import { requireAdmin, aiKeys, currentUser } from '@/lib/px-server'
+import { rotaDoAgente, rotasPacote } from '@/lib/ai-router'
 import {
   TIPOS,
   MODULOS,
