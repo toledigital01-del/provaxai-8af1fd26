@@ -143,7 +143,7 @@
 <script src="px-auth.js"></script>
 <script>
 const TABS = [
-  ['geral','Visão geral'],['conhecimento','Base de conhecimento (IA)'],['alunos','Alunos'],['cursos','Cursos'],['conteudo','Conteúdo'],
+  ['geral','Visão geral'],['conhecimento','Base de conhecimento (IA)'],['rag','RAG da Athena'],['alunos','Alunos'],['cursos','Cursos'],['conteudo','Conteúdo'],
   ['financeiro','Financeiro'],['planos','Planos e cupons'],['ia','Athena IA'],
   ['suporte','Suporte'],['logs','Logs'],['config','Central de IA']
 ];
@@ -2055,7 +2055,6 @@ function kbAulasPaint(){
       '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasPdfLote()">Anexar PDFs em lote</button>' +
       '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasTodasPdf()">Exibir todas em PDF</button>' +
       '<button class="act primary" style="font-size:0.75rem;padding:4px 10px" onclick="kbIaLote()">Preparar conteúdo de IA de todas</button>' +
-      '<button class="act" style="font-size:0.75rem;padding:4px 10px" title="Grava a memória de busca da Athena desta matéria (trechos + relevância). Refazer depois de editar materiais." onclick="kbIndexarRag()">Indexar na Athena</button>' +
       '<button class="act danger" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasExcluirTodas()">Excluir todas as aulas</button>' +
     '</div>' +
 
@@ -2499,15 +2498,6 @@ window.kbAulasTodasPdf = async function(){
 /* Anexa vários PDFs de uma vez às aulas já cadastradas.
    Casa pelo número da aula no nome do arquivo (ex.: "Aula 03.pdf");
    o que não casar entra, em ordem, nas aulas que ainda estão sem PDF. */
-/* Indexação RAG: grava a memória de busca da Athena para a matéria aberta. */
-window.kbIndexarRag = async function(){
-  if(!kbDisc){ toast('Escolha uma matéria primeiro.'); return; }
-  toast('Indexando “' + kbDisc + '” na memória da Athena… pode levar 1-2 minutos.');
-  try{
-    const r = await kbPost('/api/public/kb-embed', { curso:'prf-2021', disciplina: kbDisc });
-    toast('Pronto: ' + (r.chunks||0) + ' trechos indexados de ' + (r.docs||0) + ' materiais. A Athena agora busca por relevância e cita a origem.');
-  }catch(e){ toast(e.message || 'Não consegui indexar agora.'); }
-};
 window.kbAulasPdfLote = function(){
   if(!kbDisc) return;
   if(!KB_AULAS.length) return alert('Cadastre as aulas antes de anexar os PDFs.');
@@ -3004,6 +2994,14 @@ async function kbPost(path, payload){
   if(!r.ok) throw new Error(j.error || 'Falha na requisição.');
   return j;
 }
+async function kbReq(path, method, payload){
+  const opt = { method: method || 'GET', headers:{ Authorization:'Bearer ' + (await kbToken()) } };
+  if(payload){ opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(payload); }
+  const r = await fetch(path, opt);
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j.error || 'Falha na requisição.');
+  return j;
+}
 function kbEhTextoSimples(f){
 
   return /^text\//i.test(f.type || '') || /\.(txt|md|markdown|csv|json|srt|vtt|log|tsv)$/i.test(f.name || '');
@@ -3438,8 +3436,201 @@ window.kbDelete = async function(id){
   await loadKB(); kbPaint();
 };
 
+/* ================= RAG da Athena =================
+   Limites por curso/disciplina, teste de busca e relatório de qualidade.
+   A reindexação é automática: ao abrir esta aba (e a cada pergunta do aluno)
+   o servidor refaz o índice de qualquer matéria com material mais novo. */
+const RAG_CURSO = 'prf-2021';
+let RAG_DISC = '';
+
+async function viewRag(){
+  await loadKB();
+  const discs = kbDiscList();
+  const opts = discs.map(d => '<option value="' + esc(d) + '">' + esc(d) + '</option>').join('');
+  view.innerHTML = `
+    <div class="kb-scope">
+      <div class="kb-block">
+        <h3>Limites da busca (RAG)</h3>
+        <p class="kb-sub">Quanto do material a Athena recebe em cada pergunta. Vale a regra da matéria; se não houver, vale a regra "Padrão do curso"; se não houver, valem os padrões da plataforma (12.000 caracteres · 8 trechos · corte 0,28).</p>
+        <div class="kb-fields" style="grid-template-columns:minmax(180px,1.4fr) repeat(3,minmax(110px,1fr)) auto">
+          <div><label class="muted">Matéria</label>
+            <select id="rag-disc"><option value="">Padrão do curso (todas as matérias)</option>${opts}</select></div>
+          <div><label class="muted">Contexto máx. (caracteres)</label><input id="rag-maxchars" type="number" min="2000" max="60000" step="500" value="12000"></div>
+          <div><label class="muted">Trechos (topK)</label><input id="rag-topk" type="number" min="1" max="30" value="8"></div>
+          <div><label class="muted">Corte de similaridade</label><input id="rag-threshold" type="number" min="0" max="0.95" step="0.01" value="0.28"></div>
+          <div style="display:flex;align-items:flex-end"><button class="act primary" onclick="ragCfgSalvar()">Salvar regra</button></div>
+        </div>
+        <p class="muted" id="rag-cfg-msg" style="margin-top:8px"></p>
+        <div id="rag-cfg-lista" style="margin-top:12px"></div>
+      </div>
+
+      <div class="kb-block">
+        <h3>Testar a busca</h3>
+        <p class="kb-sub">Veja exatamente quais trechos a Athena receberia para uma pergunta, com a similaridade de cada um — sem chamar a IA e sem gastar pergunta de aluno.</p>
+        <div class="kb-fields" style="grid-template-columns:minmax(180px,1fr) minmax(180px,1fr)">
+          <div><label class="muted">Matéria</label><select id="rag-test-disc">${opts}</select></div>
+          <div><label class="muted">Aula (opcional)</label><input id="rag-test-topico" placeholder="ex.: Aula 03 - Controle da administração"></div>
+        </div>
+        <textarea id="rag-test-pergunta" rows="3" placeholder="Pergunta de teste, ex.: O que é poder de polícia?" style="margin-top:10px"></textarea>
+        <div class="kb-actions" style="margin-top:10px">
+          <button class="act primary" onclick="ragTestar()">Ver trechos que a Athena usaria</button>
+          <span class="muted" id="rag-test-msg"></span>
+        </div>
+        <div id="rag-test-out" style="margin-top:12px"></div>
+      </div>
+
+      <div class="kb-block">
+        <h3>Relatório de qualidade</h3>
+        <p class="kb-sub">Taxa de sucesso do RAG, cobertura das aulas e quando a Athena precisou do modo antigo. Ao abrir, o índice das matérias desatualizadas é refeito automaticamente.</p>
+        <div class="kb-fields" style="grid-template-columns:minmax(180px,280px) auto">
+          <div><label class="muted">Filtrar por matéria</label><select id="rag-met-disc" onchange="ragMetricas()"><option value="">Todas</option>${opts}</select></div>
+          <div style="display:flex;align-items:flex-end"><button class="act" onclick="ragMetricas()">Atualizar relatório</button></div>
+        </div>
+        <div id="rag-met-out" style="margin-top:14px"><p class="muted">Carregando…</p></div>
+      </div>
+    </div>`;
+  ragCfgCarregar();
+  ragMetricas();
+}
+
+async function ragCfgCarregar(){
+  const box = document.getElementById('rag-cfg-lista');
+  if(!box) return;
+  try{
+    const j = await kbReq('/api/public/rag-settings?curso=' + encodeURIComponent(RAG_CURSO), 'GET');
+    const regras = j.regras || [];
+    if(!regras.length){ box.innerHTML = '<p class="muted" style="font-size:0.8rem">Nenhuma regra personalizada — tudo usa o padrão da plataforma.</p>'; return; }
+    box.innerHTML = '<div class="kb-surface" style="font-size:0.8125rem">' + regras.map(r =>
+      '<div style="display:flex;gap:10px;align-items:center;padding:9px 12px;border-bottom:1px solid #EEF1F6;background:#fff">' +
+        '<b style="flex:1;min-width:140px">' + (r.disciplina ? esc(r.disciplina) : 'Padrão do curso') + '</b>' +
+        '<span class="kb-tag">' + Number(r.max_chars).toLocaleString('pt-BR') + ' caracteres</span>' +
+        '<span class="kb-tag">' + r.top_k + ' trechos</span>' +
+        '<span class="kb-tag">corte ' + String(r.threshold).replace('.', ',') + '</span>' +
+        '<button class="act danger" style="font-size:0.75rem;padding:4px 10px" onclick="ragCfgExcluir(\'' + r.id + '\')">Excluir</button>' +
+      '</div>').join('') + '</div>';
+  }catch(e){ box.innerHTML = '<p class="muted">Erro: ' + esc(e.message) + '</p>'; }
+}
+window.ragCfgSalvar = async function(){
+  const msg = document.getElementById('rag-cfg-msg');
+  const disc = document.getElementById('rag-disc').value || null;
+  const payload = {
+    curso: RAG_CURSO, disciplina: disc,
+    max_chars: parseInt(document.getElementById('rag-maxchars').value, 10),
+    top_k: parseInt(document.getElementById('rag-topk').value, 10),
+    threshold: parseFloat(String(document.getElementById('rag-threshold').value).replace(',', '.')),
+  };
+  msg.textContent = 'Salvando…';
+  try{
+    await kbPost('/api/public/rag-settings', payload);
+    msg.textContent = 'Regra salva — vale a partir da próxima pergunta.';
+    ragCfgCarregar();
+  }catch(e){ msg.textContent = e.message; }
+};
+window.ragCfgExcluir = async function(id){
+  if(!confirm('Excluir esta regra? O escopo volta ao padrão.')) return;
+  try{ await kbReq('/api/public/rag-settings?id=' + encodeURIComponent(id), 'DELETE'); ragCfgCarregar(); }
+  catch(e){ alert(e.message); }
+};
+
+window.ragTestar = async function(){
+  const out = document.getElementById('rag-test-out');
+  const msg = document.getElementById('rag-test-msg');
+  const pergunta = document.getElementById('rag-test-pergunta').value.trim();
+  const disciplina = document.getElementById('rag-test-disc').value;
+  const topico = document.getElementById('rag-test-topico').value.trim() || null;
+  if(!disciplina || pergunta.length < 3){ msg.textContent = 'Escolha a matéria e escreva a pergunta.'; return; }
+  msg.textContent = 'Buscando…';
+  out.innerHTML = '';
+  try{
+    const j = await kbPost('/api/public/rag-preview', { curso: RAG_CURSO, disciplina, topico, pergunta });
+    msg.textContent = '';
+    const cfg = j.cfg || {};
+    let html = '<p class="muted" style="font-size:0.78rem;margin:0 0 8px">Regra aplicada: ' +
+      Number(cfg.maxChars||0).toLocaleString('pt-BR') + ' caracteres · ' + (cfg.topK||0) + ' trechos · corte ' +
+      String(cfg.threshold).replace('.', ',') +
+      (j.indexado ? ' · contexto usado: ' + Number(j.contextoUsado||0).toLocaleString('pt-BR') + ' caracteres' : '') + '</p>';
+    if(j.aviso) html += '<p class="kb-sub" style="color:#92400E">' + esc(j.aviso) + '</p>';
+    if(j.trechos && j.trechos.length){
+      html += j.trechos.map(t =>
+        '<div class="kb-surface" style="padding:10px 12px;margin-bottom:8px;background:#fff;font-size:0.8125rem;opacity:' + (t.entraNoContexto ? '1' : '0.55') + '">' +
+          '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">' +
+            '<b style="flex:1;min-width:120px">[Fonte ' + t.n + '] ' + esc(t.titulo) + '</b>' +
+            (t.topico ? '<span class="kb-tag">' + esc(t.topico) + '</span>' : '') +
+            (t.entraNoContexto ? '' : '<span class="kb-tag" style="background:#FEF3C7;color:#92400E;border-color:#FDE68A">fora do limite</span>') +
+            '<b style="color:#1E3A8A">' + t.similaridade + '%</b>' +
+          '</div>' +
+          '<div style="height:5px;border-radius:99px;background:#EEF1F6;overflow:hidden;margin-bottom:6px">' +
+            '<div style="height:100%;width:' + Math.min(100, t.similaridade) + '%;background:' + (t.similaridade >= 60 ? '#059669' : t.similaridade >= 40 ? '#2563EB' : '#D97706') + '"></div>' +
+          '</div>' +
+          '<p class="muted" style="margin:0;font-size:0.75rem">' + esc(t.trecho) + (t.caracteres > 600 ? '…' : '') + '</p>' +
+        '</div>').join('');
+    } else if(!j.aviso){ html += '<p class="muted">Nenhum trecho retornado.</p>'; }
+    out.innerHTML = html;
+  }catch(e){ msg.textContent = e.message; }
+};
+
+const RAG_MOTIVOS = { sem_trechos:'Nenhum trecho passou no corte', erro_rag:'Falha na busca vetorial', sem_material:'Sem material publicado na matéria' };
+window.ragMetricas = async function(){
+  const out = document.getElementById('rag-met-out');
+  if(!out) return;
+  const disc = (document.getElementById('rag-met-disc') || {}).value || '';
+  out.innerHTML = '<p class="muted">Carregando…</p>';
+  try{
+    const j = await kbPost('/api/public/rag-metrics', { curso: RAG_CURSO, disciplina: disc || undefined });
+    const r = j.resumo || {};
+    const pct = v => v == null ? '—' : v + '%';
+    let html = '';
+    if(j.reindex && j.reindex.reindexadas && j.reindex.reindexadas.length){
+      html += '<p class="kb-sub" style="color:#065F46">Reindexação automática: ' + j.reindex.reindexadas.map(x => esc(x.disciplina) + ' (' + x.chunks + ' trechos)').join(', ') + '.</p>';
+    }
+    html += '<div class="kb-stats">' +
+      '<div class="kb-stat"><b>' + (r.perguntas||0) + '</b><span>Perguntas à Athena</span></div>' +
+      '<div class="kb-stat"><b>' + pct(r.taxaSucesso) + '</b><span>Responderam com RAG</span></div>' +
+      '<div class="kb-stat"><b>' + pct(r.simMedia) + '</b><span>Similaridade média</span></div>' +
+      '<div class="kb-stat"><b>' + (r.trechosMedios == null ? '—' : r.trechosMedios) + '</b><span>Trechos por resposta</span></div>' +
+    '</div>';
+    const fb = r.fallbacks || {};
+    const fbKeys = Object.keys(fb);
+    if(fbKeys.length){
+      html += '<p class="kb-sub" style="margin-top:14px"><b>Modo antigo (fallback)</b> — ' + fbKeys.map(k => esc(RAG_MOTIVOS[k]||k) + ': ' + fb[k]).join(' · ') + '</p>';
+    }
+    if(j.porDisciplina && j.porDisciplina.length){
+      html += '<h4 style="margin:16px 0 6px;font-size:0.85rem">Por matéria</h4><div class="kb-surface" style="font-size:0.8125rem">' +
+        j.porDisciplina.map(d =>
+          '<div style="display:flex;gap:10px;padding:8px 12px;border-bottom:1px solid #EEF1F6;background:#fff;align-items:center">' +
+            '<b style="flex:1;min-width:140px">' + esc(d.disciplina) + '</b>' +
+            '<span class="kb-tag">' + d.perguntas + ' perguntas</span>' +
+            '<span class="kb-tag ' + (d.taxaSucesso >= 70 ? 'is-on' : 'is-wait') + '">' + pct(d.taxaSucesso) + ' com RAG</span>' +
+            '<span class="kb-tag">sim. média ' + pct(d.simMedia) + '</span>' +
+            '<span class="kb-tag">' + ((j.trechosPorDisciplina||{})[d.disciplina]||0) + ' trechos indexados</span>' +
+          '</div>').join('') + '</div>';
+    }
+    if(j.cobertura && j.cobertura.length){
+      html += '<h4 style="margin:16px 0 6px;font-size:0.85rem">Cobertura das aulas (publicadas com índice)</h4><div class="kb-surface" style="font-size:0.8125rem">' +
+        j.cobertura.map(c =>
+          '<div style="display:flex;gap:10px;padding:8px 12px;border-bottom:1px solid #EEF1F6;background:#fff;align-items:center">' +
+            '<b style="flex:1;min-width:140px">' + esc(c.disciplina) + '</b>' +
+            '<div style="width:140px;height:6px;border-radius:99px;background:#EEF1F6;overflow:hidden"><div style="height:100%;width:' + (c.pct||0) + '%;background:' + (c.pct >= 90 ? '#059669' : c.pct >= 60 ? '#2563EB' : '#D97706') + '"></div></div>' +
+            '<span class="kb-tag">' + c.cobertas + '/' + c.aulas + ' aulas · ' + pct(c.pct) + '</span>' +
+          '</div>').join('') + '</div>';
+    }
+    if(j.ultimos && j.ultimos.length){
+      html += '<h4 style="margin:16px 0 6px;font-size:0.85rem">Últimas perguntas</h4><div class="kb-surface" style="font-size:0.78rem">' +
+        j.ultimos.map(e =>
+          '<div style="display:flex;gap:10px;padding:7px 12px;border-bottom:1px solid #EEF1F6;background:#fff;align-items:center">' +
+            '<span class="kb-tag ' + (e.rag_ativo ? 'is-on' : 'is-wait') + '">' + (e.rag_ativo ? 'RAG' : 'fallback') + '</span>' +
+            '<span style="flex:1;min-width:120px">' + esc(e.disciplina) + '</span>' +
+            '<span class="muted">' + (e.rag_ativo ? e.trechos + ' trechos · sim ' + Math.round((e.sim_media||0)*100) + '%' : esc(RAG_MOTIVOS[e.motivo_fallback]||e.motivo_fallback||'')) + '</span>' +
+            '<span class="muted">' + dth(e.created_at) + '</span>' +
+          '</div>').join('') + '</div>';
+    }
+    if(!r.perguntas) html += '<p class="muted" style="margin-top:10px">Ainda sem perguntas registradas neste filtro — o relatório enche sozinho conforme os alunos usam a Athena.</p>';
+    out.innerHTML = html;
+  }catch(e){ out.innerHTML = '<p class="muted">Erro: ' + esc(e.message) + '</p>'; }
+};
+
 const VIEWS = { geral:viewGeral, alunos:viewAlunos, cursos:viewCursos, conteudo:viewConteudo,
-  conhecimento:viewConhecimento,
+  conhecimento:viewConhecimento, rag:viewRag,
   financeiro:viewFinanceiro, planos:viewPlanos, ia:viewIA, suporte:viewSuporte, logs:viewLogs, config:viewConfig };
 
 

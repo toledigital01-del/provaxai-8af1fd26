@@ -3,7 +3,15 @@ import { z } from 'zod'
 import { SUPABASE_URL, currentUser, hasCourseAccess, usosHoje, serviceHeaders } from '@/lib/px-server'
 import { AIError } from '@/lib/ai-gateway'
 import { agentChat, rotaDoAgente } from '@/lib/ai-router'
-import { buscarTrechos, escopoIndexado, indexarEscopo, MAX_RAG_CHARS, type TrechoRag } from '@/lib/rag'
+import {
+  buscarTrechos,
+  configRag,
+  escopoDesatualizado,
+  indexarEscopo,
+  registrarRagEvento,
+  type RagConfig,
+  type TrechoRag,
+} from '@/lib/rag'
 
 const Body = z.object({
   disciplina: z.string().min(1).max(200),
@@ -14,15 +22,15 @@ const Body = z.object({
 
 type Fonte = { n: number; titulo: string; disciplina: string; topico: string | null; similaridade: number }
 
-/** Monta o contexto a partir dos trechos RAG, respeitando o limite rígido. */
-function montarContexto(trechos: TrechoRag[]) {
+/** Monta o contexto a partir dos trechos RAG, respeitando o limite rígido configurado. */
+function montarContexto(trechos: TrechoRag[], cfg: RagConfig) {
   let usado = 0
   const partes: string[] = []
   const fontes: Fonte[] = []
-  for (const t of trechos) {
+  for (const t of trechos.slice(0, cfg.topK)) {
     const n = fontes.length + 1
     const bloco = `### [Fonte ${n}] ${t.titulo || t.topico || t.disciplina}${t.topico ? ` · ${t.topico}` : ''}\n${t.trecho}`
-    if (usado + bloco.length > MAX_RAG_CHARS) continue
+    if (usado + bloco.length > cfg.maxChars) continue
     usado += bloco.length
     partes.push(bloco)
     fontes.push({
@@ -83,14 +91,17 @@ export const Route = createFileRoute('/api/public/athena')({
             { status: 429 },
           )
 
-        // RAG: busca vetorial dos trechos mais relevantes (com indexação
-        // automática na primeira pergunta da disciplina). Se falhar ou não
-        // houver nada indexado, cai no modo clássico de leitura direta.
+        // RAG: busca vetorial dos trechos mais relevantes. O índice é refeito
+        // automaticamente sempre que o material oficial fica mais novo que ele
+        // (sem botão manual). Se falhar ou não houver nada indexado, cai no
+        // modo clássico de leitura direta. Limites vêm de rag_settings.
+        const cfg = await configRag(curso, body.disciplina)
         let base = ''
         let fontes: Fonte[] = []
         let ragAtivo = false
+        let motivoFallback: string | null = null
         try {
-          if (!(await escopoIndexado(curso, body.disciplina))) {
+          if (await escopoDesatualizado(curso, body.disciplina)) {
             await indexarEscopo({ curso, disciplina: body.disciplina })
           }
           const trechos = await buscarTrechos({
@@ -98,15 +109,19 @@ export const Route = createFileRoute('/api/public/athena')({
             curso,
             disciplina: body.disciplina,
             topico: body.topico,
-            max: 8,
+            max: cfg.topK,
+            threshold: cfg.threshold,
           })
           if (trechos.length) {
-            const ctx = montarContexto(trechos)
+            const ctx = montarContexto(trechos, cfg)
             base = ctx.base
             fontes = ctx.fontes
             ragAtivo = true
+          } else {
+            motivoFallback = 'sem_trechos'
           }
         } catch {
+          motivoFallback = 'erro_rag'
           /* RAG é melhor-esforço: qualquer falha cai no modo clássico */
         }
 
@@ -122,7 +137,21 @@ export const Route = createFileRoute('/api/public/athena')({
             topico: d.topico || null,
             similaridade: 0,
           }))
+          if (!docs.length && motivoFallback === 'sem_trechos') motivoFallback = 'sem_material'
         }
+
+        // Telemetria do RAG para o relatório do admin (best-effort).
+        void registrarRagEvento({
+          userId,
+          curso,
+          disciplina: body.disciplina,
+          topico: body.topico ?? null,
+          pergunta: body.pergunta,
+          ragAtivo,
+          trechos: fontes.length,
+          fontes,
+          motivoFallback,
+        })
 
         // Conteúdo inteligente aprovado pelo administrador para esta aula
         // (pacote publicado: resumo, pontos-chave, pegadinhas, base da Athena…).

@@ -30,6 +30,9 @@ import { Route as ApiPublicKbIngestRouteImport } from './routes/api/public/kb-in
 import { Route as ApiPublicKbPrepararRouteImport } from './routes/api/public/kb-preparar'
 import { Route as ApiPublicLacunasRouteImport } from './routes/api/public/lacunas'
 import { Route as ApiPublicPodcastRouteImport } from './routes/api/public/podcast'
+import { Route as ApiPublicRagMetricsRouteImport } from './routes/api/public/rag-metrics'
+import { Route as ApiPublicRagPreviewRouteImport } from './routes/api/public/rag-preview'
+import { Route as ApiPublicRagSettingsRouteImport } from './routes/api/public/rag-settings'
 import { Route as ApiPublicRedacaoRouteImport } from './routes/api/public/redacao'
 import { Route as ApiPublicResumoRouteImport } from './routes/api/public/resumo'
 import { Route as ApiPublicTtsRouteImport } from './routes/api/public/tts'
@@ -142,6 +145,21 @@ const ApiPublicPodcastRoute = ApiPublicPodcastRouteImport.update({
   path: '/api/public/podcast',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRagMetricsRoute = ApiPublicRagMetricsRouteImport.update({
+  id: '/api/public/rag-metrics',
+  path: '/api/public/rag-metrics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicRagPreviewRoute = ApiPublicRagPreviewRouteImport.update({
+  id: '/api/public/rag-preview',
+  path: '/api/public/rag-preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicRagSettingsRoute = ApiPublicRagSettingsRouteImport.update({
+  id: '/api/public/rag-settings',
+  path: '/api/public/rag-settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicRedacaoRoute = ApiPublicRedacaoRouteImport.update({
   id: '/api/public/redacao',
   path: '/api/public/redacao',
@@ -185,6 +203,9 @@ export interface FileRoutesByFullPath {
   '/api/public/kb-preparar': typeof ApiPublicKbPrepararRoute
   '/api/public/lacunas': typeof ApiPublicLacunasRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
+  '/api/public/rag-metrics': typeof ApiPublicRagMetricsRoute
+  '/api/public/rag-preview': typeof ApiPublicRagPreviewRoute
+  '/api/public/rag-settings': typeof ApiPublicRagSettingsRoute
   '/api/public/redacao': typeof ApiPublicRedacaoRoute
   '/api/public/resumo': typeof ApiPublicResumoRoute
   '/api/public/tts': typeof ApiPublicTtsRoute
@@ -212,6 +233,9 @@ export interface FileRoutesByTo {
   '/api/public/kb-preparar': typeof ApiPublicKbPrepararRoute
   '/api/public/lacunas': typeof ApiPublicLacunasRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
+  '/api/public/rag-metrics': typeof ApiPublicRagMetricsRoute
+  '/api/public/rag-preview': typeof ApiPublicRagPreviewRoute
+  '/api/public/rag-settings': typeof ApiPublicRagSettingsRoute
   '/api/public/redacao': typeof ApiPublicRedacaoRoute
   '/api/public/resumo': typeof ApiPublicResumoRoute
   '/api/public/tts': typeof ApiPublicTtsRoute
@@ -240,6 +264,9 @@ export interface FileRoutesById {
   '/api/public/kb-preparar': typeof ApiPublicKbPrepararRoute
   '/api/public/lacunas': typeof ApiPublicLacunasRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
+  '/api/public/rag-metrics': typeof ApiPublicRagMetricsRoute
+  '/api/public/rag-preview': typeof ApiPublicRagPreviewRoute
+  '/api/public/rag-settings': typeof ApiPublicRagSettingsRoute
   '/api/public/redacao': typeof ApiPublicRedacaoRoute
   '/api/public/resumo': typeof ApiPublicResumoRoute
   '/api/public/tts': typeof ApiPublicTtsRoute
@@ -269,6 +296,9 @@ export interface FileRouteTypes {
     | '/api/public/kb-preparar'
     | '/api/public/lacunas'
     | '/api/public/podcast'
+    | '/api/public/rag-metrics'
+    | '/api/public/rag-preview'
+    | '/api/public/rag-settings'
     | '/api/public/redacao'
     | '/api/public/resumo'
     | '/api/public/tts'
@@ -296,6 +326,9 @@ export interface FileRouteTypes {
     | '/api/public/kb-preparar'
     | '/api/public/lacunas'
     | '/api/public/podcast'
+    | '/api/public/rag-metrics'
+    | '/api/public/rag-preview'
+    | '/api/public/rag-settings'
     | '/api/public/redacao'
     | '/api/public/resumo'
     | '/api/public/tts'
@@ -323,6 +356,9 @@ export interface FileRouteTypes {
     | '/api/public/kb-preparar'
     | '/api/public/lacunas'
     | '/api/public/podcast'
+    | '/api/public/rag-metrics'
+    | '/api/public/rag-preview'
+    | '/api/public/rag-settings'
     | '/api/public/redacao'
     | '/api/public/resumo'
     | '/api/public/tts'
@@ -351,6 +387,9 @@ export interface RootRouteChildren {
   ApiPublicKbPrepararRoute: typeof ApiPublicKbPrepararRoute
   ApiPublicLacunasRoute: typeof ApiPublicLacunasRoute
   ApiPublicPodcastRoute: typeof ApiPublicPodcastRoute
+  ApiPublicRagMetricsRoute: typeof ApiPublicRagMetricsRoute
+  ApiPublicRagPreviewRoute: typeof ApiPublicRagPreviewRoute
+  ApiPublicRagSettingsRoute: typeof ApiPublicRagSettingsRoute
   ApiPublicRedacaoRoute: typeof ApiPublicRedacaoRoute
   ApiPublicResumoRoute: typeof ApiPublicResumoRoute
   ApiPublicTtsRoute: typeof ApiPublicTtsRoute
@@ -506,6 +545,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPodcastRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/rag-metrics': {
+      id: '/api/public/rag-metrics'
+      path: '/api/public/rag-metrics'
+      fullPath: '/api/public/rag-metrics'
+      preLoaderRoute: typeof ApiPublicRagMetricsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/rag-preview': {
+      id: '/api/public/rag-preview'
+      path: '/api/public/rag-preview'
+      fullPath: '/api/public/rag-preview'
+      preLoaderRoute: typeof ApiPublicRagPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/rag-settings': {
+      id: '/api/public/rag-settings'
+      path: '/api/public/rag-settings'
+      fullPath: '/api/public/rag-settings'
+      preLoaderRoute: typeof ApiPublicRagSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/redacao': {
       id: '/api/public/redacao'
       path: '/api/public/redacao'
@@ -559,6 +619,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicKbPrepararRoute: ApiPublicKbPrepararRoute,
   ApiPublicLacunasRoute: ApiPublicLacunasRoute,
   ApiPublicPodcastRoute: ApiPublicPodcastRoute,
+  ApiPublicRagMetricsRoute: ApiPublicRagMetricsRoute,
+  ApiPublicRagPreviewRoute: ApiPublicRagPreviewRoute,
+  ApiPublicRagSettingsRoute: ApiPublicRagSettingsRoute,
   ApiPublicRedacaoRoute: ApiPublicRedacaoRoute,
   ApiPublicResumoRoute: ApiPublicResumoRoute,
   ApiPublicTtsRoute: ApiPublicTtsRoute,
