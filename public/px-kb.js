@@ -175,19 +175,40 @@
   };
 
 
-  /* Markdown simples -> HTML seguro */
+  /* Markdown simples -> HTML seguro (títulos, listas, citação, negrito, itálico, grifo, código) */
   PX.kbHTML = function (md) {
     var esc = function (s) {
       return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; });
     };
     var out = [];
-    var lista = false;
+    var ul = false, ol = false;
+    var fechaListas = function () {
+      if (ul) { out.push('</ul>'); ul = false; }
+      if (ol) { out.push('</ol>'); ol = false; }
+    };
     esc(md || '').split(/\r?\n/).forEach(function (ln) {
       var l = ln.trim();
       var li = l.match(/^[-*]\s+(.*)$/);
-      if (li) { if (!lista) { out.push('<ul>'); lista = true; } out.push('<li>' + inline(li[1]) + '</li>'); return; }
-      if (lista) { out.push('</ul>'); lista = false; }
+      if (li) {
+        if (ol) { out.push('</ol>'); ol = false; }
+        if (!ul) { out.push('<ul style="margin:6px 0 12px;padding-left:22px">'); ul = true; }
+        out.push('<li style="margin:3px 0">' + inline(li[1]) + '</li>');
+        return;
+      }
+      var oli = l.match(/^\d+[.)]\s+(.*)$/);
+      if (oli) {
+        if (ul) { out.push('</ul>'); ul = false; }
+        if (!ol) { out.push('<ol style="margin:6px 0 12px;padding-left:22px">'); ol = true; }
+        out.push('<li style="margin:3px 0">' + inline(oli[1]) + '</li>');
+        return;
+      }
+      fechaListas();
       if (!l) return;
+      var q = l.match(/^>\s?(.*)$/);
+      if (q) {
+        out.push('<blockquote style="margin:10px 0;padding:8px 14px;border-left:3px solid var(--brand,#154C9B);background:var(--surface,#F8FAFC);border-radius:0 8px 8px 0;color:#475569">' + inline(q[1]) + '</blockquote>');
+        return;
+      }
       var h = l.match(/^(#{1,6})\s+(.*)$/);
       if (h) {
         var n = Math.min(h[1].length, 4);
@@ -201,9 +222,12 @@
       }
       out.push('<p>' + inline(l) + '</p>');
     });
-    if (lista) out.push('</ul>');
+    fechaListas();
     function inline(t) {
-      return t.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/(^|\W)\*(\S.*?\S|\S)\*/g, '$1<i>$2</i>');
+      return t.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+        .replace(/==(.+?)==/g, '<mark style="background:#FEF08A;padding:0 3px;border-radius:3px">$1</mark>')
+        .replace(/`([^`]+)`/g, '<code style="background:var(--surface,#F1F5F9);padding:1px 5px;border-radius:4px;font-size:0.92em">$1</code>')
+        .replace(/(^|\W)\*(\S.*?\S|\S)\*/g, '$1<i>$2</i>');
     }
     return out.join('');
 
