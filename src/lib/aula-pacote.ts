@@ -298,8 +298,8 @@ export type GerarCtx = {
   disciplina: string
   topico: string
   material: string
-  instrucoes?: string
-  questoes?: QuestoesCfg
+  instrucoes?: string | undefined
+  questoes?: QuestoesCfg | undefined
   provider: Provider
   model: string
   keys: Keys

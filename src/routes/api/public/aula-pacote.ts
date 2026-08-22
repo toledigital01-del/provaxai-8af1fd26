@@ -85,15 +85,20 @@ async function carregarCtx(curso: string, disciplina: string, topico: string, bo
   }
 }
 
-async function lerConfig(curso: string, disciplina: string, topico: string): Promise<{ instrucoes?: string; questoes?: z.infer<typeof Body>['config'] extends infer C ? C extends { questoes?: infer Q } ? Q : never : never }> {
+type PacoteConfig = {
+  instrucoes?: string
+  questoes?: { quantidade?: number; dificuldade?: string; prioridades?: string[]; comentarios?: boolean }
+}
+
+async function lerConfig(curso: string, disciplina: string, topico: string): Promise<PacoteConfig> {
   try {
     const r = await fetch(
       `${SUPABASE_URL}/rest/v1/aula_conteudos?${filtroAula(curso, disciplina, topico, 'config')}&select=meta&limit=1`,
       { headers: serviceHeaders() },
     )
     if (!r.ok) return {}
-    const rows = (await r.json()) as Array<{ meta: { instrucoes?: string; questoes?: never } }>
-    return (rows[0]?.meta as { instrucoes?: string; questoes?: never }) || {}
+    const rows = (await r.json()) as Array<{ meta: PacoteConfig }>
+    return rows[0]?.meta || {}
   } catch {
     return {}
   }
