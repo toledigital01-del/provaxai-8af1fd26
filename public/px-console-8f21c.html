@@ -3615,6 +3615,20 @@ window.kbIaBadges = async function(){
 };
 
 /* ---------- abertura e estrutura do painel ---------- */
+/* Aviso rápido no rodapé (usado por todo o painel de IA da aula). */
+function toast(msg){
+  let t = document.getElementById('kb-toast');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'kb-toast';
+    t.style.cssText = 'position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#0F172A;color:#fff;font-size:0.82rem;padding:10px 18px;border-radius:999px;box-shadow:0 8px 24px rgba(15,23,42,.35);z-index:99999;display:none;max-width:90vw;text-align:center';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function(){ t.style.display = 'none'; }, 3800);
+}
 function kbPdfDaAula(a){
   const d = kbFind(a.disc || kbDisc, a.nome) || {};
   return String(d.pdf_url || '').trim() || null;
