@@ -1907,6 +1907,7 @@ function kbAulasPaint(){
       '<p class="muted" style="margin:0;flex:1;min-width:200px;font-size:0.75rem">Arraste pelo ⠿ para mudar a ordem — ou clique no número da aula para digitar a posição dela.</p>' +
       '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasPdfLote()">Anexar PDFs em lote</button>' +
       '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasTodasPdf()">Exibir todas em PDF</button>' +
+      '<button class="act primary" style="font-size:0.75rem;padding:4px 10px" onclick="kbPrepararDisc(kbDisc)">Preparar conteúdo de IA de todas</button>' +
       '<button class="act danger" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasExcluirTodas()">Excluir todas as aulas</button>' +
     '</div>' +
 
@@ -1924,6 +1925,7 @@ function kbAulasPaint(){
         '<span class="kb-tag ' + (pub ? 'is-on' : 'is-wait') + '">' + (pub ? 'publicada' : temTexto ? 'rascunho' : 'sem conteúdo') + '</span>' +
         '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaAbrir(\'' + escJs(a.nome) + '\')">Abrir</button>' +
         '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaRenomear(\'' + a.id + '\')">Renomear</button>' +
+        '<button class="act" style="font-size:0.75rem;padding:4px 10px" title="Gera e salva aula da Athena, resumo, questões, flashcards, lacunas e podcast" onclick="kbPrepararAula(kbDisc, \'' + escJs(a.nome) + '\')">Preparar IA</button>' +
         '<button class="act primary" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaEditar(\'' + a.id + '\')">Editar aula</button>' +
         '<button class="act danger" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaExcluir(\'' + a.id + '\')">Excluir</button>' +
       '</div>';
@@ -2293,6 +2295,7 @@ window.kbAulaModalSalvar = async function(auto, recarregar){
     kbPaint();
     if(recarregar) kbAulaEditar(a.id);
   }
+  if(publicar && !auto && a && a.nome) kbPrepararAula(kbDisc, a.nome);
   if(msg && !auto) msg.textContent = (publicar ? 'Aula publicada para os alunos' : 'Aula salva como rascunho') +
     (modo === 'pdf' ? ' — o aluno abre esta aula em PDF.' : ' — o aluno vê o conteúdo em texto.');
 };
@@ -2510,6 +2513,9 @@ function kbAulaTituloAuto(texto, origem, numero){
   return t.slice(0, 90);
 }
 
+/* Aulas criadas na última operação (usado para preparar o conteúdo de IA). */
+let KB_AULAS_CRIADAS = [];
+
 /* Cria (ou atualiza) uma aula com o texto recebido. Devolve o número usado. */
 async function kbAulaCriar(disc, texto, origem, publicar, arquivo){
   await kbAulasCarregar(disc);
@@ -2555,6 +2561,7 @@ async function kbAulaCriar(disc, texto, origem, publicar, arquivo){
   if(q.error) throw new Error('Aula criada, mas o conteúdo não salvou: ' + q.error.message);
   await logAdmin('cadastrar_aula','topics', null, { disciplina: disc, numero: ordem, titulo: titulo, publicado: !!publicar, pdf: !!pdfPath });
   await loadKB();
+  KB_AULAS_CRIADAS.push({ disc: disc, topico: nomeTopico });
   return ordem;
 }
 
@@ -2562,6 +2569,7 @@ window.kbAulaCadastrar = async function(){
   const disc = kbValidDisc(kbDisc);
   if(!disc) return kbAulaMsg('Escolha uma matéria antes.');
   const publicar = !!(document.getElementById('kb-aula-pub')||{}).checked;
+  KB_AULAS_CRIADAS = [];
 
   try{
     if(KB_AULA_TAB === 'doc'){
@@ -2594,6 +2602,18 @@ window.kbAulaCadastrar = async function(){
       if(inpDoc) inpDoc.value = '';
       kbPaint(); kbPane('aulas');
       kbAulaFilaPaint();
+      if(publicar && KB_AULAS_CRIADAS.length){
+        prepPainel();
+        prepLog('Preparando o conteúdo de IA de ' + KB_AULAS_CRIADAS.length + ' aula(s) publicada(s)…', '#FDE68A');
+        (async function(){
+          const lista = KB_AULAS_CRIADAS.slice();
+          for(let i=0;i<lista.length;i++){
+            prepLog('— ' + (i+1) + '/' + lista.length, '#64748B');
+            await kbPrepararAula(lista[i].disc, lista[i].topico);
+          }
+          prepLog('<b>Tudo pronto — o aluno já encontra aula, resumo, questões, flashcards e podcast salvos.</b>', '#FDE68A');
+        })();
+      }
       return kbAulaMsg(feitas + ' aula(s) cadastrada(s)' + (publicar ? ' e publicada(s).' : ' como rascunho.') +
         ' Os PDFs enviados ficaram anexados às aulas — use “Exibir todas em PDF” para o aluno abrir o arquivo original.');
     }
@@ -2618,7 +2638,8 @@ window.kbAulaCadastrar = async function(){
     ['kb-aula-txt','kb-aula-url','kb-aula-video'].forEach(function(id){ const el = document.getElementById(id); if(el) el.value = ''; });
     kbPaint();
     kbPane('aulas');
-    kbAulaMsg('Aula ' + kbAulaNum(n) + (publicar ? ' publicada — já aparece no painel do aluno.' : ' salva como rascunho.'));
+    kbAulaMsg('Aula ' + kbAulaNum(n) + (publicar ? ' publicada — preparando aula da Athena, resumo, questões, flashcards, lacunas e podcast…' : ' salva como rascunho.'));
+    if(publicar && KB_AULAS_CRIADAS.length) kbPrepararAula(KB_AULAS_CRIADAS[0].disc, KB_AULAS_CRIADAS[0].topico);
   }catch(e){ KB_ING_ATIVO = false; kbIngProgHide(); kbAulaMsg('Erro: ' + (e.message || e)); }
 };
 
@@ -3122,8 +3143,10 @@ window.kbSetStatus = async function(status){
   await logAdmin('status_conhecimento','knowledge_docs', doc.id, { status });
   await loadKB(); kbPaint();
   const m2 = document.getElementById('kb-msg');
-  if(m2) m2.textContent = status === 'publicado' ? 'Aula publicada — já aparece para os alunos.'
+  if(m2) m2.textContent = status === 'publicado'
+    ? 'Aula publicada — preparando aula da Athena, resumo, questões, flashcards, lacunas e podcast…'
     : 'Aula voltou para rascunho e saiu do ar.';
+  if(status === 'publicado' && kbTopic) kbPrepararAula(kbDisc, kbTopic);
 };
 /* Publica (ou despublica) direto da lista de revisão, sem abrir o editor. */
 window.kbPublicarDoc = async function(id, publicar){
@@ -3135,8 +3158,89 @@ window.kbPublicarDoc = async function(id, publicar){
   await logAdmin('status_conhecimento','knowledge_docs', id, { status: publicar ? 'publicado' : 'rascunho' });
   await loadKB(); kbPaint();
   const b2 = document.getElementById('kb-fila-msg');
-  if(b2) b2.textContent = publicar ? 'Aula publicada — já aparece para o aluno.' : 'Aula despublicada.';
+  if(b2) b2.textContent = publicar
+    ? 'Aula publicada — preparando o conteúdo de IA (aula, resumo, questões, flashcards, lacunas e podcast)…'
+    : 'Aula despublicada.';
+  if(publicar){
+    const d = KB_DOCS.find(function(x){ return x.id === id; });
+    if(d && d.topico) kbPrepararAula(d.disciplina, d.topico);
+  }
 };
+
+/* ===== Preparar conteúdo da aula (IA) na publicação =====
+   Gera UMA VEZ: aula da Athena, resumo inteligente, questões, flashcards,
+   lacunas e podcast. Depois o aluno só lê o que já está pronto. */
+const PREP_ROTULO = { aula:'Aula com Athena IA', resumo:'Resumo inteligente', questoes:'Questões',
+  flashcards:'Flashcards', lacunas:'Preencher espaços', podcast:'Podcast' };
+
+function prepPainel(){
+  let box = document.getElementById('kb-prep');
+  if(box) return box;
+  box = document.createElement('div');
+  box.id = 'kb-prep';
+  box.style.cssText = 'position:fixed;right:16px;bottom:16px;width:340px;max-height:60vh;overflow:auto;' +
+    'background:#0F172A;color:#E2E8F0;border-radius:12px;padding:12px 14px;font-size:0.78rem;z-index:9999;' +
+    'box-shadow:0 12px 32px rgba(15,23,42,.35);line-height:1.45';
+  box.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
+    '<b style="flex:1">Preparando conteúdo das aulas</b>' +
+    '<button onclick="this.parentNode.parentNode.remove()" style="background:none;border:0;color:#94A3B8;cursor:pointer;font-size:1rem">×</button>' +
+    '</div><div id="kb-prep-log"></div>';
+  document.body.appendChild(box);
+  return box;
+}
+function prepLog(txt, cor){
+  prepPainel();
+  const log = document.getElementById('kb-prep-log');
+  if(!log) return;
+  const l = document.createElement('div');
+  l.style.cssText = 'padding:2px 0;color:' + (cor || '#CBD5E1');
+  l.innerHTML = txt;
+  log.appendChild(l);
+  log.parentNode.scrollTop = log.parentNode.scrollHeight;
+}
+
+/* Prepara todos os recursos de UMA aula. Devolve true se deu tudo certo. */
+window.kbPrepararAula = async function(disc, aula, regerar, silencioso){
+  if(!disc || !aula) return false;
+  if(!silencioso) prepLog('<b>' + esc(disc) + ' › ' + esc(aula) + '</b>', '#93C5FD');
+  try{
+    const r = await fetch('/api/public/kb-preparar', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', Authorization:'Bearer ' + (await kbToken()) },
+      body: JSON.stringify({ curso:'prf-2021', disciplina: disc, topico: aula, regerar: !!regerar })
+    });
+    const j = await r.json().catch(function(){ return {}; });
+    if(!r.ok){ prepLog('✕ ' + esc(j.error || ('falhou (' + r.status + ')')), '#FCA5A5'); return false; }
+    (j.resultados || []).forEach(function(it){
+      prepLog((it.ok ? '✓ ' : '✕ ') + (PREP_ROTULO[it.item] || it.item) + ' — ' + esc(it.detalhe),
+        it.ok ? '#86EFAC' : '#FCA5A5');
+    });
+    return !!j.ok;
+  }catch(e){
+    prepLog('✕ falha de conexão', '#FCA5A5');
+    return false;
+  }
+};
+
+/* Prepara, uma a uma, todas as aulas publicadas de uma matéria. */
+window.kbPrepararDisc = async function(disc, regerar){
+  const aulas = KB_DOCS.filter(function(d){
+    return d.disciplina === disc && d.topico && kbStatusDoc(d) === 'publicado';
+  });
+  if(!aulas.length) return alert('Não há aulas publicadas nesta matéria.');
+  if(!confirm('Preparar o conteúdo de IA (aula, resumo, questões, flashcards, lacunas e podcast) de ' +
+    aulas.length + ' aula(s) de ' + disc + '?\n\nIsso pode levar alguns minutos e é feito uma única vez.')) return;
+  prepPainel();
+  prepLog('Iniciando ' + aulas.length + ' aula(s) de ' + esc(disc) + '…', '#FDE68A');
+  let ok = 0;
+  for(let i=0;i<aulas.length;i++){
+    prepLog('— ' + (i+1) + '/' + aulas.length, '#64748B');
+    if(await kbPrepararAula(disc, aulas[i].topico, regerar)) ok++;
+  }
+  prepLog('<b>Concluído: ' + ok + '/' + aulas.length + ' aula(s) com tudo pronto.</b>', '#FDE68A');
+  try{ await logAdmin('preparar_ia','knowledge_docs', null, { disciplina: disc, total: aulas.length }); }catch(e){}
+};
+
 /* Publica de uma vez todas as aulas pendentes de uma matéria. */
 window.kbPublicarDisc = async function(d){
   const pend = KB_DOCS.filter(function(x){ return x.disciplina === d && (x.conteudo||'').trim() && kbStatusDoc(x) !== 'publicado'; });
@@ -3150,7 +3254,13 @@ window.kbPublicarDisc = async function(d){
   await logAdmin('publicar_materia','knowledge_docs', null, { disciplina:d, total:pend.length });
   await loadKB(); kbPaint();
   const b2 = document.getElementById('kb-fila-msg');
-  if(b2) b2.textContent = pend.length + ' aula(s) de ' + d + ' publicadas.';
+  if(b2) b2.textContent = pend.length + ' aula(s) de ' + d + ' publicadas. Preparando o conteúdo de IA…';
+  prepPainel();
+  prepLog('Preparando ' + pend.length + ' aula(s) recém-publicadas de ' + esc(d) + '…', '#FDE68A');
+  for(let i=0;i<pend.length;i++){
+    if(pend[i].topico){ prepLog('— ' + (i+1) + '/' + pend.length, '#64748B'); await kbPrepararAula(d, pend[i].topico); }
+  }
+  prepLog('<b>Conteúdo pronto — o aluno já encontra tudo salvo.</b>', '#FDE68A');
 };
 window.kbDelete = async function(id){
   if(!confirm('Excluir este conteúdo da base?')) return;

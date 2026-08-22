@@ -3,11 +3,13 @@ import { z } from 'zod'
 import { getSetting, aiKeys, currentUser, usosHoje, registrarUsoIA } from '@/lib/px-server'
 import { fetchKnowledge, baseTexto, fonteInstrucao } from '@/lib/kb-context'
 import { chat, normalizar, AIError } from '@/lib/ai-gateway'
+import { lerRecurso, salvarRecurso } from '@/lib/aula-recursos'
 
 const Body = z.object({
   disciplina: z.string().min(1).max(200),
   topico: z.string().max(300).optional().nullable(),
   curso: z.string().max(80).optional(),
+  regerar: z.boolean().optional(),
 })
 
 type Frase = { frase: string; respostas: string[] }
@@ -46,6 +48,15 @@ export const Route = createFileRoute('/api/public/lacunas')({
         }
 
         const curso = body.curso || 'prf-2021'
+
+        // Exercício já preparado no painel administrativo.
+        if (!body.regerar) {
+          const pronto = await lerRecurso<{ frases?: Frase[] }>(curso, body.disciplina, body.topico, 'lacunas')
+          const frasesProntas = pronto?.dados?.frases
+          if (Array.isArray(frasesProntas) && frasesProntas.length)
+            return Response.json({ frases: frasesProntas, fontes: 0, modelo: pronto?.modelo, cache: true })
+        }
+
         const cfg = normalizar(await getSetting('ia_athena'))
         const limite = cfg.limiteDiario ?? 0
         if (limite > 0 && (await usosHoje(userId, 'lacunas')) >= limite)
@@ -81,7 +92,8 @@ export const Route = createFileRoute('/api/public/lacunas')({
             resposta: saida || '',
           })
           if (!frases.length) return Response.json({ error: 'Não consegui gerar o exercício agora.' }, { status: 502 })
-          return Response.json({ frases, fontes: docs.length, modelo: cfg.model })
+          await salvarRecurso(curso, body.disciplina, body.topico, 'lacunas', { frases }, cfg.model)
+          return Response.json({ frases, fontes: docs.length, modelo: cfg.model, cache: false })
         } catch (e) {
           const err = e as AIError
           return Response.json({ error: err.message || 'Não consegui gerar o exercício agora.' }, { status: err.status || 502 })

@@ -17,12 +17,14 @@ import { Route as ApiPublicAiStatusRouteImport } from './routes/api/public/ai-st
 import { Route as ApiPublicAiTestRouteImport } from './routes/api/public/ai-test'
 import { Route as ApiPublicAthenaRouteImport } from './routes/api/public/athena'
 import { Route as ApiPublicAulaIaRouteImport } from './routes/api/public/aula-ia'
+import { Route as ApiPublicGerarExerciciosRouteImport } from './routes/api/public/gerar-exercicios'
 import { Route as ApiPublicKbAulaRouteImport } from './routes/api/public/kb-aula'
 import { Route as ApiPublicKbAutocourseRouteImport } from './routes/api/public/kb-autocourse'
 import { Route as ApiPublicKbClassifyRouteImport } from './routes/api/public/kb-classify'
 import { Route as ApiPublicKbDriveRouteImport } from './routes/api/public/kb-drive'
 import { Route as ApiPublicKbEditalRouteImport } from './routes/api/public/kb-edital'
 import { Route as ApiPublicKbIngestRouteImport } from './routes/api/public/kb-ingest'
+import { Route as ApiPublicKbPrepararRouteImport } from './routes/api/public/kb-preparar'
 import { Route as ApiPublicLacunasRouteImport } from './routes/api/public/lacunas'
 import { Route as ApiPublicPodcastRouteImport } from './routes/api/public/podcast'
 import { Route as ApiPublicRedacaoRouteImport } from './routes/api/public/redacao'
@@ -71,6 +73,12 @@ const ApiPublicAulaIaRoute = ApiPublicAulaIaRouteImport.update({
   path: '/api/public/aula-ia',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicGerarExerciciosRoute =
+  ApiPublicGerarExerciciosRouteImport.update({
+    id: '/api/public/gerar-exercicios',
+    path: '/api/public/gerar-exercicios',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicKbAulaRoute = ApiPublicKbAulaRouteImport.update({
   id: '/api/public/kb-aula',
   path: '/api/public/kb-aula',
@@ -99,6 +107,11 @@ const ApiPublicKbEditalRoute = ApiPublicKbEditalRouteImport.update({
 const ApiPublicKbIngestRoute = ApiPublicKbIngestRouteImport.update({
   id: '/api/public/kb-ingest',
   path: '/api/public/kb-ingest',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicKbPrepararRoute = ApiPublicKbPrepararRouteImport.update({
+  id: '/api/public/kb-preparar',
+  path: '/api/public/kb-preparar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicLacunasRoute = ApiPublicLacunasRouteImport.update({
@@ -141,12 +154,14 @@ export interface FileRoutesByFullPath {
   '/api/public/ai-test': typeof ApiPublicAiTestRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
   '/api/public/aula-ia': typeof ApiPublicAulaIaRoute
+  '/api/public/gerar-exercicios': typeof ApiPublicGerarExerciciosRoute
   '/api/public/kb-aula': typeof ApiPublicKbAulaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-classify': typeof ApiPublicKbClassifyRoute
   '/api/public/kb-drive': typeof ApiPublicKbDriveRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
+  '/api/public/kb-preparar': typeof ApiPublicKbPrepararRoute
   '/api/public/lacunas': typeof ApiPublicLacunasRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
   '/api/public/redacao': typeof ApiPublicRedacaoRoute
@@ -163,12 +178,14 @@ export interface FileRoutesByTo {
   '/api/public/ai-test': typeof ApiPublicAiTestRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
   '/api/public/aula-ia': typeof ApiPublicAulaIaRoute
+  '/api/public/gerar-exercicios': typeof ApiPublicGerarExerciciosRoute
   '/api/public/kb-aula': typeof ApiPublicKbAulaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-classify': typeof ApiPublicKbClassifyRoute
   '/api/public/kb-drive': typeof ApiPublicKbDriveRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
+  '/api/public/kb-preparar': typeof ApiPublicKbPrepararRoute
   '/api/public/lacunas': typeof ApiPublicLacunasRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
   '/api/public/redacao': typeof ApiPublicRedacaoRoute
@@ -186,12 +203,14 @@ export interface FileRoutesById {
   '/api/public/ai-test': typeof ApiPublicAiTestRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
   '/api/public/aula-ia': typeof ApiPublicAulaIaRoute
+  '/api/public/gerar-exercicios': typeof ApiPublicGerarExerciciosRoute
   '/api/public/kb-aula': typeof ApiPublicKbAulaRoute
   '/api/public/kb-autocourse': typeof ApiPublicKbAutocourseRoute
   '/api/public/kb-classify': typeof ApiPublicKbClassifyRoute
   '/api/public/kb-drive': typeof ApiPublicKbDriveRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
+  '/api/public/kb-preparar': typeof ApiPublicKbPrepararRoute
   '/api/public/lacunas': typeof ApiPublicLacunasRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
   '/api/public/redacao': typeof ApiPublicRedacaoRoute
@@ -210,12 +229,14 @@ export interface FileRouteTypes {
     | '/api/public/ai-test'
     | '/api/public/athena'
     | '/api/public/aula-ia'
+    | '/api/public/gerar-exercicios'
     | '/api/public/kb-aula'
     | '/api/public/kb-autocourse'
     | '/api/public/kb-classify'
     | '/api/public/kb-drive'
     | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
+    | '/api/public/kb-preparar'
     | '/api/public/lacunas'
     | '/api/public/podcast'
     | '/api/public/redacao'
@@ -232,12 +253,14 @@ export interface FileRouteTypes {
     | '/api/public/ai-test'
     | '/api/public/athena'
     | '/api/public/aula-ia'
+    | '/api/public/gerar-exercicios'
     | '/api/public/kb-aula'
     | '/api/public/kb-autocourse'
     | '/api/public/kb-classify'
     | '/api/public/kb-drive'
     | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
+    | '/api/public/kb-preparar'
     | '/api/public/lacunas'
     | '/api/public/podcast'
     | '/api/public/redacao'
@@ -254,12 +277,14 @@ export interface FileRouteTypes {
     | '/api/public/ai-test'
     | '/api/public/athena'
     | '/api/public/aula-ia'
+    | '/api/public/gerar-exercicios'
     | '/api/public/kb-aula'
     | '/api/public/kb-autocourse'
     | '/api/public/kb-classify'
     | '/api/public/kb-drive'
     | '/api/public/kb-edital'
     | '/api/public/kb-ingest'
+    | '/api/public/kb-preparar'
     | '/api/public/lacunas'
     | '/api/public/podcast'
     | '/api/public/redacao'
@@ -277,12 +302,14 @@ export interface RootRouteChildren {
   ApiPublicAiTestRoute: typeof ApiPublicAiTestRoute
   ApiPublicAthenaRoute: typeof ApiPublicAthenaRoute
   ApiPublicAulaIaRoute: typeof ApiPublicAulaIaRoute
+  ApiPublicGerarExerciciosRoute: typeof ApiPublicGerarExerciciosRoute
   ApiPublicKbAulaRoute: typeof ApiPublicKbAulaRoute
   ApiPublicKbAutocourseRoute: typeof ApiPublicKbAutocourseRoute
   ApiPublicKbClassifyRoute: typeof ApiPublicKbClassifyRoute
   ApiPublicKbDriveRoute: typeof ApiPublicKbDriveRoute
   ApiPublicKbEditalRoute: typeof ApiPublicKbEditalRoute
   ApiPublicKbIngestRoute: typeof ApiPublicKbIngestRoute
+  ApiPublicKbPrepararRoute: typeof ApiPublicKbPrepararRoute
   ApiPublicLacunasRoute: typeof ApiPublicLacunasRoute
   ApiPublicPodcastRoute: typeof ApiPublicPodcastRoute
   ApiPublicRedacaoRoute: typeof ApiPublicRedacaoRoute
@@ -349,6 +376,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAulaIaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/gerar-exercicios': {
+      id: '/api/public/gerar-exercicios'
+      path: '/api/public/gerar-exercicios'
+      fullPath: '/api/public/gerar-exercicios'
+      preLoaderRoute: typeof ApiPublicGerarExerciciosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/kb-aula': {
       id: '/api/public/kb-aula'
       path: '/api/public/kb-aula'
@@ -389,6 +423,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/kb-ingest'
       fullPath: '/api/public/kb-ingest'
       preLoaderRoute: typeof ApiPublicKbIngestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/kb-preparar': {
+      id: '/api/public/kb-preparar'
+      path: '/api/public/kb-preparar'
+      fullPath: '/api/public/kb-preparar'
+      preLoaderRoute: typeof ApiPublicKbPrepararRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/lacunas': {
@@ -445,12 +486,14 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAiTestRoute: ApiPublicAiTestRoute,
   ApiPublicAthenaRoute: ApiPublicAthenaRoute,
   ApiPublicAulaIaRoute: ApiPublicAulaIaRoute,
+  ApiPublicGerarExerciciosRoute: ApiPublicGerarExerciciosRoute,
   ApiPublicKbAulaRoute: ApiPublicKbAulaRoute,
   ApiPublicKbAutocourseRoute: ApiPublicKbAutocourseRoute,
   ApiPublicKbClassifyRoute: ApiPublicKbClassifyRoute,
   ApiPublicKbDriveRoute: ApiPublicKbDriveRoute,
   ApiPublicKbEditalRoute: ApiPublicKbEditalRoute,
   ApiPublicKbIngestRoute: ApiPublicKbIngestRoute,
+  ApiPublicKbPrepararRoute: ApiPublicKbPrepararRoute,
   ApiPublicLacunasRoute: ApiPublicLacunasRoute,
   ApiPublicPodcastRoute: ApiPublicPodcastRoute,
   ApiPublicRedacaoRoute: ApiPublicRedacaoRoute,
