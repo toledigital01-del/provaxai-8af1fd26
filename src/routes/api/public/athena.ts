@@ -160,9 +160,14 @@ export const Route = createFileRoute('/api/public/athena')({
             'No máximo 2-3 pontos principais por resposta — se o assunto tiver mais partes, cubra só o essencial e termine ' +
             'perguntando se o aluno quer que você continue com o próximo ponto. Evite títulos markdown (#, ##) e emojis. ' +
             'Só use lista com marcadores quando for mesmo uma enumeração curta (até 4 itens).',
-          base
-            ? 'Use PRIORITARIAMENTE o material oficial abaixo como fonte de verdade. Se a resposta não estiver nele, diga isso e complemente com cuidado.\n\n--- MATERIAL OFICIAL ---\n' + base
-            : 'Ainda não há material oficial cadastrado para este tópico; responda com base no edital e avise o aluno que o conteúdo detalhado será publicado em breve.',
+          ragAtivo
+            ? 'Os trechos abaixo foram selecionados por relevância para a pergunta do aluno, cada um com uma etiqueta [Fonte N]. ' +
+              'Sempre que usar uma informação de um trecho, indique a origem no fim da frase, ex.: [Fonte 2]. ' +
+              'Se nenhum trecho cobrir a pergunta, diga isso com clareza antes de complementar com conhecimento geral.\n\n--- TRECHOS DO MATERIAL OFICIAL ---\n' +
+              base
+            : base
+              ? 'Use PRIORITARIAMENTE o material oficial abaixo como fonte de verdade. Se a resposta não estiver nele, diga isso e complemente com cuidado.\n\n--- MATERIAL OFICIAL ---\n' + base
+              : 'Ainda não há material oficial cadastrado para este tópico; responda com base no edital e avise o aluno que o conteúdo detalhado será publicado em breve.',
         ].join('\n')
 
         try {
@@ -177,7 +182,7 @@ export const Route = createFileRoute('/api/public/athena')({
           })
           return Response.json({
             resposta: r.texto || 'Não consegui responder agora.',
-            fontes: docs.length,
+            fontes,
             modelo: r.model,
           })
         } catch (e) {
