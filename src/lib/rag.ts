@@ -222,6 +222,7 @@ export async function buscarTrechos(opts: {
   disciplina?: string | undefined
   topico?: string | null | undefined
   max?: number | undefined
+  threshold?: number | undefined
 }): Promise<TrechoRag[]> {
   const [vetor] = await embedTextos([opts.pergunta])
   if (!vetor) return []
@@ -233,8 +234,8 @@ export async function buscarTrechos(opts: {
       p_curso: opts.curso,
       p_disciplina: opts.disciplina || null,
       p_topico: opts.topico || null,
-      match_count: opts.max || 8,
-      match_threshold: 0.28,
+      match_count: opts.max || RAG_TOP_K,
+      match_threshold: opts.threshold ?? RAG_THRESHOLD,
     }),
   })
   if (!r.ok) return []
@@ -251,4 +252,125 @@ export async function escopoIndexado(curso: string, disciplina?: string): Promis
   if (!r || !r.ok) return false
   const rows = (await r.json()) as unknown[]
   return Array.isArray(rows) && rows.length > 0
+}
+
+/* ---- Reindexação automática -------------------------------------------
+   O índice de um escopo fica "velho" quando algum material oficial
+   (knowledge_docs ou kb_documentos) foi criado/editado depois da última
+   indexação. A Athena e o painel chamam escopoDesatualizado antes de
+   responder e reindexam sozinhos — sem botão manual. */
+
+/** true quando o escopo não tem índice ou há material mais novo que ele. */
+export async function escopoDesatualizado(curso: string, disciplina?: string): Promise<boolean> {
+  const eq = (v: string) => `eq.${encodeURIComponent(v)}`
+  const h = serviceHeaders()
+  const escopo = (colDisc: string) => {
+    let q = `course_slug=${eq(curso)}`
+    if (disciplina) q += `&${colDisc}=${eq(disciplina)}`
+    return q
+  }
+  const get = async (url: string) => {
+    const r = await fetch(url, { headers: h }).catch(() => null)
+    if (!r || !r.ok) return null
+    const rows = (await r.json()) as Array<Record<string, string | null>>
+    return Array.isArray(rows) && rows.length ? rows[0] : null
+  }
+  const [chunk, doc, kb] = await Promise.all([
+    get(`${SUPABASE_URL}/rest/v1/kb_chunks?select=created_at&${escopo('disciplina')}&order=created_at.desc&limit=1`),
+    get(
+      `${SUPABASE_URL}/rest/v1/knowledge_docs?select=updated_at&${escopo('disciplina')}&publicado=is.true&order=updated_at.desc&limit=1`,
+    ),
+    get(`${SUPABASE_URL}/rest/v1/kb_documentos?select=criado_em&${escopo('discipline_nome')}&order=criado_em.desc&limit=1`),
+  ])
+  if (!chunk) return true // nunca indexado
+  const marco = new Date(chunk['created_at'] || 0).getTime()
+  const maisNovo = (iso?: string | null) => (iso ? new Date(iso).getTime() > marco + 2000 : false)
+  return maisNovo(doc?.['updated_at']) || maisNovo(kb?.['criado_em'])
+}
+
+/** Lista as disciplinas do curso cujo índice está velho (ou inexistente). */
+export async function disciplinasDesatualizadas(curso: string): Promise<string[]> {
+  const h = serviceHeaders()
+  const eq = (v: string) => `eq.${encodeURIComponent(v)}`
+  const get = async (url: string) => {
+    const r = await fetch(url, { headers: h }).catch(() => null)
+    return r && r.ok ? ((await r.json()) as Array<Record<string, string | null>>) : []
+  }
+  const [chunks, docs, kbs] = await Promise.all([
+    get(`${SUPABASE_URL}/rest/v1/kb_chunks?select=disciplina,created_at&course_slug=${eq(curso)}&order=created_at.desc&limit=10000`),
+    get(
+      `${SUPABASE_URL}/rest/v1/knowledge_docs?select=disciplina,updated_at&course_slug=${eq(curso)}&publicado=is.true&order=updated_at.desc&limit=10000`,
+    ),
+    get(`${SUPABASE_URL}/rest/v1/kb_documentos?select=discipline_nome,criado_em&course_slug=${eq(curso)}&order=criado_em.desc&limit=10000`),
+  ])
+  const marcoPorDisc: Record<string, number> = {}
+  chunks.forEach((c) => {
+    const d = c['disciplina'] || ''
+    const t = new Date(c['created_at'] || 0).getTime()
+    if (d && !marcoPorDisc[d]) marcoPorDisc[d] = t // já veio ordenado desc
+  })
+  const velhas = new Set<string>()
+  const checa = (disc: string, iso?: string | null) => {
+    if (!disc) return
+    const marco = marcoPorDisc[disc]
+    if (!marco) return velhas.add(disc)
+    if (iso && new Date(iso).getTime() > marco + 2000) velhas.add(disc)
+  }
+  docs.forEach((d) => checa(d['disciplina'] || '', d['updated_at']))
+  kbs.forEach((k) => checa(k['discipline_nome'] || '', k['criado_em']))
+  return [...velhas]
+}
+
+/** Job de reindexação: varre o curso (ou uma disciplina) e refaz só o que está velho. */
+export async function reindexarDesatualizados(curso: string, disciplina?: string, limite = 5) {
+  const alvos = disciplina
+    ? (await escopoDesatualizado(curso, disciplina))
+      ? [disciplina]
+      : []
+    : await disciplinasDesatualizadas(curso)
+  const feitos: Array<{ disciplina: string; docs: number; chunks: number }> = []
+  for (const d of alvos.slice(0, limite)) {
+    try {
+      const r = await indexarEscopo({ curso, disciplina: d })
+      feitos.push({ disciplina: d, docs: r.docs, chunks: r.chunks })
+    } catch {
+      /* melhor-esforço: uma disciplina com erro não trava as outras */
+    }
+  }
+  return { pendentes: alvos.length, reindexadas: feitos }
+}
+
+/** Registra como a Athena respondeu (RAG ou fallback) para o relatório do admin. */
+export async function registrarRagEvento(ev: {
+  userId: string | null
+  curso: string
+  disciplina: string
+  topico?: string | null
+  pergunta?: string
+  ragAtivo: boolean
+  trechos: number
+  fontes?: Array<{ similaridade: number }>
+  motivoFallback?: string | null
+}) {
+  try {
+    const sims = (ev.fontes || []).map((f) => f.similaridade).filter((n) => n > 0)
+    await fetch(`${SUPABASE_URL}/rest/v1/rag_events`, {
+      method: 'POST',
+      headers: serviceHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+      body: JSON.stringify({
+        user_id: ev.userId,
+        course_slug: ev.curso,
+        disciplina: ev.disciplina,
+        topico: ev.topico || null,
+        pergunta: (ev.pergunta || '').slice(0, 500),
+        rag_ativo: ev.ragAtivo,
+        trechos: ev.trechos,
+        sim_media: sims.length ? sims.reduce((a, b) => a + b, 0) / sims.length / 100 : null,
+        sim_max: sims.length ? Math.max(...sims) / 100 : null,
+        motivo_fallback: ev.ragAtivo ? null : ev.motivoFallback || 'sem_trechos',
+      }),
+    })
+  } catch {
+    /* log é best-effort */
+  }
 }
