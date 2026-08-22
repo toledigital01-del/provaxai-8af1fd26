@@ -3900,9 +3900,9 @@ function kbIaPaintConfig(body, doc, pdf){
     + '</div>'
     + '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px">'
     +   '<div style="font-weight:800;margin-bottom:8px">Módulos a gerar</div>'
-    +   '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px 14px">'
+    +   '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px 16px">'
     +   IA_MODULOS.map(function(mo){
-          return '<label style="font-size:0.83rem;display:flex;gap:6px;align-items:flex-start;text-align:left;line-height:1.3"><input type="checkbox" class="ia-cfg-mod" value="'+mo.tipo+'"'+(marcado(mo.tipo)?' checked':'')+' style="margin-top:2px;flex:none"><span>'+mo.icon+' '+mo.rotulo+'</span></label>';
+          return '<label style="font-size:0.83rem;display:flex;gap:8px;align-items:center;text-align:left;line-height:1.3;padding:6px 8px;border-radius:8px;cursor:pointer"><input type="checkbox" class="ia-cfg-mod" value="'+mo.tipo+'"'+(marcado(mo.tipo)?' checked':'')+' style="width:auto;margin:0;flex:none"><span>'+mo.icon+' '+mo.rotulo+'</span></label>';
         }).join('')
     +   '</div>'
     + '</div>'
@@ -3915,12 +3915,12 @@ function kbIaPaintConfig(body, doc, pdf){
             const p = o.split('|'); return '<option value="'+p[0]+'"'+((qc.dificuldade||'misto')===p[0]?' selected':'')+'>'+p[1]+'</option>';
           }).join('')
     +     '</select></label>'
-    +     '<label><input id="ia-coment" type="checkbox"'+(qc.comentarios !== false ? ' checked':'')+'> Comentário automático em cada questão</label>'
+    +     '<label style="display:flex;gap:6px;align-items:center"><input id="ia-coment" type="checkbox" style="width:auto"'+(qc.comentarios !== false ? ' checked':'')+'> Comentário automático em cada questão</label>'
     +   '</div>'
     +   '<div style="margin-top:8px;font-size:0.84rem;display:flex;gap:12px;flex-wrap:wrap"><span class="muted">Priorizar:</span>'
     +     ['legislacao|Legislação seca','conceitos|Conceitos e definições','pegadinhas|Pegadinhas da banca','importantes|Pontos mais cobrados'].map(function(o){
           const p = o.split('|'); const on = (qc.prioridades||[]).indexOf(p[0]) >= 0;
-          return '<label><input type="checkbox" class="ia-prio" value="'+p[0]+'"'+(on?' checked':'')+'> '+p[1]+'</label>';
+          return '<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" class="ia-prio" value="'+p[0]+'"'+(on?' checked':'')+' style="width:auto;margin:0"> '+p[1]+'</label>';
         }).join('')
     +   '</div>'
     + '</div>'
