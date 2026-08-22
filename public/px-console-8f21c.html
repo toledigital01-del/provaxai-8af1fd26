@@ -185,7 +185,7 @@ function syncAvisoHTML(p){
   if(p.pendente){
     return `<div style="border:1px solid #f0c36d;background:#fff8e6;color:#7a5300;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.9rem">
       ⚠ Há alterações não sincronizadas${p.ultimaSync?` desde a última sincronização (${dth(p.ultimaSync)})`:' — o currículo nunca foi sincronizado'}.
-      Última edição de conteúdo: ${dth(p.ultimaEdicao)}. Clique em <b>Sincronizar currículo agora</b> em Configurações para os alunos verem a versão atual.</div>`;
+      Última edição de conteúdo: ${dth(p.ultimaEdicao)}. Clique em <b>Sincronizar currículo agora</b> na Central de IA para os alunos verem a versão atual.</div>`;
   }
   return `<div style="border:1px solid #cfe8d4;background:#f2fbf4;color:#1f6b39;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.9rem">
     ✓ Currículo sincronizado${p.ultimaSync?` em ${dth(p.ultimaSync)}`:''}.</div>`;
@@ -1124,7 +1124,7 @@ async function viewConhecimento(){
           <div><label class="muted">Curso de destino</label><select id="ed-curso"></select></div>
           <div><label class="muted">Inteligência artificial</label>
             <select id="ed-modelo">
-              <option value="">Usar a IA do sistema (Configurações)</option>
+              <option value="">Usar a rota do assistente administrativo (Central de IA)</option>
               <option value="google/gemini-3.1-pro-preview">Edital gigante (Gemini Pro)</option>
               <option value="google/gemini-3-flash-preview">Rápido (Gemini Flash)</option>
               <option value="openai/gpt-5.6-sol">Máxima precisão (GPT-5.6 Sol)</option>
