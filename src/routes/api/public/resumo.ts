@@ -61,6 +61,7 @@ export const Route = createFileRoute('/api/public/resumo')({
               fontes: pronto.dados.fontes ?? 0,
               modelo: pronto.modelo,
               cache: true,
+              extras: await extrasPublicados(curso, body.disciplina, body.topico),
             })
         }
 
@@ -100,7 +101,13 @@ export const Route = createFileRoute('/api/public/resumo')({
           })
           if (!resumo) return Response.json({ error: 'Não consegui gerar o resumo agora.' }, { status: 502 })
           await salvarRecurso(curso, body.disciplina, body.topico, 'resumo', { resumo, fontes: docs.length }, cfg.model)
-          return Response.json({ resumo, fontes: docs.length, modelo: cfg.model, cache: false })
+          return Response.json({
+            resumo,
+            fontes: docs.length,
+            modelo: cfg.model,
+            cache: false,
+            extras: await extrasPublicados(curso, body.disciplina, body.topico),
+          })
         } catch (e) {
           const err = e as AIError
           return Response.json({ error: err.message || 'Não consegui gerar o resumo agora.' }, { status: err.status || 502 })
