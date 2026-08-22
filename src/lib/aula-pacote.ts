@@ -177,24 +177,24 @@ export async function publicarVersao(v: Versao & { course_slug: string; discipli
       user_id: null,
       titulo: topico,
       conteudo: v.conteudo,
-      modelo: (v.meta?.modelo as string) || null,
+      modelo: (v.meta?.['modelo'] as string) || null,
     })
     return true
   }
   if (tipo === 'summary')
-    return (await salvarRecurso(curso, disciplina, topico, 'resumo', { resumo: v.conteudo, fontes: 0 }, (v.meta?.modelo as string) || null), true)
+    return (await salvarRecurso(curso, disciplina, topico, 'resumo', { resumo: v.conteudo, fontes: 0 }, (v.meta?.['modelo'] as string) || null), true)
   if (tipo === 'review')
-    return (await salvarRecurso(curso, disciplina, topico, 'revisao', { conteudo: v.conteudo }, (v.meta?.modelo as string) || null), true)
+    return (await salvarRecurso(curso, disciplina, topico, 'revisao', { conteudo: v.conteudo }, (v.meta?.['modelo'] as string) || null), true)
   if (tipo === 'key_points')
-    return (await salvarRecurso(curso, disciplina, topico, 'pontos', { conteudo: v.conteudo }, (v.meta?.modelo as string) || null), true)
+    return (await salvarRecurso(curso, disciplina, topico, 'pontos', { conteudo: v.conteudo }, (v.meta?.['modelo'] as string) || null), true)
   if (tipo === 'traps')
-    return (await salvarRecurso(curso, disciplina, topico, 'pegadinhas', { conteudo: v.conteudo }, (v.meta?.modelo as string) || null), true)
+    return (await salvarRecurso(curso, disciplina, topico, 'pegadinhas', { conteudo: v.conteudo }, (v.meta?.['modelo'] as string) || null), true)
   if (tipo === 'athena_knowledge')
-    return (await salvarRecurso(curso, disciplina, topico, 'athena', { conteudo: v.conteudo }, (v.meta?.modelo as string) || null), true)
+    return (await salvarRecurso(curso, disciplina, topico, 'athena', { conteudo: v.conteudo }, (v.meta?.['modelo'] as string) || null), true)
   if (tipo === 'lacunas') {
     const frases = parseJson<unknown[]>(v.conteudo)
     if (!Array.isArray(frases)) return false
-    return (await salvarRecurso(curso, disciplina, topico, 'lacunas', { frases }, (v.meta?.modelo as string) || null), true)
+    return (await salvarRecurso(curso, disciplina, topico, 'lacunas', { frases }, (v.meta?.['modelo'] as string) || null), true)
   }
   if (tipo === 'podcast') {
     const roteiro = parseJson<unknown[]>(v.conteudo)
@@ -207,7 +207,7 @@ export async function publicarVersao(v: Versao & { course_slug: string; discipli
       topico,
       user_id: null,
       roteiro,
-      modelo: (v.meta?.modelo as string) || null,
+      modelo: (v.meta?.['modelo'] as string) || null,
     })
   }
   if (tipo === 'questions') {
@@ -594,12 +594,12 @@ export async function sincronizarPacote(curso: string, disciplina: string, topic
   if (recursos) {
     for (const r of recursos) {
       const d = r.dados || {}
-      if (r.tipo === 'resumo' && d.resumo) await gravar('summary', String(d.resumo), { modelo: r.modelo })
-      if (r.tipo === 'revisao' && d.conteudo) await gravar('review', String(d.conteudo), { modelo: r.modelo })
-      if (r.tipo === 'pontos' && d.conteudo) await gravar('key_points', String(d.conteudo), { modelo: r.modelo })
-      if (r.tipo === 'pegadinhas' && d.conteudo) await gravar('traps', String(d.conteudo), { modelo: r.modelo })
-      if (r.tipo === 'athena' && d.conteudo) await gravar('athena_knowledge', String(d.conteudo), { modelo: r.modelo })
-      if (r.tipo === 'lacunas' && Array.isArray(d.frases)) await gravar('lacunas', JSON.stringify(d.frases, null, 2), { modelo: r.modelo, itens: (d.frases as unknown[]).length })
+      if (r.tipo === 'resumo' && d['resumo']) await gravar('summary', String(d['resumo']), { modelo: r.modelo })
+      if (r.tipo === 'revisao' && d['conteudo']) await gravar('review', String(d['conteudo']), { modelo: r.modelo })
+      if (r.tipo === 'pontos' && d['conteudo']) await gravar('key_points', String(d['conteudo']), { modelo: r.modelo })
+      if (r.tipo === 'pegadinhas' && d['conteudo']) await gravar('traps', String(d['conteudo']), { modelo: r.modelo })
+      if (r.tipo === 'athena' && d['conteudo']) await gravar('athena_knowledge', String(d['conteudo']), { modelo: r.modelo })
+      if (r.tipo === 'lacunas' && Array.isArray(d['frases'])) await gravar('lacunas', JSON.stringify(d['frases'], null, 2), { modelo: r.modelo, itens: (d['frases'] as unknown[]).length })
     }
   }
 
