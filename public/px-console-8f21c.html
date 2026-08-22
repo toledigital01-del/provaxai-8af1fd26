@@ -3980,9 +3980,9 @@ window.kbIaSub = function(tipo, modo){
       }).join('') + '</div>' : '')
     + (modo === 'regenerar'
         ? '<div style="font-size:0.8rem;display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px">'
-          + '<label><input type="radio" name="ia-modo-'+tipo+'" value="original" checked> Manter formato original</label>'
-          + '<label><input type="radio" name="ia-modo-'+tipo+'" value="otimizado"> Otimizar para prova</label>'
-          + '<label><input type="radio" name="ia-modo-'+tipo+'" value="didatico"> Versão mais didática</label></div>'
+          + '<label><input type="radio" name="ia-modo-'+tipo+'" value="original" checked> Manter formato original (nova versão do zero)</label>'
+          + '<label><input type="radio" name="ia-modo-'+tipo+'" value="com-alteracoes"> Considerar as alterações que já fiz</label>'
+          + '<label><input type="radio" name="ia-modo-'+tipo+'" value="acrescentando"> Acrescentando novas informações do material</label></div>'
         : '')
     + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
     +   '<input id="ia-sub-in-'+tipo+'" placeholder="Instrução personalizada (opcional)" style="flex:1;min-width:220px;font-size:0.8rem">'
