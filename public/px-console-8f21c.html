@@ -2334,6 +2334,79 @@ window.kbAulasTodasPdf = async function(){
   kbAulaMsg(aviso.replace('\n', ' '));
 };
 
+/* Anexa vários PDFs de uma vez às aulas já cadastradas.
+   Casa pelo número da aula no nome do arquivo (ex.: "Aula 03.pdf");
+   o que não casar entra, em ordem, nas aulas que ainda estão sem PDF. */
+window.kbAulasPdfLote = function(){
+  if(!kbDisc) return;
+  if(!KB_AULAS.length) return alert('Cadastre as aulas antes de anexar os PDFs.');
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.multiple = true; inp.accept = 'application/pdf,.pdf';
+  inp.onchange = async function(){
+    const files = Array.prototype.slice.call(inp.files || []).filter(function(f){
+      return /pdf/i.test(f.type || '') || /\.pdf$/i.test(f.name || '');
+    });
+    if(!files.length) return;
+    files.sort(function(a,b){ return a.name.localeCompare(b.name, 'pt-BR', { numeric:true }); });
+
+    const aulas = KB_AULAS.slice().sort(function(a,b){ return a.ordem - b.ordem; });
+    const usadas = {};
+    const pares = [];
+    const sobra = [];
+    files.forEach(function(f){
+      const m = /aula[\s_\-]*(\d+)/i.exec(f.name);
+      let alvo = null;
+      if(m){ const n = parseInt(m[1],10); alvo = aulas.find(function(a){ return a.ordem === n && !usadas[a.id]; }) || null; }
+      if(alvo){ usadas[alvo.id] = 1; pares.push({ aula: alvo, file: f }); } else sobra.push(f);
+    });
+    const livres = aulas.filter(function(a){
+      return !usadas[a.id] && !String((kbFind(kbDisc, a.nome)||{}).pdf_url || '').trim();
+    });
+    sobra.forEach(function(f, i){ if(livres[i]){ usadas[livres[i].id] = 1; pares.push({ aula: livres[i], file: f }); } });
+    if(!pares.length) return alert('Não consegui casar nenhum arquivo com as aulas desta matéria.');
+
+    if(!confirm('Anexar ' + pares.length + ' PDF(s) às aulas de ' + kbDisc + ' e deixar o aluno abrindo em PDF?')) return;
+    KB_ING_ATIVO = true;
+    let ok = 0, passo = 0;
+    for(const p of pares){
+      kbAulaMsg('Enviando ' + p.file.name + '…');
+      kbIngProg(passo, pares.length, 'Enviando PDFs');
+      try{
+        const limpo = p.file.name.replace(/[^\w.\-]+/g, '_');
+        const caminho = 'prf-2021/' + String(kbDisc).replace(/[^\w\-]+/g, '_') + '/' + p.aula.id + '-' + Date.now() + '-' + limpo;
+        const up = await PX.sb.storage.from('aulas-pdf').upload(caminho, p.file, { contentType:'application/pdf', upsert:true });
+        if(up.error) throw new Error(up.error.message);
+        const doc = kbFind(kbDisc, p.aula.nome);
+        if(doc){
+          const r = await PX.sb.from('knowledge_docs')
+            .update({ pdf_url: caminho, modo_exibicao: 'pdf', updated_by: PX.user ? PX.user.id : null })
+            .eq('id', doc.id).select('id');
+          if(r.error) throw new Error(r.error.message);
+          if(!r.data || !r.data.length) throw new Error('sessão de administrador expirada');
+        }else{
+          const r = await PX.sb.from('knowledge_docs').insert({
+            course_slug:'prf-2021', disciplina: kbDisc, topico: p.aula.nome, titulo: kbAulaTitulo(p.aula.nome),
+            conteudo: '', status: 'publicado', publicado: true, modo_exibicao: 'pdf', pdf_url: caminho,
+            updated_by: PX.user ? PX.user.id : null,
+          }).select('id');
+          if(r.error) throw new Error(r.error.message);
+        }
+        ok++;
+      }catch(e){ kbAulaMsg('Falha em ' + p.file.name + ': ' + (e.message || e)); }
+      passo++;
+      kbIngProg(passo, pares.length, 'Enviando PDFs');
+    }
+    KB_ING_ATIVO = false;
+    setTimeout(kbIngProgHide, 1200);
+    await logAdmin('anexar_pdfs_lote','knowledge_docs', null, { disciplina: kbDisc, total: ok });
+    await loadKB();
+    kbPaint();
+    alert(ok + ' PDF(s) anexados — essas aulas agora abrem em PDF para o aluno.');
+    kbAulaMsg(ok + ' PDF(s) anexados às aulas de ' + kbDisc + '.');
+  };
+  inp.click();
+};
+
 
 function kbAulasRefresh(){
   if(!kbDisc) return;
