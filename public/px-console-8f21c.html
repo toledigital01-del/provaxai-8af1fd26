@@ -3615,6 +3615,24 @@ window.kbIaBadges = async function(){
 };
 
 /* ---------- abertura e estrutura do painel ---------- */
+/* Aviso rápido no rodapé (usado por todo o painel de IA da aula). */
+function toast(msg){
+  let t = document.getElementById('kb-toast');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'kb-toast';
+    t.style.cssText = 'position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#0F172A;color:#fff;font-size:0.82rem;padding:10px 18px;border-radius:999px;box-shadow:0 8px 24px rgba(15,23,42,.35);z-index:99999;display:none;max-width:90vw;text-align:center';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function(){ t.style.display = 'none'; }, 3800);
+}
+function kbPdfDaAula(a){
+  const d = kbFind(a.disc || kbDisc, a.nome) || {};
+  return String(d.pdf_url || '').trim() || null;
+}
 window.kbIaAbrir = function(aulaId){
   IA_AULA = KB_AULAS.find(function(a){ return a.id === aulaId; });
   if(!IA_AULA) return;
@@ -3693,7 +3711,7 @@ function kbIaPaint(){
     b.style.color = on ? '#fff' : '';
     b.style.borderColor = on ? '#1E3A8A' : '';
   });
-  const doc = kbKbDoc(IA_AULA.nome);
+  const doc = kbFind(IA_AULA.disc || kbDisc, IA_AULA.nome) || null;
   const pdf = kbPdfDaAula(IA_AULA);
   const ultima = (function(){
     let u = null;
@@ -3735,7 +3753,7 @@ function kbIaPaintConfig(body, doc, pdf){
     +   '<div style="font-weight:800;margin-bottom:8px">Módulos a gerar</div>'
     +   '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px 14px">'
     +   IA_MODULOS.map(function(mo){
-          return '<label style="font-size:0.83rem;display:flex;gap:6px;align-items:center"><input type="checkbox" class="ia-cfg-mod" value="'+mo.tipo+'"'+(marcado(mo.tipo)?' checked':'')+'> '+mo.icon+' '+mo.rotulo+'</label>';
+          return '<label style="font-size:0.83rem;display:flex;gap:6px;align-items:flex-start;text-align:left;line-height:1.3"><input type="checkbox" class="ia-cfg-mod" value="'+mo.tipo+'"'+(marcado(mo.tipo)?' checked':'')+' style="margin-top:2px;flex:none"><span>'+mo.icon+' '+mo.rotulo+'</span></label>';
         }).join('')
     +   '</div>'
     + '</div>'
