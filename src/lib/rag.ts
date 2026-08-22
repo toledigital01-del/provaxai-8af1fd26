@@ -310,10 +310,13 @@ export async function disciplinasDesatualizadas(curso: string): Promise<string[]
     if (d && !marcoPorDisc[d]) marcoPorDisc[d] = t // já veio ordenado desc
   })
   const velhas = new Set<string>()
-  const checa = (disc: string, iso?: string | null) => {
+  const checa = (disc: string, iso?: string | null): void => {
     if (!disc) return
     const marco = marcoPorDisc[disc]
-    if (!marco) return velhas.add(disc)
+    if (!marco) {
+      velhas.add(disc)
+      return
+    }
     if (iso && new Date(iso).getTime() > marco + 2000) velhas.add(disc)
   }
   docs.forEach((d) => checa(d['disciplina'] || '', d['updated_at']))
