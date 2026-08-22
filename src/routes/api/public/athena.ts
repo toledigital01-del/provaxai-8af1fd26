@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { SUPABASE_URL, currentUser, hasCourseAccess, usosHoje, serviceHeaders } from '@/lib/px-server'
 import { AIError } from '@/lib/ai-gateway'
 import { agentChat, rotaDoAgente } from '@/lib/ai-router'
+import { buscarTrechos, escopoIndexado, indexarEscopo, MAX_RAG_CHARS, type TrechoRag } from '@/lib/rag'
 
 const Body = z.object({
   disciplina: z.string().min(1).max(200),
@@ -11,6 +12,31 @@ const Body = z.object({
   curso: z.string().max(80).optional(),
 })
 
+type Fonte = { n: number; titulo: string; disciplina: string; topico: string | null; similaridade: number }
+
+/** Monta o contexto a partir dos trechos RAG, respeitando o limite rígido. */
+function montarContexto(trechos: TrechoRag[]) {
+  let usado = 0
+  const partes: string[] = []
+  const fontes: Fonte[] = []
+  for (const t of trechos) {
+    const n = fontes.length + 1
+    const bloco = `### [Fonte ${n}] ${t.titulo || t.topico || t.disciplina}${t.topico ? ` · ${t.topico}` : ''}\n${t.trecho}`
+    if (usado + bloco.length > MAX_RAG_CHARS) continue
+    usado += bloco.length
+    partes.push(bloco)
+    fontes.push({
+      n,
+      titulo: t.titulo || t.topico || t.disciplina,
+      disciplina: t.disciplina,
+      topico: t.topico,
+      similaridade: Math.round(t.similarity * 100),
+    })
+  }
+  return { base: partes.join('\n\n'), fontes }
+}
+
+/** Plano B (legado): primeiros documentos publicados, sem busca semântica. */
 async function fetchKnowledge(curso: string, disciplina: string, topico?: string | null) {
   const params = new URLSearchParams({
     select: 'titulo,topico,conteudo',
