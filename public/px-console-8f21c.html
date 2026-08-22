@@ -3816,6 +3816,7 @@ window.kbIaAbrir = function(aulaId){
 window.kbIaFechar = function(){
   const m = document.getElementById('kb-ia-modal');
   if(m) m.style.display = 'none';
+  document.body.style.overflow = '';
   IA_AULA = null; IA_DADOS = null;
   kbIaBadges();
 };
