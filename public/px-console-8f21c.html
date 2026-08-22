@@ -3856,17 +3856,28 @@ window.kbIaGerarUm = async function(tipo){
   IA_OCUPADO = true;
   try{
     const cfg = (IA_DADOS && IA_DADOS.config) || {};
-    const r = await kbIaApi({ acao:'gerar', tipo: tipo, instrucoes: cfg.instrucoes || undefined, questoes: cfg.questoes });
-    toast(r.cache ? 'Este conteúdo já existia — versão mantida.' : 'Versão ' + (r.versao||1) + ' gerada.');
+    const r = await kbIaApi({ acao:'gerar', tipo: tipo, config: { instrucoes: cfg.instrucoes || undefined, questoes: cfg.questoes } });
+    toast(r.cache ? 'Este conteúdo já existia — versão mantida.' : 'Versão ' + (r.versao||1) + ' gerada (rascunho).');
   }catch(e){ toast(e.message || 'Não consegui gerar agora.'); }
   IA_OCUPADO = false;
   await kbIaRecarregar();
 };
-window.kbIaVer = function(tipo, versaoConteudo, versaoNum){
+/* Busca o conteúdo completo da versão mais recente (a listagem traz só metadados). */
+async function kbIaConteudoAtual(tipo){
+  const j = await kbIaApi({ acao:'historico', tipo: tipo });
+  const vs = j.versoes || [];
+  return vs[0] || null;
+}
+window.kbIaVer = async function(tipo, versaoConteudo, versaoNum){
   const mo = kbIaMeta(tipo);
-  const m = kbIaMod(tipo);
-  const conteudo = versaoConteudo != null ? versaoConteudo : (m.atual ? m.atual.conteudo : '');
-  const num = versaoNum != null ? versaoNum : (m.atual ? m.atual.versao : 0);
+  let conteudo = versaoConteudo, num = versaoNum;
+  if(conteudo == null){
+    try{
+      const v = await kbIaConteudoAtual(tipo);
+      if(!v){ toast('Este módulo ainda não tem conteúdo.'); return; }
+      conteudo = v.conteudo; num = v.versao;
+    }catch(e){ toast(e.message || 'Não consegui carregar o conteúdo.'); return; }
+  }
   kbIaViewer(mo.icon + ' ' + mo.rotulo + ' — v' + num,
     mo.formato === 'json' ? kbIaJsonBonito(tipo, conteudo) : '<div class="prose" style="font-size:0.9rem">'+kbMD(conteudo)+'</div>');
 };
