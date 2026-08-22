@@ -3788,12 +3788,13 @@ window.kbIaAbrir = function(aulaId){
   if(!m){
     m = document.createElement('div');
     m.id = 'kb-ia-modal';
-    m.className = 'kb-aula-modal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:24px 16px;overflow:auto';
     document.body.appendChild(m);
   }
   m.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
   m.innerHTML =
-    '<div style="background:#fff;width:min(1080px,96vw);height:92vh;border-radius:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 60px rgba(15,23,42,.35)">'
+    '<div style="background:#fff;width:min(1080px,96vw);height:92vh;max-height:92vh;border-radius:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 60px rgba(15,23,42,.35);margin:auto">'
     + '<div style="padding:14px 18px;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
     +   '<div style="flex:1;min-width:220px">'
     +     '<div style="font-weight:800;font-size:1rem">🤖 IA DA AULA — Aula ' + String(IA_AULA.ordem).padStart(2,'0') + ' · ' + esc(IA_AULA.nome) + '</div>'
@@ -3815,6 +3816,7 @@ window.kbIaAbrir = function(aulaId){
 window.kbIaFechar = function(){
   const m = document.getElementById('kb-ia-modal');
   if(m) m.style.display = 'none';
+  document.body.style.overflow = '';
   IA_AULA = null; IA_DADOS = null;
   kbIaBadges();
 };
@@ -3898,9 +3900,9 @@ function kbIaPaintConfig(body, doc, pdf){
     + '</div>'
     + '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px">'
     +   '<div style="font-weight:800;margin-bottom:8px">Módulos a gerar</div>'
-    +   '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px 14px">'
+    +   '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px 16px">'
     +   IA_MODULOS.map(function(mo){
-          return '<label style="font-size:0.83rem;display:flex;gap:6px;align-items:flex-start;text-align:left;line-height:1.3"><input type="checkbox" class="ia-cfg-mod" value="'+mo.tipo+'"'+(marcado(mo.tipo)?' checked':'')+' style="margin-top:2px;flex:none"><span>'+mo.icon+' '+mo.rotulo+'</span></label>';
+          return '<label style="font-size:0.83rem;display:flex;gap:8px;align-items:center;text-align:left;line-height:1.3;padding:6px 8px;border-radius:8px;cursor:pointer"><input type="checkbox" class="ia-cfg-mod" value="'+mo.tipo+'"'+(marcado(mo.tipo)?' checked':'')+' style="width:auto;margin:0;flex:none"><span>'+mo.icon+' '+mo.rotulo+'</span></label>';
         }).join('')
     +   '</div>'
     + '</div>'
@@ -3913,12 +3915,12 @@ function kbIaPaintConfig(body, doc, pdf){
             const p = o.split('|'); return '<option value="'+p[0]+'"'+((qc.dificuldade||'misto')===p[0]?' selected':'')+'>'+p[1]+'</option>';
           }).join('')
     +     '</select></label>'
-    +     '<label><input id="ia-coment" type="checkbox"'+(qc.comentarios !== false ? ' checked':'')+'> Comentário automático em cada questão</label>'
+    +     '<label style="display:flex;gap:6px;align-items:center"><input id="ia-coment" type="checkbox" style="width:auto"'+(qc.comentarios !== false ? ' checked':'')+'> Comentário automático em cada questão</label>'
     +   '</div>'
     +   '<div style="margin-top:8px;font-size:0.84rem;display:flex;gap:12px;flex-wrap:wrap"><span class="muted">Priorizar:</span>'
     +     ['legislacao|Legislação seca','conceitos|Conceitos e definições','pegadinhas|Pegadinhas da banca','importantes|Pontos mais cobrados'].map(function(o){
           const p = o.split('|'); const on = (qc.prioridades||[]).indexOf(p[0]) >= 0;
-          return '<label><input type="checkbox" class="ia-prio" value="'+p[0]+'"'+(on?' checked':'')+'> '+p[1]+'</label>';
+          return '<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" class="ia-prio" value="'+p[0]+'"'+(on?' checked':'')+' style="width:auto;margin:0"> '+p[1]+'</label>';
         }).join('')
     +   '</div>'
     + '</div>'
