@@ -23,7 +23,7 @@ export type TrechoRag = {
   similarity: number
 }
 
-type DocFonte = { docId: string | null; titulo: string; topico: string | null; texto: string }
+type DocFonte = { docId: string | null; disciplina: string; titulo: string; topico: string | null; texto: string }
 
 async function chaveLovable(): Promise<string> {
   const k = await aiKeys()
