@@ -2462,9 +2462,15 @@ window.kbAulaFilaRemover = function(i){ if(KB_ING_ATIVO) return; KB_AULA_FILA.sp
 function kbAulaFilaAdd(files){
   const novos = Array.prototype.slice.call(files || []);
   if(!novos.length) return;
-  novos.forEach(function(f){ KB_AULA_FILA.push({ file:f, nome:f.name, estado:'fila', chars:0, erro:'' }); });
+  let repetidos = 0;
+  novos.forEach(function(f){
+    /* Não deixa o mesmo arquivo entrar duas vezes na fila. */
+    const ja = KB_AULA_FILA.some(function(x){ return x.nome === f.name && x.file && x.file.size === f.size; });
+    if(ja){ repetidos++; return; }
+    KB_AULA_FILA.push({ file:f, nome:f.name, estado:'fila', chars:0, erro:'' });
+  });
   kbAulaFilaPaint();
-  kbAulaMsg(KB_AULA_FILA.length + ' arquivo(s) na fila. Clique em “Cadastrar aula(s)”.');
+  kbAulaMsg(KB_AULA_FILA.length + ' arquivo(s) na fila' + (repetidos ? ' (' + repetidos + ' repetido(s) ignorado(s))' : '') + '. Clique em “Cadastrar aula(s)”.');
 }
 function kbBindAulaFile(){
   const inp = document.getElementById('kb-aula-file');
