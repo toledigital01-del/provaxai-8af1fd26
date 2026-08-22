@@ -183,13 +183,9 @@ export const Route = createFileRoute('/api/public/aula-pacote')({
               caracteres: v.conteudo.length,
               criado_em: v.created_at,
               meta: v.meta,
+              conteudo: v.conteudo,
             })),
           })
-        }
-
-        /* ----- ler o conteúdo de uma versão específica ----- */
-        if (body.acao === 'restaurar' || body.acao === 'publicar') {
-          // ambos precisam localizar a versão alvo
         }
 
         if (body.acao === 'restaurar') {
@@ -280,6 +276,8 @@ export const Route = createFileRoute('/api/public/aula-pacote')({
             if (body.acao === 'gerar') {
               if (atual && !body.modo) {
                 // geração simples respeita o que já existe: não sobrescreve à toa
+                if (body.publicar && !atual.publicado)
+                  await publicarVersao({ ...atual, course_slug: curso, disciplina, topico })
                 return Response.json({ ok: true, cache: true, versao: atual.versao })
               }
               resultado = await gerarModulo(tipo, ctx)
