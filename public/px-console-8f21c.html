@@ -2429,7 +2429,7 @@ function kbAulaTituloAuto(texto, origem, numero){
 }
 
 /* Cria (ou atualiza) uma aula com o texto recebido. Devolve o número usado. */
-async function kbAulaCriar(disc, texto, origem, publicar){
+async function kbAulaCriar(disc, texto, origem, publicar, arquivo){
   await kbAulasCarregar(disc);
   const numero = KB_AULAS.length ? Math.max.apply(null, KB_AULAS.map(a=>a.ordem)) + 1 : 0;
   const titulo = kbAulaTituloAuto(texto, origem, numero);
@@ -2438,13 +2438,26 @@ async function kbAulaCriar(disc, texto, origem, publicar){
 
   const existente = KB_AULAS.find(a => kbAulaTitulo(a.nome).toLowerCase() === titulo.toLowerCase());
   let nomeTopico = titulo;
+  let topicoId = existente ? existente.id : null;
   if(existente){
     nomeTopico = existente.nome;
   }else{
-    const ins = await PX.sb.from('topics').insert({ discipline_id: discId, nome: titulo, ordem: numero, dificuldade: 'media' });
+    const ins = await PX.sb.from('topics').insert({ discipline_id: discId, nome: titulo, ordem: numero, dificuldade: 'media' }).select('id').maybeSingle();
     if(ins.error) throw new Error('Erro ao criar a aula: ' + ins.error.message);
+    topicoId = ins.data ? ins.data.id : null;
   }
   const ordem = existente ? existente.ordem : numero;
+
+  /* Se o material enviado for um PDF, ele também fica anexado à aula,
+     para o aluno poder abrir o arquivo original (modo PDF). */
+  let pdfPath = '';
+  if(arquivo && /pdf/i.test(arquivo.type || '') || (arquivo && /\.pdf$/i.test(arquivo.name || ''))){
+    const limpo = String(arquivo.name).replace(/[^\w.\-]+/g, '_');
+    const caminho = 'prf-2021/' + String(disc || 'geral').replace(/[^\w\-]+/g, '_') + '/' +
+      (topicoId || 'aula') + '-' + Date.now() + '-' + limpo;
+    const up = await PX.sb.storage.from('aulas-pdf').upload(caminho, arquivo, { contentType: 'application/pdf', upsert: true });
+    if(!up.error) pdfPath = caminho;
+  }
 
   const payload = {
     course_slug: 'prf-2021', disciplina: disc, topico: nomeTopico,
@@ -2452,12 +2465,13 @@ async function kbAulaCriar(disc, texto, origem, publicar){
     conteudo: texto, status: publicar ? 'publicado' : 'rascunho',
     publicado: !!publicar, updated_by: PX.user ? PX.user.id : null,
   };
+  if(pdfPath) payload.pdf_url = pdfPath;
   const atual = kbFind(disc, nomeTopico);
   const q = atual
     ? await PX.sb.from('knowledge_docs').update(payload).eq('id', atual.id)
     : await PX.sb.from('knowledge_docs').insert(payload);
   if(q.error) throw new Error('Aula criada, mas o conteúdo não salvou: ' + q.error.message);
-  await logAdmin('cadastrar_aula','topics', null, { disciplina: disc, numero: ordem, titulo: titulo, publicado: !!publicar });
+  await logAdmin('cadastrar_aula','topics', null, { disciplina: disc, numero: ordem, titulo: titulo, publicado: !!publicar, pdf: !!pdfPath });
   await loadKB();
   return ordem;
 }
