@@ -3615,6 +3615,10 @@ window.kbIaBadges = async function(){
 };
 
 /* ---------- abertura e estrutura do painel ---------- */
+function kbPdfDaAula(a){
+  const d = kbFind(a.disc || kbDisc, a.nome) || {};
+  return String(d.pdf_url || '').trim() || null;
+}
 window.kbIaAbrir = function(aulaId){
   IA_AULA = KB_AULAS.find(function(a){ return a.id === aulaId; });
   if(!IA_AULA) return;
