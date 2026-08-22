@@ -144,8 +144,9 @@ export const Route = createFileRoute('/api/public/athena')({
                   vistos.add(x.tipo)
                   return (x.conteudo || '').trim()
                 })
-                .map((x) => `### ${x.tipo}\n${x.conteudo.slice(0, 8000)}`)
+                .map((x) => `### ${x.tipo}\n${x.conteudo.slice(0, 2500)}`)
                 .join('\n\n')
+                .slice(0, 8000) // teto rígido do enriquecimento, somado ao limite RAG
               if (extras) base += '\n\n--- CONTEÚDO INTELIGENTE APROVADO DESTA AULA ---\n' + extras
             }
           } catch {
