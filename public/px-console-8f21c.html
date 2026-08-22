@@ -3898,10 +3898,15 @@ function kbIaViewer(titulo, html){
 }
 
 /* ---------- editor de versão (markdown com preview ou JSON) ---------- */
-window.kbIaEditar = function(tipo){
+window.kbIaEditar = async function(tipo){
   const mo = kbIaMeta(tipo);
   const m = kbIaMod(tipo);
   if(!m.atual) return;
+  let atual;
+  try{
+    atual = await kbIaConteudoAtual(tipo);
+  }catch(err){ toast(err.message || 'Não consegui carregar o conteúdo.'); return; }
+  if(!atual){ toast('Este módulo ainda não tem conteúdo.'); return; }
   let e = document.getElementById('kb-ia-edit');
   if(!e){
     e = document.createElement('div');
