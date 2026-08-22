@@ -159,22 +159,21 @@ export async function indexarEscopo(opts: { curso: string; disciplina?: string |
   }
 
   const vetores = await embedTextos(itens.map((i) => i.trecho))
-  const linhas = itens.map((i, k) => ({
-    course_slug: curso,
-    disciplina: disciplina || '',
-    topico: i.doc.topico,
-    doc_id: i.doc.docId,
-    titulo: i.doc.titulo.slice(0, 300),
-    seq: i.seq,
-    trecho: i.trecho,
-    content_hash: hashTrecho(i.trecho),
-    embedding: JSON.stringify(vetores[k]),
-  }))
-  // quando o escopo é o curso inteiro, a disciplina vem do doc
-  if (!disciplina) {
-    // docsDoEscopo já filtrou por curso; precisamos da disciplina de cada doc
-    // (busca feita sem filtro de disciplina não é usada hoje, mas mantemos seguro)
-  }
+  // a disciplina de cada trecho vem do próprio documento (cobre também a
+  // indexação do curso inteiro de uma vez)
+  const linhas = itens
+    .map((i, k) => ({
+      course_slug: curso,
+      disciplina: i.doc.disciplina,
+      topico: i.doc.topico,
+      doc_id: i.doc.docId,
+      titulo: i.doc.titulo.slice(0, 300),
+      seq: i.seq,
+      trecho: i.trecho,
+      content_hash: hashTrecho(i.trecho),
+      embedding: JSON.stringify(vetores[k]),
+    }))
+    .filter((l) => l.disciplina)
 
   for (let i = 0; i < linhas.length; i += 200) {
     const r = await fetch(`${SUPABASE_URL}/rest/v1/kb_chunks`, {
