@@ -23,7 +23,7 @@ export type TrechoRag = {
   similarity: number
 }
 
-type DocFonte = { docId: string | null; titulo: string; topico: string | null; texto: string }
+type DocFonte = { docId: string | null; disciplina: string; titulo: string; topico: string | null; texto: string }
 
 async function chaveLovable(): Promise<string> {
   const k = await aiKeys()
@@ -93,10 +93,10 @@ async function docsDoEscopo(curso: string, disciplina?: string, topico?: string 
   const eq = (v: string) => `eq.${encodeURIComponent(v)}`
   const h = serviceHeaders()
   let qDocs =
-    `select=id,titulo,topico,sumario,conteudo&course_slug=${eq(curso)}&publicado=is.true&limit=200`
+    `select=id,titulo,disciplina,topico,sumario,conteudo&course_slug=${eq(curso)}&publicado=is.true&limit=200`
   if (disciplina) qDocs += `&disciplina=${eq(disciplina)}`
   if (topico) qDocs += `&topico=${eq(topico)}`
-  let qKb = `select=id,nome_arquivo,topic_nome,texto_extraido&course_slug=${eq(curso)}&limit=200`
+  let qKb = `select=id,nome_arquivo,discipline_nome,topic_nome,texto_extraido&course_slug=${eq(curso)}&limit=200`
   if (disciplina) qKb += `&discipline_nome=${eq(disciplina)}`
   if (topico) qKb += `&topic_nome=${eq(topico)}`
 
@@ -110,13 +110,27 @@ async function docsDoEscopo(curso: string, disciplina?: string, topico?: string 
   ])
 
   const docs: DocFonte[] = []
-  ;(kd as Array<{ id: string; titulo?: string; topico?: string; sumario?: string; conteudo?: string }>).forEach((d) => {
+  ;(kd as Array<{ id: string; titulo?: string; disciplina?: string; topico?: string; sumario?: string; conteudo?: string }>).forEach((d) => {
     const texto = [d.sumario || '', d.conteudo || ''].join('\n').trim()
-    if (texto) docs.push({ docId: d.id, titulo: d.titulo || d.topico || disciplina || 'material', topico: d.topico || null, texto })
+    if (texto)
+      docs.push({
+        docId: d.id,
+        disciplina: d.disciplina || disciplina || '',
+        titulo: d.titulo || d.topico || d.disciplina || disciplina || 'material',
+        topico: d.topico || null,
+        texto,
+      })
   })
-  ;(kb as Array<{ id: string; nome_arquivo?: string; topic_nome?: string; texto_extraido?: string }>).forEach((d) => {
+  ;(kb as Array<{ id: string; nome_arquivo?: string; discipline_nome?: string; topic_nome?: string; texto_extraido?: string }>).forEach((d) => {
     const texto = (d.texto_extraido || '').trim()
-    if (texto) docs.push({ docId: d.id, titulo: d.nome_arquivo || 'documento', topico: d.topic_nome || null, texto })
+    if (texto)
+      docs.push({
+        docId: d.id,
+        disciplina: d.discipline_nome || disciplina || '',
+        titulo: d.nome_arquivo || 'documento',
+        topico: d.topic_nome || null,
+        texto,
+      })
   })
   return docs
 }
@@ -145,22 +159,21 @@ export async function indexarEscopo(opts: { curso: string; disciplina?: string |
   }
 
   const vetores = await embedTextos(itens.map((i) => i.trecho))
-  const linhas = itens.map((i, k) => ({
-    course_slug: curso,
-    disciplina: disciplina || '',
-    topico: i.doc.topico,
-    doc_id: i.doc.docId,
-    titulo: i.doc.titulo.slice(0, 300),
-    seq: i.seq,
-    trecho: i.trecho,
-    content_hash: hashTrecho(i.trecho),
-    embedding: JSON.stringify(vetores[k]),
-  }))
-  // quando o escopo é o curso inteiro, a disciplina vem do doc
-  if (!disciplina) {
-    // docsDoEscopo já filtrou por curso; precisamos da disciplina de cada doc
-    // (busca feita sem filtro de disciplina não é usada hoje, mas mantemos seguro)
-  }
+  // a disciplina de cada trecho vem do próprio documento (cobre também a
+  // indexação do curso inteiro de uma vez)
+  const linhas = itens
+    .map((i, k) => ({
+      course_slug: curso,
+      disciplina: i.doc.disciplina,
+      topico: i.doc.topico,
+      doc_id: i.doc.docId,
+      titulo: i.doc.titulo.slice(0, 300),
+      seq: i.seq,
+      trecho: i.trecho,
+      content_hash: hashTrecho(i.trecho),
+      embedding: JSON.stringify(vetores[k]),
+    }))
+    .filter((l) => l.disciplina)
 
   for (let i = 0; i < linhas.length; i += 200) {
     const r = await fetch(`${SUPABASE_URL}/rest/v1/kb_chunks`, {
