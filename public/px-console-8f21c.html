@@ -2451,7 +2451,7 @@ async function kbAulaCriar(disc, texto, origem, publicar, arquivo){
   /* Se o material enviado for um PDF, ele também fica anexado à aula,
      para o aluno poder abrir o arquivo original (modo PDF). */
   let pdfPath = '';
-  if(arquivo && /pdf/i.test(arquivo.type || '') || (arquivo && /\.pdf$/i.test(arquivo.name || ''))){
+  if(arquivo && (/pdf/i.test(arquivo.type || '') || /\.pdf$/i.test(arquivo.name || ''))){
     const limpo = String(arquivo.name).replace(/[^\w.\-]+/g, '_');
     const caminho = 'prf-2021/' + String(disc || 'geral').replace(/[^\w\-]+/g, '_') + '/' +
       (topicoId || 'aula') + '-' + Date.now() + '-' + limpo;
