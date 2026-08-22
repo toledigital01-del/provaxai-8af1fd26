@@ -3958,7 +3958,7 @@ window.kbIaSalvarEdicao = async function(tipo, publicar){
   const ta = document.getElementById('ia-ed-txt');
   if(!ta) return;
   try{
-    const r = await kbIaApi({ acao:'salvar-edicao', tipo: tipo, conteudo: ta.value, publicar: !!publicar });
+    const r = await kbIaApi({ acao:'salvar', tipo: tipo, conteudo: ta.value, publicar: !!publicar, instrucao: 'Editado manualmente no painel da aula' });
     toast(publicar ? 'Versão ' + r.versao + ' publicada para os alunos.' : 'Rascunho v' + r.versao + ' salvo (alunos ainda veem a versão publicada).');
     document.getElementById('kb-ia-edit').style.display = 'none';
     await kbIaRecarregar();
