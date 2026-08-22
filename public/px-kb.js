@@ -224,7 +224,15 @@
       });
       var j = await r.json();
       if (!r.ok) return j.error || 'Não consegui responder agora.';
-      return j.resposta;
+      var resp = j.resposta;
+      // Origem dos trechos usados pela Athena (quando a busca inteligente está ativa)
+      if (Array.isArray(j.fontes) && j.fontes.length) {
+        var lista = j.fontes
+          .map(function (f) { return '[Fonte ' + f.n + '] ' + (f.titulo || f.topico || f.disciplina); })
+          .join(' · ');
+        resp += '\n\n—\n📚 Fontes consultadas: ' + lista;
+      }
+      return resp;
     } catch (e) {
       return 'Não consegui falar com a Athena agora. Tente novamente.';
     }

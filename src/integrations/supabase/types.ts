@@ -703,6 +703,48 @@ export type Database = {
         }
         Relationships: []
       }
+      kb_chunks: {
+        Row: {
+          content_hash: string
+          course_slug: string
+          created_at: string
+          disciplina: string
+          doc_id: string | null
+          embedding: string
+          id: string
+          seq: number
+          titulo: string | null
+          topico: string | null
+          trecho: string
+        }
+        Insert: {
+          content_hash: string
+          course_slug: string
+          created_at?: string
+          disciplina: string
+          doc_id?: string | null
+          embedding: string
+          id?: string
+          seq?: number
+          titulo?: string | null
+          topico?: string | null
+          trecho: string
+        }
+        Update: {
+          content_hash?: string
+          course_slug?: string
+          created_at?: string
+          disciplina?: string
+          doc_id?: string | null
+          embedding?: string
+          id?: string
+          seq?: number
+          titulo?: string | null
+          topico?: string | null
+          trecho?: string
+        }
+        Relationships: []
+      }
       kb_documentos: {
         Row: {
           course_slug: string
@@ -1547,6 +1589,24 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_support: { Args: never; Returns: boolean }
+      match_kb_chunks: {
+        Args: {
+          match_count?: number
+          match_threshold?: number
+          p_curso: string
+          p_disciplina?: string
+          p_topico?: string
+          query_embedding: string
+        }
+        Returns: {
+          disciplina: string
+          id: string
+          similarity: number
+          titulo: string
+          topico: string
+          trecho: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "suporte" | "aluno"

@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { SUPABASE_URL, currentUser, hasCourseAccess, usosHoje, serviceHeaders } from '@/lib/px-server'
 import { AIError } from '@/lib/ai-gateway'
 import { agentChat, rotaDoAgente } from '@/lib/ai-router'
+import { buscarTrechos, escopoIndexado, indexarEscopo, MAX_RAG_CHARS, type TrechoRag } from '@/lib/rag'
 
 const Body = z.object({
   disciplina: z.string().min(1).max(200),
@@ -11,6 +12,31 @@ const Body = z.object({
   curso: z.string().max(80).optional(),
 })
 
+type Fonte = { n: number; titulo: string; disciplina: string; topico: string | null; similaridade: number }
+
+/** Monta o contexto a partir dos trechos RAG, respeitando o limite rígido. */
+function montarContexto(trechos: TrechoRag[]) {
+  let usado = 0
+  const partes: string[] = []
+  const fontes: Fonte[] = []
+  for (const t of trechos) {
+    const n = fontes.length + 1
+    const bloco = `### [Fonte ${n}] ${t.titulo || t.topico || t.disciplina}${t.topico ? ` · ${t.topico}` : ''}\n${t.trecho}`
+    if (usado + bloco.length > MAX_RAG_CHARS) continue
+    usado += bloco.length
+    partes.push(bloco)
+    fontes.push({
+      n,
+      titulo: t.titulo || t.topico || t.disciplina,
+      disciplina: t.disciplina,
+      topico: t.topico,
+      similaridade: Math.round(t.similarity * 100),
+    })
+  }
+  return { base: partes.join('\n\n'), fontes }
+}
+
+/** Plano B (legado): primeiros documentos publicados, sem busca semântica. */
 async function fetchKnowledge(curso: string, disciplina: string, topico?: string | null) {
   const params = new URLSearchParams({
     select: 'titulo,topico,conteudo',
@@ -57,10 +83,46 @@ export const Route = createFileRoute('/api/public/athena')({
             { status: 429 },
           )
 
-        const docs = await fetchKnowledge(curso, body.disciplina, body.topico)
-        let base = docs
-          .map((d) => `### ${d.titulo || d.topico || body.disciplina}\n${(d.conteudo || '').slice(0, 12000)}`)
-          .join('\n\n')
+        // RAG: busca vetorial dos trechos mais relevantes (com indexação
+        // automática na primeira pergunta da disciplina). Se falhar ou não
+        // houver nada indexado, cai no modo clássico de leitura direta.
+        let base = ''
+        let fontes: Fonte[] = []
+        let ragAtivo = false
+        try {
+          if (!(await escopoIndexado(curso, body.disciplina))) {
+            await indexarEscopo({ curso, disciplina: body.disciplina })
+          }
+          const trechos = await buscarTrechos({
+            pergunta: body.pergunta,
+            curso,
+            disciplina: body.disciplina,
+            topico: body.topico,
+            max: 8,
+          })
+          if (trechos.length) {
+            const ctx = montarContexto(trechos)
+            base = ctx.base
+            fontes = ctx.fontes
+            ragAtivo = true
+          }
+        } catch {
+          /* RAG é melhor-esforço: qualquer falha cai no modo clássico */
+        }
+
+        if (!ragAtivo) {
+          const docs = await fetchKnowledge(curso, body.disciplina, body.topico)
+          base = docs
+            .map((d) => `### ${d.titulo || d.topico || body.disciplina}\n${(d.conteudo || '').slice(0, 12000)}`)
+            .join('\n\n')
+          fontes = docs.map((d, i) => ({
+            n: i + 1,
+            titulo: d.titulo || d.topico || body.disciplina,
+            disciplina: body.disciplina,
+            topico: d.topico || null,
+            similaridade: 0,
+          }))
+        }
 
         // Conteúdo inteligente aprovado pelo administrador para esta aula
         // (pacote publicado: resumo, pontos-chave, pegadinhas, base da Athena…).
@@ -82,8 +144,9 @@ export const Route = createFileRoute('/api/public/athena')({
                   vistos.add(x.tipo)
                   return (x.conteudo || '').trim()
                 })
-                .map((x) => `### ${x.tipo}\n${x.conteudo.slice(0, 8000)}`)
+                .map((x) => `### ${x.tipo}\n${x.conteudo.slice(0, 2500)}`)
                 .join('\n\n')
+                .slice(0, 8000) // teto rígido do enriquecimento, somado ao limite RAG
               if (extras) base += '\n\n--- CONTEÚDO INTELIGENTE APROVADO DESTA AULA ---\n' + extras
             }
           } catch {
@@ -98,9 +161,14 @@ export const Route = createFileRoute('/api/public/athena')({
             'No máximo 2-3 pontos principais por resposta — se o assunto tiver mais partes, cubra só o essencial e termine ' +
             'perguntando se o aluno quer que você continue com o próximo ponto. Evite títulos markdown (#, ##) e emojis. ' +
             'Só use lista com marcadores quando for mesmo uma enumeração curta (até 4 itens).',
-          base
-            ? 'Use PRIORITARIAMENTE o material oficial abaixo como fonte de verdade. Se a resposta não estiver nele, diga isso e complemente com cuidado.\n\n--- MATERIAL OFICIAL ---\n' + base
-            : 'Ainda não há material oficial cadastrado para este tópico; responda com base no edital e avise o aluno que o conteúdo detalhado será publicado em breve.',
+          ragAtivo
+            ? 'Os trechos abaixo foram selecionados por relevância para a pergunta do aluno, cada um com uma etiqueta [Fonte N]. ' +
+              'Sempre que usar uma informação de um trecho, indique a origem no fim da frase, ex.: [Fonte 2]. ' +
+              'Se nenhum trecho cobrir a pergunta, diga isso com clareza antes de complementar com conhecimento geral.\n\n--- TRECHOS DO MATERIAL OFICIAL ---\n' +
+              base
+            : base
+              ? 'Use PRIORITARIAMENTE o material oficial abaixo como fonte de verdade. Se a resposta não estiver nele, diga isso e complemente com cuidado.\n\n--- MATERIAL OFICIAL ---\n' + base
+              : 'Ainda não há material oficial cadastrado para este tópico; responda com base no edital e avise o aluno que o conteúdo detalhado será publicado em breve.',
         ].join('\n')
 
         try {
@@ -115,7 +183,7 @@ export const Route = createFileRoute('/api/public/athena')({
           })
           return Response.json({
             resposta: r.texto || 'Não consegui responder agora.',
-            fontes: docs.length,
+            fontes,
             modelo: r.model,
           })
         } catch (e) {

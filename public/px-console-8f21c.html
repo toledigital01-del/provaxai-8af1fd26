@@ -2055,6 +2055,7 @@ function kbAulasPaint(){
       '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasPdfLote()">Anexar PDFs em lote</button>' +
       '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasTodasPdf()">Exibir todas em PDF</button>' +
       '<button class="act primary" style="font-size:0.75rem;padding:4px 10px" onclick="kbIaLote()">Preparar conteúdo de IA de todas</button>' +
+      '<button class="act" style="font-size:0.75rem;padding:4px 10px" title="Grava a memória de busca da Athena desta matéria (trechos + relevância). Refazer depois de editar materiais." onclick="kbIndexarRag()">Indexar na Athena</button>' +
       '<button class="act danger" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasExcluirTodas()">Excluir todas as aulas</button>' +
     '</div>' +
 
@@ -2498,6 +2499,15 @@ window.kbAulasTodasPdf = async function(){
 /* Anexa vários PDFs de uma vez às aulas já cadastradas.
    Casa pelo número da aula no nome do arquivo (ex.: "Aula 03.pdf");
    o que não casar entra, em ordem, nas aulas que ainda estão sem PDF. */
+/* Indexação RAG: grava a memória de busca da Athena para a matéria aberta. */
+window.kbIndexarRag = async function(){
+  if(!kbDisc){ toast('Escolha uma matéria primeiro.'); return; }
+  toast('Indexando “' + kbDisc + '” na memória da Athena… pode levar 1-2 minutos.');
+  try{
+    const r = await kbPost('/api/public/kb-embed', { curso:'prf-2021', disciplina: kbDisc });
+    toast('Pronto: ' + (r.chunks||0) + ' trechos indexados de ' + (r.docs||0) + ' materiais. A Athena agora busca por relevância e cita a origem.');
+  }catch(e){ toast(e.message || 'Não consegui indexar agora.'); }
+};
 window.kbAulasPdfLote = function(){
   if(!kbDisc) return;
   if(!KB_AULAS.length) return alert('Cadastre as aulas antes de anexar os PDFs.');
