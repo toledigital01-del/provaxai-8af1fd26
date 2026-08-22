@@ -1,0 +1,2 @@
+revoke execute on function public.match_kb_chunks(vector, text, text, text, int, float) from anon, authenticated;
+grant execute on function public.match_kb_chunks(vector, text, text, text, int, float) to service_role;
