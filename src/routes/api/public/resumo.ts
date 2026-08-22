@@ -3,11 +3,13 @@ import { z } from 'zod'
 import { getSetting, aiKeys, currentUser, usosHoje, registrarUsoIA } from '@/lib/px-server'
 import { fetchKnowledge, baseTexto, fonteInstrucao } from '@/lib/kb-context'
 import { chat, normalizar, AIError } from '@/lib/ai-gateway'
+import { lerRecurso, salvarRecurso } from '@/lib/aula-recursos'
 
 const Body = z.object({
   disciplina: z.string().min(1).max(200),
   topico: z.string().max(300).optional().nullable(),
   curso: z.string().max(80).optional(),
+  regerar: z.boolean().optional(),
 })
 
 export const Route = createFileRoute('/api/public/resumo')({
@@ -25,6 +27,19 @@ export const Route = createFileRoute('/api/public/resumo')({
         }
 
         const curso = body.curso || 'prf-2021'
+
+        // Resumo já preparado no painel (gerado uma vez, reaproveitado por todos).
+        if (!body.regerar) {
+          const pronto = await lerRecurso<{ resumo?: string; fontes?: number }>(curso, body.disciplina, body.topico, 'resumo')
+          if (pronto && (pronto.dados?.resumo || '').trim())
+            return Response.json({
+              resumo: pronto.dados.resumo,
+              fontes: pronto.dados.fontes ?? 0,
+              modelo: pronto.modelo,
+              cache: true,
+            })
+        }
+
         const cfg = normalizar(await getSetting('ia_athena'))
         const limite = cfg.limiteDiario ?? 0
         if (limite > 0 && (await usosHoje(userId, 'resumo')) >= limite)
@@ -60,7 +75,8 @@ export const Route = createFileRoute('/api/public/resumo')({
             resposta: resumo || '',
           })
           if (!resumo) return Response.json({ error: 'Não consegui gerar o resumo agora.' }, { status: 502 })
-          return Response.json({ resumo, fontes: docs.length, modelo: cfg.model })
+          await salvarRecurso(curso, body.disciplina, body.topico, 'resumo', { resumo, fontes: docs.length }, cfg.model)
+          return Response.json({ resumo, fontes: docs.length, modelo: cfg.model, cache: false })
         } catch (e) {
           const err = e as AIError
           return Response.json({ error: err.message || 'Não consegui gerar o resumo agora.' }, { status: err.status || 502 })
