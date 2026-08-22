@@ -4003,7 +4003,7 @@ window.kbIaRodarIA = async function(tipo, modo, instrPre){
   if(box) box.querySelectorAll('button').forEach(function(b){ b.disabled = true; });
   try{
     const cfg = (IA_DADOS && IA_DADOS.config) || {};
-    const payload = { acao: modo === 'melhorar' ? 'melhorar' : modo === 'acrescentar' ? 'acrescentar' : 'regenerar', tipo: tipo, instrucoes: instr, questoes: cfg.questoes };
+    const payload = { acao: modo, tipo: tipo, instrucao: instr, config: { instrucoes: cfg.instrucoes || undefined, questoes: cfg.questoes } };
     if(modo === 'regenerar') payload.modo = modoReg;
     const r = await kbIaApi(payload);
     toast('Nova versão v' + (r.versao||'?') + ' criada — revise e publique quando estiver satisfeito.');
