@@ -3751,7 +3751,7 @@ function kbIaPaintConfig(body, doc, pdf){
     +     '<label><input id="ia-coment" type="checkbox"'+(qc.comentarios !== false ? ' checked':'')+'> Comentário automático em cada questão</label>'
     +   '</div>'
     +   '<div style="margin-top:8px;font-size:0.84rem;display:flex;gap:12px;flex-wrap:wrap"><span class="muted">Priorizar:</span>'
-    +     ['legislacao|Legislação','jurisprudencia|Jurisprudência','pegadinhas|Pegadinhas da banca','casos|Casos práticos'].map(function(o){
+    +     ['legislacao|Legislação seca','conceitos|Conceitos e definições','pegadinhas|Pegadinhas da banca','importantes|Pontos mais cobrados'].map(function(o){
           const p = o.split('|'); const on = (qc.prioridades||[]).indexOf(p[0]) >= 0;
           return '<label><input type="checkbox" class="ia-prio" value="'+p[0]+'"'+(on?' checked':'')+'> '+p[1]+'</label>';
         }).join('')
