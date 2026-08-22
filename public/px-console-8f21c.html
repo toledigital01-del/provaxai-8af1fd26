@@ -2295,6 +2295,7 @@ window.kbAulaModalSalvar = async function(auto, recarregar){
     kbPaint();
     if(recarregar) kbAulaEditar(a.id);
   }
+  if(publicar && !auto && a && a.nome) kbPrepararAula(kbDisc, a.nome);
   if(msg && !auto) msg.textContent = (publicar ? 'Aula publicada para os alunos' : 'Aula salva como rascunho') +
     (modo === 'pdf' ? ' — o aluno abre esta aula em PDF.' : ' — o aluno vê o conteúdo em texto.');
 };
