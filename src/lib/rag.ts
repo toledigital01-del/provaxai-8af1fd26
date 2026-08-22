@@ -93,10 +93,10 @@ async function docsDoEscopo(curso: string, disciplina?: string, topico?: string 
   const eq = (v: string) => `eq.${encodeURIComponent(v)}`
   const h = serviceHeaders()
   let qDocs =
-    `select=id,titulo,topico,sumario,conteudo&course_slug=${eq(curso)}&publicado=is.true&limit=200`
+    `select=id,titulo,disciplina,topico,sumario,conteudo&course_slug=${eq(curso)}&publicado=is.true&limit=200`
   if (disciplina) qDocs += `&disciplina=${eq(disciplina)}`
   if (topico) qDocs += `&topico=${eq(topico)}`
-  let qKb = `select=id,nome_arquivo,topic_nome,texto_extraido&course_slug=${eq(curso)}&limit=200`
+  let qKb = `select=id,nome_arquivo,discipline_nome,topic_nome,texto_extraido&course_slug=${eq(curso)}&limit=200`
   if (disciplina) qKb += `&discipline_nome=${eq(disciplina)}`
   if (topico) qKb += `&topic_nome=${eq(topico)}`
 
@@ -110,13 +110,27 @@ async function docsDoEscopo(curso: string, disciplina?: string, topico?: string 
   ])
 
   const docs: DocFonte[] = []
-  ;(kd as Array<{ id: string; titulo?: string; topico?: string; sumario?: string; conteudo?: string }>).forEach((d) => {
+  ;(kd as Array<{ id: string; titulo?: string; disciplina?: string; topico?: string; sumario?: string; conteudo?: string }>).forEach((d) => {
     const texto = [d.sumario || '', d.conteudo || ''].join('\n').trim()
-    if (texto) docs.push({ docId: d.id, titulo: d.titulo || d.topico || disciplina || 'material', topico: d.topico || null, texto })
+    if (texto)
+      docs.push({
+        docId: d.id,
+        disciplina: d.disciplina || disciplina || '',
+        titulo: d.titulo || d.topico || d.disciplina || disciplina || 'material',
+        topico: d.topico || null,
+        texto,
+      })
   })
-  ;(kb as Array<{ id: string; nome_arquivo?: string; topic_nome?: string; texto_extraido?: string }>).forEach((d) => {
+  ;(kb as Array<{ id: string; nome_arquivo?: string; discipline_nome?: string; topic_nome?: string; texto_extraido?: string }>).forEach((d) => {
     const texto = (d.texto_extraido || '').trim()
-    if (texto) docs.push({ docId: d.id, titulo: d.nome_arquivo || 'documento', topico: d.topic_nome || null, texto })
+    if (texto)
+      docs.push({
+        docId: d.id,
+        disciplina: d.discipline_nome || disciplina || '',
+        titulo: d.nome_arquivo || 'documento',
+        topico: d.topic_nome || null,
+        texto,
+      })
   })
   return docs
 }
