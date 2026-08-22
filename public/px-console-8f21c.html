@@ -1921,7 +1921,11 @@ function kbAulasPaint(){
         '<button class="act" title="Clique para mudar o número desta aula" onclick="kbAulaNumeroEditar(\'' + a.id + '\')" style="font-weight:700;color:#1E3A8A;min-width:74px;font-size:0.8125rem;padding:3px 8px">Aula ' + kbAulaNum(a.ordem) + '</button>' +
 
         '<span style="flex:1;min-width:120px">' + esc(kbAulaTitulo(a.nome)) + '</span>' +
-        (String(doc.pdf_url||'').trim() ? '<span class="kb-tag is-on" title="' + esc(String(doc.pdf_url).split('/').pop()) + '">PDF' + (doc.modo_exibicao === 'pdf' ? ' ativo' : ' anexado') + '</span>' : '') +
+        (String(doc.pdf_url||'').trim()
+          ? '<span class="kb-tag is-on" title="' + esc(String(doc.pdf_url).split('/').pop()) + '">PDF' + (doc.modo_exibicao === 'pdf' ? ' ativo' : ' anexado') + '</span>'
+          : (doc.modo_exibicao === 'pdf'
+              ? '<span class="kb-tag" style="background:#FEF3C7;color:#92400E;border-color:#FDE68A" title="Esta aula está no modo PDF mas nenhum arquivo foi anexado — o aluno vê o texto.">PDF faltando</span>'
+              : '')) +
         '<span class="kb-tag ' + (pub ? 'is-on' : 'is-wait') + '">' + (pub ? 'publicada' : temTexto ? 'rascunho' : 'sem conteúdo') + '</span>' +
         '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaAbrir(\'' + escJs(a.nome) + '\')">Abrir</button>' +
         '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaRenomear(\'' + a.id + '\')">Renomear</button>' +
@@ -2314,6 +2318,10 @@ window.kbAulasTodasPdf = async function(){
     kbAulaMsg('Nenhuma aula com PDF anexado nesta matéria.');
     return;
   }
+  const quebradas = docs.filter(function(d){ return d.modo_exibicao === 'pdf' && !String(d.pdf_url||'').trim(); });
+  if(quebradas.length && confirm(quebradas.length + ' aula(s) estão marcadas como PDF mas sem arquivo anexado — por isso o aluno não vê o PDF.\n\nQuer escolher os arquivos agora para anexar a elas?')){
+    return kbAulasPdfLote();
+  }
   const faltam = comPdf.filter(function(d){ return d.modo_exibicao !== 'pdf'; });
   if(!confirm('Colocar ' + comPdf.length + ' aula(s) de ' + kbDisc + ' para o aluno ver em PDF?' +
       (semPdf ? '\n\n' + semPdf + ' aula(s) sem PDF anexado ficarão como estão.' : ''))) return;
@@ -2544,7 +2552,8 @@ async function kbAulaCriar(disc, texto, origem, publicar, arquivo){
     const caminho = 'prf-2021/' + String(disc || 'geral').replace(/[^\w\-]+/g, '_') + '/' +
       (topicoId || 'aula') + '-' + Date.now() + '-' + limpo;
     const up = await PX.sb.storage.from('aulas-pdf').upload(caminho, arquivo, { contentType: 'application/pdf', upsert: true });
-    if(!up.error) pdfPath = caminho;
+    if(up.error) throw new Error('Não consegui enviar o PDF desta aula: ' + up.error.message);
+    pdfPath = caminho;
   }
 
   const payload = {
@@ -2553,7 +2562,7 @@ async function kbAulaCriar(disc, texto, origem, publicar, arquivo){
     conteudo: texto, status: publicar ? 'publicado' : 'rascunho',
     publicado: !!publicar, updated_by: PX.user ? PX.user.id : null,
   };
-  if(pdfPath) payload.pdf_url = pdfPath;
+  if(pdfPath){ payload.pdf_url = pdfPath; payload.modo_exibicao = 'pdf'; }
   const atual = kbFind(disc, nomeTopico);
   const q = atual
     ? await PX.sb.from('knowledge_docs').update(payload).eq('id', atual.id)
