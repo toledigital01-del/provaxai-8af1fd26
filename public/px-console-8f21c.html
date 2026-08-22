@@ -2304,7 +2304,9 @@ window.kbAulasTodasPdf = async function(){
   const comPdf = docs.filter(function(d){ return String(d.pdf_url||'').trim(); });
   const semPdf = docs.length - comPdf.length;
   if(!comPdf.length){
-    alert('Nenhuma aula desta matéria tem PDF anexado ainda. Envie o PDF em "Editar aula" e depois use este botão.');
+    if(confirm('Nenhuma aula desta matéria tem PDF anexado ainda.\n\nQuer escolher os PDFs agora e anexá-los às aulas de uma vez?')){
+      return kbAulasPdfLote();
+    }
     kbAulaMsg('Nenhuma aula com PDF anexado nesta matéria.');
     return;
   }
