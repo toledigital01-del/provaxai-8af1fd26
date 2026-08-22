@@ -3665,8 +3665,15 @@ async function kbIaRecarregar(){
   kbIaPaint();
 }
 function kbIaMod(tipo){
-  const ms = (IA_DADOS && IA_DADOS.modulos) || {};
-  return ms[tipo] || { tipo:tipo, publicado:null, atual:null };
+  const ms = (IA_DADOS && IA_DADOS.modulos) || [];
+  const m = Array.isArray(ms) ? ms.find(function(x){ return x.tipo === tipo; }) : (ms[tipo] || null);
+  if(!m) return { tipo:tipo, publicado:null, atual:null, totalVersoes:0 };
+  return {
+    tipo: tipo,
+    totalVersoes: m.totalVersoes || 0,
+    atual: m.atual || null,
+    publicado: m.versaoPublicada ? { versao: m.versaoPublicada } : (m.publicado || null),
+  };
 }
 function kbIaStatusTag(m){
   if(m.publicado && m.atual && m.atual.versao > m.publicado.versao)
