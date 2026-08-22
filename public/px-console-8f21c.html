@@ -3545,21 +3545,25 @@ function kbIaApi(payload){
 function kbIaJsonBonito(tipo, conteudo){
   try{
     const j = JSON.parse(conteudo);
-    if(tipo === 'flashcards' && j.flashcards)
-      return j.flashcards.map(function(f,i){ return '<div style="padding:8px 0;border-bottom:1px solid #F1F5F9"><b>'+(i+1)+'. '+esc(f.frente||'')+'</b><br><span style="color:#475569">'+esc(f.verso||'')+'</span></div>'; }).join('');
-    if(tipo === 'questions' && j.questoes)
-      return j.questoes.map(function(q,i){
-        const itens = (q.itens||[]).map(function(it,k){
-          const gab = (q.gabarito||'').split(';')[k]||'';
-          return '<div style="padding:6px 10px;border-left:3px solid '+(gab==='C'?'#10B981':'#EF4444')+';margin:6px 0;background:#F8FAFC;border-radius:6px">'+esc(it||'')+' <b>('+(gab||'?')+')</b>'+(it.comentario?'<br><span style="color:#64748B;font-size:0.82rem">'+esc(it.comentario)+'</span>':'')+'</div>';
-        }).join('');
-        return '<div style="margin-bottom:14px"><b>'+(i+1)+'. '+esc(q.enunciado||'')+'</b>'+itens+'</div>';
+    const arr = Array.isArray(j) ? j : (j.questoes || j.flashcards || j.falas || j.frases || []);
+    if(tipo === 'flashcards')
+      return arr.map(function(f,i){ return '<div style="padding:8px 0;border-bottom:1px solid #F1F5F9"><b>'+(i+1)+'. '+esc(f.frente||'')+'</b><br><span style="color:#475569">'+esc(f.verso||'')+'</span></div>'; }).join('');
+    if(tipo === 'questions')
+      return arr.map(function(q,i){
+        const gab = String(q.gabarito||'?').toUpperCase();
+        return '<div style="margin-bottom:10px;padding:8px 12px;border-left:3px solid '+(gab==='C'?'#10B981':'#EF4444')+';background:#F8FAFC;border-radius:6px">'
+          + '<b>'+(i+1)+'. '+esc(q.enunciado||'')+'</b> <b style="color:'+(gab==='C'?'#047857':'#B91C1C')+'">('+gab+')</b>'
+          + (q.comentario ? '<br><span style="color:#64748B;font-size:0.82rem">'+esc(q.comentario)+'</span>' : '')
+          + '</div>';
       }).join('');
-    if(tipo === 'podcast' && j.falas)
-      return '<div style="margin-bottom:8px;color:#64748B">Duração estimada: '+(j.duracao_estimada_min||'—')+' min</div>' + j.falas.map(function(f){ return '<div style="margin:6px 0"><b style="color:#3730A3">'+esc(f.quem==='B'?'Bia (co-host)':'Ana (host)')+':</b> '+esc(f.fala||'')+'</div>'; }).join('');
-    if(tipo === 'lacunas' && j.frases)
-      return j.frases.map(function(f,i){
-        return '<div style="padding:8px 0;border-bottom:1px solid #F1F5F9"><b>'+(i+1)+'.</b> '+esc((f.com_lacuna||'').replace(/____+/g,'〔____〕'))+'<br><span style="color:#059669;font-size:0.84rem">Resposta: '+esc((f.respostas||[]).join(' / '))+'</span></div>';
+    if(tipo === 'podcast')
+      return arr.map(function(f){
+        const quem = f.who || f.quem || 'Ana';
+        return '<div style="margin:6px 0"><b style="color:#3730A3">'+esc(quem)+':</b> '+esc(f.texto || f.fala || '')+'</div>';
+      }).join('');
+    if(tipo === 'lacunas')
+      return arr.map(function(f,i){
+        return '<div style="padding:8px 0;border-bottom:1px solid #F1F5F9"><b>'+(i+1)+'.</b> '+esc((f.frase || f.com_lacuna || '').replace(/___+/g,'〔____〕'))+'<br><span style="color:#059669;font-size:0.84rem">Resposta: '+esc((f.respostas||[]).join(' / '))+'</span></div>';
       }).join('');
     return '<pre style="white-space:pre-wrap;font-size:0.8rem">'+esc(JSON.stringify(j,null,2))+'</pre>';
   }catch(e){
@@ -3570,15 +3574,14 @@ function kbIaInfoLinha(tipo, v){
   if(!v) return '';
   let det;
   const m = v.meta || {};
-  if(tipo === 'questions') det = (m.itens ? m.itens + ' itens' : (m.questoes||0) + ' questões');
-  else if(tipo === 'flashcards') det = (m.flashcards||0) + ' flashcards';
-  else if(tipo === 'lacunas') det = (m.frases||0) + ' frases';
-  else if(tipo === 'podcast') det = (m.falas||0) + ' falas · ~' + (m.duracao_min||'—') + ' min';
-  else if(tipo === 'summary' || tipo === 'review') det = (m.topicos||0) + ' tópicos';
-  else det = (v.conteudo||'').length.toLocaleString('pt-BR') + ' caracteres';
-  const dt = v.updated_at ? new Date(v.updated_at).toLocaleString('pt-BR') : '';
-  const origem = { ia:'gerado pela IA', edicao:'editado manualmente', sistema:'migrado do conteúdo em uso' }[v.origem] || v.origem || '';
-  return det + ' · ' + dt + (origem ? ' · ' + origem : '');
+  if(tipo === 'questions') det = (m.itens||0) + ' itens certo/errado';
+  else if(tipo === 'flashcards') det = (m.itens||0) + ' flashcards';
+  else if(tipo === 'lacunas') det = (m.itens||0) + ' frases';
+  else if(tipo === 'podcast') det = (m.falas||0) + ' falas · ~' + (m.minutos||'—') + ' min';
+  else det = (v.caracteres||0).toLocaleString('pt-BR') + ' caracteres';
+  const dt = v.atualizado_em ? new Date(v.atualizado_em).toLocaleString('pt-BR') : '';
+  const origem = { ia:'gerado pela IA', admin:'criado manualmente', 'ia+admin':'IA + edição manual', sistema:'migrado do conteúdo em uso' }[v.origem] || v.origem || '';
+  return det + ' · ' + dt + (origem ? ' · ' + origem : '') + (m.modelo ? ' · ' + m.modelo : '');
 }
 
 /* ---------- selo de IA na linha de cada aula ---------- */
@@ -3662,8 +3665,15 @@ async function kbIaRecarregar(){
   kbIaPaint();
 }
 function kbIaMod(tipo){
-  const ms = (IA_DADOS && IA_DADOS.modulos) || {};
-  return ms[tipo] || { tipo:tipo, publicado:null, atual:null };
+  const ms = (IA_DADOS && IA_DADOS.modulos) || [];
+  const m = Array.isArray(ms) ? ms.find(function(x){ return x.tipo === tipo; }) : (ms[tipo] || null);
+  if(!m) return { tipo:tipo, publicado:null, atual:null, totalVersoes:0 };
+  return {
+    tipo: tipo,
+    totalVersoes: m.totalVersoes || 0,
+    atual: m.atual || null,
+    publicado: m.versaoPublicada ? { versao: m.versaoPublicada } : (m.publicado || null),
+  };
 }
 function kbIaStatusTag(m){
   if(m.publicado && m.atual && m.atual.versao > m.publicado.versao)
@@ -3732,16 +3742,16 @@ function kbIaPaintConfig(body, doc, pdf){
     + '<div id="ia-cfg-questoes" style="background:#fff;border:1px solid #C7D2FE;border-radius:12px;padding:14px 16px">'
     +   '<div style="font-weight:800;margin-bottom:8px">❓ Configuração das questões</div>'
     +   '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:0.84rem">'
-    +     '<label>Quantidade: <input id="ia-qtd" type="number" min="1" max="60" value="'+(qc.quantidade||10)+'" style="width:64px"></label>'
+    +     '<label>Quantidade: <input id="ia-qtd" type="number" min="5" max="30" value="'+Math.min(30, Math.max(5, qc.quantidade||10))+'" style="width:64px"></label>'
     +     '<label>Dificuldade: <select id="ia-dific">'
-    +       ['misto|Equilibrada','facil|Mais fáceis','medio|Intermediárias','dificil|Mais difíceis','adaptativa|Adaptativa ao aluno'].map(function(o){
+    +       ['misto|Equilibrada','facil|Mais fáceis','medio|Intermediárias','dificil|Mais difíceis'].map(function(o){
             const p = o.split('|'); return '<option value="'+p[0]+'"'+((qc.dificuldade||'misto')===p[0]?' selected':'')+'>'+p[1]+'</option>';
           }).join('')
     +     '</select></label>'
     +     '<label><input id="ia-coment" type="checkbox"'+(qc.comentarios !== false ? ' checked':'')+'> Comentário automático em cada questão</label>'
     +   '</div>'
     +   '<div style="margin-top:8px;font-size:0.84rem;display:flex;gap:12px;flex-wrap:wrap"><span class="muted">Priorizar:</span>'
-    +     ['legislacao|Legislação','jurisprudencia|Jurisprudência','pegadinhas|Pegadinhas da banca','casos|Casos práticos'].map(function(o){
+    +     ['legislacao|Legislação seca','conceitos|Conceitos e definições','pegadinhas|Pegadinhas da banca','importantes|Pontos mais cobrados'].map(function(o){
           const p = o.split('|'); const on = (qc.prioridades||[]).indexOf(p[0]) >= 0;
           return '<label><input type="checkbox" class="ia-prio" value="'+p[0]+'"'+(on?' checked':'')+'> '+p[1]+'</label>';
         }).join('')
@@ -3806,7 +3816,7 @@ window.kbIaGerarTudo = async function(){
     if(linha) linha.innerHTML = '⏳ ' + linha.textContent.slice(2) + ' — gerando…';
     try{
       const tem = !!kbIaMod(t).atual;
-      const r = await kbIaApi({ acao: tem ? 'regenerar' : 'gerar', tipo: t, modo: tem ? 'original' : undefined, instrucoes: cfg.instrucoes || undefined, questoes: cfg.questoes });
+      const r = await kbIaApi({ acao: tem ? 'regenerar' : 'gerar', tipo: t, modo: tem ? 'original' : undefined, config: { instrucoes: cfg.instrucoes || undefined, questoes: cfg.questoes } });
       if(linha) linha.innerHTML = '✓ ' + linha.textContent.slice(2).split(' — ')[0] + (r.cache ? ' — já estava pronto' : ' — v' + (r.versao||'?') + ' gerada');
     }catch(e){
       if(linha) linha.innerHTML = '✕ ' + linha.textContent.slice(2).split(' — ')[0] + ' — ' + esc(e.message || 'falhou');
@@ -3846,17 +3856,28 @@ window.kbIaGerarUm = async function(tipo){
   IA_OCUPADO = true;
   try{
     const cfg = (IA_DADOS && IA_DADOS.config) || {};
-    const r = await kbIaApi({ acao:'gerar', tipo: tipo, instrucoes: cfg.instrucoes || undefined, questoes: cfg.questoes });
-    toast(r.cache ? 'Este conteúdo já existia — versão mantida.' : 'Versão ' + (r.versao||1) + ' gerada.');
+    const r = await kbIaApi({ acao:'gerar', tipo: tipo, config: { instrucoes: cfg.instrucoes || undefined, questoes: cfg.questoes } });
+    toast(r.cache ? 'Este conteúdo já existia — versão mantida.' : 'Versão ' + (r.versao||1) + ' gerada (rascunho).');
   }catch(e){ toast(e.message || 'Não consegui gerar agora.'); }
   IA_OCUPADO = false;
   await kbIaRecarregar();
 };
-window.kbIaVer = function(tipo, versaoConteudo, versaoNum){
+/* Busca o conteúdo completo da versão mais recente (a listagem traz só metadados). */
+async function kbIaConteudoAtual(tipo){
+  const j = await kbIaApi({ acao:'historico', tipo: tipo });
+  const vs = j.versoes || [];
+  return vs[0] || null;
+}
+window.kbIaVer = async function(tipo, versaoConteudo, versaoNum){
   const mo = kbIaMeta(tipo);
-  const m = kbIaMod(tipo);
-  const conteudo = versaoConteudo != null ? versaoConteudo : (m.atual ? m.atual.conteudo : '');
-  const num = versaoNum != null ? versaoNum : (m.atual ? m.atual.versao : 0);
+  let conteudo = versaoConteudo, num = versaoNum;
+  if(conteudo == null){
+    try{
+      const v = await kbIaConteudoAtual(tipo);
+      if(!v){ toast('Este módulo ainda não tem conteúdo.'); return; }
+      conteudo = v.conteudo; num = v.versao;
+    }catch(e){ toast(e.message || 'Não consegui carregar o conteúdo.'); return; }
+  }
   kbIaViewer(mo.icon + ' ' + mo.rotulo + ' — v' + num,
     mo.formato === 'json' ? kbIaJsonBonito(tipo, conteudo) : '<div class="prose" style="font-size:0.9rem">'+kbMD(conteudo)+'</div>');
 };
@@ -3877,10 +3898,15 @@ function kbIaViewer(titulo, html){
 }
 
 /* ---------- editor de versão (markdown com preview ou JSON) ---------- */
-window.kbIaEditar = function(tipo){
+window.kbIaEditar = async function(tipo){
   const mo = kbIaMeta(tipo);
   const m = kbIaMod(tipo);
   if(!m.atual) return;
+  let atual;
+  try{
+    atual = await kbIaConteudoAtual(tipo);
+  }catch(err){ toast(err.message || 'Não consegui carregar o conteúdo.'); return; }
+  if(!atual){ toast('Este módulo ainda não tem conteúdo.'); return; }
   let e = document.getElementById('kb-ia-edit');
   if(!e){
     e = document.createElement('div');
@@ -3899,14 +3925,14 @@ window.kbIaEditar = function(tipo){
   e.style.display = 'flex';
   e.innerHTML = '<div style="background:#fff;width:min(980px,96vw);height:90vh;border-radius:14px;display:flex;flex-direction:column;overflow:hidden">'
     + '<div style="padding:12px 16px;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
-    +   '<b style="flex:1">✏️ Editar — '+mo.rotulo+' (v'+m.atual.versao+' → nova versão)</b>'
+    +   '<b style="flex:1">✏️ Editar — '+mo.rotulo+' (v'+atual.versao+' → nova versão)</b>'
     +   '<button class="act" onclick="document.getElementById(\'kb-ia-edit\').style.display=\'none\'">Cancelar</button>'
     +   '<button class="act" onclick="kbIaSalvarEdicao(\''+tipo+'\',false)">Salvar rascunho</button>'
     +   '<button class="act primary" onclick="kbIaSalvarEdicao(\''+tipo+'\',true)">Salvar e publicar</button>'
     + '</div>'
     + '<div style="flex:1;display:grid;grid-template-columns:'+(ehMd?'1fr 1fr':'1fr')+';gap:0;overflow:hidden">'
     +   '<div style="padding:14px;overflow:auto;border-right:1px solid #E2E8F0">'+barra
-    +     '<textarea id="ia-ed-txt" style="width:100%;height:calc(100% - 40px);font-family:ui-monospace,monospace;font-size:0.82rem" oninput="kbIaPreview(\''+tipo+'\')">'+esc(m.atual.conteudo)+'</textarea>'
+    +     '<textarea id="ia-ed-txt" style="width:100%;height:calc(100% - 40px);font-family:ui-monospace,monospace;font-size:0.82rem" oninput="kbIaPreview(\''+tipo+'\')">'+esc(atual.conteudo)+'</textarea>'
     +   '</div>'
     +   (ehMd ? '<div style="padding:14px;overflow:auto"><div class="muted" style="font-size:0.72rem;margin-bottom:6px">Visualização</div><div id="ia-ed-prev" class="prose" style="font-size:0.88rem"></div></div>' : '')
     + '</div></div>';
@@ -3932,7 +3958,7 @@ window.kbIaSalvarEdicao = async function(tipo, publicar){
   const ta = document.getElementById('ia-ed-txt');
   if(!ta) return;
   try{
-    const r = await kbIaApi({ acao:'salvar-edicao', tipo: tipo, conteudo: ta.value, publicar: !!publicar });
+    const r = await kbIaApi({ acao:'salvar', tipo: tipo, conteudo: ta.value, publicar: !!publicar, instrucao: 'Editado manualmente no painel da aula' });
     toast(publicar ? 'Versão ' + r.versao + ' publicada para os alunos.' : 'Rascunho v' + r.versao + ' salvo (alunos ainda veem a versão publicada).');
     document.getElementById('kb-ia-edit').style.display = 'none';
     await kbIaRecarregar();
@@ -3954,9 +3980,9 @@ window.kbIaSub = function(tipo, modo){
       }).join('') + '</div>' : '')
     + (modo === 'regenerar'
         ? '<div style="font-size:0.8rem;display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px">'
-          + '<label><input type="radio" name="ia-modo-'+tipo+'" value="original" checked> Manter formato original</label>'
-          + '<label><input type="radio" name="ia-modo-'+tipo+'" value="otimizado"> Otimizar para prova</label>'
-          + '<label><input type="radio" name="ia-modo-'+tipo+'" value="didatico"> Versão mais didática</label></div>'
+          + '<label><input type="radio" name="ia-modo-'+tipo+'" value="original" checked> Manter formato original (nova versão do zero)</label>'
+          + '<label><input type="radio" name="ia-modo-'+tipo+'" value="com-alteracoes"> Considerar as alterações que já fiz</label>'
+          + '<label><input type="radio" name="ia-modo-'+tipo+'" value="acrescentando"> Acrescentando novas informações do material</label></div>'
         : '')
     + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
     +   '<input id="ia-sub-in-'+tipo+'" placeholder="Instrução personalizada (opcional)" style="flex:1;min-width:220px;font-size:0.8rem">'
@@ -3977,7 +4003,7 @@ window.kbIaRodarIA = async function(tipo, modo, instrPre){
   if(box) box.querySelectorAll('button').forEach(function(b){ b.disabled = true; });
   try{
     const cfg = (IA_DADOS && IA_DADOS.config) || {};
-    const payload = { acao: modo === 'melhorar' ? 'melhorar' : modo === 'acrescentar' ? 'acrescentar' : 'regenerar', tipo: tipo, instrucoes: instr, questoes: cfg.questoes };
+    const payload = { acao: modo, tipo: tipo, instrucao: instr, config: { instrucoes: cfg.instrucoes || undefined, questoes: cfg.questoes } };
     if(modo === 'regenerar') payload.modo = modoReg;
     const r = await kbIaApi(payload);
     toast('Nova versão v' + (r.versao||'?') + ' criada — revise e publique quando estiver satisfeito.');
