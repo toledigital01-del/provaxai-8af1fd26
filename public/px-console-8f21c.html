@@ -3788,12 +3788,13 @@ window.kbIaAbrir = function(aulaId){
   if(!m){
     m = document.createElement('div');
     m.id = 'kb-ia-modal';
-    m.className = 'kb-aula-modal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:24px 16px;overflow:auto';
     document.body.appendChild(m);
   }
   m.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
   m.innerHTML =
-    '<div style="background:#fff;width:min(1080px,96vw);height:92vh;border-radius:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 60px rgba(15,23,42,.35)">'
+    '<div style="background:#fff;width:min(1080px,96vw);height:92vh;max-height:92vh;border-radius:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 60px rgba(15,23,42,.35);margin:auto">'
     + '<div style="padding:14px 18px;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
     +   '<div style="flex:1;min-width:220px">'
     +     '<div style="font-weight:800;font-size:1rem">🤖 IA DA AULA — Aula ' + String(IA_AULA.ordem).padStart(2,'0') + ' · ' + esc(IA_AULA.nome) + '</div>'
