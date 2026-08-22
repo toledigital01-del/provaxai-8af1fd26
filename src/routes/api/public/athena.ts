@@ -83,10 +83,46 @@ export const Route = createFileRoute('/api/public/athena')({
             { status: 429 },
           )
 
-        const docs = await fetchKnowledge(curso, body.disciplina, body.topico)
-        let base = docs
-          .map((d) => `### ${d.titulo || d.topico || body.disciplina}\n${(d.conteudo || '').slice(0, 12000)}`)
-          .join('\n\n')
+        // RAG: busca vetorial dos trechos mais relevantes (com indexação
+        // automática na primeira pergunta da disciplina). Se falhar ou não
+        // houver nada indexado, cai no modo clássico de leitura direta.
+        let base = ''
+        let fontes: Fonte[] = []
+        let ragAtivo = false
+        try {
+          if (!(await escopoIndexado(curso, body.disciplina))) {
+            await indexarEscopo({ curso, disciplina: body.disciplina })
+          }
+          const trechos = await buscarTrechos({
+            pergunta: body.pergunta,
+            curso,
+            disciplina: body.disciplina,
+            topico: body.topico,
+            max: 8,
+          })
+          if (trechos.length) {
+            const ctx = montarContexto(trechos)
+            base = ctx.base
+            fontes = ctx.fontes
+            ragAtivo = true
+          }
+        } catch {
+          /* RAG é melhor-esforço: qualquer falha cai no modo clássico */
+        }
+
+        if (!ragAtivo) {
+          const docs = await fetchKnowledge(curso, body.disciplina, body.topico)
+          base = docs
+            .map((d) => `### ${d.titulo || d.topico || body.disciplina}\n${(d.conteudo || '').slice(0, 12000)}`)
+            .join('\n\n')
+          fontes = docs.map((d, i) => ({
+            n: i + 1,
+            titulo: d.titulo || d.topico || body.disciplina,
+            disciplina: body.disciplina,
+            topico: d.topico || null,
+            similaridade: 0,
+          }))
+        }
 
         // Conteúdo inteligente aprovado pelo administrador para esta aula
         // (pacote publicado: resumo, pontos-chave, pegadinhas, base da Athena…).
