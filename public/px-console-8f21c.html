@@ -3739,7 +3739,7 @@ function kbIaPaintConfig(body, doc, pdf){
     +   '<div style="font-weight:800;margin-bottom:8px">Módulos a gerar</div>'
     +   '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px 14px">'
     +   IA_MODULOS.map(function(mo){
-          return '<label style="font-size:0.83rem;display:flex;gap:6px;align-items:center"><input type="checkbox" class="ia-cfg-mod" value="'+mo.tipo+'"'+(marcado(mo.tipo)?' checked':'')+'> '+mo.icon+' '+mo.rotulo+'</label>';
+          return '<label style="font-size:0.83rem;display:flex;gap:6px;align-items:flex-start;text-align:left;line-height:1.3"><input type="checkbox" class="ia-cfg-mod" value="'+mo.tipo+'"'+(marcado(mo.tipo)?' checked':'')+' style="margin-top:2px;flex:none"><span>'+mo.icon+' '+mo.rotulo+'</span></label>';
         }).join('')
     +   '</div>'
     + '</div>'
