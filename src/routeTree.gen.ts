@@ -25,6 +25,7 @@ import { Route as ApiPublicKbAutocourseRouteImport } from './routes/api/public/k
 import { Route as ApiPublicKbClassifyRouteImport } from './routes/api/public/kb-classify'
 import { Route as ApiPublicKbDriveRouteImport } from './routes/api/public/kb-drive'
 import { Route as ApiPublicKbEditalRouteImport } from './routes/api/public/kb-edital'
+import { Route as ApiPublicKbEmbedRouteImport } from './routes/api/public/kb-embed'
 import { Route as ApiPublicKbIngestRouteImport } from './routes/api/public/kb-ingest'
 import { Route as ApiPublicKbPrepararRouteImport } from './routes/api/public/kb-preparar'
 import { Route as ApiPublicLacunasRouteImport } from './routes/api/public/lacunas'
@@ -116,6 +117,11 @@ const ApiPublicKbEditalRoute = ApiPublicKbEditalRouteImport.update({
   path: '/api/public/kb-edital',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicKbEmbedRoute = ApiPublicKbEmbedRouteImport.update({
+  id: '/api/public/kb-embed',
+  path: '/api/public/kb-embed',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicKbIngestRoute = ApiPublicKbIngestRouteImport.update({
   id: '/api/public/kb-ingest',
   path: '/api/public/kb-ingest',
@@ -174,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/api/public/kb-classify': typeof ApiPublicKbClassifyRoute
   '/api/public/kb-drive': typeof ApiPublicKbDriveRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
+  '/api/public/kb-embed': typeof ApiPublicKbEmbedRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
   '/api/public/kb-preparar': typeof ApiPublicKbPrepararRoute
   '/api/public/lacunas': typeof ApiPublicLacunasRoute
@@ -200,6 +207,7 @@ export interface FileRoutesByTo {
   '/api/public/kb-classify': typeof ApiPublicKbClassifyRoute
   '/api/public/kb-drive': typeof ApiPublicKbDriveRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
+  '/api/public/kb-embed': typeof ApiPublicKbEmbedRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
   '/api/public/kb-preparar': typeof ApiPublicKbPrepararRoute
   '/api/public/lacunas': typeof ApiPublicLacunasRoute
@@ -227,6 +235,7 @@ export interface FileRoutesById {
   '/api/public/kb-classify': typeof ApiPublicKbClassifyRoute
   '/api/public/kb-drive': typeof ApiPublicKbDriveRoute
   '/api/public/kb-edital': typeof ApiPublicKbEditalRoute
+  '/api/public/kb-embed': typeof ApiPublicKbEmbedRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
   '/api/public/kb-preparar': typeof ApiPublicKbPrepararRoute
   '/api/public/lacunas': typeof ApiPublicLacunasRoute
@@ -255,6 +264,7 @@ export interface FileRouteTypes {
     | '/api/public/kb-classify'
     | '/api/public/kb-drive'
     | '/api/public/kb-edital'
+    | '/api/public/kb-embed'
     | '/api/public/kb-ingest'
     | '/api/public/kb-preparar'
     | '/api/public/lacunas'
@@ -281,6 +291,7 @@ export interface FileRouteTypes {
     | '/api/public/kb-classify'
     | '/api/public/kb-drive'
     | '/api/public/kb-edital'
+    | '/api/public/kb-embed'
     | '/api/public/kb-ingest'
     | '/api/public/kb-preparar'
     | '/api/public/lacunas'
@@ -307,6 +318,7 @@ export interface FileRouteTypes {
     | '/api/public/kb-classify'
     | '/api/public/kb-drive'
     | '/api/public/kb-edital'
+    | '/api/public/kb-embed'
     | '/api/public/kb-ingest'
     | '/api/public/kb-preparar'
     | '/api/public/lacunas'
@@ -334,6 +346,7 @@ export interface RootRouteChildren {
   ApiPublicKbClassifyRoute: typeof ApiPublicKbClassifyRoute
   ApiPublicKbDriveRoute: typeof ApiPublicKbDriveRoute
   ApiPublicKbEditalRoute: typeof ApiPublicKbEditalRoute
+  ApiPublicKbEmbedRoute: typeof ApiPublicKbEmbedRoute
   ApiPublicKbIngestRoute: typeof ApiPublicKbIngestRoute
   ApiPublicKbPrepararRoute: typeof ApiPublicKbPrepararRoute
   ApiPublicLacunasRoute: typeof ApiPublicLacunasRoute
@@ -458,6 +471,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicKbEditalRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/kb-embed': {
+      id: '/api/public/kb-embed'
+      path: '/api/public/kb-embed'
+      fullPath: '/api/public/kb-embed'
+      preLoaderRoute: typeof ApiPublicKbEmbedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/kb-ingest': {
       id: '/api/public/kb-ingest'
       path: '/api/public/kb-ingest'
@@ -534,6 +554,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicKbClassifyRoute: ApiPublicKbClassifyRoute,
   ApiPublicKbDriveRoute: ApiPublicKbDriveRoute,
   ApiPublicKbEditalRoute: ApiPublicKbEditalRoute,
+  ApiPublicKbEmbedRoute: ApiPublicKbEmbedRoute,
   ApiPublicKbIngestRoute: ApiPublicKbIngestRoute,
   ApiPublicKbPrepararRoute: ApiPublicKbPrepararRoute,
   ApiPublicLacunasRoute: ApiPublicLacunasRoute,

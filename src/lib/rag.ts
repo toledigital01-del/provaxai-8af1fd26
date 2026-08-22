@@ -122,7 +122,7 @@ async function docsDoEscopo(curso: string, disciplina?: string, topico?: string 
 }
 
 /** (Re)indexa um escopo: apaga os trechos antigos dele e grava os novos. */
-export async function indexarEscopo(opts: { curso: string; disciplina?: string; topico?: string | null }) {
+export async function indexarEscopo(opts: { curso: string; disciplina?: string | undefined; topico?: string | null | undefined }) {
   const { curso, disciplina, topico } = opts
   const docs = await docsDoEscopo(curso, disciplina, topico)
   if (!docs.length) return { docs: 0, chunks: 0 }
