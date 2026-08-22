@@ -3693,7 +3693,7 @@ function kbIaPaint(){
     b.style.color = on ? '#fff' : '';
     b.style.borderColor = on ? '#1E3A8A' : '';
   });
-  const doc = kbKbDoc(IA_AULA.nome);
+  const doc = kbFind(IA_AULA.disc || kbDisc, IA_AULA.nome) || null;
   const pdf = kbPdfDaAula(IA_AULA);
   const ultima = (function(){
     let u = null;
