@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { getSetting, aiKeys, requireAdmin } from '@/lib/px-server'
-import { chat, normalizar, AIError, MODELOS, type Provider } from '@/lib/ai-gateway'
+import { aiKeys, requireAdmin } from '@/lib/px-server'
+import { chat, AIError, MODELOS, type Provider } from '@/lib/ai-gateway'
+import { rotaDoAgente } from '@/lib/ai-router'
 
 /* Identificador de aula: lê o material bruto de UMA aula e devolve
    o número da aula (Aula 00, 01, 02…) e o título limpo, sem reescrever o conteúdo. */
@@ -31,7 +32,7 @@ export const Route = createFileRoute('/api/public/kb-aula')({
           return Response.json({ error: 'Requisição inválida.' }, { status: 400 })
         }
 
-        const salvo = normalizar(await getSetting('ia_sistema'))
+        const salvo = await rotaDoAgente('assistente_admin')
         const provider: Provider = body.provider || salvo.provider
         const modelo = MODELOS[provider].includes(body.modelo || '')
           ? (body.modelo as string)

@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { getSetting, aiKeys, currentUser, usosHoje, registrarUsoIA, serviceHeaders, SUPABASE_URL } from '@/lib/px-server'
+import { currentUser, usosHoje, serviceHeaders, SUPABASE_URL } from '@/lib/px-server'
 import { materialIntegral } from '@/lib/kb-context'
-import { chat, normalizar, AIError } from '@/lib/ai-gateway'
+import { AIError } from '@/lib/ai-gateway'
+import { agentChat, rotaDoAgente } from '@/lib/ai-router'
 
 /* Episódio de podcast cobrindo a matéria INTEIRA.
    O roteiro é gerado uma vez por tópico/curso oficial e fica em cache
@@ -69,8 +70,8 @@ export const Route = createFileRoute('/api/public/podcast')({
             return Response.json({ roteiro, modelo: hit[0]?.modelo || null, cache: true })
         }
 
-        const cfg = normalizar(await getSetting('ia_athena'))
-        const limite = cfg.limiteDiario ?? 0
+        const rota = await rotaDoAgente('geracao_aulas')
+        const limite = rota.limiteDiario
         if (userId && limite > 0 && (await usosHoje(userId, 'podcast')) >= limite)
           return Response.json({ error: `Você atingiu o limite de ${limite} episódios hoje. Volte amanhã.` }, { status: 429 })
 
@@ -91,26 +92,22 @@ export const Route = createFileRoute('/api/public/podcast')({
             : 'ATENÇÃO: ainda não há material cadastrado para esta matéria. Diga isso na primeira fala e faça um episódio curto e geral.',
         ].join('\n')
 
+        let modeloUsado = rota.model
         try {
-          const saida = await chat({
-            provider: cfg.provider,
-            model: cfg.model,
+          const r = await agentChat({
+            agent: 'geracao_aulas',
             system,
             user: `Disciplina: ${body.disciplina}${topico ? ` | Tópico em foco: ${topico}` : ''}\n\nGere o roteiro completo em JSON, cobrindo toda a matéria.`,
-            keys: await aiKeys(),
             maxTokens: 12000,
-          })
-          const roteiro = extrairRoteiro(saida || '')
-          if (userId) await registrarUsoIA({
-            user_id: userId,
+            userId,
             ferramenta: 'podcast',
-            modelo: cfg.model,
-            discipline_nome: body.disciplina,
-            topic_nome: topico,
-            pergunta: 'podcast',
-            resposta: saida || '',
+            disciplina: body.disciplina,
+            topico,
           })
-          if (!roteiro.length) return Response.json({ error: 'Não consegui gerar o episódio agora.' }, { status: 502 })
+          modeloUsado = r.model
+          const roteiro0 = extrairRoteiro(r.texto || '')
+          if (!roteiro0.length) return Response.json({ error: 'Não consegui gerar o episódio agora.' }, { status: 502 })
+          var roteiro = roteiro0
 
           // 2) Guarda o roteiro para os próximos alunos ouvirem sem gerar de novo.
           if (base) {
@@ -128,7 +125,7 @@ export const Route = createFileRoute('/api/public/podcast')({
                   topico,
                   user_id: null,
                   roteiro,
-                  modelo: cfg.model,
+                  modelo: modeloUsado,
                 }),
               })
             } catch {
@@ -136,7 +133,7 @@ export const Route = createFileRoute('/api/public/podcast')({
             }
           }
 
-          return Response.json({ roteiro, fontes: base ? 1 : 0, modelo: cfg.model, cache: false })
+          return Response.json({ roteiro, fontes: base ? 1 : 0, modelo: modeloUsado, cache: false })
         } catch (e) {
           const err = e as AIError
           return Response.json({ error: err.message || 'Não consegui gerar o episódio agora.' }, { status: err.status || 502 })

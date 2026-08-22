@@ -145,7 +145,7 @@
 const TABS = [
   ['geral','Visão geral'],['conhecimento','Base de conhecimento (IA)'],['alunos','Alunos'],['cursos','Cursos'],['conteudo','Conteúdo'],
   ['financeiro','Financeiro'],['planos','Planos e cupons'],['ia','Athena IA'],
-  ['suporte','Suporte'],['logs','Logs'],['config','Configurações']
+  ['suporte','Suporte'],['logs','Logs'],['config','Central de IA']
 ];
 let tab = location.hash.replace('#','') || 'geral';
 const view = document.getElementById('view');
@@ -185,7 +185,7 @@ function syncAvisoHTML(p){
   if(p.pendente){
     return `<div style="border:1px solid #f0c36d;background:#fff8e6;color:#7a5300;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.9rem">
       ⚠ Há alterações não sincronizadas${p.ultimaSync?` desde a última sincronização (${dth(p.ultimaSync)})`:' — o currículo nunca foi sincronizado'}.
-      Última edição de conteúdo: ${dth(p.ultimaEdicao)}. Clique em <b>Sincronizar currículo agora</b> em Configurações para os alunos verem a versão atual.</div>`;
+      Última edição de conteúdo: ${dth(p.ultimaEdicao)}. Clique em <b>Sincronizar currículo agora</b> na Central de IA para os alunos verem a versão atual.</div>`;
   }
   return `<div style="border:1px solid #cfe8d4;background:#f2fbf4;color:#1f6b39;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.9rem">
     ✓ Currículo sincronizado${p.ultimaSync?` em ${dth(p.ultimaSync)}`:''}.</div>`;
@@ -622,15 +622,155 @@ function cfgTrocaProv(prefixo){
   const mods = ((CFG_STATUS && CFG_STATUS.modelos) || {})[prov] || [];
   document.getElementById(prefixo+'-mod').innerHTML = mods.map(m=>`<option value="${esc(m)}">${esc(m)}</option>`).join('');
 }
+const CFG_TABS = [
+  ['integracoes','Integrações'],['roteamento','Roteamento'],['athena','Athena'],['iadmin','IA administrativa'],
+  ['voz','Voz'],['sync','Sincronização'],['avancado','Avançado'],
+];
+let CFG_TAB = 'integracoes';
+let CENTRAL = null;
+function cfgTab(id){
+  CFG_TAB = id;
+  document.querySelectorAll('#cfg-nav button').forEach(b => b.classList.toggle('on', b.dataset.cfgtab === id));
+  CFG_TABS.forEach(([s]) => { const el = document.getElementById('cfgsec-'+s); if(el) el.style.display = s===id ? '' : 'none'; });
+}
+function centralRota(slug){
+  return ((CENTRAL && CENTRAL.rotas) || []).find(x => x.agent_slug === slug) || {};
+}
+function cfgProvOptions(atual, comVazio){
+  const mods = (CENTRAL && CENTRAL.modelos) || (CFG_STATUS && CFG_STATUS.modelos) || {};
+  return (comVazio ? '<option value="">— sem fallback —</option>' : '') + Object.keys(mods).map(p => {
+    const nome = (CFG_PROVEDORES.find(x=>x.id===p)||{}).nome || p;
+    return `<option value="${p}" ${p===atual?'selected':''}>${esc(nome)}</option>`;
+  }).join('');
+}
+function cfgModOptions(prov, atual){
+  const lista = (((CENTRAL && CENTRAL.modelos) || (CFG_STATUS && CFG_STATUS.modelos) || {})[prov]) || [];
+  return lista.map(m=>`<option value="${esc(m)}" ${m===atual?'selected':''}>${esc(m)}</option>`).join('');
+}
+function aiTrocaProv(slug){
+  const prov = document.getElementById('rt-'+slug+'-prov').value;
+  document.getElementById('rt-'+slug+'-mod').innerHTML = cfgModOptions(prov, '');
+}
+function aiTrocaFbProv(slug){
+  const prov = document.getElementById('rt-'+slug+'-fbprov').value;
+  document.getElementById('rt-'+slug+'-fbmod').innerHTML = prov ? cfgModOptions(prov, '') : '';
+}
+function htmlRoteamento(){
+  if(!CENTRAL) return '<div class="card"><p class="muted">Não consegui carregar as rotas agora. Recarregue a página.</p></div>';
+  const integ = (CENTRAL.integracoes || []);
+  const ultimo = p => {
+    const i = integ.find(x => x.provedor === p);
+    if(!i || !i.ultimo_teste) return '';
+    return `<span class="tag" style="background:${i.teste_ok?'#dcfce7':'#fee2e2'};color:${i.teste_ok?'#166534':'#991b1b'}">teste ${i.teste_ok?'ok':'falhou'} · ${dt(i.ultimo_teste)}</span>`;
+  };
+  const conect = CENTRAL.conectado || {};
+  return [['aluno','Agentes do aluno'],['admin','Agentes administrativos']].map(([g,titulo]) => `
+  <div class="card"><h2>${titulo}</h2>
+    <p class="muted">Cada função usa o provedor e o modelo escolhidos aqui. Se o principal falhar (sem crédito, fora do ar), o fallback entra automaticamente. O "modelo personalizado" vale quando preenchido — use o identificador exato do provedor.</p>
+    ${CENTRAL.agentes.filter(a=>a.grupo===g).map(a => {
+      const r = centralRota(a.slug);
+      const prov = r.provider || 'anthropic';
+      const fb = r.fallback_provider || '';
+      return `<div style="border-top:1px solid #e2e8f0;padding:14px 0">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+          <div><b>${esc(a.nome)}</b> ${cfgPill(!!conect[prov])} ${ultimo(prov)}<div class="muted">${esc(a.descricao||'')}</div></div>
+          <div class="muted" id="rt-${a.slug}-status"></div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div><label class="muted">Provedor</label>
+            <select id="rt-${a.slug}-prov" onchange="aiTrocaProv('${a.slug}')">${cfgProvOptions(prov)}</select></div>
+          <div><label class="muted">Modelo</label>
+            <select id="rt-${a.slug}-mod">${cfgModOptions(prov, r.custom_model ? '' : r.model)}</select></div>
+          <div><label class="muted">Modelo personalizado (opcional)</label>
+            <input id="rt-${a.slug}-custom" placeholder="ex.: claude-opus-4-6" value="${esc(r.custom_model||'')}"></div>
+        </div>
+        <div class="row">
+          <div><label class="muted">Fallback</label>
+            <select id="rt-${a.slug}-fbprov" onchange="aiTrocaFbProv('${a.slug}')">${cfgProvOptions(fb, true)}</select></div>
+          <div><label class="muted">Modelo de fallback</label>
+            <select id="rt-${a.slug}-fbmod">${fb ? cfgModOptions(fb, r.fallback_model) : ''}</select></div>
+          <div><label class="muted">Limite diário por aluno (0 = sem limite)</label>
+            <input id="rt-${a.slug}-limite" type="number" min="0" max="10000" value="${r.limite_diario||0}"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
+          <button class="act primary" onclick="aiSalvarRota('${a.slug}')">Salvar rota</button>
+          <button class="act" onclick="aiTestarRota('${a.slug}')">Testar agora</button>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`).join('');
+}
+async function aiAcao(payload){
+  const { data:{ session } } = await PX.sb.auth.getSession();
+  const r = await fetch('/api/public/ai-central', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', Authorization:'Bearer ' + (session ? session.access_token : '') },
+    body: JSON.stringify(payload),
+  });
+  return r.json().catch(()=>({ error:'resposta inválida' }));
+}
+async function aiSalvarRota(slug){
+  const val = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const st = document.getElementById('rt-'+slug+'-status');
+  if(st){ st.textContent = 'Salvando…'; st.style.color = ''; }
+  const custom = (val('rt-'+slug+'-custom')||'').trim();
+  if(custom && !/^[\w./:-]{2,120}$/.test(custom)){
+    if(st){ st.textContent = '✗ modelo personalizado inválido (sem espaços)'; st.style.color = '#991b1b'; }
+    return;
+  }
+  const j = await aiAcao({
+    acao:'salvar_rota', agent:slug,
+    provider: val('rt-'+slug+'-prov'),
+    model: val('rt-'+slug+'-mod'),
+    custom_model: custom,
+    fallback_provider: val('rt-'+slug+'-fbprov'),
+    fallback_model: val('rt-'+slug+'-fbmod'),
+    fallback_ativo: !!val('rt-'+slug+'-fbprov'),
+    limite_diario: parseInt(val('rt-'+slug+'-limite')||'0',10)||0,
+  });
+  if(st){ st.textContent = j.ok ? '✓ rota salva — já vale para as próximas chamadas' : '✗ ' + (j.error || 'erro ao salvar'); st.style.color = j.ok ? '#166534' : '#991b1b'; }
+}
+async function aiTestarRota(slug){
+  const val = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const st = document.getElementById('rt-'+slug+'-status');
+  const model = (val('rt-'+slug+'-custom')||'').trim() || val('rt-'+slug+'-mod');
+  if(st){ st.textContent = 'Testando com uma chamada real…'; st.style.color = ''; }
+  const j = await aiAcao({ acao:'testar_modelo', provider: val('rt-'+slug+'-prov'), model });
+  if(st){
+    st.textContent = j.ok ? `✓ funcionou — ${j.detalhe}` : '✗ ' + (j.detalhe || j.error || 'falhou');
+    st.style.color = j.ok ? '#166534' : '#991b1b';
+  }
+}
+async function aiSalvarPrompt(agent, elId){
+  const st = document.getElementById(elId+'-st');
+  if(st){ st.textContent = 'Salvando…'; st.style.color = ''; }
+  const j = await aiAcao({ acao:'salvar_prompt', agent, prompt_extra: document.getElementById(elId).value });
+  if(st){ st.textContent = j.ok ? '✓ prompt salvo' : '✗ ' + (j.error || 'erro ao salvar'); st.style.color = j.ok ? '#166534' : '#991b1b'; }
+}
+function htmlPromptAgente(agent, elId, titulo, texto){
+  const r = centralRota(agent);
+  return `<div class="card"><h2>${titulo}</h2>
+    <p class="muted">${texto}</p>
+    <textarea rows="6" id="${elId}">${esc(r.prompt_extra||'')}</textarea>
+    <div style="margin-top:6px"><button class="act primary" onclick="aiSalvarPrompt('${agent}','${elId}')">Salvar prompt</button></div>
+    <div class="muted" id="${elId}-st" style="margin-top:6px"></div>
+  </div>`;
+}
+
 async function viewConfig(){
-  view.innerHTML = '<div class="card"><p class="muted">Carregando configurações…</p></div>';
+  view.innerHTML = '<div class="card"><p class="muted">Carregando a Central de IA…</p></div>';
   const { data: ps } = await PX.sb.from('platform_settings').select('*').order('chave');
   const mapa = {}; (ps||[]).forEach(s => mapa[s.chave] = s);
+  const { data:{ session } } = await PX.sb.auth.getSession();
+  const authH = { Authorization: 'Bearer ' + (session ? session.access_token : '') };
   try {
-    const { data:{ session } } = await PX.sb.auth.getSession();
-    const r = await fetch('/api/public/ai-status', { headers: { Authorization: 'Bearer ' + (session ? session.access_token : '') } });
+    const r = await fetch('/api/public/ai-status', { headers: authH });
     CFG_STATUS = r.ok ? await r.json() : null;
   } catch(e){ CFG_STATUS = null; }
+  try {
+    const r = await fetch('/api/public/ai-central', { headers: authH });
+    CENTRAL = r.ok ? await r.json() : null;
+  } catch(e){ CENTRAL = null; }
   const conect = (CFG_STATUS && CFG_STATUS.conectado) || {};
   const salvas = {};
   try {
@@ -641,11 +781,14 @@ async function viewConfig(){
     .filter(x => x && x.env && !CFG_CHAVES.some(c => c.env === x.env));
   CFG_EXTRAS = extras;
   const lista = CFG_CHAVES.concat(extras.map(x => ({ id:x.env, env:x.env, nome:x.nome||x.env, exemplo:'cole a credencial', dica:x.dica||'Integração cadastrada por você.', extra:true })));
-  const athena = (mapa['ia_athena'] && mapa['ia_athena'].valor) || { provider:'lovable', model:'google/gemini-3-flash-preview' };
-  const sistema = (mapa['ia_sistema'] && mapa['ia_sistema'].valor) || { provider:'lovable', model:'google/gemini-3-flash-preview' };
   const voz = (mapa['voz_elevenlabs'] && mapa['voz_elevenlabs'].valor) || { ativo:false, voice_id:'9BWtsMINqrJLrRacOk9x', model:'eleven_turbo_v2_5' };
 
   view.innerHTML = `
+  <div class="kb-nav" id="cfg-nav" style="margin-bottom:14px">
+    ${CFG_TABS.map(([id,l])=>`<button data-cfgtab="${id}" onclick="cfgTab('${id}')">${l}</button>`).join('')}
+  </div>
+
+  <div id="cfgsec-integracoes">
   <div class="card">
     <h2>Integrações de IA</h2>
     <p class="muted">Cole aqui as chaves de cada serviço. Elas ficam gravadas em área restrita a administradores e nunca aparecem para os alunos. A etiqueta azul mostra que existe chave gravada (com os primeiros e últimos caracteres e a data); use “Testar” para confirmar se ela ainda é válida.</p>
@@ -677,23 +820,21 @@ async function viewConfig(){
     </div>
     <button class="act" style="margin-top:12px" onclick="document.getElementById('cfg-nova-int').style.display='block'">+ Nova integração</button>
   </div>
-
-
-
-  <div class="card">
-    <h2>IA do curso — Athena</h2>
-    <p class="muted">Responde os alunos nas aulas, questões e chat.</p>
-    ${cfgSelects('athena', athena)}
-    <button class="act primary" onclick="cfgSalvarIA('ia_athena','athena')">Salvar IA da Athena</button>
   </div>
 
-  <div class="card">
-    <h2>IA do sistema — administrativa</h2>
-    <p class="muted">Monta os cursos a partir do material enviado e cuida das tarefas do painel.</p>
-    ${cfgSelects('sistema', sistema)}
-    <button class="act primary" onclick="cfgSalvarIA('ia_sistema','sistema')">Salvar IA do sistema</button>
+  <div id="cfgsec-roteamento" style="display:none">${htmlRoteamento()}</div>
+
+  <div id="cfgsec-athena" style="display:none">
+    ${htmlPromptAgente('athena','prompt-athena','Athena — prompt complementar',
+      'Texto extra anexado ao final de toda instrução enviada à Athena (chat das aulas). Use para ajustar o tom e as regras sem mexer no prompt-base. O prompt-base e o histórico de uso ficam na aba "Athena IA" do painel.')}
   </div>
 
+  <div id="cfgsec-iadmin" style="display:none">
+    ${htmlPromptAgente('assistente_admin','prompt-iadmin','IA administrativa — prompt complementar',
+      'Texto extra anexado às instruções do copiloto do painel e das montagens de curso (edital, classificação e currículo).')}
+  </div>
+
+  <div id="cfgsec-voz" style="display:none">
   <div class="card">
     <h2>Voz (ElevenLabs)</h2>
     <div class="row">
@@ -704,7 +845,9 @@ async function viewConfig(){
     </div>
     <button class="act primary" onclick="cfgSalvarVoz()">Salvar voz</button>
   </div>
+  </div>
 
+  <div id="cfgsec-sync" style="display:none">
   <div class="card">
     <h2>Sincronizar com o app dos alunos</h2>
     <div id="cfg-sync-alerta"></div>
@@ -713,16 +856,20 @@ async function viewConfig(){
 
     <div class="muted" id="cfg-sync-msg" style="margin-top:8px"></div>
   </div>
+  </div>
 
+  <div id="cfgsec-avancado" style="display:none">
   <div class="card">
     <h2>Configurações avançadas (JSON)</h2>
-    <p class="muted">Só aparecem aqui as configurações que não têm formulário próprio. IA da Athena, IA do sistema, voz e integrações são editadas nos formulários acima.</p>
+    <p class="muted">Só aparecem aqui as configurações que não têm formulário próprio. Rotas de IA, prompts, voz e integrações são editados nas abas acima.</p>
     ${(ps||[]).filter(s=>!CFG_JSON_OCULTAS.includes(s.chave)).map(s=>`<div class="row">
       <div><label class="muted">${esc(s.chave)}</label><input id="ps-${s.id}" value='${esc(JSON.stringify(s.valor))}'></div>
       <div><button class="act" onclick="salvarConfig('${s.id}')">Salvar</button></div>
     </div>`).join('') || '<p class="muted">Nenhuma configuração cadastrada.</p>'}
+  </div>
   </div>`;
 
+  cfgTab(CFG_TAB);
   pintarSyncAviso();
 }
 
@@ -977,7 +1124,7 @@ async function viewConhecimento(){
           <div><label class="muted">Curso de destino</label><select id="ed-curso"></select></div>
           <div><label class="muted">Inteligência artificial</label>
             <select id="ed-modelo">
-              <option value="">Usar a IA do sistema (Configurações)</option>
+              <option value="">Usar a rota do assistente administrativo (Central de IA)</option>
               <option value="google/gemini-3.1-pro-preview">Edital gigante (Gemini Pro)</option>
               <option value="google/gemini-3-flash-preview">Rápido (Gemini Flash)</option>
               <option value="openai/gpt-5.6-sol">Máxima precisão (GPT-5.6 Sol)</option>

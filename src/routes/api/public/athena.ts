@@ -1,16 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import {
-  SUPABASE_URL,
-  getSetting,
-  aiKeys,
-  currentUser,
-  hasCourseAccess,
-  usosHoje,
-  registrarUsoIA,
-  serviceHeaders,
-} from '@/lib/px-server'
-import { chat, normalizar, AIError } from '@/lib/ai-gateway'
+import { SUPABASE_URL, currentUser, hasCourseAccess, usosHoje, serviceHeaders } from '@/lib/px-server'
+import { AIError } from '@/lib/ai-gateway'
+import { agentChat, rotaDoAgente } from '@/lib/ai-router'
 
 const Body = z.object({
   disciplina: z.string().min(1).max(200),
@@ -57,8 +49,8 @@ export const Route = createFileRoute('/api/public/athena')({
         // aluno logado pode falar com a Athena. Reativar: `if (!(await hasCourseAccess(userId, curso))) return Response.json({ error: 'Seu acesso ao curso não está ativo.' }, { status: 403 })`
         void hasCourseAccess
 
-        const cfgLimite = normalizar(await getSetting('ia_athena'))
-        const limite = cfgLimite.limiteDiario ?? 0
+        const rota = await rotaDoAgente('athena')
+        const limite = rota.limiteDiario
         if (limite > 0 && (await usosHoje(userId, 'athena')) >= limite)
           return Response.json(
             { error: `Você atingiu o limite de ${limite} perguntas para a Athena hoje. Volte amanhã.` },
@@ -99,8 +91,6 @@ export const Route = createFileRoute('/api/public/athena')({
           }
         }
 
-        const cfg = cfgLimite
-
         const system = [
           'Você é a Athena, professora de concursos da plataforma Prova X.',
           'Responda em português do Brasil, de forma didática, objetiva e focada em prova (padrão Cebraspe certo/errado).',
@@ -114,26 +104,19 @@ export const Route = createFileRoute('/api/public/athena')({
         ].join('\n')
 
         try {
-          const resposta = await chat({
-            provider: cfg.provider,
-            model: cfg.model,
+          const r = await agentChat({
+            agent: 'athena',
             system,
             user: `Disciplina: ${body.disciplina}${body.topico ? ` | Tópico: ${body.topico}` : ''}\n\nPergunta: ${body.pergunta}`,
-            keys: await aiKeys(),
-          })
-          await registrarUsoIA({
-            user_id: userId,
+            userId,
             ferramenta: 'athena',
-            modelo: cfg.model,
-            discipline_nome: body.disciplina,
-            topic_nome: body.topico ?? null,
-            pergunta: body.pergunta,
-            resposta: resposta || '',
+            disciplina: body.disciplina,
+            topico: body.topico ?? null,
           })
           return Response.json({
-            resposta: resposta || 'Não consegui responder agora.',
+            resposta: r.texto || 'Não consegui responder agora.',
             fontes: docs.length,
-            modelo: cfg.model,
+            modelo: r.model,
           })
         } catch (e) {
           const err = e as AIError

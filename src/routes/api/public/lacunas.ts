@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { getSetting, aiKeys, currentUser, usosHoje, registrarUsoIA } from '@/lib/px-server'
+import { currentUser, usosHoje } from '@/lib/px-server'
 import { fetchKnowledge, baseTexto, fonteInstrucao } from '@/lib/kb-context'
-import { chat, normalizar, AIError } from '@/lib/ai-gateway'
+import { AIError } from '@/lib/ai-gateway'
+import { agentChat, rotaDoAgente } from '@/lib/ai-router'
 import { lerRecurso, salvarRecurso } from '@/lib/aula-recursos'
 
 const Body = z.object({
@@ -57,8 +58,8 @@ export const Route = createFileRoute('/api/public/lacunas')({
             return Response.json({ frases: frasesProntas, fontes: 0, modelo: pronto?.modelo, cache: true })
         }
 
-        const cfg = normalizar(await getSetting('ia_athena'))
-        const limite = cfg.limiteDiario ?? 0
+        const rota = await rotaDoAgente('geracao_questoes')
+        const limite = rota.limiteDiario
         if (limite > 0 && (await usosHoje(userId, 'lacunas')) >= limite)
           return Response.json({ error: `Você atingiu o limite de ${limite} exercícios hoje. Volte amanhã.` }, { status: 429 })
 
@@ -74,26 +75,19 @@ export const Route = createFileRoute('/api/public/lacunas')({
         ].join('\n')
 
         try {
-          const saida = await chat({
-            provider: cfg.provider,
-            model: cfg.model,
+          const r = await agentChat({
+            agent: 'geracao_questoes',
             system,
             user: `Disciplina: ${body.disciplina}${body.topico ? ` | Tópico: ${body.topico}` : ''}\n\nGere as frases em JSON.`,
-            keys: await aiKeys(),
-          })
-          const frases = extrair(saida || '')
-          await registrarUsoIA({
-            user_id: userId,
+            userId,
             ferramenta: 'lacunas',
-            modelo: cfg.model,
-            discipline_nome: body.disciplina,
-            topic_nome: body.topico ?? null,
-            pergunta: 'lacunas',
-            resposta: saida || '',
+            disciplina: body.disciplina,
+            topico: body.topico ?? null,
           })
+          const frases = extrair(r.texto || '')
           if (!frases.length) return Response.json({ error: 'Não consegui gerar o exercício agora.' }, { status: 502 })
-          await salvarRecurso(curso, body.disciplina, body.topico, 'lacunas', { frases }, cfg.model)
-          return Response.json({ frases, fontes: docs.length, modelo: cfg.model, cache: false })
+          await salvarRecurso(curso, body.disciplina, body.topico, 'lacunas', { frases }, r.model)
+          return Response.json({ frases, fontes: docs.length, modelo: r.model, cache: false })
         } catch (e) {
           const err = e as AIError
           return Response.json({ error: err.message || 'Não consegui gerar o exercício agora.' }, { status: err.status || 502 })
