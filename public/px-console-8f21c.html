@@ -3987,6 +3987,7 @@ window.kbIaRodarIA = async function(tipo, modo, instrPre){
 };
 
 /* ---------- histórico de versões ---------- */
+let IA_HIST = {};
 window.kbIaHistorico = async function(tipo){
   const box = document.getElementById('ia-sub-' + tipo);
   if(!box) return;
@@ -3997,22 +3998,27 @@ window.kbIaHistorico = async function(tipo){
     const j = await kbIaApi({ acao:'historico', tipo: tipo });
     const vs = j.versoes || [];
     if(!vs.length){ box.innerHTML = '<div class="muted" style="font-size:0.8rem;margin-top:10px">Nenhuma versão ainda.</div>'; return; }
+    IA_HIST[tipo] = vs;
     box.innerHTML = '<div style="margin-top:10px;border-top:1px dashed #E2E8F0;padding-top:10px">'
       + '<div style="font-size:0.8rem;font-weight:700;margin-bottom:6px">Histórico de versões</div>'
-      + vs.map(function(v){
+      + vs.map(function(v, i){
         const origem = { ia:'IA', edicao:'edição manual', sistema:'migração' }[v.origem] || v.origem || '';
         return '<div style="display:flex;align-items:center;gap:8px;font-size:0.78rem;padding:5px 0;border-bottom:1px solid #F1F5F9;flex-wrap:wrap">'
           + '<b>v'+v.versao+'</b>'
           + (v.publicado ? '<span class="kb-tag" style="background:#ECFDF5;color:#047857;border-color:#A7F3D0">PUBLICADA</span>' : '')
           + '<span class="muted">'+esc(origem)+' · '+new Date(v.criado_em).toLocaleString('pt-BR')+'</span>'
           + '<span style="flex:1"></span>'
-          + '<button class="act" style="font-size:0.7rem" onclick=\'kbIaVer('+JSON.stringify(tipo)+','+JSON.stringify(v.conteudo)+','+v.versao+')\'>Visualizar</button>'
+          + '<button class="act" style="font-size:0.7rem" onclick="kbIaHistVer(\''+tipo+'\','+i+')">Visualizar</button>'
           + (v.publicado ? '' : '<button class="act" style="font-size:0.7rem" onclick="kbIaRestaurar(\''+tipo+'\',\''+v.id+'\')">Restaurar</button>')
           + '</div>';
       }).join('') + '</div>';
   }catch(e){
     box.innerHTML = '<div class="muted" style="font-size:0.8rem;margin-top:10px">'+esc(e.message||'Falha ao carregar.')+'</div>';
   }
+};
+window.kbIaHistVer = function(tipo, i){
+  const v = (IA_HIST[tipo] || [])[i];
+  if(v) kbIaVer(tipo, v.conteudo, v.versao);
 };
 window.kbIaRestaurar = async function(tipo, versaoId){
   if(!confirm('Restaurar cria uma NOVA versão com o conteúdo da versão escolhida (o histórico é preservado). Continuar?')) return;
