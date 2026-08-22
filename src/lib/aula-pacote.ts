@@ -287,10 +287,10 @@ function filtroRecurso(curso: string, disciplina: string, topico: string, tipo: 
 /* ---------- geração ---------- */
 
 export type QuestoesCfg = {
-  quantidade?: number
-  dificuldade?: string
-  prioridades?: string[]
-  comentarios?: boolean
+  quantidade?: number | undefined
+  dificuldade?: string | undefined
+  prioridades?: string[] | undefined
+  comentarios?: boolean | undefined
 }
 
 export type GerarCtx = {
