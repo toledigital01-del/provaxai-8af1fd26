@@ -11,8 +11,37 @@ const CHUNK_ALVO = 1200 // caracteres por trecho
 const CHUNK_OVERLAP = 160 // sobreposição para não cortar ideias no meio
 const MAX_CHUNKS_POR_CARGA = 1500 // segurança contra materiais gigantes
 
-/** Limite rígido de contexto RAG enviado ao modelo de chat. */
+/** Limite rígido de contexto RAG enviado ao modelo de chat (padrão; o admin pode ajustar por curso/disciplina). */
 export const MAX_RAG_CHARS = 12000
+export const RAG_TOP_K = 8
+export const RAG_THRESHOLD = 0.28
+
+export type RagConfig = { maxChars: number; topK: number; threshold: number }
+const RAG_PADRAO: RagConfig = { maxChars: MAX_RAG_CHARS, topK: RAG_TOP_K, threshold: RAG_THRESHOLD }
+
+/** Configuração efetiva do RAG para o escopo: a linha da disciplina vence a do curso. */
+export async function configRag(curso: string, disciplina?: string): Promise<RagConfig> {
+  try {
+    const eq = (v: string) => `eq.${encodeURIComponent(v)}`
+    let q = `select=disciplina,max_chars,top_k,threshold&course_slug=${eq(curso)}&limit=50`
+    q += disciplina ? `&or=(disciplina.is.null,disciplina.${eq(disciplina)})` : `&disciplina=is.null`
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/rag_settings?${q}`, { headers: serviceHeaders() })
+    if (!r.ok) return { ...RAG_PADRAO }
+    const rows = (await r.json()) as Array<{ disciplina: string | null; max_chars: number; top_k: number; threshold: number }>
+    if (!Array.isArray(rows) || !rows.length) return { ...RAG_PADRAO }
+    const especifica = rows.find((x) => disciplina && x.disciplina === disciplina)
+    const geral = rows.find((x) => !x.disciplina)
+    const cfg = especifica || geral
+    if (!cfg) return { ...RAG_PADRAO }
+    return {
+      maxChars: Math.min(Math.max(cfg.max_chars || RAG_PADRAO.maxChars, 2000), 60000),
+      topK: Math.min(Math.max(cfg.top_k || RAG_PADRAO.topK, 1), 30),
+      threshold: Math.min(Math.max(cfg.threshold ?? RAG_PADRAO.threshold, 0), 0.95),
+    }
+  } catch {
+    return { ...RAG_PADRAO }
+  }
+}
 
 export type TrechoRag = {
   id: string
