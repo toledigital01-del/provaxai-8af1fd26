@@ -1446,14 +1446,8 @@ async function edLerArquivos(files){
   for(const f of files){
     try{
       edProg(i, files.length, 'Lendo ' + f.name);
-      let texto = '';
-      if(kbEhTextoSimples(f)){
-        texto = (await f.text()).trim();
-      }else{
-        const b64 = await new Promise((res,rej)=>{ const r = new FileReader(); r.onload=()=>res(String(r.result)); r.onerror=rej; r.readAsDataURL(f); });
-        const j = await kbPost('/api/public/kb-ingest', { tipo: kbEhImagem(f) ? 'imagem' : 'auto', nome:f.name, mime:f.type||'', arquivo_base64:b64 });
-        texto = j.texto || '';
-      }
+      const texto = await kbLerArquivo(f, null);
+
       if(texto) ta.value = (ta.value.trim() ? ta.value + '\n\n' : '') + texto;
     }catch(e){ edMsg('Erro ao ler "' + f.name + '": ' + e.message); }
     i++;
