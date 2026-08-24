@@ -30,6 +30,7 @@ import { Route as ApiPublicKbEmbedRouteImport } from './routes/api/public/kb-emb
 import { Route as ApiPublicKbIngestRouteImport } from './routes/api/public/kb-ingest'
 import { Route as ApiPublicKbPrepararRouteImport } from './routes/api/public/kb-preparar'
 import { Route as ApiPublicLacunasRouteImport } from './routes/api/public/lacunas'
+import { Route as ApiPublicMapaRouteImport } from './routes/api/public/mapa'
 import { Route as ApiPublicPodcastRouteImport } from './routes/api/public/podcast'
 import { Route as ApiPublicRagMetricsRouteImport } from './routes/api/public/rag-metrics'
 import { Route as ApiPublicRagPreviewRouteImport } from './routes/api/public/rag-preview'
@@ -146,6 +147,11 @@ const ApiPublicLacunasRoute = ApiPublicLacunasRouteImport.update({
   path: '/api/public/lacunas',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicMapaRoute = ApiPublicMapaRouteImport.update({
+  id: '/api/public/mapa',
+  path: '/api/public/mapa',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPodcastRoute = ApiPublicPodcastRouteImport.update({
   id: '/api/public/podcast',
   path: '/api/public/podcast',
@@ -209,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
   '/api/public/kb-preparar': typeof ApiPublicKbPrepararRoute
   '/api/public/lacunas': typeof ApiPublicLacunasRoute
+  '/api/public/mapa': typeof ApiPublicMapaRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
   '/api/public/rag-metrics': typeof ApiPublicRagMetricsRoute
   '/api/public/rag-preview': typeof ApiPublicRagPreviewRoute
@@ -240,6 +247,7 @@ export interface FileRoutesByTo {
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
   '/api/public/kb-preparar': typeof ApiPublicKbPrepararRoute
   '/api/public/lacunas': typeof ApiPublicLacunasRoute
+  '/api/public/mapa': typeof ApiPublicMapaRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
   '/api/public/rag-metrics': typeof ApiPublicRagMetricsRoute
   '/api/public/rag-preview': typeof ApiPublicRagPreviewRoute
@@ -272,6 +280,7 @@ export interface FileRoutesById {
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
   '/api/public/kb-preparar': typeof ApiPublicKbPrepararRoute
   '/api/public/lacunas': typeof ApiPublicLacunasRoute
+  '/api/public/mapa': typeof ApiPublicMapaRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
   '/api/public/rag-metrics': typeof ApiPublicRagMetricsRoute
   '/api/public/rag-preview': typeof ApiPublicRagPreviewRoute
@@ -305,6 +314,7 @@ export interface FileRouteTypes {
     | '/api/public/kb-ingest'
     | '/api/public/kb-preparar'
     | '/api/public/lacunas'
+    | '/api/public/mapa'
     | '/api/public/podcast'
     | '/api/public/rag-metrics'
     | '/api/public/rag-preview'
@@ -336,6 +346,7 @@ export interface FileRouteTypes {
     | '/api/public/kb-ingest'
     | '/api/public/kb-preparar'
     | '/api/public/lacunas'
+    | '/api/public/mapa'
     | '/api/public/podcast'
     | '/api/public/rag-metrics'
     | '/api/public/rag-preview'
@@ -367,6 +378,7 @@ export interface FileRouteTypes {
     | '/api/public/kb-ingest'
     | '/api/public/kb-preparar'
     | '/api/public/lacunas'
+    | '/api/public/mapa'
     | '/api/public/podcast'
     | '/api/public/rag-metrics'
     | '/api/public/rag-preview'
@@ -399,6 +411,7 @@ export interface RootRouteChildren {
   ApiPublicKbIngestRoute: typeof ApiPublicKbIngestRoute
   ApiPublicKbPrepararRoute: typeof ApiPublicKbPrepararRoute
   ApiPublicLacunasRoute: typeof ApiPublicLacunasRoute
+  ApiPublicMapaRoute: typeof ApiPublicMapaRoute
   ApiPublicPodcastRoute: typeof ApiPublicPodcastRoute
   ApiPublicRagMetricsRoute: typeof ApiPublicRagMetricsRoute
   ApiPublicRagPreviewRoute: typeof ApiPublicRagPreviewRoute
@@ -558,6 +571,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicLacunasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/mapa': {
+      id: '/api/public/mapa'
+      path: '/api/public/mapa'
+      fullPath: '/api/public/mapa'
+      preLoaderRoute: typeof ApiPublicMapaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/podcast': {
       id: '/api/public/podcast'
       path: '/api/public/podcast'
@@ -639,6 +659,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicKbIngestRoute: ApiPublicKbIngestRoute,
   ApiPublicKbPrepararRoute: ApiPublicKbPrepararRoute,
   ApiPublicLacunasRoute: ApiPublicLacunasRoute,
+  ApiPublicMapaRoute: ApiPublicMapaRoute,
   ApiPublicPodcastRoute: ApiPublicPodcastRoute,
   ApiPublicRagMetricsRoute: ApiPublicRagMetricsRoute,
   ApiPublicRagPreviewRoute: ApiPublicRagPreviewRoute,
