@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { requirePedagogicalAdmin } from '@/lib/px-server'
-
+import { requirePedagogicalAdmin, SUPABASE_URL, serviceHeaders } from '@/lib/px-server'
+import { extrairPdf, type ResultadoExtracao } from '@/lib/kb-extract'
 
 const Body = z.object({
   tipo: z.enum(['pdf', 'txt', 'url', 'texto', 'video', 'imagem', 'auto']),
@@ -10,6 +10,10 @@ const Body = z.object({
   url: z.string().max(2000).optional(),
   texto: z.string().max(400000).optional(),
   arquivo_base64: z.string().max(30_000_000).optional(),
+  /* Quando informada, o texto extraído já é guardado na biblioteca da matéria
+     para revisão/edição antes de publicar a aula. */
+  disciplina: z.string().max(200).optional(),
+  topico: z.string().max(300).optional(),
 })
 
 function stripHtml(html: string): string {
@@ -37,52 +41,62 @@ function base64ToBytes(b64: string): Uint8Array {
   return out
 }
 
-async function extractPdf(bytes: Uint8Array): Promise<string> {
-  try {
-    const { extractText, getDocumentProxy } = await import('unpdf')
-    const doc = await getDocumentProxy(bytes)
-    const { text } = await extractText(doc, { mergePages: true })
-    return String(text || '').replace(/\n{3,}/g, '\n\n').trim()
-  } catch {
-    // PDF corrompido/protegido: tratado como "sem texto" (resposta 422 amigável)
-    return ''
+const limpaB64 = (b64: string) => (b64.includes(',') ? b64.slice(b64.indexOf(',') + 1) : b64)
+
+const PROMPT_TRANSCRICAO =
+  'Transcreva fielmente TODO o conteúdo textual deste documento em Markdown simples, preservando títulos, listas, tabelas e fórmulas, na ordem das páginas. Não resuma, não comente, não invente. Se realmente não houver texto legível, responda apenas: SEM_TEXTO.'
+
+/** Chamada única de visão no gateway (PDF ou imagem). */
+async function visaoIA(dataUrl: string, modelo: string): Promise<string> {
+  const apiKey = process.env['LOVABLE_API_KEY']
+  if (!apiKey) return ''
+  const r = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: modelo,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: PROMPT_TRANSCRICAO },
+            { type: 'image_url', image_url: { url: dataUrl } },
+          ],
+        },
+      ],
+    }),
+  })
+  if (!r.ok) return ''
+  const data = (await r.json()) as any
+  return String(data?.choices?.[0]?.message?.content || '').trim()
+}
+
+/** Camada de texto nativa do PDF + número de páginas (para medir a qualidade). */
+async function camadaTextoPdf(bytes: Uint8Array): Promise<{ texto: string; paginas: number }> {
+  const { extractText, getDocumentProxy } = await import('unpdf')
+  const doc = await getDocumentProxy(bytes)
+  const { text } = await extractText(doc, { mergePages: true })
+  return {
+    texto: String(text || '').replace(/\n{3,}/g, '\n\n').trim(),
+    paginas: Number((doc as any)?.numPages) || 1,
   }
 }
 
+async function processarPdf(b64: string, bytes: Uint8Array): Promise<ResultadoExtracao> {
+  const clean = limpaB64(b64)
+  const grande = clean.length > 14_000_000
+  return extrairPdf({
+    lerCamadaTexto: () => camadaTextoPdf(bytes),
+    transcrever: async (modelo) => (grande ? '' : visaoIA(`data:application/pdf;base64,${clean}`, modelo)),
+  })
+}
 
-/* PDF digitalizado (sem camada de texto): transcreve com IA de visão. */
-async function extractPdfIA(b64: string): Promise<string> {
-  const apiKey = process.env['LOVABLE_API_KEY']
-  if (!apiKey) return ''
-  const clean = b64.includes(',') ? b64.slice(b64.indexOf(',') + 1) : b64
-  if (clean.length > 14_000_000) return '' // PDF grande demais para transcrição por IA
-  try {
-    const r = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'google/gemini-3-flash-preview',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: 'Transcreva fielmente TODO o conteúdo textual deste PDF em Markdown simples, preservando títulos, listas, tabelas e fórmulas, na ordem das páginas. Não resuma, não comente, não invente. Se não houver texto, responda apenas: SEM_TEXTO.',
-              },
-              { type: 'image_url', image_url: { url: `data:application/pdf;base64,${clean}` } },
-            ],
-          },
-        ],
-      }),
-    })
-    if (!r.ok) return ''
-    const data = (await r.json()) as any
-    const texto = String(data?.choices?.[0]?.message?.content || '').trim()
-    return /^SEM_TEXTO/i.test(texto) ? '' : texto
-  } catch {
-    return ''
-  }
+async function processarImagem(b64: string, mime: string): Promise<ResultadoExtracao> {
+  const dataUrl = b64.startsWith('data:') ? b64 : `data:${mime || 'image/png'};base64,${b64}`
+  return extrairPdf({
+    lerCamadaTexto: async () => ({ texto: '', paginas: 1 }),
+    transcrever: (modelo) => visaoIA(dataUrl, modelo),
+  })
 }
 
 function youtubeId(url: string): string | null {
@@ -108,37 +122,7 @@ async function extractVideo(url: string): Promise<string> {
   return ''
 }
 
-/* Lê imagens (foto de apostila, print, slide) transcrevendo com IA de visão. */
-async function extractImagem(b64: string, mime: string): Promise<string> {
-  const apiKey = process.env['LOVABLE_API_KEY']
-  if (!apiKey) throw new Error('IA indisponível para ler imagens no momento.')
-  const dataUrl = b64.startsWith('data:') ? b64 : `data:${mime || 'image/png'};base64,${b64}`
-  const r = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'google/gemini-3-flash-preview',
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: 'Transcreva fielmente TODO o conteúdo textual desta imagem (apostila, slide, prova ou anotação) em Markdown simples, preservando títulos, listas, tabelas e fórmulas. Não resuma, não comente, não invente. Se não houver texto, responda apenas: SEM_TEXTO.',
-            },
-            { type: 'image_url', image_url: { url: dataUrl } },
-          ],
-        },
-      ],
-    }),
-  })
-  if (!r.ok) throw new Error('Não consegui ler a imagem agora. Tente novamente.')
-  const data = (await r.json()) as any
-  const texto = String(data?.choices?.[0]?.message?.content || '').trim()
-  return /^SEM_TEXTO/i.test(texto) ? '' : texto
-}
-
-/* Lê qualquer arquivo de texto (txt, md, csv, json, html, srt, código…) sem etapa extra. */
+/* Lê qualquer arquivo de texto (txt, md, csv, json, html, srt, código…). */
 function lerTextoDireto(bytes: Uint8Array, nome: string): string {
   const raw = new TextDecoder('utf-8', { fatal: false }).decode(bytes)
   return /\.html?$/i.test(nome) ? stripHtml(raw) : raw.replace(/\u0000/g, '').trim()
@@ -146,6 +130,46 @@ function lerTextoDireto(bytes: Uint8Array, nome: string): string {
 
 function ehImagem(nome: string, mime: string): boolean {
   return /^image\//i.test(mime || '') || /\.(png|jpe?g|webp|gif|bmp|heic|heif|tiff?)$/i.test(nome || '')
+}
+
+/** Guarda o texto extraído na biblioteca da matéria (revisão antes de publicar). */
+async function salvarNaBiblioteca(reg: {
+  disciplina?: string
+  topico?: string
+  nome: string
+  tipo: string
+  origem_url?: string
+  texto: string
+}): Promise<string | null> {
+  if (!reg.disciplina || !reg.texto) return null
+  try {
+    const linha = {
+      course_slug: 'prf-2021',
+      discipline_nome: reg.disciplina,
+      topic_nome: reg.topico || null,
+      nome_arquivo: reg.nome || 'material',
+      tipo: reg.tipo,
+      origem_url: reg.origem_url || null,
+      texto_extraido: reg.texto,
+      status_direitos: 'material_proprio',
+    }
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/kb_documentos${reg.origem_url ? '?on_conflict=course_slug,origem_url' : ''}`,
+      {
+        method: 'POST',
+        headers: serviceHeaders({
+          'Content-Type': 'application/json',
+          Prefer: reg.origem_url ? 'resolution=merge-duplicates,return=representation' : 'return=representation',
+        }),
+        body: JSON.stringify(linha),
+      },
+    )
+    if (!r.ok) return null
+    const rows = (await r.json()) as Array<{ id: string }>
+    return rows?.[0]?.id ?? null
+  } catch {
+    return null
+  }
 }
 
 export const Route = createFileRoute('/api/public/kb-ingest')({
@@ -162,63 +186,99 @@ export const Route = createFileRoute('/api/public/kb-ingest')({
           return Response.json({ error: 'Requisição inválida.' }, { status: 400 })
         }
 
-        try {
-          const nome = body.nome || ''
-          const mime = body.mime || ''
+        const nome = body.nome || ''
+        const mime = body.mime || ''
 
+        /* Resposta única para todos os caminhos: extrai, guarda e devolve. */
+        const responder = async (
+          texto: string,
+          origem: string,
+          tipo: string,
+          extra: Record<string, unknown> = {},
+        ) => {
+          const doc_id = await salvarNaBiblioteca({
+            disciplina: body.disciplina,
+            topico: body.topico,
+            nome: origem,
+            tipo,
+            origem_url: /^https?:\/\//i.test(origem) ? origem : undefined,
+            texto,
+          })
+          return Response.json({ texto, origem, doc_id, salvo: !!doc_id, ...extra })
+        }
+
+        try {
           if (body.tipo === 'texto') {
-            return Response.json({ texto: (body.texto || '').trim(), origem: 'texto' })
+            const t = (body.texto || '').trim()
+            if (!t) return Response.json({ error: 'Nenhum texto informado.' }, { status: 400 })
+            return responder(t, nome || 'texto colado', 'texto')
           }
-          if (body.tipo === 'imagem') {
+
+          if (body.tipo === 'imagem' || (body.tipo === 'auto' && ehImagem(nome, mime))) {
             if (!body.arquivo_base64) return Response.json({ error: 'Imagem ausente.' }, { status: 400 })
-            const texto = await extractImagem(body.arquivo_base64, mime)
-            if (!texto) return Response.json({ error: 'Não encontrei texto legível nesta imagem.' }, { status: 422 })
-            return Response.json({ texto, origem: nome || 'imagem' })
+            const r = await processarImagem(body.arquivo_base64, mime)
+            if (!r.texto)
+              return Response.json({ error: 'Não encontrei texto legível nesta imagem.' }, { status: 422 })
+            return responder(r.texto, nome || 'imagem', 'imagem', { ocr: true, qualidade: r.qualidade })
           }
+
           if (body.tipo === 'txt') {
-            const raw = body.texto ?? (body.arquivo_base64 ? lerTextoDireto(base64ToBytes(body.arquivo_base64), nome) : '')
-            return Response.json({ texto: raw.trim(), origem: nome || 'arquivo.txt' })
+            const raw =
+              body.texto ??
+              (body.arquivo_base64 ? lerTextoDireto(base64ToBytes(body.arquivo_base64), nome) : '')
+            if (!raw.trim()) return Response.json({ error: 'Arquivo de texto vazio.' }, { status: 422 })
+            return responder(raw.trim(), nome || 'arquivo.txt', 'texto')
           }
+
           if (body.tipo === 'pdf' || body.tipo === 'auto') {
             if (!body.arquivo_base64) return Response.json({ error: 'Arquivo ausente.' }, { status: 400 })
             const bytes = base64ToBytes(body.arquivo_base64)
-
-            if (body.tipo === 'auto' && ehImagem(nome, mime)) {
-              const texto = await extractImagem(body.arquivo_base64, mime)
-              if (!texto) return Response.json({ error: 'Não encontrei texto legível nesta imagem.' }, { status: 422 })
-              return Response.json({ texto, origem: nome || 'imagem' })
-            }
-
             const ehPdf = body.tipo === 'pdf' || /pdf/i.test(mime) || /\.pdf$/i.test(nome)
+
             if (ehPdf) {
-              const texto = await extractPdf(bytes)
-              if (texto && texto.length > 40) return Response.json({ texto, origem: nome || 'arquivo.pdf' })
-              const ocr = await extractPdfIA(body.arquivo_base64)
-              if (ocr) return Response.json({ texto: ocr, origem: nome || 'arquivo.pdf', ocr: true })
-              if (texto) return Response.json({ texto, origem: nome || 'arquivo.pdf' })
-              return Response.json(
-                { error: 'Não consegui ler texto deste PDF (parece digitalizado e a transcrição por IA falhou). Envie as páginas como imagem.' },
-                { status: 422 },
-              )
+              const r = await processarPdf(body.arquivo_base64, bytes)
+              if (!r.texto)
+                return Response.json(
+                  {
+                    error:
+                      'Não consegui ler texto deste PDF (parece digitalizado e a transcrição por IA falhou). Envie as páginas como imagem.',
+                  },
+                  { status: 422 },
+                )
+              return responder(r.texto, nome || 'arquivo.pdf', 'pdf', {
+                ocr: r.qualidade === 'ocr',
+                qualidade: r.qualidade,
+              })
             }
 
             const direto = lerTextoDireto(bytes, nome)
-            if (direto) return Response.json({ texto: direto, origem: nome || 'arquivo' })
-            return Response.json({ error: 'Não consegui ler este tipo de arquivo. Envie PDF, texto ou imagem.' }, { status: 422 })
+            if (direto) return responder(direto, nome || 'arquivo', 'texto')
+            return Response.json(
+              { error: 'Não consegui ler este tipo de arquivo. Envie PDF, texto ou imagem.' },
+              { status: 422 },
+            )
           }
+
           if (body.tipo === 'url') {
             if (!body.url) return Response.json({ error: 'Informe o endereço do site.' }, { status: 400 })
             const r = await fetch(body.url, { headers: { 'User-Agent': 'Mozilla/5.0 ProvaXBot' } })
             if (!r.ok) return Response.json({ error: 'Não consegui acessar esse endereço.' }, { status: 422 })
             const ct = r.headers.get('content-type') || ''
             if (ct.includes('application/pdf')) {
-              const texto = await extractPdf(new Uint8Array(await r.arrayBuffer()))
-              return Response.json({ texto, origem: body.url })
+              const bytes = new Uint8Array(await r.arrayBuffer())
+              const res = await extrairPdf({
+                lerCamadaTexto: () => camadaTextoPdf(bytes),
+                transcrever: async () => '',
+              })
+              if (!res.texto)
+                return Response.json({ error: 'O PDF deste endereço não tem texto legível.' }, { status: 422 })
+              return responder(res.texto, body.url, 'pdf')
             }
             const texto = stripHtml(await r.text())
             if (!texto) return Response.json({ error: 'A página não retornou texto legível.' }, { status: 422 })
-            return Response.json({ texto, origem: body.url })
+            return responder(texto, body.url, 'url')
           }
+
           // vídeo
           if (!body.url) return Response.json({ error: 'Informe o link do vídeo.' }, { status: 400 })
           const texto = await extractVideo(body.url)
@@ -227,7 +287,7 @@ export const Route = createFileRoute('/api/public/kb-ingest')({
               { error: 'Não encontrei legendas/transcrição neste vídeo. Cole a transcrição como texto.' },
               { status: 422 },
             )
-          return Response.json({ texto, origem: body.url })
+          return responder(texto, body.url, 'video')
         } catch (e) {
           return Response.json({ error: 'Falha ao processar o material: ' + (e as Error).message }, { status: 500 })
         }
