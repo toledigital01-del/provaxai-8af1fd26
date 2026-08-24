@@ -368,7 +368,7 @@ let rzStatus = 0;
 async function rzCarregar() {
   rzState = 'load'; rzData = null; rzErro = ''; rzStatus = 0; renderPane();
   const alvo = scope === 'geral' && selDisc !== 'all' ? selDisc : disc;
-  const r = await PX.iaPost('resumo', { disciplina: alvo, topico: scope === 'topico' ? topic : null, curso: id });
+  const r = await PX.iaPostCache('resumo', { disciplina: alvo, topico: scope === 'topico' ? topic : null, curso: id });
   if (r.erro) { rzState = 'erro'; rzErro = r.erro; rzStatus = r.status || 0; }
   else {
     const blocks = rzParse(r.resumo);
@@ -713,7 +713,12 @@ async function carregarAulaIA(regerar) {
   box.innerHTML = '<p style="color:var(--muted)">A Athena está preparando a aula deste tópico… isso pode levar alguns instantes.</p>';
   let r = {};
   try {
-    r = await PX.iaPost('aula-ia', { curso: id, disciplina: disc, topico: topic, regerar: !!regerar });
+    const req = { curso: id, disciplina: disc, topico: topic };
+    if (regerar) PX.iaCacheLimpar('aula-ia', req);
+    r = regerar
+      ? await PX.iaPost('aula-ia', Object.assign({}, req, { regerar: true }))
+      : await PX.iaPostCache('aula-ia', req);
+    if (regerar && r && r.aula) PX.iaPostCache('aula-ia', req, true);
   } catch (e) { r = { erro: 'Falha de conexão.' }; }
   if (!document.getElementById('kb-conteudo')) return;
   if (r && r.aula) {
@@ -771,12 +776,12 @@ async function mapaCarregar(gerar) {
   mapaState = { state: 'load', dados: null, erro: '', status: 0 };
   renderPane();
   const alvo = scope === 'geral' && selDisc !== 'all' ? selDisc : disc;
-  const r = await PX.iaPost('mapa', {
+  const r = await PX.iaPostCache('mapa', {
     disciplina: alvo,
     topico: scope === 'topico' ? topic : null,
     curso: id,
     gerar: !!gerar,
-  });
+  }, !!gerar);
   if (r.erro) mapaState = { state: 'erro', dados: null, erro: r.erro, status: r.status || 0 };
   else if (r.aulas) mapaState = { state: 'lista', dados: r.aulas, erro: '', status: 200 };
   else if (r.pendente) mapaState = { state: 'pendente', dados: null, erro: '', status: 200 };
@@ -1076,7 +1081,7 @@ function renderPane() {
       if (lacr) lacr.onclick = () => { lacState = { state: 'idle', frases: [], erro: '' }; renderPane(); };
       if (lacState.state === 'idle') {
         lacState = { state: 'load', frases: [], erro: '' };
-        PX.iaPost('lacunas', { disciplina: disc, topico: topic, curso: id }).then(r => {
+        PX.iaPostCache('lacunas', { disciplina: disc, topico: topic, curso: id }).then(r => {
           lacState = r.erro ? { state: 'erro', frases: [], erro: r.erro, status: r.status } : { state: 'ok', frases: r.frases || [], erro: '' };
           if (tab === 'espacos') renderPane();
         });
@@ -1125,7 +1130,7 @@ function renderPane() {
       if (rt) rt.onclick = () => { podState = { state: 'idle', roteiro: [], erro: '' }; renderPane(); };
       if (podState.state === 'idle') {
         podState = { state: 'load', roteiro: [], erro: '' };
-        PX.iaPost('podcast', { disciplina: disc, topico: topic, curso: id }).then(r => {
+        PX.iaPostCache('podcast', { disciplina: disc, topico: topic, curso: id }).then(r => {
           podState = r.erro
             ? { state: 'erro', roteiro: [], erro: r.erro, status: r.status }
             : { state: 'ok', roteiro: r.roteiro || [], erro: '' };
