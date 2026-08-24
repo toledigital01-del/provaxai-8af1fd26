@@ -3204,6 +3204,28 @@ function kbEhTextoSimples(f){
 function kbEhImagem(f){
   return /^image\//i.test(f.type || '') || /\.(png|jpe?g|webp|gif|bmp|heic|heif|tiff?)$/i.test(f.name || '');
 }
+
+/* ---- Leitor único de material (usado pelo edital, pela aula e pelo lote) ----
+   PDF digital, PDF escaneado (transcrito por IA), imagem e texto simples.
+   Quando há matéria selecionada, o texto extraído já fica guardado na
+   biblioteca da matéria para revisão/edição antes de publicar. */
+async function kbLerArquivo(f, disciplina){
+  if(kbEhTextoSimples(f)){
+    const texto = (await f.text()).trim();
+    if(texto && disciplina){
+      try{ await kbPost('/api/public/kb-ingest', { tipo:'texto', texto:texto, nome:f.name, disciplina:disciplina, topico:kbTopic||undefined }); }catch(e){}
+    }
+    return texto;
+  }
+  const b64 = await new Promise(function(res,rej){ const r = new FileReader(); r.onload=function(){ res(String(r.result)); }; r.onerror=rej; r.readAsDataURL(f); });
+  const j = await kbPost('/api/public/kb-ingest', {
+    tipo: kbEhImagem(f) ? 'imagem' : 'auto',
+    nome: f.name, mime: f.type || '', arquivo_base64: b64,
+    disciplina: disciplina || undefined, topico: kbTopic || undefined,
+  });
+  return String(j.texto || '').trim();
+}
+
 function kbEhVideoUrl(u){
   return /(youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com)/i.test(u || '');
 }
