@@ -35,6 +35,19 @@ export async function requireAdmin(request: Request): Promise<Response | null> {
   return null
 }
 
+/**
+ * Autorização temporária para as ferramentas pedagógicas do painel.
+ *
+ * O console administrativo está, por decisão do produto, operando sem login.
+ * Somente rotas de criação/publicação de conteúdo devem usar este guard; ações
+ * sensíveis (usuários, compras, integrações e chaves) continuam em requireAdmin.
+ */
+export async function requirePedagogicalAdmin(request: Request): Promise<Response | null> {
+  const token = bearer(request)
+  if (!token) return null
+  return requireAdmin(request)
+}
+
 /** Lê uma configuração pública da plataforma (platform_settings). */
 export async function getSetting<T = unknown>(chave: string): Promise<T | null> {
   try {

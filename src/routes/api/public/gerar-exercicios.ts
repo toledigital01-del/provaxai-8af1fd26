@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { currentUser, requireAdmin, serviceHeaders, SUPABASE_URL } from '@/lib/px-server'
+import { currentUser, requirePedagogicalAdmin, serviceHeaders, SUPABASE_URL } from '@/lib/px-server'
 import { materialIntegral } from '@/lib/kb-context'
 import { AIError } from '@/lib/ai-gateway'
 import { agentChat } from '@/lib/ai-router'
@@ -45,7 +45,7 @@ export const Route = createFileRoute('/api/public/gerar-exercicios')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const negado = await requireAdmin(request)
+        const negado = await requirePedagogicalAdmin(request)
         if (negado) return negado
 
         let body: z.infer<typeof Body>

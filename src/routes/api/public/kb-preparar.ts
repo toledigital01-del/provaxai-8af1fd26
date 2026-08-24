@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { requireAdmin } from '@/lib/px-server'
+import { requirePedagogicalAdmin } from '@/lib/px-server'
 
 /* Prepara TUDO de uma aula na publicação: aula da Athena, resumo inteligente,
    questões, flashcards, lacunas e roteiro do podcast. Cada item é gerado uma
@@ -21,7 +21,7 @@ export const Route = createFileRoute('/api/public/kb-preparar')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const negado = await requireAdmin(request)
+        const negado = await requirePedagogicalAdmin(request)
         if (negado) return negado
 
         let body: z.infer<typeof Body>
