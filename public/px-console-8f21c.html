@@ -3115,6 +3115,49 @@ window.kbLibReprocessar = function(id){
   if(ta){ ta.value = d.texto_extraido || ''; ta.focus(); }
   kbAulaMsg('Texto de "' + d.nome_arquivo + '" carregado no campo acima — revise e clique em “Cadastrar aula”.');
 };
+/* Revisar/editar o texto extraído antes de virar aula. */
+window.kbLibEditar = function(id){
+  const d = KB_LIB.find(function(x){ return x.id === id; });
+  if(!d) return;
+  let ov = document.getElementById('kb-lib-modal');
+  if(ov) ov.remove();
+  ov = document.createElement('div');
+  ov.id = 'kb-lib-modal';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.innerHTML = '<div style="background:#fff;border-radius:14px;width:min(900px,100%);max-height:90vh;display:flex;flex-direction:column;overflow:hidden">' +
+    '<div style="padding:14px 18px;border-bottom:1px solid #E8EDF3;display:flex;gap:10px;align-items:center">' +
+      '<strong style="flex:1;font-size:0.95rem">Revisar texto — ' + esc(d.nome_arquivo) + '</strong>' +
+      '<span class="muted" id="kb-lib-cnt" style="font-size:0.75rem"></span>' +
+    '</div>' +
+    '<textarea id="kb-lib-ta" style="flex:1;min-height:50vh;border:0;padding:16px 18px;font:13px/1.55 ui-monospace,monospace;resize:none;outline:none"></textarea>' +
+    '<div style="padding:12px 18px;border-top:1px solid #E8EDF3;display:flex;gap:8px;justify-content:flex-end;align-items:center">' +
+      '<span id="kb-lib-msg" class="muted" style="flex:1;font-size:0.8rem"></span>' +
+      '<button class="act" onclick="document.getElementById(\'kb-lib-modal\').remove()">Fechar</button>' +
+      '<button class="act" onclick="kbLibSalvarTexto(\'' + d.id + '\')">Salvar texto</button>' +
+      '<button class="act" onclick="kbLibSalvarTexto(\'' + d.id + '\', true)">Salvar e usar na aula</button>' +
+    '</div></div>';
+  document.body.appendChild(ov);
+  const ta = document.getElementById('kb-lib-ta');
+  const cnt = document.getElementById('kb-lib-cnt');
+  ta.value = d.texto_extraido || '';
+  const atualiza = function(){ cnt.textContent = ta.value.length.toLocaleString('pt-BR') + ' caracteres'; };
+  ta.addEventListener('input', atualiza); atualiza(); ta.focus();
+};
+window.kbLibSalvarTexto = async function(id, usar){
+  const ta = document.getElementById('kb-lib-ta');
+  const msg = document.getElementById('kb-lib-msg');
+  if(!ta) return;
+  const texto = ta.value;
+  if(msg) msg.textContent = 'Salvando…';
+  const { error } = await PX.sb.from('kb_documentos').update({ texto_extraido: texto }).eq('id', id);
+  if(error){ if(msg) msg.textContent = 'Erro ao salvar: ' + error.message; return; }
+  const d = KB_LIB.find(function(x){ return x.id === id; });
+  if(d) d.texto_extraido = texto;
+  if(msg) msg.textContent = '✅ Texto salvo.';
+  kbPaintBiblioteca();
+  if(usar){ document.getElementById('kb-lib-modal').remove(); kbLibReprocessar(id); }
+};
+
 window.kbLibRemover = async function(id){
   if(!confirm('Remover este documento da biblioteca? O texto guardado será apagado.')) return;
   const { error } = await PX.sb.from('kb_documentos').delete().eq('id', id);
