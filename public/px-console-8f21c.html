@@ -705,7 +705,7 @@ async function aiAcao(payload){
   const { data:{ session } } = await PX.sb.auth.getSession();
   const r = await fetch('/api/public/ai-central', {
     method:'POST',
-    headers:{ 'Content-Type':'application/json', Authorization:'Bearer ' + (session ? session.access_token : '') },
+    headers: Object.assign({ 'Content-Type':'application/json' }, session ? { Authorization:'Bearer ' + session.access_token } : {}),
     body: JSON.stringify(payload),
   });
   return r.json().catch(()=>({ error:'resposta inválida' }));
