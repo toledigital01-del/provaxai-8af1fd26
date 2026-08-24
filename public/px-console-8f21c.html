@@ -3813,8 +3813,18 @@ function gateForm(msg){
   };
 }
 
+// Login do painel temporariamente desativado.
+// Para reativar, defina window.PX_ADMIN_GUARD_ON = true antes deste script.
+const ADMIN_GUARD_ON = (window.PX_ADMIN_GUARD_ON === true);
+
 async function boot(){
   try { await PX.ready; } catch(e){}
+  if (!ADMIN_GUARD_ON) {
+    document.getElementById('who').textContent = PX.user ? PX.displayName() : 'Administrador';
+    renderTabs();
+    render();
+    return;
+  }
   if (PX.bootError) {
     renderTabs();
     return gateForm('Não foi possível conectar ao servidor. Recarregue a página.');
