@@ -2847,13 +2847,9 @@ function kbBindAulaFile(){
   }
 }
 
-/* Lê o texto de um arquivo (PDF, imagem, txt…). */
-async function kbAulaLerArquivo(f){
-  if(kbEhTextoSimples(f)) return (await f.text()).trim();
-  const b64 = await new Promise((res,rej)=>{ const r = new FileReader(); r.onload=()=>res(String(r.result)); r.onerror=rej; r.readAsDataURL(f); });
-  const j = await kbPost('/api/public/kb-ingest', { tipo: kbEhImagem(f) ? 'imagem' : 'auto', nome:f.name, mime:f.type||'', arquivo_base64:b64 });
-  return String(j.texto || '').trim();
-}
+/* Leitura de arquivo: usa o leitor único (kbLerArquivo). */
+async function kbAulaLerArquivo(f){ return kbLerArquivo(f, kbDisc); }
+
 
 /* Título automático: primeira linha útil do material, ou o nome do arquivo. */
 function kbAulaTituloAuto(texto, origem, numero){
