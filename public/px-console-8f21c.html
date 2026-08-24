@@ -797,9 +797,11 @@ async function viewConfig(){
   const conect = (CFG_STATUS && CFG_STATUS.conectado) || {};
   const salvas = {};
   try {
-    const { data: ks } = await PX.sb.from('api_keys').select('chave,valor,updated_at');
-    (ks||[]).forEach(k => { salvas[k.chave] = { mask: cfgMascara(k.valor), data: k.updated_at ? dt(k.updated_at) : '' }; });
+    const rk = await fetch('/api/public/ai-keys', { headers: authH });
+    const jk = rk.ok ? await rk.json() : { chaves: [] };
+    (jk.chaves||[]).forEach(k => { salvas[k.chave] = { mask: k.mask, data: k.updated_at ? dt(k.updated_at) : '' }; });
   } catch(e){}
+
   const extras = (mapa['integracoes_ia'] && Array.isArray(mapa['integracoes_ia'].valor) ? mapa['integracoes_ia'].valor : [])
     .filter(x => x && x.env && !CFG_CHAVES.some(c => c.env === x.env));
   CFG_EXTRAS = extras;
@@ -824,7 +826,7 @@ async function viewConfig(){
           <div class="muted">${esc(c.env)} — ${esc(c.dica)}</div>
         </div>
         <div>
-          <button class="act primary" onclick="cfgSalvarChave('${c.env}')">Salvar</button>
+          <button class="act primary" data-savekey="${c.env}" onclick="cfgSalvarChave('${c.env}')">Salvar</button>
           <button class="act" onclick="cfgTestarChave('${c.env}')">Testar</button>
           ${salvas[c.env]?`<button class="act" onclick="cfgApagarChave('${c.env}')">Remover</button>`:''}
           ${c.extra?`<button class="act" onclick="cfgRemoverIntegracao('${c.env}')">Excluir integração</button>`:''}
@@ -934,6 +936,14 @@ async function cfgTestarTodas(){
   const linhas = Array.from(document.querySelectorAll('[data-keyrow]')).map(el => el.getAttribute('data-keyrow'));
   for(const env of linhas){ await cfgTestarChave(env); }
 }
+async function cfgChaveApi(payload){
+  const h = { 'Content-Type':'application/json' };
+  try { if(PX.token) h['Authorization'] = 'Bearer ' + PX.token; } catch(e){}
+  const r = await fetch('/api/public/ai-keys', { method:'POST', headers:h, body: JSON.stringify(payload) });
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok || j.error){ alert(j.error || 'Não consegui salvar a chave.'); return false; }
+  return true;
+}
 async function cfgCriarIntegracao(){
   const nome = (document.getElementById('int-nome').value||'').trim();
   const env = (document.getElementById('int-env').value||'').trim().toUpperCase().replace(/[^A-Z0-9_]/g,'_');
@@ -943,41 +953,43 @@ async function cfgCriarIntegracao(){
   const novas = (CFG_EXTRAS||[]).filter(x=>x.env!==env).concat([{ env, nome }]);
   if(!(await cfgUpsert('integracoes_ia', novas))) return;
   if(valor){
-    const { error } = await PX.sb.from('api_keys').upsert({ chave: env, valor, updated_by: PX.user.id }, { onConflict:'chave' });
-    if(error) return alert(error.message);
+    if(!(await cfgChaveApi({ acao:'salvar', chave: env, valor }))) return;
     await logAdmin('salvar_chave_api','api_keys',env);
   }
-  alert('Integração cadastrada.');
+  alert('Integração cadastrada e chave salva.');
   viewConfig();
 }
 async function cfgRemoverIntegracao(env){
   if(!confirm('Excluir esta integração da lista? A chave salva também será removida.')) return;
   const novas = (CFG_EXTRAS||[]).filter(x=>x.env!==env);
   if(!(await cfgUpsert('integracoes_ia', novas))) return;
-  await PX.sb.from('api_keys').delete().eq('chave', env);
+  await cfgChaveApi({ acao:'remover', chave: env });
   await logAdmin('remover_chave_api','api_keys',env);
+  alert('Integração removida.');
   viewConfig();
 }
 async function cfgSalvarChave(env){
-
   const el = document.getElementById('key-'+env);
   const valor = (el.value||'').trim();
   if(!valor) return alert('Cole a chave antes de salvar.');
-  const { error } = await PX.sb.from('api_keys').upsert(
-    { chave: env, valor, updated_by: PX.user.id }, { onConflict:'chave' });
-  if(error) return alert(error.message);
+  const btn = document.querySelector('[data-savekey="'+env+'"]');
+  if(btn){ btn.disabled = true; btn.textContent = 'Salvando…'; }
+  const ok = await cfgChaveApi({ acao:'salvar', chave: env, valor });
+  if(btn){ btn.disabled = false; btn.textContent = 'Salvar'; }
+  if(!ok) return;
   await logAdmin('salvar_chave_api','api_keys',env);
   el.value = '';
-  alert('Chave salva. Já está valendo para as próximas gerações.');
+  alert('✅ Chave salva com sucesso! Já está valendo para as próximas gerações.');
   viewConfig();
 }
 async function cfgApagarChave(env){
   if(!confirm('Remover esta chave? Os recursos que dependem dela deixam de funcionar.')) return;
-  const { error } = await PX.sb.from('api_keys').delete().eq('chave', env);
-  if(error) return alert(error.message);
+  if(!(await cfgChaveApi({ acao:'remover', chave: env }))) return;
   await logAdmin('remover_chave_api','api_keys',env);
+  alert('Chave removida.');
   viewConfig();
 }
+
 async function cfgUpsert(chave, valor){
   const { error } = await PX.sb.from('platform_settings').upsert({ chave, valor, publico:true }, { onConflict:'chave' });
   if(error){ alert(error.message); return false; }
