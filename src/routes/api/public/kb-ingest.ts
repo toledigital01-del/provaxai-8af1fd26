@@ -38,11 +38,17 @@ function base64ToBytes(b64: string): Uint8Array {
 }
 
 async function extractPdf(bytes: Uint8Array): Promise<string> {
-  const { extractText, getDocumentProxy } = await import('unpdf')
-  const doc = await getDocumentProxy(bytes)
-  const { text } = await extractText(doc, { mergePages: true })
-  return String(text || '').replace(/\n{3,}/g, '\n\n').trim()
+  try {
+    const { extractText, getDocumentProxy } = await import('unpdf')
+    const doc = await getDocumentProxy(bytes)
+    const { text } = await extractText(doc, { mergePages: true })
+    return String(text || '').replace(/\n{3,}/g, '\n\n').trim()
+  } catch {
+    // PDF corrompido/protegido: tratado como "sem texto" (resposta 422 amigável)
+    return ''
+  }
 }
+
 
 function youtubeId(url: string): string | null {
   const m = url.match(/(?:youtu\.be\/|v=|\/embed\/|\/shorts\/)([A-Za-z0-9_-]{6,})/)
