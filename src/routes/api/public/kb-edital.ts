@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { aiKeys, requireAdmin } from '@/lib/px-server'
+import { aiKeys, requirePedagogicalAdmin } from '@/lib/px-server'
 import { chat, AIError, MODELOS, type Provider } from '@/lib/ai-gateway'
 import { rotaDoAgente } from '@/lib/ai-router'
 
@@ -29,7 +29,7 @@ export const Route = createFileRoute('/api/public/kb-edital')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const denied = await requireAdmin(request)
+        const denied = await requirePedagogicalAdmin(request)
         if (denied) return denied
 
         let body: z.infer<typeof Body>

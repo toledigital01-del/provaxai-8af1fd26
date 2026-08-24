@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { requireAdmin, currentUser } from '@/lib/px-server'
+import { requirePedagogicalAdmin, currentUser } from '@/lib/px-server'
 import { AIError } from '@/lib/ai-gateway'
 import { agentChat } from '@/lib/ai-router'
 
@@ -19,7 +19,7 @@ export const Route = createFileRoute('/api/public/admin-copilot')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const denied = await requireAdmin(request)
+        const denied = await requirePedagogicalAdmin(request)
         if (denied) return denied
 
         let body: z.infer<typeof Body>

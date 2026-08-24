@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { requireAdmin, SUPABASE_URL, serviceHeaders } from '@/lib/px-server'
+import { requirePedagogicalAdmin, SUPABASE_URL, serviceHeaders } from '@/lib/px-server'
 import { reindexarDesatualizados } from '@/lib/rag'
 
 /* Relatório de RAG da Athena (somente admin): taxa de sucesso, cobertura por
@@ -17,7 +17,7 @@ type Evento = {
 }
 
 async function handler(request: Request) {
-  const denied = await requireAdmin(request)
+  const denied = await requirePedagogicalAdmin(request)
   if (denied) return denied
 
   const url = new URL(request.url)

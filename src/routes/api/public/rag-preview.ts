@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { requireAdmin } from '@/lib/px-server'
+import { requirePedagogicalAdmin } from '@/lib/px-server'
 import { buscarTrechos, configRag, escopoDesatualizado, escopoIndexado } from '@/lib/rag'
 
 /* Pré-visualização do RAG (somente admin): mostra exatamente quais trechos
@@ -18,7 +18,7 @@ export const Route = createFileRoute('/api/public/rag-preview')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const denied = await requireAdmin(request)
+        const denied = await requirePedagogicalAdmin(request)
         if (denied) return denied
         let body: z.infer<typeof Body>
         try {

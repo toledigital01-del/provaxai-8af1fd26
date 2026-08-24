@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { requireAdmin, serviceHeaders, SUPABASE_URL } from '@/lib/px-server'
+import { requirePedagogicalAdmin, serviceHeaders, SUPABASE_URL } from '@/lib/px-server'
 
 /* Teste rápido de uma chave de integração: faz a chamada mais barata possível
    (listar modelos ou uma completude mínima) e devolve ok/erro em português. */
@@ -83,7 +83,7 @@ export const Route = createFileRoute('/api/public/ai-test')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const denied = await requireAdmin(request)
+        const denied = await requirePedagogicalAdmin(request)
         if (denied) return denied
 
         let body: z.infer<typeof Body>

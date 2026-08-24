@@ -1,12 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { requireAdmin, aiKeys } from '@/lib/px-server'
+import { requirePedagogicalAdmin, aiKeys } from '@/lib/px-server'
 import { MODELOS } from '@/lib/ai-gateway'
 
 export const Route = createFileRoute('/api/public/ai-status')({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const denied = await requireAdmin(request)
+        const denied = await requirePedagogicalAdmin(request)
         if (denied) return denied
         const k = await aiKeys()
         return Response.json({
