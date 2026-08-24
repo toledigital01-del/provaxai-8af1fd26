@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
+import { requirePedagogicalAdmin } from '@/lib/px-server'
 
 const SUPABASE_URL = 'https://rdokrryisfkhmevcxlws.supabase.co'
 const SUPABASE_KEY = 'sb_publishable_9ILwlXJNPJ5ZzpALdbmfBA_gRAtH4Qr'
@@ -12,25 +13,6 @@ const Body = z.object({
   texto: z.string().max(400000).optional(),
   arquivo_base64: z.string().max(30_000_000).optional(),
 })
-
-async function requireAdmin(request: Request): Promise<{ ok: true; token: string } | { ok: false; res: Response }> {
-  const auth = request.headers.get('authorization') || ''
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : ''
-  if (!token) return { ok: false, res: Response.json({ error: 'Não autenticado.' }, { status: 401 }) }
-  const u = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${token}` },
-  })
-  if (!u.ok) return { ok: false, res: Response.json({ error: 'Sessão inválida.' }, { status: 401 }) }
-  const user = (await u.json()) as { id: string }
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/has_role`, {
-    method: 'POST',
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ _user_id: user.id, _role: 'admin' }),
-  })
-  const isAdmin = r.ok && (await r.json()) === true
-  if (!isAdmin) return { ok: false, res: Response.json({ error: 'Acesso restrito a administradores.' }, { status: 403 }) }
-  return { ok: true, token }
-}
 
 function stripHtml(html: string): string {
   return html
@@ -131,8 +113,8 @@ export const Route = createFileRoute('/api/public/kb-ingest')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const gate = await requireAdmin(request)
-        if (!gate.ok) return gate.res
+        const denied = await requirePedagogicalAdmin(request)
+        if (denied) return denied
 
         let body: z.infer<typeof Body>
         try {
