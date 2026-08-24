@@ -10,6 +10,7 @@ import { SUPABASE_URL, serviceHeaders } from './px-server'
 import { materialIntegral } from './kb-context'
 import { salvarRecurso } from './aula-recursos'
 import { chat, type Provider, type Keys } from './ai-gateway'
+import { doutrina } from './doutrina'
 
 export const MODULOS = [
   { tipo: 'aula', rotulo: 'Aula com Athena IA', formato: 'md' },
@@ -21,6 +22,8 @@ export const MODULOS = [
   { tipo: 'key_points', rotulo: 'Pontos-chave', formato: 'md' },
   { tipo: 'traps', rotulo: 'Pegadinhas de prova', formato: 'md' },
   { tipo: 'podcast', rotulo: 'Podcast', formato: 'json' },
+  { tipo: 'mapa_mental', rotulo: 'Mapa mental', formato: 'md' },
+  { tipo: 'metadados', rotulo: 'Metadados pedagógicos', formato: 'json' },
   { tipo: 'athena_knowledge', rotulo: 'Base de conhecimento da Athena', formato: 'md' },
 ] as const
 
@@ -189,6 +192,13 @@ export async function publicarVersao(v: Versao & { course_slug: string; discipli
     return (await salvarRecurso(curso, disciplina, topico, 'pontos', { conteudo: v.conteudo }, (v.meta?.['modelo'] as string) || null), true)
   if (tipo === 'traps')
     return (await salvarRecurso(curso, disciplina, topico, 'pegadinhas', { conteudo: v.conteudo }, (v.meta?.['modelo'] as string) || null), true)
+  if (tipo === 'mapa_mental')
+    return (await salvarRecurso(curso, disciplina, topico, 'mapa_mental', { conteudo: v.conteudo }, (v.meta?.['modelo'] as string) || null), true)
+  if (tipo === 'metadados') {
+    const itens = parseJson<unknown[]>(v.conteudo)
+    if (!Array.isArray(itens) || !itens.length) return false
+    return (await salvarRecurso(curso, disciplina, topico, 'metadados', { dados: itens[0] }, (v.meta?.['modelo'] as string) || null), true)
+  }
   if (tipo === 'athena_knowledge')
     return (await salvarRecurso(curso, disciplina, topico, 'athena', { conteudo: v.conteudo }, (v.meta?.['modelo'] as string) || null), true)
   if (tipo === 'lacunas') {
@@ -211,26 +221,40 @@ export async function publicarVersao(v: Versao & { course_slug: string; discipli
     })
   }
   if (tipo === 'questions') {
-    const itens = parseJson<Array<{ enunciado?: string; gabarito?: string; comentario?: string }>>(v.conteudo)
+    const itens = parseJson<Array<Record<string, unknown>>>(v.conteudo)
     if (!Array.isArray(itens) || !itens.length) return false
     const filtro = `course_slug=${eq(curso)}&discipline_nome=${eq(disciplina)}&topic_nome=${eq(topico)}`
     await delRest(`questions?${filtro}`)
     return postRest(
       'questions',
       itens
-        .filter((q) => String(q.enunciado || '').trim().length > 10)
-        .map((q) => ({
-          course_slug: curso,
-          discipline_nome: disciplina,
-          topic_nome: topico,
-          enunciado: String(q.enunciado).trim(),
-          tipo: 'ce',
-          gabarito: String(q.gabarito || 'C').trim().toUpperCase().startsWith('C') ? 'C' : 'E',
-          alternativas: [],
-          comentario: String(q.comentario || '').trim() || null,
-          banca: 'Cebraspe',
-          ativa: true,
-        })),
+        .filter((q) => String(q['enunciado'] || '').trim().length > 10)
+        .map((q) => {
+          const txt = (k: string) => {
+            const val = q[k]
+            return val == null || val === '' ? null : String(val).trim()
+          }
+          const origem = String(q['origem'] || 'inedita').toLowerCase()
+          const org = origem === 'real' ? 'real' : origem === 'nao_verificada' ? 'nao_verificada' : 'inedita'
+          return {
+            course_slug: curso,
+            discipline_nome: disciplina,
+            topic_nome: topico,
+            enunciado: String(q['enunciado']).trim(),
+            tipo: 'ce',
+            gabarito: String(q['gabarito'] || 'C').trim().toUpperCase().startsWith('C') ? 'C' : 'E',
+            alternativas: [],
+            comentario: String(q['comentario'] || '').trim() || null,
+            banca: txt('banca') || 'Cebraspe',
+            origem: org,
+            verificada: org === 'real',
+            orgao: txt('orgao'),
+            cargo: txt('cargo'),
+            nivel: txt('nivel'),
+            fonte: org === 'real' ? txt('fonte') || 'material da aula' : null,
+            ativa: true,
+          }
+        }),
     )
   }
   if (tipo === 'flashcards') {
@@ -271,6 +295,8 @@ export async function despublicarModulo(curso: string, disciplina: string, topic
   if (tipo === 'key_points') return delRest(`aula_recursos?${filtroRecurso(curso, disciplina, topico, 'pontos')}`)
   if (tipo === 'traps') return delRest(`aula_recursos?${filtroRecurso(curso, disciplina, topico, 'pegadinhas')}`)
   if (tipo === 'athena_knowledge') return delRest(`aula_recursos?${filtroRecurso(curso, disciplina, topico, 'athena')}`)
+  if (tipo === 'mapa_mental') return delRest(`aula_recursos?${filtroRecurso(curso, disciplina, topico, 'mapa_mental')}`)
+  if (tipo === 'metadados') return delRest(`aula_recursos?${filtroRecurso(curso, disciplina, topico, 'metadados')}`)
   if (tipo === 'lacunas') return delRest(`aula_recursos?${filtroRecurso(curso, disciplina, topico, 'lacunas')}`)
   if (tipo === 'podcast')
     return delRest(`podcasts_ia?course_slug=${eq(curso)}&disciplina=${eq(disciplina)}&topico=${eq(topico)}&user_id=is.null`)
@@ -304,6 +330,8 @@ export type GerarCtx = {
   model: string
   /** Rotas por módulo (Central de IA): quando presente, cada módulo usa seu agente. */
   rotas?: Partial<Record<TipoModulo, { provider: Provider; model: string }>> | undefined
+  /** Doutrina pedagógica vigente (prompt-mestre). Injetada em todos os módulos. */
+  doutrina?: string | undefined
   keys: Keys
 }
 
@@ -315,6 +343,8 @@ function jsonArray<T>(txt: string): T[] {
 function promptBase(ctx: GerarCtx, regras: string[]) {
   const extra = (ctx.instrucoes || '').trim()
   return [
+    (ctx.doutrina || '').trim(),
+    '--- TAREFA ESPECÍFICA DESTE MÓDULO ---',
     ...regras,
     extra ? `Instruções do professor responsável pelo conteúdo (siga com prioridade):\n"${extra}"` : '',
     '\n--- MATERIAL DA AULA ---\n' + ctx.material.slice(0, 90000),
@@ -331,7 +361,7 @@ function rotear(ctx: GerarCtx, tipo: TipoModulo): GerarCtx {
 
 /** Gera UM módulo da aula. Devolve { conteudo, meta } pronto para salvarVersao. */
 export async function gerarModulo(tipo: TipoModulo, ctx0: GerarCtx): Promise<{ conteudo: string; meta: Record<string, unknown> }> {
-  const ctx = rotear(ctx0, tipo)
+  const ctx = rotear({ ...ctx0, doutrina: ctx0.doutrina || (await doutrina()) }, tipo)
   const user = `Disciplina: ${ctx.disciplina} | Aula: ${ctx.topico}\n\nGere o conteúdo agora.`
 
   if (tipo === 'aula') {
@@ -522,6 +552,32 @@ export async function gerarModulo(tipo: TipoModulo, ctx0: GerarCtx): Promise<{ c
     return { conteudo: JSON.stringify(falas, null, 2), meta: { modelo: ctx.model, falas: falas.length, minutos } }
   }
 
+  if (tipo === 'mapa_mental') {
+    const system = promptBase(ctx, [
+      'Monte o MAPA MENTAL textual desta aula em Markdown, pronto para memorização visual.',
+      'Use listas aninhadas com no máximo 4 níveis: tema central (# ), ramos (## ), sub-ramos ("- ") e detalhes ("  - ").',
+      'Cada nó é curto (até 8 palavras), com os termos técnicos em negrito e os prazos/números destacados.',
+      'Cubra toda a aula, na mesma ordem lógica do conteúdo, sem inventar informação.',
+    ])
+    const conteudo = await chat({ provider: ctx.provider, model: ctx.model, system, user, keys: ctx.keys, maxTokens: 6000 })
+    return { conteudo: conteudo.trim(), meta: { modelo: ctx.model } }
+  }
+
+  if (tipo === 'metadados') {
+    const system = promptBase(ctx, [
+      'Produza os METADADOS PEDAGÓGICOS desta aula para o catálogo interno da plataforma.',
+      'Responda SOMENTE com JSON válido, um único objeto dentro de um array:',
+      '[{"resumo_uma_linha":"...","nivel":"basico|intermediario|avancado","tempo_estudo_min":45,',
+      '"pre_requisitos":["..."],"objetivos_aprendizagem":["..."],"palavras_chave":["..."],',
+      '"itens_edital":["..."],"leis_citadas":["..."],"incidencia_prova":"alta|media|baixa"}]',
+      'Todos os campos precisam refletir o material — nada de suposição sobre o que não está nele.',
+    ])
+    const saida = await chat({ provider: ctx.provider, model: ctx.model, system, user, keys: ctx.keys, maxTokens: 3000 })
+    const itens = jsonArray<Record<string, unknown>>(saida)
+    if (!itens.length) throw new Error('A IA não devolveu os metadados.')
+    return { conteudo: JSON.stringify(itens, null, 2), meta: { modelo: ctx.model } }
+  }
+
   // athena_knowledge
   const system = promptBase(ctx, [
     'Você organiza a BASE DE CONHECIMENTO que a tutora IA (Athena) usará para tirar dúvidas dos alunos sobre esta aula.',
@@ -536,9 +592,10 @@ export async function gerarModulo(tipo: TipoModulo, ctx0: GerarCtx): Promise<{ c
 
 /** Acrescenta conteúdo novo ao módulo, sem apagar o que já existe. */
 export async function acrescentarModulo(tipo: TipoModulo, ctx0: GerarCtx, atual: string, instrucao: string) {
-  const ctx = rotear(ctx0, tipo)
+  const ctx = rotear({ ...ctx0, doutrina: ctx0.doutrina || (await doutrina()) }, tipo)
   const formato = MODULOS.find((m) => m.tipo === tipo)?.formato
   const system = [
+    (ctx.doutrina || '').trim(),
     'Você é a Athena, professora de concursos da plataforma Prova X.',
     'O administrador quer ACRESCENTAR conteúdo a um material já existente. Gere APENAS a parte nova pedida,',
     formato === 'json'
@@ -568,9 +625,10 @@ export async function acrescentarModulo(tipo: TipoModulo, ctx0: GerarCtx, atual:
 
 /** Melhora/reescreve o conteúdo atual seguindo a instrução do administrador. */
 export async function melhorarModulo(tipo: TipoModulo, ctx0: GerarCtx, atual: string, instrucao: string) {
-  const ctx = rotear(ctx0, tipo)
+  const ctx = rotear({ ...ctx0, doutrina: ctx0.doutrina || (await doutrina()) }, tipo)
   const formato = MODULOS.find((m) => m.tipo === tipo)?.formato
   const system = [
+    (ctx.doutrina || '').trim(),
     'Você é a Athena, professora de concursos da plataforma Prova X.',
     'Reescreva o conteúdo abaixo seguindo a instrução do administrador, mantendo as informações corretas',
     'e a fidelidade ao material da aula. Não perca conteúdo importante sem motivo.',
