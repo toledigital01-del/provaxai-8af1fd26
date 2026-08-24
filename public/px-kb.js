@@ -174,6 +174,56 @@
     }
   };
 
+  /* ---------- Cache do conteúdo já publicado ----------
+     Uma vez aberto, o material da aula fica guardado no navegador (memória +
+     localStorage por 7 dias), então ao voltar na aba ele abre na hora, sem
+     esperar a IA e sem gerar de novo. */
+  var iaMem = {};
+  var CACHE_MS = 7 * 24 * 60 * 60 * 1000;
+  var CACHE_PREFIX = 'px:ia:';
+
+  function chaveIA(rota, dados) {
+    var d = dados || {};
+    var partes = Object.keys(d).sort().map(function (k) { return k + '=' + String(d[k]); });
+    return CACHE_PREFIX + rota + '|' + partes.join('&');
+  }
+
+  function lerLocal(k) {
+    try {
+      var raw = localStorage.getItem(k);
+      if (!raw) return null;
+      var o = JSON.parse(raw);
+      if (!o || !o.t || Date.now() - o.t > CACHE_MS) { localStorage.removeItem(k); return null; }
+      return o.v;
+    } catch (e) { return null; }
+  }
+
+  function gravarLocal(k, v) {
+    try { localStorage.setItem(k, JSON.stringify({ t: Date.now(), v: v })); } catch (e) { /* cota cheia */ }
+  }
+
+  /* Igual ao iaPost, mas reaproveitando a resposta já obtida antes.
+     forcar = true refaz a chamada e substitui o que estava guardado. */
+  PX.iaPostCache = async function (rota, dados, forcar) {
+    var k = chaveIA(rota, dados);
+    if (!forcar) {
+      if (iaMem[k]) return iaMem[k];
+      var salvo = lerLocal(k);
+      if (salvo) { iaMem[k] = salvo; return salvo; }
+    }
+    var j = await PX.iaPost(rota, dados);
+    if (j && !j.erro) { iaMem[k] = j; gravarLocal(k, j); }
+    return j;
+  };
+
+  /* Limpa o que estiver guardado de uma rota (usado ao "gerar novamente") */
+  PX.iaCacheLimpar = function (rota, dados) {
+    var k = chaveIA(rota, dados);
+    delete iaMem[k];
+    try { localStorage.removeItem(k); } catch (e) { /* ignora */ }
+  };
+
+
 
   /* Markdown simples -> HTML seguro (títulos, listas, citação, negrito, itálico, grifo, código) */
   PX.kbHTML = function (md) {
