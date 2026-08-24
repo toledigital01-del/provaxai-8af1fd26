@@ -1446,14 +1446,8 @@ async function edLerArquivos(files){
   for(const f of files){
     try{
       edProg(i, files.length, 'Lendo ' + f.name);
-      let texto = '';
-      if(kbEhTextoSimples(f)){
-        texto = (await f.text()).trim();
-      }else{
-        const b64 = await new Promise((res,rej)=>{ const r = new FileReader(); r.onload=()=>res(String(r.result)); r.onerror=rej; r.readAsDataURL(f); });
-        const j = await kbPost('/api/public/kb-ingest', { tipo: kbEhImagem(f) ? 'imagem' : 'auto', nome:f.name, mime:f.type||'', arquivo_base64:b64 });
-        texto = j.texto || '';
-      }
+      const texto = await kbLerArquivo(f, null);
+
       if(texto) ta.value = (ta.value.trim() ? ta.value + '\n\n' : '') + texto;
     }catch(e){ edMsg('Erro ao ler "' + f.name + '": ' + e.message); }
     i++;
@@ -2847,13 +2841,9 @@ function kbBindAulaFile(){
   }
 }
 
-/* Lê o texto de um arquivo (PDF, imagem, txt…). */
-async function kbAulaLerArquivo(f){
-  if(kbEhTextoSimples(f)) return (await f.text()).trim();
-  const b64 = await new Promise((res,rej)=>{ const r = new FileReader(); r.onload=()=>res(String(r.result)); r.onerror=rej; r.readAsDataURL(f); });
-  const j = await kbPost('/api/public/kb-ingest', { tipo: kbEhImagem(f) ? 'imagem' : 'auto', nome:f.name, mime:f.type||'', arquivo_base64:b64 });
-  return String(j.texto || '').trim();
-}
+/* Leitura de arquivo: usa o leitor único (kbLerArquivo). */
+async function kbAulaLerArquivo(f){ return kbLerArquivo(f, kbDisc); }
+
 
 /* Título automático: primeira linha útil do material, ou o nome do arquivo. */
 function kbAulaTituloAuto(texto, origem, numero){
@@ -2978,7 +2968,7 @@ window.kbAulaCadastrar = async function(){
       const url = String((document.getElementById(campo)||{}).value || '').trim();
       if(!url) return kbAulaMsg('Cole o link antes de cadastrar.');
       kbAulaMsg('Lendo o conteúdo do link…');
-      const j = await kbPost('/api/public/kb-ingest', { tipo: KB_AULA_TAB === 'video' ? 'video' : 'url', url });
+      const j = await kbPost('/api/public/kb-ingest', { tipo: KB_AULA_TAB === 'video' ? 'video' : 'url', url: url, disciplina: disc || undefined, topico: kbTopic || undefined });
       texto = String(j.texto || '').trim();
       origem = j.origem || url;
     }
@@ -3064,9 +3054,11 @@ function kbPaintBiblioteca(){
         '<span style="flex:1;min-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
           (d.origem_url ? '<a href="' + esc(d.origem_url) + '" target="_blank" rel="noopener" style="color:#2563EB;text-decoration:none">' + esc(d.nome_arquivo) + '</a>' : esc(d.nome_arquivo)) +
         '</span>' +
-        '<span class="muted" style="font-size:0.75rem">' + esc(d.tipo) + (d.topic_nome ? ' · ' + esc(d.topic_nome) : '') + ' · ' + dt(d.criado_em) + '</span>' +
-        '<button class="act" onclick="kbLibReprocessar(\'' + d.id + '\')">Reprocessar</button>' +
+        '<span class="muted" style="font-size:0.75rem">' + esc(d.tipo) + (d.topic_nome ? ' · ' + esc(d.topic_nome) : '') + ' · ' + ((d.texto_extraido||'').length).toLocaleString('pt-BR') + ' car. · ' + dt(d.criado_em) + '</span>' +
+        '<button class="act" onclick="kbLibEditar(\'' + d.id + '\')">Revisar texto</button>' +
+        '<button class="act" onclick="kbLibReprocessar(\'' + d.id + '\')">Usar na aula</button>' +
         '<button class="act danger" onclick="kbLibRemover(\'' + d.id + '\')">Remover</button>' +
+
       '</div>';
     }).join('') + '</div>';
 }
@@ -3123,6 +3115,49 @@ window.kbLibReprocessar = function(id){
   if(ta){ ta.value = d.texto_extraido || ''; ta.focus(); }
   kbAulaMsg('Texto de "' + d.nome_arquivo + '" carregado no campo acima — revise e clique em “Cadastrar aula”.');
 };
+/* Revisar/editar o texto extraído antes de virar aula. */
+window.kbLibEditar = function(id){
+  const d = KB_LIB.find(function(x){ return x.id === id; });
+  if(!d) return;
+  let ov = document.getElementById('kb-lib-modal');
+  if(ov) ov.remove();
+  ov = document.createElement('div');
+  ov.id = 'kb-lib-modal';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.innerHTML = '<div style="background:#fff;border-radius:14px;width:min(900px,100%);max-height:90vh;display:flex;flex-direction:column;overflow:hidden">' +
+    '<div style="padding:14px 18px;border-bottom:1px solid #E8EDF3;display:flex;gap:10px;align-items:center">' +
+      '<strong style="flex:1;font-size:0.95rem">Revisar texto — ' + esc(d.nome_arquivo) + '</strong>' +
+      '<span class="muted" id="kb-lib-cnt" style="font-size:0.75rem"></span>' +
+    '</div>' +
+    '<textarea id="kb-lib-ta" style="flex:1;min-height:50vh;border:0;padding:16px 18px;font:13px/1.55 ui-monospace,monospace;resize:none;outline:none"></textarea>' +
+    '<div style="padding:12px 18px;border-top:1px solid #E8EDF3;display:flex;gap:8px;justify-content:flex-end;align-items:center">' +
+      '<span id="kb-lib-msg" class="muted" style="flex:1;font-size:0.8rem"></span>' +
+      '<button class="act" onclick="document.getElementById(\'kb-lib-modal\').remove()">Fechar</button>' +
+      '<button class="act" onclick="kbLibSalvarTexto(\'' + d.id + '\')">Salvar texto</button>' +
+      '<button class="act" onclick="kbLibSalvarTexto(\'' + d.id + '\', true)">Salvar e usar na aula</button>' +
+    '</div></div>';
+  document.body.appendChild(ov);
+  const ta = document.getElementById('kb-lib-ta');
+  const cnt = document.getElementById('kb-lib-cnt');
+  ta.value = d.texto_extraido || '';
+  const atualiza = function(){ cnt.textContent = ta.value.length.toLocaleString('pt-BR') + ' caracteres'; };
+  ta.addEventListener('input', atualiza); atualiza(); ta.focus();
+};
+window.kbLibSalvarTexto = async function(id, usar){
+  const ta = document.getElementById('kb-lib-ta');
+  const msg = document.getElementById('kb-lib-msg');
+  if(!ta) return;
+  const texto = ta.value;
+  if(msg) msg.textContent = 'Salvando…';
+  const { error } = await PX.sb.from('kb_documentos').update({ texto_extraido: texto }).eq('id', id);
+  if(error){ if(msg) msg.textContent = 'Erro ao salvar: ' + error.message; return; }
+  const d = KB_LIB.find(function(x){ return x.id === id; });
+  if(d) d.texto_extraido = texto;
+  if(msg) msg.textContent = '✅ Texto salvo.';
+  kbPaintBiblioteca();
+  if(usar){ document.getElementById('kb-lib-modal').remove(); kbLibReprocessar(id); }
+};
+
 window.kbLibRemover = async function(id){
   if(!confirm('Remover este documento da biblioteca? O texto guardado será apagado.')) return;
   const { error } = await PX.sb.from('kb_documentos').delete().eq('id', id);
@@ -3208,6 +3243,28 @@ function kbEhTextoSimples(f){
 function kbEhImagem(f){
   return /^image\//i.test(f.type || '') || /\.(png|jpe?g|webp|gif|bmp|heic|heif|tiff?)$/i.test(f.name || '');
 }
+
+/* ---- Leitor único de material (usado pelo edital, pela aula e pelo lote) ----
+   PDF digital, PDF escaneado (transcrito por IA), imagem e texto simples.
+   Quando há matéria selecionada, o texto extraído já fica guardado na
+   biblioteca da matéria para revisão/edição antes de publicar. */
+async function kbLerArquivo(f, disciplina){
+  if(kbEhTextoSimples(f)){
+    const texto = (await f.text()).trim();
+    if(texto && disciplina){
+      try{ await kbPost('/api/public/kb-ingest', { tipo:'texto', texto:texto, nome:f.name, disciplina:disciplina, topico:kbTopic||undefined }); }catch(e){}
+    }
+    return texto;
+  }
+  const b64 = await new Promise(function(res,rej){ const r = new FileReader(); r.onload=function(){ res(String(r.result)); }; r.onerror=rej; r.readAsDataURL(f); });
+  const j = await kbPost('/api/public/kb-ingest', {
+    tipo: kbEhImagem(f) ? 'imagem' : 'auto',
+    nome: f.name, mime: f.type || '', arquivo_base64: b64,
+    disciplina: disciplina || undefined, topico: kbTopic || undefined,
+  });
+  return String(j.texto || '').trim();
+}
+
 function kbEhVideoUrl(u){
   return /(youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com)/i.test(u || '');
 }
