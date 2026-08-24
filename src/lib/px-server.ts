@@ -141,7 +141,8 @@ export async function hasCourseAccess(userId: string, slug: string): Promise<boo
 }
 
 /** Quantas chamadas o aluno já fez hoje em determinada ferramenta. */
-export async function usosHoje(userId: string, ferramenta: string): Promise<number> {
+export async function usosHoje(userId: string | null, ferramenta: string): Promise<number> {
+  if (!userId) return 0
   const inicio = new Date()
   inicio.setUTCHours(0, 0, 0, 0)
   const r = await fetch(

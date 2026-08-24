@@ -41,8 +41,8 @@ export const Route = createFileRoute('/api/public/resumo')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const userId = await currentUser(request)
-        if (!userId) return Response.json({ error: 'Entre na sua conta para gerar o resumo.' }, { status: 401 })
+        const userId = await currentUser(request) // null = convidado
+        // Acesso liberado sem login por enquanto (fase de testes).
 
         let body: z.infer<typeof Body>
         try {
