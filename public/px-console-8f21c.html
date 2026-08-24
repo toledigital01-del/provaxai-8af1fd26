@@ -824,6 +824,19 @@ async function viewConfig(){
 
   <div id="cfgsec-roteamento" style="display:none">${htmlRoteamento()}</div>
 
+  <div id="cfgsec-doutrina" style="display:none">
+    <div class="card">
+      <h2>Doutrina pedagógica (prompt-mestre)</h2>
+      <p class="muted">Este texto rege TODA a geração de conteúdo pela IA: identidade, regras de veracidade, padrão de aula, estilo Cebraspe das questões e checklist final. Ele é enviado antes das instruções de cada módulo (aula, resumo, revisão, questões, flashcards, pegadinhas, mapa mental, podcast e base da Athena).</p>
+      <textarea rows="22" id="doutrina-txt" style="font-family:ui-monospace,Menlo,monospace;font-size:0.82rem">Carregando…</textarea>
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="act primary" onclick="doutrinaSalvar()">Salvar doutrina</button>
+        <button class="act" onclick="doutrinaRestaurar()">Restaurar padrão Prova X</button>
+      </div>
+      <div class="muted" id="doutrina-st" style="margin-top:6px"></div>
+    </div>
+  </div>
+
   <div id="cfgsec-athena" style="display:none">
     ${htmlPromptAgente('athena','prompt-athena','Athena — prompt complementar',
       'Texto extra anexado ao final de toda instrução enviada à Athena (chat das aulas). Use para ajustar o tom e as regras sem mexer no prompt-base. O prompt-base e o histórico de uso ficam na aba "Athena IA" do painel.')}
@@ -4021,6 +4034,8 @@ const IA_MODULOS = [
   { tipo:'key_points', rotulo:'Pontos-chave', icon:'📌', formato:'md' },
   { tipo:'traps', rotulo:'Pegadinhas de prova', icon:'⚠️', formato:'md' },
   { tipo:'podcast', rotulo:'Podcast', icon:'🎙️', formato:'json' },
+  { tipo:'mapa_mental', rotulo:'Mapa mental', icon:'🗺️', formato:'md' },
+  { tipo:'metadados', rotulo:'Metadados pedagógicos', icon:'🏷️', formato:'json' },
   { tipo:'athena_knowledge', rotulo:'Base da Athena IA', icon:'🤖', formato:'md' },
 ];
 const IA_MELHORAR_OPS = {
@@ -4030,6 +4045,7 @@ const IA_MELHORAR_OPS = {
   traps:['mais direcionado para prova','mais didático','mais organizado'],
   aula:['mais didático','mais direcionado para prova','mais organizado'],
   athena_knowledge:['mais organizado','mais objetivo','mais direcionado para prova'],
+  mapa_mental:['mais organizado','mais objetivo','mais direcionado para prova'],
 };
 let IA_AULA = null, IA_DADOS = null, IA_TAB = 'config', IA_OCUPADO = false;
 
@@ -4586,7 +4602,29 @@ function kbIaPaintPublicacao(body){
       + (m.publicado ? '<button class="act" style="font-size:0.74rem" onclick="kbIaDespublicar(\''+mo.tipo+'\')">Despublicar</button>' : '')
       + '</div>';
   }).join('');
+  const ed = (IA_DADOS && IA_DADOS.editorial) || { status:'rascunho', versao_rotulo:'v1.0' };
+  const sts = (IA_DADOS && IA_DADOS.statusEditorial) || [
+    {valor:'rascunho',rotulo:'Rascunho'},{valor:'em_revisao',rotulo:'Em revisão'},{valor:'revisado',rotulo:'Revisado'},
+    {valor:'aprovado',rotulo:'Aprovado'},{valor:'publicado',rotulo:'Publicado'},{valor:'desatualizado',rotulo:'Desatualizado'}];
+  const editorialHtml = '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 18px;margin-bottom:14px">'
+    + '<div style="font-weight:800;margin-bottom:4px">Controle editorial da aula</div>'
+    + '<div class="muted" style="font-size:0.8rem;margin-bottom:10px">Registro pedagógico da aula: em que etapa da revisão ela está, qual versão está no ar e quando precisa ser reconferida.</div>'
+    + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px">'
+    +   '<div><label class="muted" style="font-size:0.74rem">Status</label><select id="ia-ed-status" style="width:100%">'
+    +     sts.map(function(o){ return '<option value="'+o.valor+'"'+(ed.status===o.valor?' selected':'')+'>'+o.rotulo+'</option>'; }).join('')
+    +   '</select></div>'
+    +   '<div><label class="muted" style="font-size:0.74rem">Versão editorial</label><input id="ia-ed-versao" style="width:100%" value="'+esc(ed.versao_rotulo||'v1.0')+'"></div>'
+    +   '<div><label class="muted" style="font-size:0.74rem">Próxima revisão</label><input id="ia-ed-revisao" type="date" style="width:100%" value="'+esc(ed.proxima_revisao||'')+'"></div>'
+    + '</div>'
+    + '<div style="margin-top:10px"><label class="muted" style="font-size:0.74rem">Observações do revisor</label>'
+    +   '<textarea id="ia-ed-obs" rows="2" style="width:100%;font-size:0.84rem">'+esc(ed.observacoes||'')+'</textarea></div>'
+    + '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
+    +   '<button class="act primary" style="font-size:0.78rem" onclick="kbIaSalvarEditorial(false)">Salvar status</button>'
+    +   '<button class="act" style="font-size:0.78rem" onclick="kbIaSalvarEditorial(true)">✓ Marcar como conferida hoje</button>'
+    +   '<span class="muted" style="font-size:0.74rem">Última conferência: '+(ed.ultima_verificacao ? new Date(ed.ultima_verificacao).toLocaleDateString('pt-BR') : '—')+'</span>'
+    + '</div></div>';
   body.innerHTML = '<div style="max-width:760px;margin:0 auto">'
+    + editorialHtml
     + '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 18px">'
     + '<div style="font-weight:800;margin-bottom:4px">Publicação para os alunos</div>'
     + '<div class="muted" style="font-size:0.8rem;margin-bottom:10px">Só o que está <b>publicado</b> aparece no painel do aluno e entra no contexto da Athena. Rascunhos ficam visíveis apenas aqui.</div>'
@@ -4596,6 +4634,19 @@ function kbIaPaintPublicacao(body){
     +   '<span class="muted" style="font-size:0.75rem">Publica a versão mais recente de cada módulo que ainda está em rascunho.</span>'
     + '</div></div></div>';
 }
+window.kbIaSalvarEditorial = async function(conferida){
+  const v = function(id){ const e = document.getElementById(id); return e ? e.value : ''; };
+  try{
+    const r = await kbIaApi({ acao:'salvar-editorial', editorial:{
+      status: v('ia-ed-status'), versao_rotulo: v('ia-ed-versao') || 'v1.0',
+      observacoes: v('ia-ed-obs'), proxima_revisao: v('ia-ed-revisao') || undefined,
+      verificado: !!conferida,
+    }});
+    if(IA_DADOS && r && r.editorial) IA_DADOS.editorial = r.editorial;
+    toast('Status editorial salvo.');
+    kbIaPaint();
+  }catch(e){ toast(e.message || 'Não consegui salvar o status editorial.'); }
+};
 window.kbIaPublicar = async function(tipo){
   try{
     await kbIaApi({ acao:'publicar', tipo: tipo });
