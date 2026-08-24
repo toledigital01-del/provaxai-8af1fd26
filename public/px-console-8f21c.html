@@ -826,7 +826,7 @@ async function viewConfig(){
           <div class="muted">${esc(c.env)} — ${esc(c.dica)}</div>
         </div>
         <div>
-          <button class="act primary" onclick="cfgSalvarChave('${c.env}')">Salvar</button>
+          <button class="act primary" data-savekey="${c.env}" onclick="cfgSalvarChave('${c.env}')">Salvar</button>
           <button class="act" onclick="cfgTestarChave('${c.env}')">Testar</button>
           ${salvas[c.env]?`<button class="act" onclick="cfgApagarChave('${c.env}')">Remover</button>`:''}
           ${c.extra?`<button class="act" onclick="cfgRemoverIntegracao('${c.env}')">Excluir integração</button>`:''}
