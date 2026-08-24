@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { requireAdmin, aiKeys, currentUser } from '@/lib/px-server'
+import { requirePedagogicalAdmin, aiKeys, currentUser } from '@/lib/px-server'
 import { rotaDoAgente, rotasPacote } from '@/lib/ai-router'
 import {
   TIPOS,
@@ -122,7 +122,7 @@ export const Route = createFileRoute('/api/public/aula-pacote')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const negado = await requireAdmin(request)
+        const negado = await requirePedagogicalAdmin(request)
         if (negado) return negado
         const userId = await currentUser(request)
 
