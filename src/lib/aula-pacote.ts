@@ -403,19 +403,42 @@ export async function gerarModulo(tipo: TipoModulo, ctx0: GerarCtx): Promise<{ c
         ? 'O comentário deve ser COMPLETO: explique por que está certo/errado e cite o ponto do material.'
         : 'O comentário deve ser uma justificativa curta.',
       'Não invente lei, prazo, número ou julgado que não esteja no material.',
-      'Responda SOMENTE com JSON válido: [{"enunciado":"...","gabarito":"C","comentario":"..."}]',
+      'Classifique a ORIGEM de cada item: "real" apenas quando a questão constar do material com banca/órgão/ano',
+      'identificáveis (informe também "banca", "orgao", "ano" e "cargo" quando existirem); caso contrário use "inedita".',
+      'Na dúvida sobre a procedência, use "inedita" — jamais rotule como real algo não confirmado no material.',
+      'Informe o nível de cada item em "nivel": "facil", "medio" ou "dificil".',
+      'Responda SOMENTE com JSON válido: [{"enunciado":"...","gabarito":"C","comentario":"...","origem":"inedita","nivel":"medio","banca":"Cebraspe","orgao":null,"ano":null,"cargo":null}]',
     ])
     const saida = await chat({ provider: ctx.provider, model: ctx.model, system, user, keys: ctx.keys, maxTokens: 12000 })
-    const itens = jsonArray<{ enunciado?: string; gabarito?: string; comentario?: string }>(saida)
-      .filter((x) => String(x.enunciado || '').trim().length > 10)
+    const itens = jsonArray<Record<string, unknown>>(saida)
+      .filter((x) => String(x['enunciado'] || '').trim().length > 10)
       .slice(0, total)
-      .map((x) => ({
-        enunciado: String(x.enunciado).trim(),
-        gabarito: String(x.gabarito || 'C').trim().toUpperCase().startsWith('C') ? 'C' : 'E',
-        comentario: String(x.comentario || '').trim(),
-      }))
+      .map((x) => {
+        const origem = String(x['origem'] || 'inedita').toLowerCase()
+        const nivel = String(x['nivel'] || dif || 'medio').toLowerCase()
+        const txt = (k: string) => {
+          const v = x[k]
+          return v == null || v === '' ? null : String(v).trim()
+        }
+        return {
+          enunciado: String(x['enunciado']).trim(),
+          gabarito: String(x['gabarito'] || 'C').trim().toUpperCase().startsWith('C') ? 'C' : 'E',
+          comentario: String(x['comentario'] || '').trim(),
+          origem: origem === 'real' ? 'real' : origem === 'nao_verificada' ? 'nao_verificada' : 'inedita',
+          nivel: ['facil', 'medio', 'dificil'].includes(nivel) ? nivel : 'medio',
+          banca: txt('banca') || 'Cebraspe',
+          orgao: txt('orgao'),
+          ano: txt('ano'),
+          cargo: txt('cargo'),
+        }
+      })
     if (!itens.length) throw new Error('A IA não devolveu questões válidas.')
-    return { conteudo: JSON.stringify(itens, null, 2), meta: { modelo: ctx.model, itens: itens.length, config: q } }
+    const reais = itens.filter((i) => i.origem === 'real').length
+    return {
+      conteudo: JSON.stringify(itens, null, 2),
+      meta: { modelo: ctx.model, itens: itens.length, reais, ineditas: itens.length - reais, config: q },
+    }
+
   }
 
   if (tipo === 'flashcards') {
