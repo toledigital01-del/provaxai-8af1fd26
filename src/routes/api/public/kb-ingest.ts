@@ -192,9 +192,12 @@ export const Route = createFileRoute('/api/public/kb-ingest')({
             const ehPdf = body.tipo === 'pdf' || /pdf/i.test(mime) || /\.pdf$/i.test(nome)
             if (ehPdf) {
               const texto = await extractPdf(bytes)
+              if (texto && texto.length > 40) return Response.json({ texto, origem: nome || 'arquivo.pdf' })
+              const ocr = await extractPdfIA(body.arquivo_base64)
+              if (ocr) return Response.json({ texto: ocr, origem: nome || 'arquivo.pdf', ocr: true })
               if (texto) return Response.json({ texto, origem: nome || 'arquivo.pdf' })
               return Response.json(
-                { error: 'Não consegui ler texto deste PDF (parece digitalizado). Envie as páginas como imagem que eu transcrevo.' },
+                { error: 'Não consegui ler texto deste PDF (parece digitalizado e a transcrição por IA falhou). Envie as páginas como imagem.' },
                 { status: 422 },
               )
             }
