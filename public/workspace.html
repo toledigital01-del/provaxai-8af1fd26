@@ -200,6 +200,10 @@
   .mm-node { font-weight:700; font-size:0.9rem; color:var(--mmc); margin-bottom:8px; }
   .mm-leaves { margin:0; padding-left:18px; }
   .mm-leaves li { font-size:0.85rem; line-height:1.55; color:var(--muted); margin-bottom:5px; }
+  .mm-leaves li.n1 { margin-left:14px; list-style:circle; }
+  .mm-leaves li.n2 { margin-left:28px; list-style:square; font-size:0.82rem; }
+  .mm-leaves li b { color:inherit; font-weight:700; }
+
 </style>
 
   <script src="px-guard.js"></script>
@@ -732,68 +736,116 @@ async function carregarAulaIA(regerar) {
 }
 
 
-/* ---------- Mapa Mental ---------- */
-let mapaState = { state: 'idle', blocks: null, erro: '', status: 0 };
-function mapaFrases(b) {
-  const txt = b.p.map(x => x[0]).join('');
-  const chaves = b.p.filter(x => x[1] === 'chave').map(x => x[0]);
-  const ramos = chaves.length ? chaves : txt.split(/(?<=\.)\s+/);
-  return ramos.map(s => String(s).trim()).filter(s => s.length > 2).slice(0, 6);
+/* ---------- Mapa Mental ----------
+   Fonte oficial: módulo "Mapa mental" publicado no painel administrativo
+   (aula_recursos / mapa_mental). A geração pela Athena é só um plano B. */
+let mapaState = { state: 'idle', dados: null, erro: '', status: 0 };
+
+/* Markdown do módulo -> { tema, ramos:[{ t, folhas:[{txt, nivel}] }] } */
+function mapaParse(md) {
+  const linhas = String(md || '').split(/\r?\n/);
+  let tema = '', ramos = [], atual = null;
+  linhas.forEach(ln => {
+    if (!ln.trim()) return;
+    const h1 = ln.match(/^#\s+(.*)$/);
+    if (h1) { tema = h1[1].trim(); return; }
+    const h2 = ln.match(/^#{2,4}\s+(.*)$/);
+    if (h2) { atual = { t: h2[1].trim(), folhas: [] }; ramos.push(atual); return; }
+    const li = ln.match(/^(\s*)[-*•]\s+(.*)$/);
+    if (li) {
+      if (!atual) { atual = { t: tema || rzSubject(), folhas: [] }; ramos.push(atual); }
+      atual.folhas.push({ txt: li[2].trim(), nivel: Math.min(2, Math.floor(li[1].length / 2)) });
+      return;
+    }
+    if (!atual) { atual = { t: tema || rzSubject(), folhas: [] }; ramos.push(atual); }
+    atual.folhas.push({ txt: ln.trim(), nivel: 0 });
+  });
+  ramos = ramos.filter(r => r.t || r.folhas.length);
+  return { tema: tema || rzSubject(), ramos };
 }
-async function mapaCarregar() {
-  mapaState = { state: 'load', blocks: null, erro: '', status: 0 };
+function mapaInline(t) {
+  return esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`(.+?)`/g, '<code>$1</code>');
+}
+
+async function mapaCarregar(gerar) {
+  mapaState = { state: 'load', dados: null, erro: '', status: 0 };
   renderPane();
   const alvo = scope === 'geral' && selDisc !== 'all' ? selDisc : disc;
-  const r = await PX.iaPost('resumo', { disciplina: alvo, topico: scope === 'topico' ? topic : null, curso: id });
-  if (r.erro) mapaState = { state: 'erro', blocks: null, erro: r.erro, status: r.status || 0 };
+  const r = await PX.iaPost('mapa', {
+    disciplina: alvo,
+    topico: scope === 'topico' ? topic : null,
+    curso: id,
+    gerar: !!gerar,
+  });
+  if (r.erro) mapaState = { state: 'erro', dados: null, erro: r.erro, status: r.status || 0 };
+  else if (r.aulas) mapaState = { state: 'lista', dados: r.aulas, erro: '', status: 200 };
+  else if (r.pendente) mapaState = { state: 'pendente', dados: null, erro: '', status: 200 };
   else {
-    const blocks = rzParse(r.resumo);
-    mapaState = blocks.length
-      ? { state: 'ok', blocks, erro: '', status: 200 }
-      : { state: 'erro', blocks: null, erro: 'A Athena não retornou conteúdo para o mapa.', status: 0 };
+    const m = mapaParse(r.conteudo);
+    mapaState = m.ramos.length
+      ? { state: 'ok', dados: { mapa: m, oficial: !!r.oficial }, erro: '', status: 200 }
+      : { state: 'erro', dados: null, erro: 'O mapa recebido está vazio.', status: 0 };
   }
   renderPane();
 }
+
 function renderMapa(p) {
-  const head = `<div class="cesp-head"><b>Mapa Mental</b><span>${ctxLabel()} — a estrutura do conteúdo em ramos visuais para memorizar rápido.</span></div>`;
-  if (mapaState.state === 'idle') {
+  const head = `<div class="cesp-head"><b>Mapa Mental</b><span>${ctxLabel()} — a estrutura da aula em ramos visuais, publicada pelo professor.</span></div>`;
+
+  if (mapaState.state === 'idle') { mapaCarregar(false); }
+  if (mapaState.state === 'idle' || mapaState.state === 'load') {
+    p.innerHTML = `<div class="pane">${head}<p class="prose" style="color:var(--muted);">Abrindo o mapa mental desta aula…</p></div>`;
+    return;
+  }
+
+  if (mapaState.state === 'lista') {
+    const linhas = (mapaState.dados || []);
     p.innerHTML = `<div class="pane">${head}${scopePickerHTML()}
-      <div class="rz-bar"><button class="on icobtn" id="mm-go">Gerar Mapa Mental</button></div>
-      <p class="prose" style="color:var(--muted);">A Athena organiza o material em um mapa com o tema central, os grandes ramos e os pontos essenciais de cada um.</p>
+      ${linhas.length
+        ? `<div class="qbox" style="padding:0;overflow:hidden;margin-top:16px;">${linhas.map(o =>
+            `<a class="rev-row" style="text-decoration:none;color:inherit;" href="workspace.html?${base}&disc=${encodeURIComponent(o.disciplina)}&topic=${encodeURIComponent(o.topico)}&tab=mapa"><span>${aulaLabel(o.disciplina, o.topico)}</span><span class="rev-when">${esc(o.disciplina)}</span></a>`).join('')}</div>`
+        : kbAvisoHTML('Nenhum mapa mental publicado ainda', 'Os mapas deste contexto estão em produção no painel do professor.', '')}
     </div>`;
     mountScopePicker();
-    document.getElementById('mm-go').onclick = () => mapaCarregar();
     return;
   }
-  if (mapaState.state === 'load') {
-    p.innerHTML = `<div class="pane">${head}<p class="prose" style="color:var(--muted);">Desenhando o mapa mental deste conteúdo…</p></div>`;
+
+  if (mapaState.state === 'pendente') {
+    p.innerHTML = `<div class="pane">${head}
+      ${kbAvisoHTML('Mapa mental em produção', 'O professor ainda não publicou o mapa mental desta aula. Você pode pedir uma versão provisória para a Athena enquanto isso.', '')}
+      <div class="rz-bar"><button class="on icobtn" id="mm-gen">Gerar versão provisória</button></div>
+    </div>`;
+    document.getElementById('mm-gen').onclick = () => mapaCarregar(true);
     return;
   }
+
   if (mapaState.state === 'erro') {
     p.innerHTML = `<div class="pane">${head}${mapaState.status === 401
-      ? loginAvisoHTML('gerar o mapa mental')
-      : kbAvisoHTML('Não consegui montar o mapa', mapaState.erro, '<p style="margin:12px 0 0"><button class="btn-secondary" id="mm-retry">Tentar de novo</button></p>')}</div>`;
+      ? loginAvisoHTML('ver o mapa mental')
+      : kbAvisoHTML('Não consegui abrir o mapa', mapaState.erro, '<p style="margin:12px 0 0"><button class="btn-secondary" id="mm-retry">Tentar de novo</button></p>')}</div>`;
     const b = document.getElementById('mm-retry');
-    if (b) b.onclick = () => mapaCarregar();
+    if (b) b.onclick = () => mapaCarregar(false);
     return;
   }
+
+  const { mapa, oficial } = mapaState.dados;
   const cores = ['#154C9B', '#0B7A5B', '#B45309', '#7C3AED', '#B91C1C', '#0369A1'];
-  const ramos = mapaState.blocks.map((b, i) => {
-    const cor = cores[i % cores.length];
-    const folhas = mapaFrases(b);
-    return `<div class="mm-branch" style="--mmc:${cor}">
-      <div class="mm-node">${esc(b.t)}</div>
-      ${folhas.length ? `<ul class="mm-leaves">${folhas.map(f => `<li>${esc(f)}</li>`).join('')}</ul>` : ''}
-    </div>`;
-  }).join('');
+  const ramos = mapa.ramos.map((b, i) => `<div class="mm-branch" style="--mmc:${cores[i % cores.length]}">
+      <div class="mm-node">${mapaInline(b.t)}</div>
+      ${b.folhas.length ? `<ul class="mm-leaves">${b.folhas.map(f => `<li class="n${f.nivel}">${mapaInline(f.txt)}</li>`).join('')}</ul>` : ''}
+    </div>`).join('');
   p.innerHTML = `<div class="pane">
     ${head}
-    <div class="mm-root">${esc(rzSubject())}</div>
+    <div class="mm-root">${mapaInline(mapa.tema)}</div>
     <div class="mm-grid">${ramos}</div>
-    <div class="mini"><button id="mm-again">Gerar de novo</button></div>
+    <div class="mini">
+      <span style="align-self:center;font-size:0.8rem;color:var(--muted);">${oficial ? 'Mapa oficial publicado pelo professor.' : 'Versão provisória gerada pela Athena.'}</span>
+      <button id="mm-again">Atualizar</button>
+    </div>
   </div>`;
-  document.getElementById('mm-again').onclick = () => mapaCarregar();
+  document.getElementById('mm-again').onclick = () => mapaCarregar(!oficial);
 }
+
 
 function renderPane() {
   const p = document.getElementById('pane');
