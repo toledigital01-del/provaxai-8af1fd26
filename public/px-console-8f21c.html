@@ -623,13 +623,14 @@ function cfgTrocaProv(prefixo){
   document.getElementById(prefixo+'-mod').innerHTML = mods.map(m=>`<option value="${esc(m)}">${esc(m)}</option>`).join('');
 }
 const CFG_TABS = [
-  ['integracoes','Integrações'],['roteamento','Roteamento'],['athena','Athena'],['iadmin','IA administrativa'],
+  ['integracoes','Integrações'],['roteamento','Roteamento'],['doutrina','Doutrina pedagógica'],['athena','Athena'],['iadmin','IA administrativa'],
   ['voz','Voz'],['sync','Sincronização'],['avancado','Avançado'],
 ];
 let CFG_TAB = 'integracoes';
 let CENTRAL = null;
 function cfgTab(id){
   CFG_TAB = id;
+  if(id === 'doutrina') setTimeout(doutrinaCarregar, 0);
   document.querySelectorAll('#cfg-nav button').forEach(b => b.classList.toggle('on', b.dataset.cfgtab === id));
   CFG_TABS.forEach(([s]) => { const el = document.getElementById('cfgsec-'+s); if(el) el.style.display = s===id ? '' : 'none'; });
 }
@@ -740,6 +741,28 @@ async function aiTestarRota(slug){
     st.textContent = j.ok ? `✓ funcionou — ${j.detalhe}` : '✗ ' + (j.detalhe || j.error || 'falhou');
     st.style.color = j.ok ? '#166534' : '#991b1b';
   }
+}
+let DOUTRINA_PADRAO_TXT = '';
+async function doutrinaCarregar(){
+  const el = document.getElementById('doutrina-txt');
+  if(!el) return;
+  try{
+    const j = await aiAcao({ acao:'ler_doutrina' });
+    DOUTRINA_PADRAO_TXT = j.padrao || '';
+    el.value = j.texto || '';
+  }catch(e){ el.value = ''; }
+}
+async function doutrinaSalvar(){
+  const st = document.getElementById('doutrina-st');
+  if(st){ st.textContent = 'Salvando…'; st.style.color = ''; }
+  const j = await aiAcao({ acao:'salvar_doutrina', texto: document.getElementById('doutrina-txt').value });
+  if(st){ st.textContent = j.ok ? '✓ doutrina salva — vale para todas as próximas gerações' : '✗ ' + (j.error || 'erro ao salvar'); st.style.color = j.ok ? '#166534' : '#991b1b'; }
+}
+async function doutrinaRestaurar(){
+  if(!confirm('Restaurar a doutrina padrão do Prova X? O texto atual será substituído.')) return;
+  const el = document.getElementById('doutrina-txt');
+  if(el && DOUTRINA_PADRAO_TXT) el.value = DOUTRINA_PADRAO_TXT;
+  await doutrinaSalvar();
 }
 async function aiSalvarPrompt(agent, elId){
   const st = document.getElementById(elId+'-st');
