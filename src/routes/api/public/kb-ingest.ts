@@ -2,8 +2,6 @@ import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
 import { requirePedagogicalAdmin } from '@/lib/px-server'
 
-const SUPABASE_URL = 'https://rdokrryisfkhmevcxlws.supabase.co'
-const SUPABASE_KEY = 'sb_publishable_9ILwlXJNPJ5ZzpALdbmfBA_gRAtH4Qr'
 
 const Body = z.object({
   tipo: z.enum(['pdf', 'txt', 'url', 'texto', 'video', 'imagem', 'auto']),
