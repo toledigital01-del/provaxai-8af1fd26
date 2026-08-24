@@ -193,7 +193,15 @@
   .pod-foot button:hover { border-color:#0B2A5B; color:#154C9B; }
   .pod-foot svg { width:17px; height:17px; }
 
+  /* Mapa mental */
+  .mm-root { margin:18px auto 0; max-width:520px; text-align:center; background:#0B2A5B; color:#fff; font-weight:700; font-size:0.98rem; padding:14px 18px; border-radius:14px; }
+  .mm-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; margin-top:18px; }
+  .mm-branch { border:1px solid var(--line); border-left:4px solid var(--mmc); border-radius:12px; padding:12px 14px; background:var(--card,#fff); }
+  .mm-node { font-weight:700; font-size:0.9rem; color:var(--mmc); margin-bottom:8px; }
+  .mm-leaves { margin:0; padding-left:18px; }
+  .mm-leaves li { font-size:0.85rem; line-height:1.55; color:var(--muted); margin-bottom:5px; }
 </style>
+
   <script src="px-guard.js"></script>
   <script src="px-kb.js"></script>
 </head>
