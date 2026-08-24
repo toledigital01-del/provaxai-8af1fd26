@@ -18,6 +18,7 @@ import {
   filtroAula,
 } from '@/lib/aula-pacote'
 import { SUPABASE_URL, serviceHeaders } from '@/lib/px-server'
+import { doutrina, lerEditorial, salvarEditorial, STATUS_EDITORIAL } from '@/lib/doutrina'
 
 /* Painel "IA da Aula": o administrador gera, edita, acrescenta, melhora,
    regenera, versiona e publica cada módulo de conteúdo inteligente da aula.
@@ -37,6 +38,7 @@ const Body = z.object({
     'restaurar',
     'sincronizar',
     'salvar-config',
+    'salvar-editorial',
   ]),
   curso: z.string().max(80).optional(),
   disciplina: z.string().min(1).max(200),
@@ -47,6 +49,15 @@ const Body = z.object({
   modo: z.enum(['original', 'com-alteracoes', 'acrescentando']).optional(),
   publicar: z.boolean().optional(),
   versaoId: z.string().max(60).optional(),
+  editorial: z
+    .object({
+      status: z.string().max(30).optional(),
+      versao_rotulo: z.string().max(20).optional(),
+      observacoes: z.string().max(4000).optional(),
+      proxima_revisao: z.string().max(20).optional(),
+      verificado: z.boolean().optional(),
+    })
+    .optional(),
   config: z
     .object({
       instrucoes: z.string().max(4000).optional(),
@@ -150,7 +161,8 @@ export const Route = createFileRoute('/api/public/aula-pacote')({
               versaoPublicada: pub ? pub.versao : null,
             }
           })
-          return Response.json({ modulos, config })
+          const editorial = await lerEditorial(curso, disciplina, topico)
+          return Response.json({ modulos, config, editorial, statusEditorial: STATUS_EDITORIAL })
         }
 
         /* ----- salvar as instruções/configurações da aula ----- */
@@ -169,6 +181,24 @@ export const Route = createFileRoute('/api/public/aula-pacote')({
             userId,
           })
           return Response.json({ ok: true })
+        }
+
+        /* ----- status editorial da aula ----- */
+        if (body.acao === 'salvar-editorial') {
+          const e = body.editorial || {}
+          const validos = STATUS_EDITORIAL.map((s) => s.valor) as string[]
+          if (e.status && !validos.includes(e.status))
+            return Response.json({ error: 'Status editorial inválido.' }, { status: 400 })
+          const ok = await salvarEditorial(curso, disciplina, topico, {
+            ...(e.status ? { status: e.status } : {}),
+            ...(e.versao_rotulo ? { versao_rotulo: e.versao_rotulo } : {}),
+            ...(e.observacoes !== undefined ? { observacoes: e.observacoes || null } : {}),
+            ...(e.proxima_revisao ? { proxima_revisao: e.proxima_revisao } : {}),
+            ...(e.verificado ? { ultima_verificacao: new Date().toISOString() } : {}),
+            atualizado_por: userId,
+          })
+          if (!ok) return Response.json({ error: 'Não consegui salvar o status editorial.' }, { status: 502 })
+          return Response.json({ ok: true, editorial: await lerEditorial(curso, disciplina, topico) })
         }
 
         /* ----- histórico de versões de um módulo ----- */
