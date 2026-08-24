@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
+import { doutrina, salvarDoutrina, DOUTRINA_PADRAO } from '@/lib/doutrina'
 import { SUPABASE_URL, serviceHeaders, requireAdmin, aiKeys } from '@/lib/px-server'
 import { MODELOS, chatEx, AIError, type Provider } from '@/lib/ai-gateway'
 import { AGENTES } from '@/lib/ai-router'
@@ -42,7 +43,14 @@ const SalvarPrompt = z.object({
   prompt_extra: z.string().max(4000),
 })
 
-const Body = z.discriminatedUnion('acao', [SalvarRota, TestarModelo, SalvarPrompt])
+const SalvarDoutrina = z.object({
+  acao: z.literal('salvar_doutrina'),
+  texto: z.string().max(40000),
+})
+
+const LerDoutrina = z.object({ acao: z.literal('ler_doutrina') })
+
+const Body = z.discriminatedUnion('acao', [SalvarRota, TestarModelo, SalvarPrompt, SalvarDoutrina, LerDoutrina])
 
 function modeloValido(provider: Provider, model: string, custom: string) {
   if (custom) return /^[\w./:-]{2,120}$/.test(custom) // formato livre, sem espaços
@@ -138,6 +146,16 @@ export const Route = createFileRoute('/api/public/ai-central')({
           })
           if (!r.ok) return Response.json({ error: 'Não consegui salvar a rota.' }, { status: 502 })
           return Response.json({ ok: true })
+        }
+
+        if (body.acao === 'ler_doutrina') {
+          return Response.json({ texto: await doutrina(), padrao: DOUTRINA_PADRAO })
+        }
+
+        if (body.acao === 'salvar_doutrina') {
+          const ok = await salvarDoutrina(body.texto)
+          if (!ok) return Response.json({ error: 'Não consegui salvar a doutrina.' }, { status: 502 })
+          return Response.json({ ok: true, texto: await doutrina() })
         }
 
         if (body.acao === 'salvar_prompt') {

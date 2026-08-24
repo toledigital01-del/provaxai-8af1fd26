@@ -310,6 +310,60 @@ export type Database = {
         }
         Relationships: []
       }
+      aula_editorial: {
+        Row: {
+          atualizado_por: string | null
+          auditoria: Json
+          course_slug: string
+          created_at: string
+          disciplina: string
+          id: string
+          metadados: Json
+          observacoes: string | null
+          proxima_revisao: string | null
+          status: string
+          topico: string
+          ultima_atualizacao: string | null
+          ultima_verificacao: string | null
+          updated_at: string
+          versao_rotulo: string
+        }
+        Insert: {
+          atualizado_por?: string | null
+          auditoria?: Json
+          course_slug?: string
+          created_at?: string
+          disciplina: string
+          id?: string
+          metadados?: Json
+          observacoes?: string | null
+          proxima_revisao?: string | null
+          status?: string
+          topico: string
+          ultima_atualizacao?: string | null
+          ultima_verificacao?: string | null
+          updated_at?: string
+          versao_rotulo?: string
+        }
+        Update: {
+          atualizado_por?: string | null
+          auditoria?: Json
+          course_slug?: string
+          created_at?: string
+          disciplina?: string
+          id?: string
+          metadados?: Json
+          observacoes?: string | null
+          proxima_revisao?: string | null
+          status?: string
+          topico?: string
+          ultima_atualizacao?: string | null
+          ultima_verificacao?: string | null
+          updated_at?: string
+          versao_rotulo?: string
+        }
+        Relationships: []
+      }
       aula_recursos: {
         Row: {
           course_slug: string
@@ -1130,48 +1184,66 @@ export type Database = {
           ano: number | null
           ativa: boolean
           banca: string | null
+          cargo: string | null
           comentario: string | null
           course_slug: string | null
           created_at: string
           discipline_nome: string
           enunciado: string
+          fonte: string | null
           gabarito: string
           id: string
+          nivel: string | null
+          orgao: string | null
+          origem: string
           tipo: string
           topic_nome: string | null
           updated_at: string
+          verificada: boolean
         }
         Insert: {
           alternativas?: Json
           ano?: number | null
           ativa?: boolean
           banca?: string | null
+          cargo?: string | null
           comentario?: string | null
           course_slug?: string | null
           created_at?: string
           discipline_nome: string
           enunciado: string
+          fonte?: string | null
           gabarito: string
           id?: string
+          nivel?: string | null
+          orgao?: string | null
+          origem?: string
           tipo?: string
           topic_nome?: string | null
           updated_at?: string
+          verificada?: boolean
         }
         Update: {
           alternativas?: Json
           ano?: number | null
           ativa?: boolean
           banca?: string | null
+          cargo?: string | null
           comentario?: string | null
           course_slug?: string | null
           created_at?: string
           discipline_nome?: string
           enunciado?: string
+          fonte?: string | null
           gabarito?: string
           id?: string
+          nivel?: string | null
+          orgao?: string | null
+          origem?: string
           tipo?: string
           topic_nome?: string | null
           updated_at?: string
+          verificada?: boolean
         }
         Relationships: []
       }
