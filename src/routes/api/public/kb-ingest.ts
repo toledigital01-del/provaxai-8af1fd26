@@ -134,11 +134,11 @@ function ehImagem(nome: string, mime: string): boolean {
 
 /** Guarda o texto extraído na biblioteca da matéria (revisão antes de publicar). */
 async function salvarNaBiblioteca(reg: {
-  disciplina?: string
-  topico?: string
+  disciplina?: string | undefined
+  topico?: string | undefined
   nome: string
   tipo: string
-  origem_url?: string
+  origem_url?: string | undefined
   texto: string
 }): Promise<string | null> {
   if (!reg.disciplina || !reg.texto) return null
