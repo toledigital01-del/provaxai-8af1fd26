@@ -50,6 +50,41 @@ async function extractPdf(bytes: Uint8Array): Promise<string> {
 }
 
 
+/* PDF digitalizado (sem camada de texto): transcreve com IA de visão. */
+async function extractPdfIA(b64: string): Promise<string> {
+  const apiKey = process.env['LOVABLE_API_KEY']
+  if (!apiKey) return ''
+  const clean = b64.includes(',') ? b64.slice(b64.indexOf(',') + 1) : b64
+  if (clean.length > 14_000_000) return '' // PDF grande demais para transcrição por IA
+  try {
+    const r = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'google/gemini-3-flash-preview',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Transcreva fielmente TODO o conteúdo textual deste PDF em Markdown simples, preservando títulos, listas, tabelas e fórmulas, na ordem das páginas. Não resuma, não comente, não invente. Se não houver texto, responda apenas: SEM_TEXTO.',
+              },
+              { type: 'image_url', image_url: { url: `data:application/pdf;base64,${clean}` } },
+            ],
+          },
+        ],
+      }),
+    })
+    if (!r.ok) return ''
+    const data = (await r.json()) as any
+    const texto = String(data?.choices?.[0]?.message?.content || '').trim()
+    return /^SEM_TEXTO/i.test(texto) ? '' : texto
+  } catch {
+    return ''
+  }
+}
+
 function youtubeId(url: string): string | null {
   const m = url.match(/(?:youtu\.be\/|v=|\/embed\/|\/shorts\/)([A-Za-z0-9_-]{6,})/)
   return m?.[1] ?? null
