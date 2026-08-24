@@ -785,7 +785,7 @@ async function viewConfig(){
   const { data: ps } = await PX.sb.from('platform_settings').select('*').order('chave');
   const mapa = {}; (ps||[]).forEach(s => mapa[s.chave] = s);
   const { data:{ session } } = await PX.sb.auth.getSession();
-  const authH = { Authorization: 'Bearer ' + (session ? session.access_token : '') };
+  const authH = session ? { Authorization: 'Bearer ' + session.access_token } : {};
   try {
     const r = await fetch('/api/public/ai-status', { headers: authH });
     CFG_STATUS = r.ok ? await r.json() : null;
