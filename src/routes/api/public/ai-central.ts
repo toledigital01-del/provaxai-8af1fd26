@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
 import { doutrina, salvarDoutrina, DOUTRINA_PADRAO } from '@/lib/doutrina'
-import { SUPABASE_URL, serviceHeaders, requireAdmin, aiKeys } from '@/lib/px-server'
+import { SUPABASE_URL, serviceHeaders, requirePedagogicalAdmin, aiKeys } from '@/lib/px-server'
 import { MODELOS, chatEx, AIError, type Provider } from '@/lib/ai-gateway'
 import { AGENTES } from '@/lib/ai-router'
 
@@ -80,7 +80,7 @@ export const Route = createFileRoute('/api/public/ai-central')({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const denied = await requireAdmin(request)
+        const denied = await requirePedagogicalAdmin(request)
         if (denied) return denied
         const h = serviceHeaders()
         const [rotasR, integR] = await Promise.all([
@@ -104,7 +104,7 @@ export const Route = createFileRoute('/api/public/ai-central')({
       },
 
       POST: async ({ request }) => {
-        const denied = await requireAdmin(request)
+        const denied = await requirePedagogicalAdmin(request)
         if (denied) return denied
 
         let body: z.infer<typeof Body>

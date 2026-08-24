@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { requireAdmin, SUPABASE_URL, serviceHeaders } from '@/lib/px-server'
+import { requirePedagogicalAdmin, SUPABASE_URL, serviceHeaders } from '@/lib/px-server'
 import { indexarEscopo } from '@/lib/rag'
 
 /* Indexação RAG da base de conhecimento (somente admin).
@@ -17,7 +17,7 @@ export const Route = createFileRoute('/api/public/kb-embed')({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const denied = await requireAdmin(request)
+        const denied = await requirePedagogicalAdmin(request)
         if (denied) return denied
         const curso = new URL(request.url).searchParams.get('curso') || 'prf-2021'
         const r = await fetch(
@@ -33,7 +33,7 @@ export const Route = createFileRoute('/api/public/kb-embed')({
       },
 
       POST: async ({ request }) => {
-        const denied = await requireAdmin(request)
+        const denied = await requirePedagogicalAdmin(request)
         if (denied) return denied
         let body: z.infer<typeof Body>
         try {

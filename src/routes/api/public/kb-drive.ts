@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { requireAdmin } from '@/lib/px-server'
+import { requirePedagogicalAdmin } from '@/lib/px-server'
 
 /* Importação do Google Drive para a biblioteca da base de conhecimento.
    Aceita link de pasta, link de arquivo único ou o próprio ID.
@@ -115,7 +115,7 @@ export const Route = createFileRoute('/api/public/kb-drive')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const denied = await requireAdmin(request)
+        const denied = await requirePedagogicalAdmin(request)
         if (denied) return denied
 
         let body: z.infer<typeof Body>
