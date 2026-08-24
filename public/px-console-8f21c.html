@@ -918,15 +918,22 @@ async function cfgTestarChave(env){
     const { data:{ session } } = await PX.sb.auth.getSession();
     const r = await fetch('/api/public/ai-test', {
       method:'POST',
-      headers:{ 'Content-Type':'application/json', Authorization: 'Bearer ' + (session ? session.access_token : '') },
+      headers: Object.assign({ 'Content-Type':'application/json' }, session ? { Authorization:'Bearer ' + session.access_token } : {}),
       body: JSON.stringify({ env }),
     });
     const j = await r.json().catch(()=>({ ok:false, detalhe:'resposta inválida' }));
     if(alvo){
-      alvo.textContent = j.ok ? '✓ chave válida — testada agora' : ('✗ chave inválida: ' + String(j.detalhe || j.error || 'falhou').slice(0,220));
-      alvo.style.color = j.ok ? '#166534' : '#991b1b';
+      if(j.ok){ alvo.textContent = '✓ chave válida — testada agora'; alvo.style.color = '#166534'; }
+      else if(r.status === 401 || r.status === 403){
+        alvo.textContent = 'ⓘ chave salva, mas não foi possível testar agora (acesso restrito).';
+        alvo.style.color = '#92400e';
+      } else {
+        alvo.textContent = '✗ o teste falhou: ' + String(j.detalhe || j.error || 'falhou').slice(0,220);
+        alvo.style.color = '#991b1b';
+      }
     }
     return !!j.ok;
+
   } catch(e){
     if(alvo){ alvo.textContent = '✗ erro: ' + e.message; alvo.style.color = '#991b1b'; }
     return false;
