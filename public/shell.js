@@ -203,8 +203,9 @@
     if (++tries > 200) return clearInterval(t);
     if (!window.PX || !PX.ready) return;
     clearInterval(t);
-    PX.requirePro('prf-2021').then(function (u) {
-      if (!u) return;
+    // Login não é mais exigido por enquanto: apenas pinta o menu se houver sessão.
+    PX.ready.then(function () {
+      if (!PX.user) return;
       paint();
       var p = setInterval(function () { if (document.getElementById('px-username')) paint(); }, 400);
       setTimeout(function () { clearInterval(p); }, 4000);

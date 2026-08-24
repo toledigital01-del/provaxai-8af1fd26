@@ -1,7 +1,11 @@
 /* Prova X — trava de acesso das páginas protegidas.
-   Exige (1) sessão autenticada e (2) assinatura/acesso ativo.
-   Basta incluir <script src="px-guard.js"></script> no <head> da página. */
+   DESATIVADA POR ENQUANTO (fase de testes): todas as páginas abrem sem login
+   e sem assinatura. Para reativar, defina window.PX_GUARD_ON = true antes de
+   carregar este script (ou troque GUARD_ATIVO para true abaixo). */
 (function () {
+  var GUARD_ATIVO = (window.PX_GUARD_ON === true);
+  if (!GUARD_ATIVO) return;
+
   var CURSO = (window.PX_GUARD_COURSE || 'prf-2021');
 
   // Esconde o conteúdo até a verificação terminar (evita "piscar" a área paga).
