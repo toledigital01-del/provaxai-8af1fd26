@@ -724,6 +724,69 @@ async function carregarAulaIA(regerar) {
 }
 
 
+/* ---------- Mapa Mental ---------- */
+let mapaState = { state: 'idle', blocks: null, erro: '', status: 0 };
+function mapaFrases(b) {
+  const txt = b.p.map(x => x[0]).join('');
+  const chaves = b.p.filter(x => x[1] === 'chave').map(x => x[0]);
+  const ramos = chaves.length ? chaves : txt.split(/(?<=\.)\s+/);
+  return ramos.map(s => String(s).trim()).filter(s => s.length > 2).slice(0, 6);
+}
+async function mapaCarregar() {
+  mapaState = { state: 'load', blocks: null, erro: '', status: 0 };
+  renderPane();
+  const alvo = scope === 'geral' && selDisc !== 'all' ? selDisc : disc;
+  const r = await PX.iaPost('resumo', { disciplina: alvo, topico: scope === 'topico' ? topic : null, curso: id });
+  if (r.erro) mapaState = { state: 'erro', blocks: null, erro: r.erro, status: r.status || 0 };
+  else {
+    const blocks = rzParse(r.resumo);
+    mapaState = blocks.length
+      ? { state: 'ok', blocks, erro: '', status: 200 }
+      : { state: 'erro', blocks: null, erro: 'A Athena não retornou conteúdo para o mapa.', status: 0 };
+  }
+  renderPane();
+}
+function renderMapa(p) {
+  const head = `<div class="cesp-head"><b>Mapa Mental</b><span>${ctxLabel()} — a estrutura do conteúdo em ramos visuais para memorizar rápido.</span></div>`;
+  if (mapaState.state === 'idle') {
+    p.innerHTML = `<div class="pane">${head}${scopePickerHTML()}
+      <div class="rz-bar"><button class="on icobtn" id="mm-go">Gerar Mapa Mental</button></div>
+      <p class="prose" style="color:var(--muted);">A Athena organiza o material em um mapa com o tema central, os grandes ramos e os pontos essenciais de cada um.</p>
+    </div>`;
+    mountScopePicker();
+    document.getElementById('mm-go').onclick = () => mapaCarregar();
+    return;
+  }
+  if (mapaState.state === 'load') {
+    p.innerHTML = `<div class="pane">${head}<p class="prose" style="color:var(--muted);">Desenhando o mapa mental deste conteúdo…</p></div>`;
+    return;
+  }
+  if (mapaState.state === 'erro') {
+    p.innerHTML = `<div class="pane">${head}${mapaState.status === 401
+      ? loginAvisoHTML('gerar o mapa mental')
+      : kbAvisoHTML('Não consegui montar o mapa', mapaState.erro, '<p style="margin:12px 0 0"><button class="btn-secondary" id="mm-retry">Tentar de novo</button></p>')}</div>`;
+    const b = document.getElementById('mm-retry');
+    if (b) b.onclick = () => mapaCarregar();
+    return;
+  }
+  const cores = ['#154C9B', '#0B7A5B', '#B45309', '#7C3AED', '#B91C1C', '#0369A1'];
+  const ramos = mapaState.blocks.map((b, i) => {
+    const cor = cores[i % cores.length];
+    const folhas = mapaFrases(b);
+    return `<div class="mm-branch" style="--mmc:${cor}">
+      <div class="mm-node">${esc(b.t)}</div>
+      ${folhas.length ? `<ul class="mm-leaves">${folhas.map(f => `<li>${esc(f)}</li>`).join('')}</ul>` : ''}
+    </div>`;
+  }).join('');
+  p.innerHTML = `<div class="pane">
+    ${head}
+    <div class="mm-root">${esc(rzSubject())}</div>
+    <div class="mm-grid">${ramos}</div>
+    <div class="mini"><button id="mm-again">Gerar de novo</button></div>
+  </div>`;
+  document.getElementById('mm-again').onclick = () => mapaCarregar();
+}
+
 function renderPane() {
   const p = document.getElementById('pane');
   if (tab !== 'podcast' && podState && podState.audio) { try { podState.audio.pause(); } catch (e) {} }
