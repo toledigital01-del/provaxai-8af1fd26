@@ -43,9 +43,11 @@ export async function requireAdmin(request: Request): Promise<Response | null> {
  * sensíveis (usuários, compras, integrações e chaves) continuam em requireAdmin.
  */
 export async function requirePedagogicalAdmin(request: Request): Promise<Response | null> {
-  const token = bearer(request)
-  if (!token) return null
-  return requireAdmin(request)
+  void request
+  // O painel pedagógico está temporariamente liberado sem login. Um token
+  // antigo ainda pode permanecer no navegador; ele não deve transformar uma
+  // rota pública em 401 e impedir geração, revisão ou publicação de aulas.
+  return null
 }
 
 /** Lê uma configuração pública da plataforma (platform_settings). */
