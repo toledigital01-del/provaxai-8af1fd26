@@ -4424,23 +4424,31 @@ function kbIaPaintConteudos(body){
               + '<button class="act" style="font-size:0.72rem" onclick="kbIaSub(\''+mo.tipo+'\',\'acrescentar\')">Acrescentar</button>'
               + '<button class="act" style="font-size:0.72rem" onclick="kbIaSub(\''+mo.tipo+'\',\'regenerar\')">Regenerar</button>'
               + '<button class="act" style="font-size:0.72rem" onclick="kbIaHistorico(\''+mo.tipo+'\')">Histórico</button>'
-            : '<button class="act primary" style="font-size:0.72rem" onclick="kbIaGerarUm(\''+mo.tipo+'\')">Gerar agora</button>')
+            : '<button class="act primary ia-gerar-um" data-tipo="'+mo.tipo+'" style="font-size:0.72rem" onclick="kbIaGerarUm(\''+mo.tipo+'\',this)">Gerar agora</button>')
         + '</div>'
         + (v ? '<div class="muted" style="font-size:0.74rem;margin-top:6px">'+kbIaInfoLinha(mo.tipo, v)+'</div>' : '')
         + '<div id="ia-sub-'+mo.tipo+'"></div>'
         + '</div>';
     }).join('') + '</div>';
 }
-window.kbIaGerarUm = async function(tipo){
-  if(IA_OCUPADO) return;
+window.kbIaGerarUm = async function(tipo, botao){
+  if(IA_OCUPADO){ toast('Aguarde a geração atual terminar.'); return; }
   IA_OCUPADO = true;
+  const botoes = Array.prototype.slice.call(document.querySelectorAll('.ia-gerar-um'));
+  botoes.forEach(function(b){ b.disabled = true; });
+  if(botao){ botao.textContent = 'Gerando…'; botao.setAttribute('aria-busy','true'); }
   try{
     const cfg = (IA_DADOS && IA_DADOS.config) || {};
     const r = await kbIaApi({ acao:'gerar', tipo: tipo, config: { instrucoes: cfg.instrucoes || undefined, questoes: cfg.questoes } });
     toast(r.cache ? 'Este conteúdo já existia — versão mantida.' : 'Versão ' + (r.versao||1) + ' gerada (rascunho).');
-  }catch(e){ toast(e.message || 'Não consegui gerar agora.'); }
-  IA_OCUPADO = false;
-  await kbIaRecarregar();
+    await kbIaRecarregar();
+  }catch(e){
+    toast(e.message || 'Não consegui gerar agora.');
+    if(botao){ botao.textContent = 'Tentar novamente'; botao.removeAttribute('aria-busy'); }
+    botoes.forEach(function(b){ b.disabled = false; });
+  }finally{
+    IA_OCUPADO = false;
+  }
 };
 /* Busca o conteúdo completo da versão mais recente (a listagem traz só metadados). */
 async function kbIaConteudoAtual(tipo){
