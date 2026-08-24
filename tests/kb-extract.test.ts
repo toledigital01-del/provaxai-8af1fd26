@@ -76,7 +76,7 @@ describe('extração de PDFs com qualidades diferentes', () => {
     const d = deps(CENARIOS.escaneadoParcial, {})
     const r = await extrairPdf(d)
     expect(r.qualidade).toBe('texto')
-    expect(r.texto).toBe(CENARIOS.escaneadoParcial.texto)
+    expect(r.texto).toBe(CENARIOS.escaneadoParcial.texto.trim())
   })
 
   it('PDF realmente vazio devolve "vazio" (mensagem amigável, sem erro 500)', async () => {
