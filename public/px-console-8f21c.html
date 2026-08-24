@@ -797,9 +797,11 @@ async function viewConfig(){
   const conect = (CFG_STATUS && CFG_STATUS.conectado) || {};
   const salvas = {};
   try {
-    const { data: ks } = await PX.sb.from('api_keys').select('chave,valor,updated_at');
-    (ks||[]).forEach(k => { salvas[k.chave] = { mask: cfgMascara(k.valor), data: k.updated_at ? dt(k.updated_at) : '' }; });
+    const rk = await fetch('/api/public/ai-keys', { headers: authH });
+    const jk = rk.ok ? await rk.json() : { chaves: [] };
+    (jk.chaves||[]).forEach(k => { salvas[k.chave] = { mask: k.mask, data: k.updated_at ? dt(k.updated_at) : '' }; });
   } catch(e){}
+
   const extras = (mapa['integracoes_ia'] && Array.isArray(mapa['integracoes_ia'].valor) ? mapa['integracoes_ia'].valor : [])
     .filter(x => x && x.env && !CFG_CHAVES.some(c => c.env === x.env));
   CFG_EXTRAS = extras;
