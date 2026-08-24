@@ -2968,7 +2968,7 @@ window.kbAulaCadastrar = async function(){
       const url = String((document.getElementById(campo)||{}).value || '').trim();
       if(!url) return kbAulaMsg('Cole o link antes de cadastrar.');
       kbAulaMsg('Lendo o conteúdo do link…');
-      const j = await kbPost('/api/public/kb-ingest', { tipo: KB_AULA_TAB === 'video' ? 'video' : 'url', url });
+      const j = await kbPost('/api/public/kb-ingest', { tipo: KB_AULA_TAB === 'video' ? 'video' : 'url', url: url, disciplina: disc || undefined, topico: kbTopic || undefined });
       texto = String(j.texto || '').trim();
       origem = j.origem || url;
     }
