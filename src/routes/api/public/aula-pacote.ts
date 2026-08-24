@@ -94,6 +94,7 @@ async function carregarCtx(curso: string, disciplina: string, topico: string, bo
     provider: rotaBase.provider,
     model: rotaBase.model,
     rotas,
+    doutrina: await doutrina(),
     keys: await aiKeys(),
   }
 }
@@ -242,6 +243,9 @@ export const Route = createFileRoute('/api/public/aula-pacote')({
         }
 
         /* ----- publicar / despublicar ----- */
+        if (body.acao === 'publicar') {
+          await salvarEditorial(curso, disciplina, topico, { status: 'publicado', atualizado_por: userId }).catch(() => null)
+        }
         if (body.acao === 'publicar' || body.acao === 'despublicar') {
           if (!tipoValido(body.tipo)) return Response.json({ error: 'Módulo inválido.' }, { status: 400 })
           if (body.acao === 'despublicar') {
