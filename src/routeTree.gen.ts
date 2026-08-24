@@ -14,6 +14,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ApiPublicAdminCopilotRouteImport } from './routes/api/public/admin-copilot'
 import { Route as ApiPublicAdminDeleteUserRouteImport } from './routes/api/public/admin-delete-user'
 import { Route as ApiPublicAiCentralRouteImport } from './routes/api/public/ai-central'
+import { Route as ApiPublicAiKeysRouteImport } from './routes/api/public/ai-keys'
 import { Route as ApiPublicAiStatusRouteImport } from './routes/api/public/ai-status'
 import { Route as ApiPublicAiTestRouteImport } from './routes/api/public/ai-test'
 import { Route as ApiPublicAthenaRouteImport } from './routes/api/public/athena'
@@ -62,6 +63,11 @@ const ApiPublicAdminDeleteUserRoute =
 const ApiPublicAiCentralRoute = ApiPublicAiCentralRouteImport.update({
   id: '/api/public/ai-central',
   path: '/api/public/ai-central',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAiKeysRoute = ApiPublicAiKeysRouteImport.update({
+  id: '/api/public/ai-keys',
+  path: '/api/public/ai-keys',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicAiStatusRoute = ApiPublicAiStatusRouteImport.update({
@@ -187,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/api/public/admin-copilot': typeof ApiPublicAdminCopilotRoute
   '/api/public/admin-delete-user': typeof ApiPublicAdminDeleteUserRoute
   '/api/public/ai-central': typeof ApiPublicAiCentralRoute
+  '/api/public/ai-keys': typeof ApiPublicAiKeysRoute
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/ai-test': typeof ApiPublicAiTestRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
@@ -217,6 +224,7 @@ export interface FileRoutesByTo {
   '/api/public/admin-copilot': typeof ApiPublicAdminCopilotRoute
   '/api/public/admin-delete-user': typeof ApiPublicAdminDeleteUserRoute
   '/api/public/ai-central': typeof ApiPublicAiCentralRoute
+  '/api/public/ai-keys': typeof ApiPublicAiKeysRoute
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/ai-test': typeof ApiPublicAiTestRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
@@ -248,6 +256,7 @@ export interface FileRoutesById {
   '/api/public/admin-copilot': typeof ApiPublicAdminCopilotRoute
   '/api/public/admin-delete-user': typeof ApiPublicAdminDeleteUserRoute
   '/api/public/ai-central': typeof ApiPublicAiCentralRoute
+  '/api/public/ai-keys': typeof ApiPublicAiKeysRoute
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/ai-test': typeof ApiPublicAiTestRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
@@ -280,6 +289,7 @@ export interface FileRouteTypes {
     | '/api/public/admin-copilot'
     | '/api/public/admin-delete-user'
     | '/api/public/ai-central'
+    | '/api/public/ai-keys'
     | '/api/public/ai-status'
     | '/api/public/ai-test'
     | '/api/public/athena'
@@ -310,6 +320,7 @@ export interface FileRouteTypes {
     | '/api/public/admin-copilot'
     | '/api/public/admin-delete-user'
     | '/api/public/ai-central'
+    | '/api/public/ai-keys'
     | '/api/public/ai-status'
     | '/api/public/ai-test'
     | '/api/public/athena'
@@ -340,6 +351,7 @@ export interface FileRouteTypes {
     | '/api/public/admin-copilot'
     | '/api/public/admin-delete-user'
     | '/api/public/ai-central'
+    | '/api/public/ai-keys'
     | '/api/public/ai-status'
     | '/api/public/ai-test'
     | '/api/public/athena'
@@ -371,6 +383,7 @@ export interface RootRouteChildren {
   ApiPublicAdminCopilotRoute: typeof ApiPublicAdminCopilotRoute
   ApiPublicAdminDeleteUserRoute: typeof ApiPublicAdminDeleteUserRoute
   ApiPublicAiCentralRoute: typeof ApiPublicAiCentralRoute
+  ApiPublicAiKeysRoute: typeof ApiPublicAiKeysRoute
   ApiPublicAiStatusRoute: typeof ApiPublicAiStatusRoute
   ApiPublicAiTestRoute: typeof ApiPublicAiTestRoute
   ApiPublicAthenaRoute: typeof ApiPublicAthenaRoute
@@ -431,6 +444,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/ai-central'
       fullPath: '/api/public/ai-central'
       preLoaderRoute: typeof ApiPublicAiCentralRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/ai-keys': {
+      id: '/api/public/ai-keys'
+      path: '/api/public/ai-keys'
+      fullPath: '/api/public/ai-keys'
+      preLoaderRoute: typeof ApiPublicAiKeysRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/ai-status': {
@@ -603,6 +623,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAdminCopilotRoute: ApiPublicAdminCopilotRoute,
   ApiPublicAdminDeleteUserRoute: ApiPublicAdminDeleteUserRoute,
   ApiPublicAiCentralRoute: ApiPublicAiCentralRoute,
+  ApiPublicAiKeysRoute: ApiPublicAiKeysRoute,
   ApiPublicAiStatusRoute: ApiPublicAiStatusRoute,
   ApiPublicAiTestRoute: ApiPublicAiTestRoute,
   ApiPublicAthenaRoute: ApiPublicAthenaRoute,
