@@ -25,9 +25,10 @@ export const MIN_CHARS = 200
  */
 export function precisaTranscricao(texto: string, paginas = 1): boolean {
   const limpo = String(texto || '').replace(/\s+/g, ' ').trim()
-  if (limpo.length < MIN_CHARS) return true
-  const porPagina = limpo.length / Math.max(1, paginas)
-  return porPagina < 120
+  const paginasSeguras = Math.max(1, paginas)
+  const minimo = Math.max(80, Math.min(MIN_CHARS, 120 * paginasSeguras))
+  if (limpo.length < minimo) return true
+  return limpo.length / paginasSeguras < 120
 }
 
 /** Considera a transcrição da IA aproveitável (evita "SEM_TEXTO" e respostas vazias). */
