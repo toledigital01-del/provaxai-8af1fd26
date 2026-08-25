@@ -50,6 +50,18 @@
   PX.kbFetch = async function (disciplina, curso) {
     var key = (curso || 'prf-2021') + '|' + disciplina;
     if (cache[key]) return cache[key];
+    /* Conteúdo publicado já aberto antes: reaproveita do navegador (7 dias) */
+    var lsKey = 'px:kbdocs|' + key;
+    var salvo = null;
+    try {
+      var raw = localStorage.getItem(lsKey);
+      if (raw) {
+        var o = JSON.parse(raw);
+        if (o && o.t && Date.now() - o.t < 7 * 24 * 60 * 60 * 1000) salvo = o.v;
+        else localStorage.removeItem(lsKey);
+      }
+    } catch (e) { salvo = null; }
+    if (salvo && salvo.docs) { cache[key] = salvo; return salvo; }
     var qs =
       'select=titulo,sumario,topico,conteudo,modo_exibicao,pdf_url&course_slug=eq.' +
       encodeURIComponent(curso || 'prf-2021') +
@@ -63,7 +75,10 @@
       var r = await fetch(SB_URL + '/rest/v1/knowledge_docs?' + qs, { headers: h });
       var docs = r.ok ? await r.json() : [];
       var res = { status: r.status, docs: Array.isArray(docs) ? docs : [] };
-      if (r.ok) cache[key] = res;
+      if (r.ok) {
+        cache[key] = res;
+        try { localStorage.setItem(lsKey, JSON.stringify({ t: Date.now(), v: res })); } catch (e) { /* cota */ }
+      }
       return res;
     } catch (e) {
       return { status: 0, docs: [] };
