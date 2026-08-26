@@ -2095,12 +2095,20 @@ function kbEditor(){
 
 
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px">
+          <input id="kb-aula-modulo" list="kb-modulos-lista" placeholder="Módulo (opcional) — ex.: Fundamentos e Organização" style="flex:1;min-width:230px">
+          <datalist id="kb-modulos-lista"></datalist>
+          <input id="kb-aula-modulo-ordem" type="number" min="1" step="1" placeholder="Ordem do módulo" style="width:150px">
+        </div>
+        <p class="muted" style="margin:6px 0 0;font-size:0.74rem">O módulo agrupa as aulas em seções na lista abaixo e na tela do aluno. Deixe vazio para não agrupar.</p>
+
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px">
           <label class="muted" style="display:flex;gap:6px;align-items:center;margin:0;font-size:0.78rem">
             <input type="checkbox" id="kb-aula-pub" style="width:auto"> Publicar para os alunos (sem marcar, entra como rascunho)
           </label>
           <span style="flex:1"></span>
           <button class="act primary" data-aulasend onclick="kbAulaCadastrar()">Cadastrar aula</button>
         </div>
+
         <p class="muted" id="kb-aula-msg" style="margin:10px 0 0;font-size:0.78rem"></p>
       </div>
 
