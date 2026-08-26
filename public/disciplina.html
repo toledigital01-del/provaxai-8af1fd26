@@ -150,12 +150,11 @@ document.querySelectorAll('.chip').forEach(c => c.onclick = () => {
   render();
 });
 
-function render() {
-  const list = info.topics.filter(t => filter === 'all' || t.st === filter);
-  document.getElementById('topics').innerHTML = list.length ? list.map(t => {
-    const s = STATUS_META[t.st];
-    const mk = pxStudyGet(t.name);
-    return `<div class="topic-row px-row">
+const modFechados = {};
+function rowHTML(t) {
+  const s = STATUS_META[t.st];
+  const mk = pxStudyGet(t.name);
+  return `<div class="topic-row px-row">
       <span class="topic-left">
         <input type="checkbox" class="px-check" data-t="${encodeURIComponent(t.name)}" ${mk.done ? 'checked' : ''} title="Marcar como estudado">
         <a class="tlink" href="${topicHref(t.name)}">
@@ -174,10 +173,34 @@ function render() {
         <div class="note-actions"><button class="note-save" data-s="${encodeURIComponent(t.name)}">Salvar nota</button></div>
       </div>
     </div>`;
-  }).join('') : '<div class="empty">Nenhuma aula com esse status.</div>';
+}
+
+function render() {
+  const list = info.topics.filter(t => filter === 'all' || t.st === filter);
+  const box = document.getElementById('topics');
+  if (!list.length) { box.innerHTML = '<div class="empty">Nenhuma aula com esse status.</div>'; return; }
+  const grupos = (typeof agruparPorModulo === 'function')
+    ? agruparPorModulo(disc, list, t => t.name)
+    : [{ modulo: '', itens: list }];
+  /* Sem nenhum módulo definido: mantém a lista plana de sempre. */
+  if (grupos.length === 1 && !grupos[0].modulo) { box.innerHTML = list.map(rowHTML).join(''); return; }
+  box.innerHTML = grupos.map(g => {
+    const corpo = g.itens.map(rowHTML).join('');
+    if (!g.modulo) return `<div class="mod-sec"><button class="mod-head" data-mod=""><span class="mod-caret">▾</span><span class="mod-name">Outras aulas</span><span class="mod-count">${g.itens.length}</span></button><div class="mod-body">${corpo}</div></div>`;
+    const fechado = modFechados[g.modulo] ? ' closed' : '';
+    return `<div class="mod-sec${fechado}">
+      <button class="mod-head" data-mod="${encodeURIComponent(g.modulo)}">
+        <span class="mod-caret">▾</span>
+        <span class="mod-name">${g.modulo.replace(/</g,'&lt;')}</span>
+        <span class="mod-count">${g.itens.length} ${g.itens.length === 1 ? 'aula' : 'aulas'}</span>
+      </button>
+      <div class="mod-body">${corpo}</div>
+    </div>`;
+  }).join('');
 }
 render();
 window.pxRerender = function(){ render(); };
+
 
 document.getElementById('topics').addEventListener('click', e => {
   const chk = e.target.closest('.px-check');
