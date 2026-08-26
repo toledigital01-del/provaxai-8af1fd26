@@ -97,6 +97,8 @@ export const Route = createFileRoute('/api/public/aula-html')({
             { status: 502 },
           )
 
+        await garantirTopico(curso, body.disciplina, body.topico)
+
         return Response.json({ ok: true, formato: 'html', tamanho: body.html.length })
       },
     },
