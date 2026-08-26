@@ -734,8 +734,8 @@ async function carregarAulaIA(regerar) {
 function renderAulaHTML(box, html){
   box.innerHTML = '';
   const visivel = String(html || '')
-    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '')
-    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<style\b[^>]*>[\s\S]*?(?:<\/style>|$)/gi, '')
+    .replace(/<script\b[^>]*>[\s\S]*?(?:<\/script>|$)/gi, '')
     .replace(/<head\b[^>]*>[\s\S]*?<\/head>/gi, '')
     .replace(/<title\b[^>]*>[\s\S]*?<\/title>/gi, '')
     .replace(/<(?:meta|link)\b[^>]*>/gi, '')
