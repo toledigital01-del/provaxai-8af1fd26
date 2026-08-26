@@ -43,7 +43,7 @@ async function materialDoTopico(curso: string, disciplina: string, topico: strin
     )
     docs.forEach((d) => {
       const t = [d.sumario || '', d.conteudo || ''].join('\n').trim()
-      if (t) partes.push(`### ${d.titulo || d.topico || disciplina}\n${t.slice(0, 12000)}`)
+      if (t) partes.push(`### ${d.titulo || d.topico || disciplina}\n${t.slice(0, 60000)}`)
     })
 
     const kb = await fetch(
@@ -56,7 +56,7 @@ async function materialDoTopico(curso: string, disciplina: string, topico: strin
       .filter((d) => d.topic_nome === topico || !d.topic_nome)
       .forEach((d) => {
         const t = (d.texto_extraido || '').trim()
-        if (t) partes.push(`### ${d.nome_arquivo || 'material'}\n${t.slice(0, 12000)}`)
+        if (t) partes.push(`### ${d.nome_arquivo || 'material'}\n${t.slice(0, 60000)}`)
       })
   } else {
     const um = await fetch(
