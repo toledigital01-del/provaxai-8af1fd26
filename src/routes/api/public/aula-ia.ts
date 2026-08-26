@@ -156,7 +156,7 @@ export const Route = createFileRoute('/api/public/aula-ia')({
           const r = await agentChat({
             agent: 'geracao_aulas',
             system,
-            user: `Disciplina: ${body.disciplina}\nTópico: ${body.topico}\n\nEscreva a aula completa.`,
+            user: `Disciplina: ${body.disciplina}\nTópico: ${body.topico}\n\nEscreva a apostila completa, cobrindo todos os assuntos do material.`,
             maxTokens: 60000,
             userId,
             ferramenta: 'aula-ia',
