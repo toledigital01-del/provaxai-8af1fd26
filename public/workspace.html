@@ -320,7 +320,8 @@ window.pxRerender = function(){
 /* ---------- Coluna esquerda ---------- */
 const TABS = WS_TABS;
 let tab = params.get('tab') || 'tutor';
-if (tab === 'material') tab = 'conteudo';
+/* Material bruto ficou restrito ao painel admin: qualquer rota antiga cai na aula da Athena. */
+if (tab === 'material' || tab === 'conteudo') tab = 'tutor';
 
 
 renderShell({
@@ -717,20 +718,13 @@ async function carregarAulaIA(regerar) {
   if (r && r.aula) {
     box.innerHTML = PX.kbHTML(r.aula) +
       '<p style="margin:18px 0 0;font-size:0.8rem;color:var(--muted)">' +
-        'Não encontrou o que procurava? <button class="btn-secondary" style="padding:4px 10px;font-size:0.8rem" onclick="carregarAulaIA(true)">Gerar novamente</button> ' +
-        'ou veja o <a href="#" onclick="goTab(\'conteudo\');return false" style="color:var(--brand,#154C9B);font-weight:600">material original</a>.' +
+        'Não encontrou o que procurava? <button class="btn-secondary" style="padding:4px 10px;font-size:0.8rem" onclick="carregarAulaIA(true)">Gerar novamente</button>' +
       '</p>';
     return;
   }
   const msg = (r && r.erro) || 'Não consegui montar a aula agora.';
-  if (r && r.status === 401) {
-    box.innerHTML = kbAvisoHTML('Não consegui abrir esta aula', esc(msg),
-      '<p style="margin:12px 0 0"><button class="btn-secondary" onclick="carregarAulaIA()">Tentar de novo</button></p>');
-  } else {
-    box.innerHTML = kbAvisoHTML('Aula ainda não disponível', esc(msg),
-      '<p style="margin:12px 0 0"><button class="btn-secondary" onclick="carregarAulaIA(true)">Tentar de novo</button> ' +
-      '<button class="btn-secondary" onclick="goTab(\'conteudo\')">Ver conteúdo</button></p>');
-  }
+  box.innerHTML = kbAvisoHTML('Aula ainda não disponível', esc(msg),
+    '<p style="margin:12px 0 0"><button class="btn-secondary" onclick="carregarAulaIA(true)">Tentar de novo</button></p>');
 }
 
 
