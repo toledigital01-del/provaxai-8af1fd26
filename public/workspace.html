@@ -737,6 +737,8 @@ function renderAulaHTML(box, html){
     .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '')
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<head\b[^>]*>[\s\S]*?<\/head>/gi, '')
+    .replace(/<title\b[^>]*>[\s\S]*?<\/title>/gi, '')
+    .replace(/<(?:meta|link)\b[^>]*>/gi, '')
     .replace(/<[^>]+>/g, '').replace(/&nbsp;/gi, ' ').trim();
   if (visivel.length < 20) {
     box.innerHTML = kbAvisoHTML('Aula HTML sem conteúdo visível', 'O arquivo publicado contém somente estilos ou scripts. O professor precisa reenviar o HTML completo da aula.', '');

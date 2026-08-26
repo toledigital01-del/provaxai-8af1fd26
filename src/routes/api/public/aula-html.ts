@@ -19,6 +19,8 @@ function temConteudoVisivel(html: string) {
     .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '')
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<head\b[^>]*>[\s\S]*?<\/head>/gi, '')
+    .replace(/<title\b[^>]*>[\s\S]*?<\/title>/gi, '')
+    .replace(/<(?:meta|link)\b[^>]*>/gi, '')
   return semBlocosTecnicos.replace(/<[^>]+>/g, '').replace(/&nbsp;/gi, ' ').trim().length >= 20
 }
 
