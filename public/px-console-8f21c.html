@@ -4233,6 +4233,9 @@ function kbIaInfoLinha(tipo, v){
 }
 
 /* ---------- selo de IA na linha de cada aula ---------- */
+/* Badges inline na linha de cada aula: uma bolinha por artefato de IA.
+   Verde = publicado, azul = gerado (rascunho), cinza = pendente. */
+const KB_IA6 = ['aula','summary','questions','flashcards','lacunas','podcast'];
 window.kbIaBadges = async function(){
   const spans = Array.prototype.slice.call(document.querySelectorAll('.kb-ia-badge'));
   if(!spans.length || !kbDisc) return;
@@ -4250,14 +4253,23 @@ window.kbIaBadges = async function(){
     (r.publicado ? t.pub : t.ras)[r.tipo] = true;
   });
   spans.forEach(function(s){
-    const t = porTopico[s.dataset.topico];
-    if(!t){ s.textContent = '⚠ IA não preparada'; s.style.cssText = 'font-size:0.68rem;background:#F1F5F9;color:#64748B;border-color:#E2E8F0'; s.style.display = ''; return; }
-    const pubs = Object.keys(t.pub).length;
-    const soRascunho = Object.keys(t.ras).filter(function(x){ return !t.pub[x]; }).length;
-    if(pubs >= 8){ s.textContent = '🤖 IA pronta'; s.style.cssText = 'font-size:0.68rem;background:#ECFDF5;color:#047857;border-color:#A7F3D0'; }
-    else if(soRascunho > 0){ s.textContent = '📝 IA com rascunhos'; s.style.cssText = 'font-size:0.68rem;background:#FFFBEB;color:#B45309;border-color:#FDE68A'; }
-    else if(pubs > 0){ s.textContent = '🤖 IA ' + pubs + '/10'; s.style.cssText = 'font-size:0.68rem;background:#EEF2FF;color:#3730A3;border-color:#C7D2FE'; }
-    else { s.textContent = '⚠ IA não preparada'; s.style.cssText = 'font-size:0.68rem;background:#F1F5F9;color:#64748B;border-color:#E2E8F0'; }
+    const t = porTopico[s.dataset.topico] || { pub:{}, ras:{} };
+    let pubs = 0, rasc = 0;
+    const dots = KB_IA6.map(function(tp){
+      const mo = kbIaMeta(tp);
+      const pub = !!t.pub[tp], ras = !!t.ras[tp];
+      if(pub) pubs++; else if(ras) rasc++;
+      const cor = pub ? '#10B981' : ras ? '#2563EB' : '#CBD5E1';
+      const st = pub ? 'publicado' : ras ? 'gerado (rascunho)' : 'pendente';
+      return '<span title="' + esc(mo.rotulo) + ': ' + st + '" style="width:9px;height:9px;border-radius:99px;background:' + cor + ';display:inline-block"></span>';
+    }).join('');
+    s.innerHTML = '<span style="display:inline-flex;gap:3px;align-items:center;vertical-align:middle">' + dots + '</span>' +
+      '<span style="margin-left:5px">' + (pubs ? pubs + '/6 no ar' : rasc ? rasc + ' rascunho(s)' : 'IA não preparada') + '</span>';
+    s.style.cssText = pubs === 6
+      ? 'font-size:0.68rem;background:#ECFDF5;color:#047857;border-color:#A7F3D0'
+      : pubs > 0 ? 'font-size:0.68rem;background:#EEF2FF;color:#3730A3;border-color:#C7D2FE'
+      : rasc > 0 ? 'font-size:0.68rem;background:#FFFBEB;color:#B45309;border-color:#FDE68A'
+      : 'font-size:0.68rem;background:#F1F5F9;color:#64748B;border-color:#E2E8F0';
     s.style.display = '';
   });
 };
