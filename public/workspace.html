@@ -746,7 +746,7 @@ function mapaParse(md) {
     const li = ln.match(/^(\s*)[-*•]\s+(.*)$/);
     if (li) {
       if (!atual) { atual = { t: tema || rzSubject(), folhas: [] }; ramos.push(atual); }
-      atual.folhas.push({ txt: li[2].trim(), nivel: Math.min(2, Math.floor(li[1].length / 2)) });
+      atual.folhas.push({ txt: li[2].trim(), nivel: Math.max(0, Math.floor(li[1].replace(/\t/g, '  ').length / 2)) });
       return;
     }
     if (!atual) { atual = { t: tema || rzSubject(), folhas: [] }; ramos.push(atual); }
