@@ -2037,13 +2037,16 @@ function kbEditor(){
         <div data-aulapane="html" style="display:none">
           <label class="muted">Aula pronta em HTML</label>
           <p class="muted" style="margin:4px 0 8px;font-size:0.76rem">Cole a página HTML completa da aula (com o CSS e os scripts dela). Ela é exibida isolada para o aluno e não passa pela geração automática de IA.</p>
-          <input id="kb-html-topico" placeholder="Nome da aula (ex.: Aula 00 - Noções de organização administrativa)" style="margin-bottom:8px">
+          <input id="kb-html-topico" list="kb-html-topicos" placeholder="Nome da aula (escolha uma já cadastrada ou digite uma nova)" style="margin-bottom:8px">
+          <datalist id="kb-html-topicos"></datalist>
+          <p class="muted" style="margin:0 0 8px;font-size:0.74rem">Se o nome for novo, a aula é criada automaticamente na grade do aluno.</p>
           <textarea id="kb-html-txt" rows="12" spellcheck="false" placeholder="&lt;!doctype html&gt; …" style="font-family:ui-monospace,monospace;font-size:0.78rem"></textarea>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">
             <span style="flex:1"></span>
             <button class="act primary" onclick="kbAulaHtmlSalvar()">Salvar e publicar</button>
           </div>
           <p class="muted" id="kb-html-msg" style="margin:8px 0 0;font-size:0.78rem"></p>
+          <p id="kb-html-orfas" style="margin:8px 0 0;font-size:0.78rem;color:#92400E;display:none"></p>
         </div>
 
 
@@ -2185,9 +2188,11 @@ function kbAulasPaint(){
 }
 
 /* Marca as aulas que são páginas HTML prontas (formato='html' em aulas_ia). */
+/* Marca as aulas que são páginas HTML prontas (formato='html' em aulas_ia)
+   e avisa quando alguma delas está fora da grade do aluno (aula órfã). */
 window.kbHtmlBadges = async function(){
   const spans = Array.prototype.slice.call(document.querySelectorAll('.kb-html-badge'));
-  if(!spans.length || !kbDisc) return;
+  if(!kbDisc) return;
   let rows = [];
   try{
     const { data } = await PX.sb.from('aulas_ia')
@@ -2198,6 +2203,23 @@ window.kbHtmlBadges = async function(){
   const html = {};
   rows.forEach(function(r){ html[r.topico] = true; });
   spans.forEach(function(s){ s.style.display = html[s.dataset.topico] ? '' : 'none'; });
+
+  /* Sugestões de nome no campo da aba "Aula pronta (HTML)" */
+  const dl = document.getElementById('kb-html-topicos');
+  if(dl) dl.innerHTML = KB_AULAS.map(function(a){ return '<option value="' + esc(a.nome).replace(/"/g,'&quot;') + '">'; }).join('');
+
+  /* Aulas em HTML sem tópico correspondente na grade do aluno */
+  const naGrade = {};
+  KB_AULAS.forEach(function(a){ naGrade[a.nome] = true; });
+  const orfas = Object.keys(html).filter(function(t){ return !naGrade[t]; });
+  const av = document.getElementById('kb-html-orfas');
+  if(av){
+    av.style.display = orfas.length ? '' : 'none';
+    av.innerHTML = orfas.length
+      ? '⚠️ Fora da grade do aluno (aula órfã): ' + orfas.map(esc).join(' · ') +
+        '. Salve novamente usando um nome da lista, ou cadastre esse nome como aula.'
+      : '';
+  }
 };
 
 /* Colar uma aula já pronta em HTML e publicar direto para o aluno. */
