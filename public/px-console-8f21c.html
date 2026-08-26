@@ -2902,6 +2902,22 @@ function kbAulaTituloAuto(texto, origem, numero){
   return t.slice(0, 90);
 }
 
+/* Detecta o número e o nome ORIGINAIS da aula no material (ex.: "Aula 03 -
+   Controle da administração" no PDF ou no nome do arquivo). Assim a aula
+   criada fica com o mesmo número e nome do material de origem. */
+function kbAulaDetectarOriginal(texto, origem){
+  const fontes = [String(texto || '').slice(0, 1500), String(origem || '').replace(/\.[a-z0-9]+$/i, '')];
+  for(const f of fontes){
+    const m = f.match(/(?:^|[\s(])(?:aula|cap[íi]tulo)\s*0*(\d{1,3})\s*[-–—:.]?\s*([^\n\r]{0,140})/i);
+    if(m){
+      const numero = parseInt(m[1], 10);
+      const titulo = kbAulaTitulo(String(m[2] || '').replace(/^[-–—:. ]+/, '').replace(/[ \t]+/g, ' ').trim());
+      if(Number.isFinite(numero)) return { numero: numero, titulo: titulo };
+    }
+  }
+  return null;
+}
+
 /* Aulas criadas na última operação (usado para preparar o conteúdo de IA). */
 let KB_AULAS_CRIADAS = [];
 
