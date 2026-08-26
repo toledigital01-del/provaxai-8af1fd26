@@ -406,6 +406,7 @@ export type Database = {
           course_slug: string
           created_at: string
           disciplina: string
+          formato: string
           id: string
           modelo: string | null
           titulo: string | null
@@ -418,6 +419,7 @@ export type Database = {
           course_slug: string
           created_at?: string
           disciplina: string
+          formato?: string
           id?: string
           modelo?: string | null
           titulo?: string | null
@@ -430,6 +432,7 @@ export type Database = {
           course_slug?: string
           created_at?: string
           disciplina?: string
+          formato?: string
           id?: string
           modelo?: string | null
           titulo?: string | null
