@@ -5432,51 +5432,6 @@ window.kbIaRestaurar = async function(tipo, versaoId){
   }catch(e){ toast(e.message || 'Não consegui restaurar.'); }
 };
 
-/* ---------- ABA 3 — PUBLICAÇÃO ---------- */
-/* ---------- PUBLICAÇÃO + EDITORIAL (bloco único no fim do painel) ---------- */
-function kbIaEditorialHtml(body){
-  const ed = (IA_DADOS && IA_DADOS.editorial) || { status:'rascunho', versao_rotulo:'v1.0' };
-  const sts = (IA_DADOS && IA_DADOS.statusEditorial) || [
-    {valor:'rascunho',rotulo:'Rascunho'},{valor:'em_revisao',rotulo:'Em revisão'},{valor:'revisado',rotulo:'Revisado'},
-    {valor:'aprovado',rotulo:'Aprovado'},{valor:'publicado',rotulo:'Publicado'},{valor:'desatualizado',rotulo:'Desatualizado'}];
-  body.innerHTML = '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 18px">'
-    + '<div style="font-weight:800;margin-bottom:4px">🚀 Publicação para os alunos</div>'
-    + '<div class="muted" style="font-size:0.8rem;margin-bottom:10px">Só o que está <b>publicado</b> aparece no painel do aluno e entra no contexto da Athena. Use o botão "Publicar tudo" no topo da tela para liberar a versão mais recente de cada módulo.</div>'
-    + '<details style="margin-top:12px;border-top:1px solid #F1F5F9;padding-top:10px">'
-    +   '<summary class="muted" style="cursor:pointer;font-size:0.78rem">Controle editorial (status, versão, próxima revisão)</summary>'
-    +   '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:10px">'
-    +     '<div><label class="muted" style="font-size:0.74rem">Status</label><select id="ia-ed-status" style="width:100%">'
-    +       sts.map(function(o){ return '<option value="'+o.valor+'"'+(ed.status===o.valor?' selected':'')+'>'+o.rotulo+'</option>'; }).join('')
-    +     '</select></div>'
-    +     '<div><label class="muted" style="font-size:0.74rem">Versão editorial</label><input id="ia-ed-versao" style="width:100%" value="'+esc(ed.versao_rotulo||'v1.0')+'"></div>'
-    +     '<div><label class="muted" style="font-size:0.74rem">Próxima revisão</label><input id="ia-ed-revisao" type="date" style="width:100%" value="'+esc(ed.proxima_revisao||'')+'"></div>'
-    +   '</div>'
-    +   '<div style="margin-top:10px"><label class="muted" style="font-size:0.74rem">Observações do revisor</label>'
-    +     '<textarea id="ia-ed-obs" rows="2" style="width:100%;font-size:0.84rem">'+esc(ed.observacoes||'')+'</textarea></div>'
-    +   '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
-    +     '<button class="act primary" style="font-size:0.78rem" onclick="kbIaSalvarEditorial(false)">Salvar status</button>'
-    +     '<button class="act" style="font-size:0.78rem" onclick="kbIaSalvarEditorial(true)">✓ Marcar como conferida hoje</button>'
-    +     '<span class="muted" style="font-size:0.74rem">Última conferência: '+(ed.ultima_verificacao ? new Date(ed.ultima_verificacao).toLocaleDateString('pt-BR') : '—')+'</span>'
-    +   '</div>'
-    + '</details></div>';
-}
-function kbIaPaintPublicacao(body){
-  body.innerHTML = '<div style="max-width:760px;margin:0 auto"></div>';
-  kbIaEditorialHtml(body.firstChild);
-}
-window.kbIaSalvarEditorial = async function(conferida){
-  const v = function(id){ const e = document.getElementById(id); return e ? e.value : ''; };
-  try{
-    const r = await kbIaApi({ acao:'salvar-editorial', editorial:{
-      status: v('ia-ed-status'), versao_rotulo: v('ia-ed-versao') || 'v1.0',
-      observacoes: v('ia-ed-obs'), proxima_revisao: v('ia-ed-revisao') || undefined,
-      verificado: !!conferida,
-    }});
-    if(IA_DADOS && r && r.editorial) IA_DADOS.editorial = r.editorial;
-    toast('Status editorial salvo.');
-    kbIaPaint();
-  }catch(e){ toast(e.message || 'Não consegui salvar o status editorial.'); }
-};
 window.kbIaPublicar = async function(tipo){
   try{
     await kbIaApi({ acao:'publicar', tipo: tipo });
