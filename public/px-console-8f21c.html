@@ -4432,7 +4432,7 @@ function kbPdfDaAula(a){
 window.kbIaAbrir = function(aulaId){
   IA_AULA = KB_AULAS.find(function(a){ return a.id === aulaId; });
   if(!IA_AULA) return;
-  IA_TAB = 'config'; IA_DADOS = null;
+  IA_TAB = 'config'; IA_DADOS = null; KB_IA_MODO = 'gerar';
   let m = document.getElementById('kb-ia-modal');
   if(!m){
     m = document.createElement('div');
