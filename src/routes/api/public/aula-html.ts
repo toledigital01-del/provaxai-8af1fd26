@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
 import { requirePedagogicalAdmin, serviceHeaders, SUPABASE_URL } from '@/lib/px-server'
 import { cacheChave, cacheLimpar } from '@/lib/px-cache'
+import { temConteudoVisivel } from '@/lib/aula-html-util'
 
 /* Aula escrita fora do app como página HTML pronta (CSS e interatividade próprios).
    Grava direto em `aulas_ia` com formato='html' — não passa pela geração de IA. */
@@ -16,14 +17,10 @@ const Body = z.object({
 
 const eq = (v: string) => `eq.${encodeURIComponent(v)}`
 
-function temConteudoVisivel(html: string) {
-  const semBlocosTecnicos = html
-    .replace(/<style\b[^>]*>[\s\S]*?(?:<\/style>|$)/gi, '')
-    .replace(/<script\b[^>]*>[\s\S]*?(?:<\/script>|$)/gi, '')
-    .replace(/<head\b[^>]*>[\s\S]*?<\/head>/gi, '')
-    .replace(/<title\b[^>]*>[\s\S]*?<\/title>/gi, '')
-    .replace(/<(?:meta|link)\b[^>]*>/gi, '')
-  return semBlocosTecnicos.replace(/<[^>]+>/g, '').replace(/&nbsp;/gi, ' ').trim().length >= 20
+/* Ao publicar, todo artefato em cache daquela aula precisa cair junto. */
+function limparTudo(curso: string, disciplina: string, topico: string) {
+  for (const rota of ['aula-ia', 'recurso', 'resumo', 'mapa', 'podcast'])
+    cacheLimpar(cacheChave(rota, [curso, disciplina, topico]))
 }
 
 /* Garante que o tópico exista na grade do aluno — sem isso a aula fica órfã:
@@ -96,7 +93,7 @@ export const Route = createFileRoute('/api/public/aula-html')({
           if (!salvo || salvo.formato !== 'html' || !temConteudoVisivel(salvo.conteudo || '')) {
             return Response.json({ error: 'Esta aula ainda não possui um HTML completo para publicar.' }, { status: 422 })
           }
-          cacheLimpar(cacheChave('aula-ia', [curso, body.disciplina, body.topico]))
+          limparTudo(curso, body.disciplina, body.topico)
           await garantirTopico(curso, body.disciplina, body.topico)
           return Response.json({ ok: true, publicado: true, formato: 'html' })
         }
@@ -109,7 +106,7 @@ export const Route = createFileRoute('/api/public/aula-html')({
         }
 
         // Publicação nova: derruba o cache do servidor para o aluno ver na hora.
-        cacheLimpar(cacheChave('aula-ia', [curso, body.disciplina, body.topico]))
+        limparTudo(curso, body.disciplina, body.topico)
         const del = await fetch(`${SUPABASE_URL}/rest/v1/aulas_ia?${filtro}`, {
           method: 'DELETE',
           headers: serviceHeaders({ Prefer: 'return=minimal' }),

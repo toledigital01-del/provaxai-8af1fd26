@@ -21,6 +21,7 @@ import { Route as ApiPublicAthenaRouteImport } from './routes/api/public/athena'
 import { Route as ApiPublicAulaHtmlRouteImport } from './routes/api/public/aula-html'
 import { Route as ApiPublicAulaIaRouteImport } from './routes/api/public/aula-ia'
 import { Route as ApiPublicAulaPacoteRouteImport } from './routes/api/public/aula-pacote'
+import { Route as ApiPublicAulaStatusRouteImport } from './routes/api/public/aula-status'
 import { Route as ApiPublicGerarExerciciosRouteImport } from './routes/api/public/gerar-exercicios'
 import { Route as ApiPublicKbAuditoriaRouteImport } from './routes/api/public/kb-auditoria'
 import { Route as ApiPublicKbAulaRouteImport } from './routes/api/public/kb-aula'
@@ -102,6 +103,11 @@ const ApiPublicAulaIaRoute = ApiPublicAulaIaRouteImport.update({
 const ApiPublicAulaPacoteRoute = ApiPublicAulaPacoteRouteImport.update({
   id: '/api/public/aula-pacote',
   path: '/api/public/aula-pacote',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAulaStatusRoute = ApiPublicAulaStatusRouteImport.update({
+  id: '/api/public/aula-status',
+  path: '/api/public/aula-status',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicGerarExerciciosRoute =
@@ -225,6 +231,7 @@ export interface FileRoutesByFullPath {
   '/api/public/aula-html': typeof ApiPublicAulaHtmlRoute
   '/api/public/aula-ia': typeof ApiPublicAulaIaRoute
   '/api/public/aula-pacote': typeof ApiPublicAulaPacoteRoute
+  '/api/public/aula-status': typeof ApiPublicAulaStatusRoute
   '/api/public/gerar-exercicios': typeof ApiPublicGerarExerciciosRoute
   '/api/public/kb-auditoria': typeof ApiPublicKbAuditoriaRoute
   '/api/public/kb-aula': typeof ApiPublicKbAulaRoute
@@ -260,6 +267,7 @@ export interface FileRoutesByTo {
   '/api/public/aula-html': typeof ApiPublicAulaHtmlRoute
   '/api/public/aula-ia': typeof ApiPublicAulaIaRoute
   '/api/public/aula-pacote': typeof ApiPublicAulaPacoteRoute
+  '/api/public/aula-status': typeof ApiPublicAulaStatusRoute
   '/api/public/gerar-exercicios': typeof ApiPublicGerarExerciciosRoute
   '/api/public/kb-auditoria': typeof ApiPublicKbAuditoriaRoute
   '/api/public/kb-aula': typeof ApiPublicKbAulaRoute
@@ -296,6 +304,7 @@ export interface FileRoutesById {
   '/api/public/aula-html': typeof ApiPublicAulaHtmlRoute
   '/api/public/aula-ia': typeof ApiPublicAulaIaRoute
   '/api/public/aula-pacote': typeof ApiPublicAulaPacoteRoute
+  '/api/public/aula-status': typeof ApiPublicAulaStatusRoute
   '/api/public/gerar-exercicios': typeof ApiPublicGerarExerciciosRoute
   '/api/public/kb-auditoria': typeof ApiPublicKbAuditoriaRoute
   '/api/public/kb-aula': typeof ApiPublicKbAulaRoute
@@ -333,6 +342,7 @@ export interface FileRouteTypes {
     | '/api/public/aula-html'
     | '/api/public/aula-ia'
     | '/api/public/aula-pacote'
+    | '/api/public/aula-status'
     | '/api/public/gerar-exercicios'
     | '/api/public/kb-auditoria'
     | '/api/public/kb-aula'
@@ -368,6 +378,7 @@ export interface FileRouteTypes {
     | '/api/public/aula-html'
     | '/api/public/aula-ia'
     | '/api/public/aula-pacote'
+    | '/api/public/aula-status'
     | '/api/public/gerar-exercicios'
     | '/api/public/kb-auditoria'
     | '/api/public/kb-aula'
@@ -403,6 +414,7 @@ export interface FileRouteTypes {
     | '/api/public/aula-html'
     | '/api/public/aula-ia'
     | '/api/public/aula-pacote'
+    | '/api/public/aula-status'
     | '/api/public/gerar-exercicios'
     | '/api/public/kb-auditoria'
     | '/api/public/kb-aula'
@@ -439,6 +451,7 @@ export interface RootRouteChildren {
   ApiPublicAulaHtmlRoute: typeof ApiPublicAulaHtmlRoute
   ApiPublicAulaIaRoute: typeof ApiPublicAulaIaRoute
   ApiPublicAulaPacoteRoute: typeof ApiPublicAulaPacoteRoute
+  ApiPublicAulaStatusRoute: typeof ApiPublicAulaStatusRoute
   ApiPublicGerarExerciciosRoute: typeof ApiPublicGerarExerciciosRoute
   ApiPublicKbAuditoriaRoute: typeof ApiPublicKbAuditoriaRoute
   ApiPublicKbAulaRoute: typeof ApiPublicKbAulaRoute
@@ -546,6 +559,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/aula-pacote'
       fullPath: '/api/public/aula-pacote'
       preLoaderRoute: typeof ApiPublicAulaPacoteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/aula-status': {
+      id: '/api/public/aula-status'
+      path: '/api/public/aula-status'
+      fullPath: '/api/public/aula-status'
+      preLoaderRoute: typeof ApiPublicAulaStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/gerar-exercicios': {
@@ -711,6 +731,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAulaHtmlRoute: ApiPublicAulaHtmlRoute,
   ApiPublicAulaIaRoute: ApiPublicAulaIaRoute,
   ApiPublicAulaPacoteRoute: ApiPublicAulaPacoteRoute,
+  ApiPublicAulaStatusRoute: ApiPublicAulaStatusRoute,
   ApiPublicGerarExerciciosRoute: ApiPublicGerarExerciciosRoute,
   ApiPublicKbAuditoriaRoute: ApiPublicKbAuditoriaRoute,
   ApiPublicKbAulaRoute: ApiPublicKbAulaRoute,
