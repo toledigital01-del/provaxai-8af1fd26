@@ -2704,6 +2704,15 @@ window.kbAulaModalSalvar = async function(auto, recarregar){
   if(publicar && !auto && a && a.nome) kbPrepararAula(kbDisc, a.nome);
   if(msg && !auto) msg.textContent = (publicar ? 'Aula publicada para os alunos' : 'Aula salva como rascunho') +
     (modo === 'pdf' ? ' — o aluno abre esta aula em PDF.' : ' — o aluno vê o conteúdo em texto.');
+  /* Fluxo único de IA: ao carregar/substituir o material com o painel da IA
+     aberto nesta aula, gera/atualiza os 12 módulos automaticamente. */
+  const iaModal = document.getElementById('kb-ia-modal');
+  const iaAberta = iaModal && iaModal.style.display !== 'none' && IA_AULA && IA_AULA.id === a.id;
+  const materialMudou = !doc ? !!(conteudo || pdfUrl) : ((doc.conteudo || '') !== conteudo || String(doc.pdf_url || '') !== pdfUrl);
+  if(iaAberta && materialMudou && !IA_OCUPADO){
+    kbAulaModalFechar();
+    kbIaRecarregar().then(function(){ kbIaFluxoAuto(KB_IA_MODO); });
+  }
 };
 
 
