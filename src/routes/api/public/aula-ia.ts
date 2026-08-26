@@ -96,19 +96,20 @@ export const Route = createFileRoute('/api/public/aula-ia')({
 
         const filtroDono = dono ? `user_id=${eq(dono)}` : 'user_id=is.null'
         const cacheUrl =
-          `${SUPABASE_URL}/rest/v1/aulas_ia?select=titulo,conteudo,modelo,updated_at` +
+          `${SUPABASE_URL}/rest/v1/aulas_ia?select=titulo,conteudo,modelo,formato,updated_at` +
           `&course_slug=${eq(curso)}&disciplina=${eq(body.disciplina)}&topico=${eq(body.topico)}&${filtroDono}&limit=1`
 
         if (!body.regerar) {
           const cache = await fetch(cacheUrl, { headers: serviceHeaders() })
             .then((r) => (r.ok ? r.json() : []))
             .catch(() => [])
-          const hit = (cache as Array<{ titulo?: string; conteudo?: string; modelo?: string }>)[0]
+          const hit = (cache as Array<{ titulo?: string; conteudo?: string; modelo?: string; formato?: string }>)[0]
           if (hit && (hit.conteudo || '').trim())
             return Response.json({
               aula: hit.conteudo,
               titulo: hit.titulo || body.topico,
               modelo: hit.modelo || null,
+              formato: hit.formato === 'html' ? 'html' : 'markdown',
               cache: true,
               compartilhada: oficial,
             })
@@ -189,6 +190,7 @@ export const Route = createFileRoute('/api/public/aula-ia')({
               user_id: dono,
               titulo: body.topico,
               conteudo: aula,
+              formato: 'markdown',
               modelo: modeloUsado,
             }),
           })
@@ -196,7 +198,7 @@ export const Route = createFileRoute('/api/public/aula-ia')({
           /* cache é best-effort */
         }
 
-        return Response.json({ aula, titulo: body.topico, modelo: modeloUsado, cache: false, compartilhada: oficial })
+        return Response.json({ aula, titulo: body.topico, modelo: modeloUsado, formato: 'markdown', cache: false, compartilhada: oficial })
       },
     },
   },
