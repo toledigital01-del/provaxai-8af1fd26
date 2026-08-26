@@ -2352,6 +2352,8 @@ window.kbHtmlBadges = async function(){
   }catch(e){ return; }
   const html = {};
   rows.forEach(function(r){ html[r.topico] = true; });
+  /* Guarda quais aulas são HTML pronto: “Editar aula” abre o editor de HTML nelas. */
+  window.KB_HTML_AULAS = html;
   spans.forEach(function(s){ s.style.display = html[s.dataset.topico] ? '' : 'none'; });
   publicar.forEach(function(s){ s.style.display = html[s.dataset.topico] ? '' : 'none'; });
 
