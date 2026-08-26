@@ -2486,6 +2486,9 @@ window.kbAulaHtmlPublicar = async function(topico){
       curso:'prf-2021', disciplina:kbDisc, topico:topico, acao:'publicar'
     });
     const st = await kbAulaStatusBuscar(topico, true);
+    /* Gera os materiais da IA (resumo, pontos, mapa, flashcards…) para a aula
+       não ficar marcada como "IA não preparada" para o aluno. */
+    kbPrepararAula(kbDisc, topico, false, true);
     if(msg) msg.textContent = '✅ Aula publicada, cache atualizado (versão ' + (st.versao || '—') + ').';
     toast('Aula publicada e sincronizada para os alunos.');
     kbAulasPaint();
@@ -2507,7 +2510,8 @@ window.kbAulaHtmlSalvar = async function(){
   msg.textContent = 'Salvando…';
   try{
     await kbPost('/api/public/aula-html', { curso:'prf-2021', disciplina: kbDisc, topico: topico, html: html, acao:'salvar' });
-    msg.textContent = '✅ Aula em HTML publicada.';
+    kbPrepararAula(kbDisc, topico, false, true);
+    msg.textContent = '✅ Aula em HTML publicada (preparando materiais da IA…).';
     document.getElementById('kb-html-txt').value = '';
     document.getElementById('kb-html-topico').value = '';
     kbAulasCarregar(kbDisc).then(kbAulasPaint).catch(function(){ kbAulasPaint(); });
@@ -2988,11 +2992,13 @@ window.kbAulaHtmlEditarSalvar = async function(id){
       if(up.error) throw new Error(up.error.message);
       await PX.sb.from('knowledge_docs').update({ topico: nome })
         .eq('course_slug','prf-2021').eq('disciplina', kbDisc).eq('topico', a.nome);
+      await kbRenomearVinculos(a.nome, nome);
       await kbPost('/api/public/aula-html', { curso:'prf-2021', disciplina:kbDisc, topico:a.nome, acao:'excluir' });
       a.nome = nome;
       try{ if(PX.syncCurriculo) await PX.syncCurriculo(); }catch(e){}
     }
     await kbPost('/api/public/aula-html', { curso:'prf-2021', disciplina:kbDisc, topico:a.nome, html: html, acao:'salvar' });
+    kbPrepararAula(kbDisc, a.nome, false, true);
     if(msg) msg.textContent = '✅ Aula salva e publicada para o aluno.';
     toast('Aula em HTML atualizada.');
     await kbAulasCarregar(kbDisc);
