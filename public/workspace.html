@@ -737,7 +737,19 @@ function renderAulaHTML(box, html){
   fr.setAttribute('sandbox', 'allow-scripts');
   fr.setAttribute('title', 'Aula');
   fr.style.cssText = 'width:100%;border:0;display:block;min-height:420px;background:#fff';
-  fr.srcdoc = html;
+  /* Com sandbox="allow-scripts" o documento fica em origem opaca, então além de
+     tentar ler a altura direto, embutimos um script que avisa o tamanho real. */
+  const medidor = '<script>(function(){function h(){try{var a=document.body,b=document.documentElement;' +
+    'parent.postMessage({pxAulaAltura:Math.max(a?a.scrollHeight:0,b?b.scrollHeight:0)},"*");}catch(e){}}' +
+    'window.addEventListener("load",h);document.addEventListener("DOMContentLoaded",h);' +
+    'setInterval(h,800);if(window.ResizeObserver&&document.body)new ResizeObserver(h).observe(document.body);h();})();<\/script>';
+  fr.srcdoc = /<\/body>/i.test(html) ? html.replace(/<\/body>/i, medidor + '</body>') : html + medidor;
+  const viaMensagem = function(ev){
+    if (ev.source !== fr.contentWindow) return;
+    const h = ev.data && ev.data.pxAulaAltura;
+    if (typeof h === 'number' && h > 0) fr.style.height = (h + 24) + 'px';
+  };
+  window.addEventListener('message', viaMensagem);
   const ajustar = function(){
     try {
       const d = fr.contentWindow && fr.contentWindow.document;
