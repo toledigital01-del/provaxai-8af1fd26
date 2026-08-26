@@ -2352,6 +2352,8 @@ window.kbHtmlBadges = async function(){
   }catch(e){ return; }
   const html = {};
   rows.forEach(function(r){ html[r.topico] = true; });
+  /* Guarda quais aulas são HTML pronto: “Editar aula” abre o editor de HTML nelas. */
+  window.KB_HTML_AULAS = html;
   spans.forEach(function(s){ s.style.display = html[s.dataset.topico] ? '' : 'none'; });
   publicar.forEach(function(s){ s.style.display = html[s.dataset.topico] ? '' : 'none'; });
 
@@ -2890,9 +2892,113 @@ window.kbAulaModalPub = function(pub){
   kbAulaModalSalvar(false, true);
 };
 
+/* ---- Editor de aulas em HTML pronto ---------------------------------- */
+window.KB_HTML_AULAS = window.KB_HTML_AULAS || {};
+window.kbAulaHtmlEditar = async function(id){
+  const a = KB_AULAS.find(x => x.id === id);
+  if(!a) return;
+  let m = document.getElementById('kb-htmled-modal');
+  if(!m){
+    m = document.createElement('div');
+    m.id = 'kb-htmled-modal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.55);display:flex;align-items:flex-start;justify-content:center;padding:32px 16px;overflow:auto';
+    document.body.appendChild(m);
+  }
+  m.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  m.innerHTML = '<div style="background:#F1F5F9;border-radius:16px;max-width:1040px;width:100%;padding:22px 24px"><p class="muted">Carregando o HTML desta aula…</p></div>';
+  let dados = { titulo: kbAulaTitulo(a.nome), html: '' };
+  try{
+    dados = await kbPost('/api/public/aula-html', { curso:'prf-2021', disciplina:kbDisc, topico:a.nome, acao:'carregar' });
+  }catch(e){
+    m.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:520px;width:100%;padding:22px 24px">' +
+      '<p>Não consegui carregar o HTML: ' + esc(e.message || '') + '</p>' +
+      '<button class="act" onclick="kbAulaHtmlFechar()">Fechar</button></div>';
+    return;
+  }
+  m.innerHTML =
+    '<div style="background:#F1F5F9;border-radius:16px;max-width:1040px;width:100%;padding:22px 24px;box-shadow:0 20px 60px rgba(15,23,42,.3)">' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">' +
+        '<b style="color:#1E3A8A">Aula ' + kbAulaNum(a.ordem) + ' · página HTML pronta</b>' +
+        '<span class="kb-tag" style="background:#FDF2F8;color:#9D174D;border-color:#FBCFE8">HTML</span>' +
+        '<span style="flex:1"></span>' +
+        '<button class="act" onclick="kbAulaHtmlFechar()">Fechar</button>' +
+      '</div>' +
+      '<label class="muted">Nome da aula (título mostrado ao aluno)</label>' +
+      '<input id="kb-htmled-nome" value="' + esc(kbAulaTitulo(a.nome)).replace(/"/g,'&quot;') + '" style="margin-bottom:12px">' +
+      '<label class="muted">Código HTML da aula</label>' +
+      '<textarea id="kb-htmled-src" spellcheck="false" style="width:100%;min-height:44vh;font-family:ui-monospace,Menlo,monospace;font-size:0.78rem;line-height:1.5"></textarea>' +
+      '<div class="kb-actions" style="margin-top:12px">' +
+        '<button class="act primary" onclick="kbAulaHtmlEditarSalvar(\'' + a.id + '\')">Salvar e publicar</button>' +
+        '<button class="act" onclick="kbAulaHtmlPrever()">👁 Pré-visualizar</button>' +
+        '<span style="flex:1"></span>' +
+        '<button class="act danger" onclick="kbAulaHtmlEditarExcluir(\'' + a.id + '\')">Apagar HTML desta aula</button>' +
+      '</div>' +
+      '<p class="muted" id="kb-htmled-msg" style="margin-top:10px;font-size:0.78rem"></p>' +
+    '</div>';
+  document.getElementById('kb-htmled-src').value = dados.html || '';
+};
+window.kbAulaHtmlFechar = function(){
+  const m = document.getElementById('kb-htmled-modal');
+  if(m) m.style.display = 'none';
+  document.body.style.overflow = '';
+};
+window.kbAulaHtmlPrever = function(){
+  const html = String((document.getElementById('kb-htmled-src')||{}).value || '');
+  const w = window.open('', '_blank');
+  if(!w) return;
+  w.document.open(); w.document.write(html); w.document.close();
+};
+window.kbAulaHtmlEditarSalvar = async function(id){
+  const a = KB_AULAS.find(x => x.id === id);
+  const msg = document.getElementById('kb-htmled-msg');
+  if(!a) return;
+  const html = String(document.getElementById('kb-htmled-src').value || '').trim();
+  const nome = kbAulaTitulo(String(document.getElementById('kb-htmled-nome').value || '').trim());
+  if(html.length < 200){ if(msg) msg.textContent = 'O HTML precisa ter pelo menos 200 caracteres.'; return; }
+  if(msg) msg.textContent = 'Salvando…';
+  try{
+    /* Renomear primeiro: o HTML é gravado já no nome novo do tópico. */
+    if(nome && nome !== a.nome){
+      const up = await PX.sb.from('topics').update({ nome: nome }).eq('id', a.id);
+      if(up.error) throw new Error(up.error.message);
+      await PX.sb.from('knowledge_docs').update({ topico: nome })
+        .eq('course_slug','prf-2021').eq('disciplina', kbDisc).eq('topico', a.nome);
+      await kbPost('/api/public/aula-html', { curso:'prf-2021', disciplina:kbDisc, topico:a.nome, acao:'excluir' });
+      a.nome = nome;
+      try{ if(PX.syncCurriculo) await PX.syncCurriculo(); }catch(e){}
+    }
+    await kbPost('/api/public/aula-html', { curso:'prf-2021', disciplina:kbDisc, topico:a.nome, html: html, acao:'salvar' });
+    if(msg) msg.textContent = '✅ Aula salva e publicada para o aluno.';
+    toast('Aula em HTML atualizada.');
+    await kbAulasCarregar(kbDisc);
+    kbAulasPaint();
+  }catch(e){
+    if(msg) msg.textContent = 'Erro: ' + (e.message || 'não consegui salvar.');
+  }
+};
+window.kbAulaHtmlEditarExcluir = async function(id){
+  const a = KB_AULAS.find(x => x.id === id);
+  if(!a) return;
+  if(!confirm('Apagar o HTML da aula “' + kbAulaTitulo(a.nome) + '”? A aula continua na grade, mas ficará sem conteúdo.')) return;
+  const msg = document.getElementById('kb-htmled-msg');
+  try{
+    await kbPost('/api/public/aula-html', { curso:'prf-2021', disciplina:kbDisc, topico:a.nome, acao:'excluir' });
+    delete window.KB_HTML_AULAS[a.nome];
+    kbAulaHtmlFechar();
+    toast('HTML da aula apagado.');
+    await kbAulasCarregar(kbDisc);
+    kbAulasPaint();
+  }catch(e){
+    if(msg) msg.textContent = 'Erro: ' + (e.message || 'não consegui apagar.');
+  }
+};
+
 window.kbAulaEditar = function(id){
   const a = KB_AULAS.find(x => x.id === id);
   if(!a) return;
+  /* Aula que é página HTML pronta abre no editor de HTML, não no editor de texto. */
+  if(window.KB_HTML_AULAS && window.KB_HTML_AULAS[a.nome]) return kbAulaHtmlEditar(id);
   KB_AULA_EDIT = a;
   KB_AULA_EDIT_SUJO = false;
   const doc = kbFind(kbDisc, a.nome) || {};
