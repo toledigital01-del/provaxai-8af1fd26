@@ -453,7 +453,13 @@ export async function gerarModulo(tipo: TipoModulo, ctx0: GerarCtx): Promise<{ c
       '## Esquema de revisão · ## Fixação — 10 assertivas certo/errado no estilo Cebraspe, com gabarito comentado.',
       'Regras: português do Brasil, 1ª pessoa do professor; destaque em **negrito** conceitos-chave, prazos e exceções;',
       'parágrafos curtos; não invente lei, número, prazo ou julgado que não esteja no material.',
+      'Letra da lei: sempre que citar o TEXTO LITERAL de um artigo de lei, use blockquote Markdown ("> ") em linha própria,',
+      'nunca em negrito no meio do parágrafo — o blockquote separa visualmente a letra da lei da sua explicação.',
+      'Glossário: na PRIMEIRA vez que definir um termo técnico importante, marque-o com a sintaxe {{termo::definição curta em até 2 linhas}}.',
+      'Exemplo: {{Acostamento::parte da via destinada à parada ou estacionamento de veículos em emergência, quando não há local apropriado}}.',
+      'Não use ** dentro dessa marcação e não marque o mesmo termo de novo se ele reaparecer depois no texto.',
       'Tamanho: aula completa e aprofundada, entre 2.500 e 4.000 palavras. Responda apenas com a aula em Markdown.',
+
     ])
     const conteudo = await chat({ provider: ctx.provider, model: ctx.model, system, user, keys: ctx.keys, maxTokens: 16000 })
     return { conteudo: conteudo.trim(), meta: { modelo: ctx.model } }

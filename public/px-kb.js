@@ -241,12 +241,21 @@
     var esc = function (s) {
       return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; });
     };
+    function attr(s) {
+      return String(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
     function inline(t) {
-      return t.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+      /* Glossário {{termo::definição}} vem ANTES de negrito/itálico para não colidir com ** e * */
+      return t.replace(/\{\{([^{}:]+)::([^{}]+)\}\}/g, function (_m, termo, def) {
+        return '<button type="button" class="termo-glossario" data-def="' + attr(String(def).trim()) + '">' +
+          String(termo).trim() + '</button>';
+      })
+        .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
         .replace(/==(.+?)==/g, '<mark>$1</mark>')
         .replace(/`([^`]+)`/g, '<code>$1</code>')
         .replace(/(^|\W)\*(\S.*?\S|\S)\*/g, '$1<i>$2</i>');
     }
+
     var linhas = esc(md || '').split(/\r?\n/);
     var out = [];
     var ul = false, ol = false;
@@ -321,6 +330,61 @@
       '<div class="kb-callout__body">' + PX.kbHTML(md) + '</div>' +
       '</section>';
   };
+
+  /* ---- Glossário interativo: popover ao tocar/clicar num termo ----
+     Delegação global: funciona em qualquer conteúdo vindo de PX.kbHTML. */
+  (function () {
+    var pop = null, alvo = null;
+
+    function fechar() {
+      if (pop && pop.parentNode) pop.parentNode.removeChild(pop);
+      if (alvo) alvo.setAttribute('aria-expanded', 'false');
+      pop = null; alvo = null;
+    }
+    PX.glossarioFechar = fechar;
+
+    function abrir(btn) {
+      fechar();
+      alvo = btn;
+      btn.setAttribute('aria-expanded', 'true');
+      pop = document.createElement('div');
+      pop.className = 'glossario-pop';
+      pop.setAttribute('role', 'dialog');
+      var t = document.createElement('b');
+      t.textContent = btn.textContent || '';
+      var d = document.createElement('div');
+      d.textContent = btn.getAttribute('data-def') || '';
+      pop.appendChild(t); pop.appendChild(d);
+      document.body.appendChild(pop);
+
+      var r = btn.getBoundingClientRect();
+      var sx = window.pageXOffset, sy = window.pageYOffset;
+      var w = pop.offsetWidth, h = pop.offsetHeight;
+      var left = r.left + sx + r.width / 2 - w / 2;
+      left = Math.max(sx + 10, Math.min(left, sx + document.documentElement.clientWidth - w - 10));
+      var top = r.bottom + sy + 8;
+      if (r.bottom + h + 16 > window.innerHeight && r.top - h - 8 > 0) top = r.top + sy - h - 8;
+      pop.style.left = left + 'px';
+      pop.style.top = top + 'px';
+    }
+
+    document.addEventListener('click', function (e) {
+      var btn = e.target && e.target.closest && e.target.closest('.termo-glossario');
+      if (btn) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (alvo === btn) fechar(); else abrir(btn);
+        return;
+      }
+      if (pop && !(e.target.closest && e.target.closest('.glossario-pop'))) fechar();
+    }, true);
+
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fechar(); });
+    window.addEventListener('resize', fechar);
+    window.addEventListener('scroll', function () { if (pop) fechar(); }, true);
+  })();
+
+
 
 
   /* Pergunta à Athena usando a base de conhecimento como fonte */
