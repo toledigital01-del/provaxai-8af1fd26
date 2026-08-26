@@ -273,13 +273,16 @@ export async function publicarVersao(v: Versao & { course_slug: string; discipli
           }
         }),
     )
+    if (!ok) return false
+    await delRest(`questions?${filtro}&created_at=lt.${encodeURIComponent(antes)}`)
+    return finalizar(true)
   }
   if (tipo === 'flashcards') {
     const itens = parseJson<Array<{ frente?: string; verso?: string }>>(v.conteudo)
     if (!Array.isArray(itens) || !itens.length) return false
     const filtro = `course_slug=${eq(curso)}&discipline_nome=${eq(disciplina)}&topic_nome=${eq(topico)}&is_oficial=is.true`
-    await delRest(`flashcards?${filtro}`)
-    return postRest(
+    const antes = new Date().toISOString()
+    const ok = await postRest(
       'flashcards',
       itens
         .filter((c) => String(c.frente || '').trim() && String(c.verso || '').trim())
@@ -293,6 +296,9 @@ export async function publicarVersao(v: Versao & { course_slug: string; discipli
           is_oficial: true,
         })),
     )
+    if (!ok) return false
+    await delRest(`flashcards?${filtro}&created_at=lt.${encodeURIComponent(antes)}`)
+    return finalizar(true)
   }
   return false
 }
