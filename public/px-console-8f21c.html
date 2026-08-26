@@ -4301,12 +4301,6 @@ window.kbIaAbrir = function(aulaId){
     +     '<div style="font-weight:800;font-size:1rem">🤖 IA DA AULA — Aula ' + String(IA_AULA.ordem).padStart(2,'0') + ' · ' + esc(IA_AULA.nome) + '</div>'
     +     '<div class="muted" style="font-size:0.75rem" id="ia-hdr">' + esc(kbDisc) + ' · pacote de conteúdo inteligente</div>'
     +   '</div>'
-    +   '<div id="ia-tabs" style="display:flex;gap:6px">'
-    +     ['config|⚙ Configuração','conteudos|📦 Conteúdos gerados','publicacao|🚀 Publicação'].map(function(t){
-          const p = t.split('|');
-          return '<button class="act" data-tab="'+p[0]+'" style="font-size:0.78rem;padding:6px 12px" onclick="kbIaTab(\''+p[0]+'\')">'+p[1]+'</button>';
-        }).join('')
-    +   '</div>'
     +   '<button class="act" onclick="kbIaFechar()">Fechar</button>'
     + '</div>'
     + '<div id="ia-body" style="flex:1;overflow:auto;padding:18px;background:#F8FAFC">'
@@ -4355,12 +4349,6 @@ function kbIaStatusTag(m){
 function kbIaPaint(){
   const body = document.getElementById('ia-body');
   if(!body || !IA_AULA) return;
-  Array.prototype.forEach.call(document.querySelectorAll('#ia-tabs .act'), function(b){
-    const on = b.dataset.tab === IA_TAB;
-    b.style.background = on ? '#1E3A8A' : '#fff';
-    b.style.color = on ? '#fff' : '';
-    b.style.borderColor = on ? '#1E3A8A' : '';
-  });
   const doc = kbFind(IA_AULA.disc || kbDisc, IA_AULA.nome) || null;
   const pdf = kbPdfDaAula(IA_AULA);
   const ultima = (function(){
@@ -4371,9 +4359,25 @@ function kbIaPaint(){
   const hdr = document.getElementById('ia-hdr');
   if(hdr) hdr.textContent = kbDisc + ' · ' + (pdf ? 'PDF: ' + pdf.split('/').pop() : 'material em texto') + ' · última atualização IA: ' + ultima;
 
-  if(IA_TAB === 'config') return kbIaPaintConfig(body, doc, pdf);
-  if(IA_TAB === 'conteudos') return kbIaPaintConteudos(body);
-  return kbIaPaintPublicacao(body);
+  /* Painel único e vertical: configuração (recolhível) → 1 bloco por artefato → publicação. */
+  const tmp = document.createElement('div');
+  kbIaPaintConfig(tmp, doc, pdf);
+  const cfgHtml = tmp.innerHTML;
+  tmp.innerHTML = '';
+  kbIaPaintConteudos(tmp);
+  const conHtml = tmp.innerHTML;
+  tmp.innerHTML = '';
+  kbIaEditorialHtml(tmp);
+  const edHtml = tmp.innerHTML;
+  body.innerHTML = '<div style="max-width:920px;margin:0 auto;display:grid;gap:14px">'
+    + '<details style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:2px 18px">'
+    +   '<summary style="cursor:pointer;font-weight:800;padding:12px 0;font-size:0.88rem">⚙ Configuração da geração '
+    +     '<span class="muted" style="font-weight:400;font-size:0.74rem">— material-fonte, instruções, módulos e questões</span></summary>'
+    +   cfgHtml
+    + '</details>'
+    + conHtml
+    + edHtml
+    + '</div>';
 }
 
 /* ---------- ABA 1 — CONFIGURAÇÃO ---------- */
