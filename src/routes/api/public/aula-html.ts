@@ -10,7 +10,8 @@ const Body = z.object({
   curso: z.string().max(80).optional(),
   disciplina: z.string().min(1).max(200),
   topico: z.string().min(1).max(300),
-  html: z.string().min(200).max(2_000_000),
+  html: z.string().min(200).max(2_000_000).optional(),
+  acao: z.enum(['salvar', 'publicar']).optional(),
 })
 
 const eq = (v: string) => `eq.${encodeURIComponent(v)}`
@@ -77,16 +78,35 @@ export const Route = createFileRoute('/api/public/aula-html')({
           )
         }
 
-        if (!temConteudoVisivel(body.html)) {
+        const curso = body.curso || 'prf-2021'
+        const filtro =
+          `course_slug=${eq(curso)}&disciplina=${eq(body.disciplina)}&topico=${eq(body.topico)}&user_id=is.null`
+
+        // O botão Publicar da lista reaproveita o HTML já salvo. Isso também
+        // invalida o cache da aula, sem obrigar o professor a reenviar o arquivo.
+        if (body.acao === 'publicar' && !body.html) {
+          const atual = await fetch(
+            `${SUPABASE_URL}/rest/v1/aulas_ia?select=conteudo,formato&${filtro}&limit=1`,
+            { headers: serviceHeaders() },
+          )
+          const rows = atual.ok
+            ? ((await atual.json()) as Array<{ conteudo?: string; formato?: string }>)
+            : []
+          const salvo = rows[0]
+          if (!salvo || salvo.formato !== 'html' || !temConteudoVisivel(salvo.conteudo || '')) {
+            return Response.json({ error: 'Esta aula ainda não possui um HTML completo para publicar.' }, { status: 422 })
+          }
+          cacheLimpar(cacheChave('aula-ia', [curso, body.disciplina, body.topico]))
+          await garantirTopico(curso, body.disciplina, body.topico)
+          return Response.json({ ok: true, publicado: true, formato: 'html' })
+        }
+
+        if (!body.html || !temConteudoVisivel(body.html)) {
           return Response.json(
             { error: 'O arquivo contém apenas estilos ou scripts, sem o conteúdo visível da aula. Envie o HTML completo, incluindo o conteúdo da página.' },
             { status: 400 },
           )
         }
-
-        const curso = body.curso || 'prf-2021'
-        const filtro =
-          `course_slug=${eq(curso)}&disciplina=${eq(body.disciplina)}&topico=${eq(body.topico)}&user_id=is.null`
 
         // Publicação nova: derruba o cache do servidor para o aluno ver na hora.
         cacheLimpar(cacheChave('aula-ia', [curso, body.disciplina, body.topico]))
