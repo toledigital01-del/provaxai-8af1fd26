@@ -256,7 +256,11 @@ export const Route = createFileRoute('/api/public/aula-pacote')({
           const alvo = body.versaoId ? vs.find((v) => v.id === body.versaoId) : vs[0]
           if (!alvo) return Response.json({ error: 'Nada para publicar neste módulo.' }, { status: 422 })
           const ok = await publicarVersao({ ...alvo, course_slug: curso, disciplina, topico })
-          if (!ok) return Response.json({ error: 'Não consegui publicar este conteúdo.' }, { status: 500 })
+          if (!ok)
+            return Response.json(
+              { error: 'Não consegui gravar este conteúdo na área do aluno — tente publicar de novo.' },
+              { status: 500 },
+            )
           return Response.json({ ok: true, versao: alvo.versao })
         }
 
