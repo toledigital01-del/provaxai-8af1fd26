@@ -14,6 +14,16 @@ const Body = z.object({
 
 const eq = (v: string) => `eq.${encodeURIComponent(v)}`
 
+function temConteudoVisivel(html: string) {
+  const semBlocosTecnicos = html
+    .replace(/<style\b[^>]*>[\s\S]*?(?:<\/style>|$)/gi, '')
+    .replace(/<script\b[^>]*>[\s\S]*?(?:<\/script>|$)/gi, '')
+    .replace(/<head\b[^>]*>[\s\S]*?<\/head>/gi, '')
+    .replace(/<title\b[^>]*>[\s\S]*?<\/title>/gi, '')
+    .replace(/<(?:meta|link)\b[^>]*>/gi, '')
+  return semBlocosTecnicos.replace(/<[^>]+>/g, '').replace(/&nbsp;/gi, ' ').trim().length >= 20
+}
+
 /* Garante que o tópico exista na grade do aluno — sem isso a aula fica órfã:
    salva no banco, mas sem lugar na navegação do curso. */
 async function garantirTopico(curso: string, disciplina: string, topico: string) {
@@ -62,6 +72,13 @@ export const Route = createFileRoute('/api/public/aula-html')({
         } catch {
           return Response.json(
             { error: 'Cole o HTML completo da aula (mínimo 200 caracteres, máximo 2 MB).' },
+            { status: 400 },
+          )
+        }
+
+        if (!temConteudoVisivel(body.html)) {
+          return Response.json(
+            { error: 'O arquivo contém apenas estilos ou scripts, sem o conteúdo visível da aula. Envie o HTML completo, incluindo o conteúdo da página.' },
             { status: 400 },
           )
         }

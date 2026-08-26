@@ -712,9 +712,9 @@ async function carregarAulaIA(regerar) {
   try {
     const req = { curso: id, disciplina: disc, topico: topic };
     if (regerar) PX.iaCacheLimpar('aula-ia', req);
-    r = regerar
-      ? await PX.iaPost('aula-ia', Object.assign({}, req, { regerar: true }))
-      : await PX.iaPostCache('aula-ia', req);
+    /* A aula publicada já está pronta no servidor. Buscamos a versão atual para
+       alterações feitas no painel aparecerem imediatamente, sem cache antigo. */
+    r = await PX.iaPost('aula-ia', regerar ? Object.assign({}, req, { regerar: true }) : req);
     if (regerar && r && r.aula) PX.iaPostCache('aula-ia', req, true);
   } catch (e) { r = { erro: 'Falha de conexão.' }; }
   if (!document.getElementById('kb-conteudo')) return;
@@ -733,6 +733,17 @@ async function carregarAulaIA(regerar) {
    CSS dela não vazar para o resto do app. A altura acompanha o documento. */
 function renderAulaHTML(box, html){
   box.innerHTML = '';
+  const visivel = String(html || '')
+    .replace(/<style\b[^>]*>[\s\S]*?(?:<\/style>|$)/gi, '')
+    .replace(/<script\b[^>]*>[\s\S]*?(?:<\/script>|$)/gi, '')
+    .replace(/<head\b[^>]*>[\s\S]*?<\/head>/gi, '')
+    .replace(/<title\b[^>]*>[\s\S]*?<\/title>/gi, '')
+    .replace(/<(?:meta|link)\b[^>]*>/gi, '')
+    .replace(/<[^>]+>/g, '').replace(/&nbsp;/gi, ' ').trim();
+  if (visivel.length < 20) {
+    box.innerHTML = kbAvisoHTML('Aula HTML sem conteúdo visível', 'O arquivo publicado contém somente estilos ou scripts. O professor precisa reenviar o HTML completo da aula.', '');
+    return;
+  }
   const fr = document.createElement('iframe');
   fr.setAttribute('sandbox', 'allow-scripts');
   fr.setAttribute('title', 'Aula');
@@ -743,7 +754,9 @@ function renderAulaHTML(box, html){
     'parent.postMessage({pxAulaAltura:Math.max(a?a.scrollHeight:0,b?b.scrollHeight:0)},"*");}catch(e){}}' +
     'window.addEventListener("load",h);document.addEventListener("DOMContentLoaded",h);' +
     'setInterval(h,800);if(window.ResizeObserver&&document.body)new ResizeObserver(h).observe(document.body);h();})();<\/script>';
-  fr.srcdoc = /<\/body>/i.test(html) ? html.replace(/<\/body>/i, medidor + '</body>') : html + medidor;
+  let documento = String(html || '');
+  if (!/<html\b/i.test(documento)) documento = '<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>' + documento + '</body></html>';
+  fr.srcdoc = /<\/body>/i.test(documento) ? documento.replace(/<\/body>/i, medidor + '</body>') : documento + medidor;
   const viaMensagem = function(ev){
     if (ev.source !== fr.contentWindow) return;
     const h = ev.data && ev.data.pxAulaAltura;

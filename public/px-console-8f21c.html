@@ -2036,7 +2036,15 @@ function kbEditor(){
 
         <div data-aulapane="html" style="display:none">
           <label class="muted">Aula pronta em HTML</label>
-          <p class="muted" style="margin:4px 0 8px;font-size:0.76rem">Cole a página HTML completa da aula (com o CSS e os scripts dela). Ela é exibida isolada para o aluno e não passa pela geração automática de IA.</p>
+          <p class="muted" style="margin:4px 0 8px;font-size:0.76rem">Cole a página, envie um arquivo .html ou importe um arquivo diretamente do Google Drive.</p>
+          <div id="kb-html-drop" class="kb-drop" style="margin-bottom:10px;padding:16px">
+            <p class="muted" style="margin:0 0 9px">Arraste e solte o arquivo HTML aqui</p>
+            <input type="file" id="kb-html-file" accept=".html,.htm,text/html" style="width:auto;max-width:100%">
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+            <input id="kb-html-drive-url" placeholder="Link do arquivo HTML no Google Drive" style="flex:1;min-width:220px">
+            <button type="button" class="act" onclick="kbAulaHtmlDrive()">Importar do Drive</button>
+          </div>
           <input id="kb-html-topico" list="kb-html-topicos" placeholder="Nome da aula (escolha uma já cadastrada ou digite uma nova)" style="margin-bottom:8px">
           <datalist id="kb-html-topicos"></datalist>
           <p class="muted" style="margin:0 0 8px;font-size:0.74rem">Se o nome for novo, a aula é criada automaticamente na grade do aluno.</p>
@@ -2241,6 +2249,59 @@ window.kbAulaHtmlSalvar = async function(){
   }catch(e){
     msg.textContent = 'Erro: ' + (e.message || 'não consegui salvar.');
   }
+};
+
+function kbAulaHtmlNome(nome, html){
+  const titulo = String(html || '').match(/<title\b[^>]*>([\s\S]*?)<\/title>/i);
+  const base = String(nome || '').replace(/\.(?:html?|xhtml)$/i, '').replace(/[_]+/g, ' ').trim();
+  return String((titulo && titulo[1]) || base).replace(/<[^>]+>/g, '').trim().slice(0, 300);
+}
+
+async function kbAulaHtmlCarregarArquivo(file){
+  const msg = document.getElementById('kb-html-msg');
+  if(!file) return;
+  if(!/\.html?$/i.test(file.name || '') && file.type !== 'text/html'){
+    if(msg) msg.textContent = 'Escolha um arquivo .html ou .htm.';
+    return;
+  }
+  if(file.size > 2000000){ if(msg) msg.textContent = 'O HTML está muito grande (máximo 2 MB).'; return; }
+  try{
+    const html = await file.text();
+    document.getElementById('kb-html-txt').value = html;
+    document.getElementById('kb-html-topico').value = kbAulaHtmlNome(file.name, html);
+    if(msg) msg.textContent = '✅ Arquivo carregado. Revise e clique em “Salvar e publicar”.';
+  }catch(e){ if(msg) msg.textContent = 'Não consegui ler o arquivo HTML.'; }
+}
+
+function kbBindHtmlFile(){
+  const inp = document.getElementById('kb-html-file');
+  if(inp && !inp.dataset.bound){
+    inp.dataset.bound = '1';
+    inp.addEventListener('change', function(){ kbAulaHtmlCarregarArquivo(inp.files && inp.files[0]); });
+  }
+  const drop = document.getElementById('kb-html-drop');
+  if(drop && !drop.dataset.bound){
+    drop.dataset.bound = '1';
+    ['dragenter','dragover'].forEach(function(ev){ drop.addEventListener(ev, function(e){ e.preventDefault(); drop.style.borderColor='#94A9C9'; drop.style.background='#F5F8FE'; }); });
+    ['dragleave','drop'].forEach(function(ev){ drop.addEventListener(ev, function(e){ e.preventDefault(); drop.style.borderColor=''; drop.style.background=''; }); });
+    drop.addEventListener('drop', function(e){ kbAulaHtmlCarregarArquivo(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]); });
+  }
+}
+
+window.kbAulaHtmlDrive = async function(){
+  const msg = document.getElementById('kb-html-msg');
+  const url = String((document.getElementById('kb-html-drive-url')||{}).value || '').trim();
+  if(!kbDisc){ msg.textContent = 'Escolha uma matéria primeiro.'; return; }
+  if(!url){ msg.textContent = 'Cole o link do arquivo HTML no Google Drive.'; return; }
+  msg.textContent = 'Importando arquivo do Google Drive…';
+  try{
+    const j = await kbPost('/api/public/kb-drive', { pasta_url:url, disciplina:kbDisc, topico:null });
+    const a = (j.arquivos || []).find(function(x){ return /\.html?$/i.test(x.nome || '') || /<(?:!doctype|html|head|body)\b/i.test(x.texto || ''); });
+    if(!a) throw new Error('O link não aponta para um arquivo HTML legível.');
+    document.getElementById('kb-html-txt').value = a.texto || '';
+    document.getElementById('kb-html-topico').value = kbAulaHtmlNome(a.nome, a.texto);
+    msg.textContent = '✅ HTML importado do Drive. Revise e clique em “Salvar e publicar”.';
+  }catch(e){ msg.textContent = 'Erro: ' + (e.message || 'não consegui importar o HTML.'); }
 };
 
 
@@ -2976,6 +3037,7 @@ function kbBindAulaFile(){
       kbAulaFilaAdd((e.dataTransfer && e.dataTransfer.files) || []);
     });
   }
+  kbBindHtmlFile();
 }
 
 /* Leitura de arquivo: usa o leitor único (kbLerArquivo). */
