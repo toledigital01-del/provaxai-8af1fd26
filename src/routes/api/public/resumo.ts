@@ -5,6 +5,7 @@ import { fetchKnowledge, baseTexto, fonteInstrucao } from '@/lib/kb-context'
 import { AIError } from '@/lib/ai-gateway'
 import { agentChat, rotaDoAgente } from '@/lib/ai-router'
 import { lerRecurso, salvarRecurso } from '@/lib/aula-recursos'
+import { jsonPublicado } from '@/lib/px-cache'
 
 const Body = z.object({
   disciplina: z.string().min(1).max(200),
@@ -41,6 +42,7 @@ export const Route = createFileRoute('/api/public/resumo')({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const t0 = performance.now()
         let body: z.infer<typeof Body>
         try {
           body = Body.parse(await request.json())
@@ -54,13 +56,17 @@ export const Route = createFileRoute('/api/public/resumo')({
         if (!body.regerar) {
           const pronto = await lerRecurso<{ resumo?: string; fontes?: number }>(curso, body.disciplina, body.topico, 'resumo')
           if (pronto && (pronto.dados?.resumo || '').trim())
-            return Response.json({
-              resumo: pronto.dados.resumo,
-              fontes: pronto.dados.fontes ?? 0,
-              modelo: pronto.modelo,
-              cache: true,
-              extras: await extrasPublicados(curso, body.disciplina, body.topico),
-            })
+            return jsonPublicado(
+              {
+                resumo: pronto.dados.resumo,
+                fontes: pronto.dados.fontes ?? 0,
+                modelo: pronto.modelo,
+                cache: true,
+                extras: await extrasPublicados(curso, body.disciplina, body.topico),
+              },
+              t0,
+            )
+
           return Response.json({ error: 'O resumo ainda não foi publicado pelo professor.' }, { status: 404 })
         }
 

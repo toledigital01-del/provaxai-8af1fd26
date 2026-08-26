@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { jsonPublicado } from '@/lib/px-cache'
 import { z } from 'zod'
 import { currentUser, usosHoje, serviceHeaders, SUPABASE_URL } from '@/lib/px-server'
 import { fetchKnowledge, baseTexto, fonteInstrucao } from '@/lib/kb-context'
@@ -43,6 +44,7 @@ export const Route = createFileRoute('/api/public/mapa')({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const t0 = performance.now()
         const userId = await currentUser(request) // null = convidado
         // Acesso liberado sem login por enquanto (fase de testes).
 
@@ -62,7 +64,7 @@ export const Route = createFileRoute('/api/public/mapa')({
         // Mapa oficial publicado no painel administrativo.
         const pronto = await lerRecurso<{ conteudo?: string }>(curso, body.disciplina, topico, 'mapa_mental')
         const oficial = (pronto?.dados?.conteudo || '').trim()
-        if (oficial) return Response.json({ conteudo: oficial, modelo: pronto?.modelo || null, oficial: true, cache: true })
+        if (oficial) return jsonPublicado({ conteudo: oficial, modelo: pronto?.modelo || null, oficial: true, cache: true }, t0)
 
         if (!body.gerar) return Response.json({ conteudo: '', oficial: false, pendente: true })
 

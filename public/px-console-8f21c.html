@@ -1168,11 +1168,17 @@ async function viewConhecimento(){
 
     <div class="kb-block" style="margin-bottom:14px;padding:12px 18px">
       <div id="kb-cob-resumo"></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
+        <button class="btn ghost" style="font-size:0.76rem;padding:5px 10px" onclick="kbAuditoria()">🔍 Auditar aulas antes de publicar</button>
+        <span class="muted" style="font-size:0.72rem">Mostra aulas órfãs (fora da grade) ou com conteúdos faltando.</span>
+      </div>
+      <div id="kb-auditoria" style="margin-top:10px"></div>
       <details style="margin-top:6px">
         <summary class="muted" style="cursor:pointer;font-size:0.75rem">Ver cobertura detalhada por matéria</summary>
         <div id="kb-visao" style="margin-top:8px"></div>
       </details>
     </div>
+
 
     <div style="margin-bottom:18px">
       <div id="kb-steps" class="kb-nav"></div>
@@ -1853,6 +1859,36 @@ function kbPaintCobResumo(){
       ' tópicos publicados · ' + docs + ' conteúdos salvos</span>' +
   '</div>';
 }
+
+/* Auditoria: aponta aulas fora da grade (órfãs) ou sem conteúdos derivados. */
+window.kbAuditoria = async function(){
+  const box = document.getElementById('kb-auditoria');
+  if(!box) return;
+  box.innerHTML = '<p class="muted" style="font-size:0.76rem">Conferindo as aulas…</p>';
+  let j;
+  try { j = await kbPost('/api/public/kb-auditoria', { curso:'prf-2021' }); }
+  catch(e){ box.innerHTML = '<p style="font-size:0.76rem;color:#B42318">' + (e.message||'Falha na auditoria.') + '</p>'; return; }
+  const itens = j.itens || [];
+  if(!itens.length){ box.innerHTML = '<p class="muted" style="font-size:0.76rem">Nenhuma aula publicada ainda.</p>'; return; }
+  const cor = { orfa:'#B42318', incompleta:'#B45309', ok:'#0F8F5F' };
+  const rotulo = { orfa:'Órfã — fora da grade', incompleta:'Faltam conteúdos', ok:'Pronta' };
+  const linhas = itens.map(function(i){
+    return '<tr>' +
+      '<td style="padding:5px 8px;font-size:0.75rem">' + (i.disciplina||'') + '</td>' +
+      '<td style="padding:5px 8px;font-size:0.75rem"><b>' + (i.titulo||i.topico||'') + '</b></td>' +
+      '<td style="padding:5px 8px;font-size:0.72rem;color:' + (cor[i.situacao]||'#475569') + '">' + rotulo[i.situacao] + '</td>' +
+      '<td style="padding:5px 8px;font-size:0.72rem;color:#64748B">' + ((i.faltando||[]).join(', ') || '—') + '</td>' +
+    '</tr>';
+  }).join('');
+  box.innerHTML =
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;font-size:0.74rem;margin-bottom:6px">' +
+      '<span style="color:#0F8F5F">✅ ' + j.ok + ' prontas</span>' +
+      '<span style="color:#B45309">⚠️ ' + j.incompletas + ' incompletas</span>' +
+      '<span style="color:#B42318">🚫 ' + j.orfas + ' órfãs</span>' +
+    '</div>' +
+    '<div style="max-height:280px;overflow:auto;border:1px solid #E2E8F0;border-radius:8px">' +
+      '<table style="width:100%;border-collapse:collapse">' + linhas + '</table></div>';
+};
 
 window.kbPane = p => {
   KB_PANE = p;

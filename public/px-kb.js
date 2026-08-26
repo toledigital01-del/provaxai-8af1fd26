@@ -165,7 +165,39 @@
   };
 
   /* Chamada autenticada aos endpoints de IA do Prova X (/api/public/...) */
+  /* ---------- Telemetria de desempenho ----------
+     Guarda o tempo de cada chamada (e o tempo medido no servidor, quando ele
+     envia o cabeçalho Server-Timing) para descobrir rapidamente o que está
+     deixando a aula lenta. Ver com PX.perfRelatorio() no console. */
+  PX.perfLog = PX.perfLog || [];
+  PX.perfRegistrar = function (rota, ms, extra) {
+    var reg = Object.assign({ rota: rota, ms: Math.round(ms), quando: Date.now() }, extra || {});
+    PX.perfLog.push(reg);
+    if (PX.perfLog.length > 200) PX.perfLog.shift();
+    try {
+      localStorage.setItem('px:perf', JSON.stringify(PX.perfLog.slice(-60)));
+    } catch (e) { /* cota */ }
+    try {
+      window.dispatchEvent(new CustomEvent('px:perf', { detail: reg }));
+    } catch (e) { /* navegadores antigos */ }
+    return reg;
+  };
+  PX.perfRelatorio = function () {
+    var por = {};
+    PX.perfLog.forEach(function (r) {
+      var a = (por[r.rota] = por[r.rota] || { rota: r.rota, chamadas: 0, total: 0, pior: 0, cache: 0 });
+      a.chamadas++; a.total += r.ms; a.pior = Math.max(a.pior, r.ms);
+      if (r.cache) a.cache++;
+    });
+    return Object.keys(por).map(function (k) {
+      var a = por[k];
+      return { rota: a.rota, chamadas: a.chamadas, media_ms: Math.round(a.total / a.chamadas), pior_ms: a.pior, do_cache: a.cache };
+    }).sort(function (x, y) { return y.media_ms - x.media_ms; });
+  };
+
+  /* Chamada autenticada aos endpoints de IA do Prova X (/api/public/...) */
   PX.iaPost = async function (rota, dados) {
+    var t0 = (window.performance && performance.now()) || Date.now();
     try {
       var tk = null;
       try { tk = await PX.token(); } catch (e) { tk = null; }
@@ -177,12 +209,21 @@
         body: JSON.stringify(dados || {}),
       });
       var j = await r.json();
+      var st = r.headers.get('Server-Timing') || '';
+      var servidor = /dur=([\d.]+)/.exec(st);
+      PX.perfRegistrar(rota, ((window.performance && performance.now()) || Date.now()) - t0, {
+        status: r.status,
+        servidor_ms: servidor ? Math.round(parseFloat(servidor[1])) : null,
+        cache: !!(j && j.cache),
+      });
       if (!r.ok) return { erro: j.error || 'Não consegui responder agora.', status: r.status };
       return j;
     } catch (e) {
+      PX.perfRegistrar(rota, ((window.performance && performance.now()) || Date.now()) - t0, { status: 0, erro: true });
       return { erro: 'Falha de conexão. Tente novamente.', status: 0 };
     }
   };
+
 
   /* ---------- Cache do conteúdo já publicado ----------
      Uma vez aberto, o material da aula fica guardado no navegador (memória +

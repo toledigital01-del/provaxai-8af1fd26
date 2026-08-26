@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
 import { requirePedagogicalAdmin, serviceHeaders, SUPABASE_URL } from '@/lib/px-server'
+import { cacheChave, cacheLimpar } from '@/lib/px-cache'
 
 /* Aula escrita fora do app como página HTML pronta (CSS e interatividade próprios).
    Grava direto em `aulas_ia` com formato='html' — não passa pela geração de IA. */
@@ -87,6 +88,8 @@ export const Route = createFileRoute('/api/public/aula-html')({
         const filtro =
           `course_slug=${eq(curso)}&disciplina=${eq(body.disciplina)}&topico=${eq(body.topico)}&user_id=is.null`
 
+        // Publicação nova: derruba o cache do servidor para o aluno ver na hora.
+        cacheLimpar(cacheChave('aula-ia', [curso, body.disciplina, body.topico]))
         const del = await fetch(`${SUPABASE_URL}/rest/v1/aulas_ia?${filtro}`, {
           method: 'DELETE',
           headers: serviceHeaders({ Prefer: 'return=minimal' }),

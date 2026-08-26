@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { jsonPublicado } from '@/lib/px-cache'
 import { z } from 'zod'
 import { currentUser, usosHoje, serviceHeaders, SUPABASE_URL } from '@/lib/px-server'
 import { materialIntegral } from '@/lib/kb-context'
@@ -42,6 +43,7 @@ export const Route = createFileRoute('/api/public/podcast')({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const t0 = performance.now()
         let body: z.infer<typeof Body>
         try {
           body = Body.parse(await request.json())
@@ -65,7 +67,7 @@ export const Route = createFileRoute('/api/public/podcast')({
             .catch(() => [])) as Array<{ roteiro?: Fala[]; modelo?: string }>
           const roteiro = hit[0]?.roteiro
           if (Array.isArray(roteiro) && roteiro.length)
-            return Response.json({ roteiro, modelo: hit[0]?.modelo || null, cache: true })
+            return jsonPublicado({ roteiro, modelo: hit[0]?.modelo || null, cache: true }, t0)
           return Response.json({ error: 'O podcast ainda não foi publicado pelo professor.' }, { status: 404 })
         }
 
