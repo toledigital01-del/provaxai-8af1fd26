@@ -46,6 +46,11 @@ export const Route = createFileRoute('/api/public/kb-classify')({
           'Tarefa ÚNICA: dizer a qual tópico da lista cada trecho pertence. NÃO reescreva, NÃO resuma, NÃO comente.',
           '- Use exatamente o texto de um tópico da lista.',
           '- Se o trecho não pertencer a nenhum tópico (capa, índice, propaganda, texto solto), devolva "topico": "".',
+          ...(adminExtra.promptExtra ? [
+            '',
+            'Orientação adicional do administrador (siga com prioridade, mas sem deixar de responder no formato JSON pedido acima):',
+            adminExtra.promptExtra,
+          ] : []),
           'Responda SOMENTE com JSON válido: {"mapa":[{"i":<número do trecho>,"topico":"<tópico exato ou vazio>"}]}',
         ].join('\n')
 
