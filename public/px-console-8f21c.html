@@ -1755,7 +1755,7 @@ function kbTopicItems(){
 window.kbFiltroDisc = v => { kbQd = v; document.getElementById('kb-disc-list').innerHTML = kbDiscItems(); };
 window.kbFiltroTopic = v => { kbQt = v; document.getElementById('kb-topic-list').innerHTML = kbTopicItems(); };
 
-/* ---- Caixas (uma por matéria) na etapa de Conteúdo ---- */
+/* ---- Lista de matérias (modo lista único) na etapa de Conteúdo ---- */
 let KB_OPEN = false;
 function kbCardDisc(d){
   const tops = kbTopicList(d);
@@ -1764,13 +1764,15 @@ function kbCardDisc(d){
   const fontes = KB_LIB.filter(function(x){ return x.discipline_nome === d; }).length;
   const pct = tops.length ? Math.round(comAula / tops.length * 100) : (docs.length ? 100 : 0);
   const cor = pct >= 80 ? '#10B981' : pct > 0 ? '#F59E0B' : '#CBD5E1';
-  return '<button class="act" onclick="kbSelDisc(\'' + escJs(d) + '\')" style="display:block;text-align:left;border:1px solid #E9EDF3;border-radius:14px;padding:16px;background:#fff">' +
-    '<span style="display:block;font-size:0.88rem;font-weight:650;line-height:1.35;margin-bottom:4px">' + esc(d) + '</span>' +
-    '<span class="muted" style="display:block;font-size:0.75rem;font-weight:400;margin-bottom:12px">' + tops.length + ' tópicos · ' + fontes + ' documento(s)</span>' +
-    '<span style="display:flex;align-items:center;gap:8px">' +
-      '<span style="flex:1;height:6px;border-radius:99px;background:#EEF1F6;overflow:hidden"><span style="display:block;height:100%;width:' + pct + '%;background:' + cor + '"></span></span>' +
-      '<span style="font-size:0.75rem;font-weight:700;color:#475569">' + pct + '%</span>' +
+  return '<button class="act" onclick="kbSelDisc(\'' + escJs(d) + '\')" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid #E9EDF3;border-radius:10px;padding:10px 14px;background:#fff">' +
+    '<span style="flex:1;min-width:0">' +
+      '<span style="display:block;font-size:0.85rem;font-weight:650;line-height:1.3">' + esc(d) + '</span>' +
+      '<span class="muted" style="display:block;font-size:0.72rem;font-weight:400">' + tops.length + ' tópicos · ' + fontes + ' documento(s)</span>' +
     '</span>' +
+    '<span style="width:110px;height:6px;border-radius:99px;background:#EEF1F6;overflow:hidden;flex:none">' +
+      '<span style="display:block;height:100%;width:' + pct + '%;background:' + cor + '"></span></span>' +
+    '<span style="font-size:0.74rem;font-weight:700;color:#475569;width:38px;text-align:right;flex:none">' + pct + '%</span>' +
+    '<span class="muted" style="font-size:0.76rem;flex:none">Abrir →</span>' +
   '</button>';
 }
 function kbPaintCards(){
@@ -1778,7 +1780,7 @@ function kbPaintCards(){
   if(!box) return;
   const discs = kbDiscList();
   box.innerHTML = discs.length
-    ? '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:4px">' +
+    ? '<div style="display:grid;gap:8px;margin-top:4px">' +
         discs.map(kbCardDisc).join('') + '</div>'
     : '<p class="muted">Nenhuma matéria cadastrada — carregue o edital na etapa 1.</p>';
 }
