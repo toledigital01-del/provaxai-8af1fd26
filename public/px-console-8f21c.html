@@ -1218,6 +1218,23 @@ async function viewConhecimento(){
     </section>
 
     <section data-step="conteudo">
+      <div class="kb-block" style="margin-bottom:18px">
+        <h3>📋 Extrair questões reais de apostila</h3>
+        <p class="kb-sub">Envie o PDF ou cole o texto de uma apostila de questões de provas anteriores. A IA <b>copia somente questões reais completas</b> (nunca inventa), classifica cada uma no tópico certo do edital e grava como questão <b>real</b> — elas têm prioridade sobre as geradas por IA e nunca são apagadas por regenerações.</p>
+        <div class="kb-fields">
+          <div><label class="muted">Matéria de destino</label><select id="kq-disc" onfocus="kbQuestoesDiscs()"></select></div>
+        </div>
+        <div class="kb-drop">
+          <p class="muted" style="margin:0 0 10px">Escolha o arquivo da apostila (PDF ou texto)</p>
+          <input type="file" id="kq-file" accept=".pdf,.txt,.md,application/pdf,text/plain" style="width:auto;max-width:100%">
+        </div>
+        <textarea id="kq-txt" rows="4" placeholder="Ou cole aqui o texto da apostila de questões" style="margin-top:12px"></textarea>
+        <div class="kb-actions" style="margin-top:12px">
+          <button class="act primary" id="kq-btn" onclick="kbQuestoesExtrair()">Extrair questões reais</button>
+          <span class="muted" style="font-size:0.75rem">Questões duplicadas são ignoradas automaticamente.</span>
+        </div>
+        <div id="kq-log" style="margin-top:10px;font-size:0.8rem;max-height:220px;overflow:auto"></div>
+      </div>
       <div class="kb-block">
         <div id="kb-voltar" style="display:none;margin-bottom:12px">
           <button class="act" onclick="kbFecharDisc()">← Todas as matérias</button>
@@ -4422,6 +4439,15 @@ function kbIaPaint(){
   kbIaEditorialHtml(tmp);
   const edHtml = tmp.innerHTML;
   body.innerHTML = '<div style="max-width:920px;margin:0 auto;display:grid;gap:14px">'
+    + '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px">'
+    +   '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
+    +     '<button class="act primary" id="ia-btn-gerar" style="font-size:0.86rem;padding:10px 18px" onclick="kbIaFluxoAuto(\'gerar\')">⚡ Gerar conteúdos pendentes</button>'
+    +     '<button class="act primary" style="font-size:0.86rem;padding:10px 18px" onclick="kbIaPublicarTudo()">🚀 Publicar tudo</button>'
+    +     '<button class="act" style="font-size:0.82rem" onclick="kbIaMaisMaterial()">📎 Adicionar mais material</button>'
+    +   '</div>'
+    +   '<div class="muted" style="font-size:0.74rem;margin-top:8px">"Gerar conteúdos pendentes" cria só o que ainda não está publicado — o que já existe (inclusive edições manuais) é preservado. "Publicar tudo" libera para o aluno a versão mais recente de cada módulo.</div>'
+    +   '<div id="ia-progresso" style="display:none;margin-top:10px;border-top:1px solid #F1F5F9;padding-top:10px"></div>'
+    + '</div>'
     + '<details style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:2px 18px">'
     +   '<summary style="cursor:pointer;font-weight:800;padding:12px 0;font-size:0.88rem">⚙ Configuração da geração '
     +     '<span class="muted" style="font-weight:400;font-size:0.74rem">— material-fonte, instruções, módulos e questões</span></summary>'
@@ -4430,6 +4456,7 @@ function kbIaPaint(){
     + conHtml
     + edHtml
     + '</div>';
+  kbIaCarregarPrevias();
 }
 
 /* ---------- ABA 1 — CONFIGURAÇÃO ---------- */
