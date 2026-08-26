@@ -4577,6 +4577,77 @@ window.kbIaGerarTudo = async function(){
   toast('Geração concluída. Revise em "Conteúdos gerados" e publique na aba "Publicação".');
 };
 
+/* ---------- fluxo único: gerar pendentes / acrescentar novo material ----------
+   modo 'gerar': cria apenas o que ainda não tem versão publicada (rascunhos e
+   edições manuais são preservados — a ação 'gerar' devolve o que já existe).
+   modo 'acrescentando': soma o material novo ao que já existe (mesma lógica do
+   'regenerar' modo 'acrescentando'); o que não tinha nada é gerado do zero. */
+window.kbIaFluxoAuto = async function(modo){
+  if(IA_OCUPADO || !IA_AULA) return;
+  if(document.getElementById('ia-cfg-inst')) await kbIaSalvarConfig(false);
+  const cfg = (IA_DADOS && IA_DADOS.config) || {};
+  IA_OCUPADO = true;
+  const prog = document.getElementById('ia-progresso');
+  if(prog){
+    prog.style.display = 'block';
+    prog.innerHTML = '<div style="font-weight:800;font-size:0.8rem;margin-bottom:6px">'
+      + (modo === 'acrescentando' ? '📎 Atualizando os conteúdos com o material novo…' : '⚡ Gerando os conteúdos pendentes…')
+      + ' <span class="muted" style="font-weight:400">(pode levar alguns minutos — não feche esta janela)</span></div>'
+      + IA_MODULOS.map(function(mo){
+          return '<div id="ia-prog-'+mo.tipo+'" style="font-size:0.83rem;padding:3px 0">○ '+mo.icon+' '+mo.rotulo+'</div>';
+        }).join('');
+  }
+  let gerados = 0, pulados = 0, falhas = 0;
+  for(const mo of IA_MODULOS){
+    const t = mo.tipo;
+    const linha = document.getElementById('ia-prog-' + t);
+    const m = kbIaMod(t);
+    let acao = 'gerar';
+    const extra = {};
+    if(modo === 'acrescentando' && m.atual){ acao = 'regenerar'; extra.modo = 'acrescentando'; }
+    else if(m.publicado && !(m.atual && m.atual.versao > m.publicado.versao)){
+      if(linha) linha.innerHTML = '— ' + mo.icon + ' ' + mo.rotulo + ' — já publicado (pulado)';
+      pulados++; continue;
+    }
+    if(linha) linha.innerHTML = '⏳ ' + mo.icon + ' ' + mo.rotulo + ' — gerando…';
+    try{
+      const r = await kbIaApi(Object.assign({ acao: acao, tipo: t, config: { instrucoes: cfg.instrucoes || undefined, questoes: cfg.questoes } }, extra));
+      if(linha) linha.innerHTML = '✓ ' + mo.icon + ' ' + mo.rotulo + (r.cache ? ' — já estava pronto' : ' — v' + (r.versao || '?'));
+      gerados++;
+    }catch(e){
+      falhas++;
+      if(linha) linha.innerHTML = '✕ ' + mo.icon + ' ' + mo.rotulo + ' — ' + esc(e.message || 'falhou');
+    }
+  }
+  IA_OCUPADO = false;
+  await kbIaRecarregar();
+  const prog2 = document.getElementById('ia-progresso');
+  if(prog2) prog2.style.display = 'block';
+  toast('Fluxo concluído: ' + gerados + ' conteúdo(s) pronto(s)' + (pulados ? ', ' + pulados + ' já publicados' : '') + (falhas ? ', ' + falhas + ' falharam' : '') + '. Revise abaixo e clique em "Publicar tudo".');
+};
+window.kbIaMaisMaterial = function(){
+  if(!IA_AULA) return;
+  KB_IA_MODO = 'acrescentando';
+  kbAulaEditar(IA_AULA.id);
+};
+/* Prévia formatada de cada módulo direto na tela de revisão. */
+async function kbIaCarregarPrevias(){
+  for(const mo of IA_MODULOS){
+    const alvo = document.getElementById('ia-cont-' + mo.tipo);
+    if(!alvo || alvo.dataset.carregado) continue;
+    alvo.dataset.carregado = '1';
+    try{
+      const v = await kbIaConteudoAtual(mo.tipo);
+      if(!alvo.isConnected) return;
+      if(!v || !v.conteudo){ alvo.innerHTML = ''; continue; }
+      const html = mo.formato === 'json'
+        ? kbIaJsonBonito(mo.tipo, v.conteudo)
+        : '<div class="prose" style="font-size:0.86rem">' + kbMD(v.conteudo) + '</div>';
+      alvo.innerHTML = '<div style="margin-top:10px;border-top:1px solid #F1F5F9;padding-top:8px"><div style="max-height:300px;overflow:auto;font-size:0.84rem">' + html + '</div></div>';
+    }catch(e){ if(alvo.isConnected) alvo.innerHTML = ''; }
+  }
+}
+
 /* ---------- ABA 2 — CONTEÚDOS GERADOS ---------- */
 function kbIaPaintConteudos(body){
   body.innerHTML = '<div style="display:grid;gap:12px;max-width:920px;margin:0 auto">'
