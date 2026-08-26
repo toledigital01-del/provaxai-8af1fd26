@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { currentUser, serviceHeaders, SUPABASE_URL } from '@/lib/px-server'
 import { AIError } from '@/lib/ai-gateway'
 import { agentChat } from '@/lib/ai-router'
-import { cacheChave, cacheGravar, cacheLer, cacheLimpar, jsonPublicado } from '@/lib/px-cache'
+import { cacheChave, cacheGravar, cacheLimpar, jsonPublicado } from '@/lib/px-cache'
 
 
 /* Aula explicada pela Athena, gerada a partir do material carregado.
