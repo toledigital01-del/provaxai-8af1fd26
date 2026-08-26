@@ -2095,12 +2095,20 @@ function kbEditor(){
 
 
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px">
+          <input id="kb-aula-modulo" list="kb-modulos-lista" placeholder="Módulo (opcional) — ex.: Fundamentos e Organização" style="flex:1;min-width:230px">
+          <datalist id="kb-modulos-lista"></datalist>
+          <input id="kb-aula-modulo-ordem" type="number" min="1" step="1" placeholder="Ordem do módulo" style="width:150px">
+        </div>
+        <p class="muted" style="margin:6px 0 0;font-size:0.74rem">O módulo agrupa as aulas em seções na lista abaixo e na tela do aluno. Deixe vazio para não agrupar.</p>
+
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px">
           <label class="muted" style="display:flex;gap:6px;align-items:center;margin:0;font-size:0.78rem">
             <input type="checkbox" id="kb-aula-pub" style="width:auto"> Publicar para os alunos (sem marcar, entra como rascunho)
           </label>
           <span style="flex:1"></span>
           <button class="act primary" data-aulasend onclick="kbAulaCadastrar()">Cadastrar aula</button>
         </div>
+
         <p class="muted" id="kb-aula-msg" style="margin:10px 0 0;font-size:0.78rem"></p>
       </div>
 
@@ -2183,25 +2191,96 @@ async function kbAulasCarregar(disc){
   KB_AULAS = [];
   const id = await kbDiscId(disc);
   if(!id) return;
-  const { data } = await PX.sb.from('topics').select('id,nome,ordem').eq('discipline_id', id).order('ordem');
-  KB_AULAS = (data || []).map(t => ({ id:t.id, nome:t.nome, ordem: typeof t.ordem === 'number' ? t.ordem : 0 }));
+  const { data } = await PX.sb.from('topics').select('id,nome,ordem,modulo,modulo_ordem').eq('discipline_id', id).order('ordem');
+  KB_AULAS = (data || []).map(t => ({
+    id:t.id, nome:t.nome,
+    ordem: typeof t.ordem === 'number' ? t.ordem : 0,
+    modulo: String(t.modulo || '').trim(),
+    modulo_ordem: typeof t.modulo_ordem === 'number' ? t.modulo_ordem : null,
+  }));
+  kbModulosDatalist();
 }
+
+/* Módulos já usados nesta matéria (para sugerir e evitar nomes divergentes) */
+function kbModulosUsados(){
+  const m = {};
+  KB_AULAS.forEach(function(a){
+    if(!a.modulo) return;
+    if(!(a.modulo in m) || (a.modulo_ordem != null && m[a.modulo] == null)) m[a.modulo] = a.modulo_ordem;
+  });
+  return Object.keys(m).sort(function(x,y){
+    const a = m[x] == null ? 9999 : m[x], b = m[y] == null ? 9999 : m[y];
+    return (a - b) || x.localeCompare(y, 'pt-BR');
+  }).map(function(n){ return { nome:n, ordem:m[n] }; });
+}
+function kbModulosDatalist(){
+  const dl = document.getElementById('kb-modulos-lista');
+  if(dl) dl.innerHTML = kbModulosUsados().map(function(m){
+    return '<option value="' + esc(m.nome).replace(/"/g,'&quot;') + '">';
+  }).join('');
+}
+
+/* Edita módulo + ordem do módulo de uma aula (com sugestão dos já usados). */
+window.kbAulaModuloEditar = async function(id){
+  const a = KB_AULAS.find(function(x){ return x.id === id; });
+  if(!a) return;
+  const usados = kbModulosUsados();
+  const dica = usados.length ? '\n\nMódulos já usados nesta matéria:\n· ' + usados.map(function(m){ return m.nome; }).join('\n· ') : '';
+  const nome = prompt('Módulo desta aula (deixe vazio para não agrupar):' + dica, a.modulo || '');
+  if(nome === null) return;
+  const limpo = String(nome).trim();
+  let ordem = a.modulo_ordem;
+  if(limpo){
+    const ja = usados.find(function(m){ return m.nome.toLowerCase() === limpo.toLowerCase(); });
+    const sugestao = a.modulo_ordem != null ? a.modulo_ordem : (ja && ja.ordem != null ? ja.ordem : usados.length + 1);
+    const ord = prompt('Ordem do módulo "' + limpo + '" (número inteiro):', String(sugestao));
+    if(ord === null) return;
+    const n = parseInt(ord, 10);
+    ordem = Number.isFinite(n) ? n : sugestao;
+  }else{
+    ordem = null;
+  }
+  const up = await PX.sb.from('topics').update({ modulo: limpo || null, modulo_ordem: limpo ? ordem : null }).eq('id', id);
+  if(up.error) return kbAulaMsg('Erro ao salvar o módulo: ' + up.error.message);
+  a.modulo = limpo; a.modulo_ordem = limpo ? ordem : null;
+  /* Mantém o mesmo módulo/ordem para todas as aulas com esse nome de módulo */
+  if(limpo){
+    const iguais = KB_AULAS.filter(function(x){ return x.modulo.toLowerCase() === limpo.toLowerCase() && x.modulo_ordem !== ordem; });
+    for(const x of iguais){
+      await PX.sb.from('topics').update({ modulo: limpo, modulo_ordem: ordem }).eq('id', x.id);
+      x.modulo = limpo; x.modulo_ordem = ordem;
+    }
+  }
+  await logAdmin('modulo_aula','topics', id, { disciplina: kbDisc, aula: a.nome, modulo: limpo, modulo_ordem: ordem });
+  kbAulasPaint();
+  try{ if(PX.syncCurriculo) await PX.syncCurriculo(); }catch(e){}
+  kbAulaMsg(limpo ? 'Aula movida para o módulo “' + limpo + '”.' : 'Aula sem módulo.');
+};
+
 function kbAulasPaint(){
   const box = document.getElementById('kb-aulas-lista');
   if(!box) return;
   if(!KB_AULAS.length){ box.innerHTML = '<p class="muted" style="font-size:0.8rem">Nenhuma aula cadastrada nesta matéria ainda — cadastre a Aula 00 acima.</p>'; return; }
   const ordenadas = KB_AULAS.slice().sort((a,b)=>a.ordem-b.ordem);
-  box.innerHTML =
-    '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 8px">' +
-      '<p class="muted" style="margin:0;flex:1;min-width:200px;font-size:0.75rem">Arraste pelo ⠿ para mudar a ordem — ou clique no número da aula para digitar a posição dela.</p>' +
-      '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasPdfLote()">Anexar PDFs em lote</button>' +
-      '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasTodasPdf()">Exibir todas em PDF</button>' +
-      '<button class="act primary" style="font-size:0.75rem;padding:4px 10px" onclick="kbIaLote()">Preparar conteúdo de IA de todas</button>' +
-      '<button class="act danger" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasExcluirTodas()">Excluir todas as aulas</button>' +
-    '</div>' +
+  /* Agrupa por módulo (ordenado por modulo_ordem); dentro do módulo mantém a
+     ordem/numeração das aulas que já existe hoje. */
+  const grupos = [];
+  const idxG = {};
+  ordenadas.forEach(function(a){
+    const k = a.modulo || '';
+    if(!(k in idxG)){ idxG[k] = grupos.length; grupos.push({ nome:k, ordem: a.modulo_ordem == null ? 9999 : a.modulo_ordem, itens:[] }); }
+    grupos[idxG[k]].itens.push(a);
+  });
+  grupos.sort(function(x,y){
+    if(!x.nome) return 1;
+    if(!y.nome) return -1;
+    return (x.ordem - y.ordem) || x.nome.localeCompare(y.nome, 'pt-BR');
+  });
+  const agrupado = grupos.length > 1 || (grupos[0] && grupos[0].nome);
 
-    '<div class="kb-surface" id="kb-aulas-dnd" style="font-size:0.8125rem">' +
-    ordenadas.map(function(a, i){
+  function linha(a){
+      const i = ordenadas.indexOf(a);
+
       const doc = kbFind(kbDisc, a.nome) || {};
       const pub = kbStatusDoc(doc.id ? doc : null) === 'publicado';
       const temTexto = !!String(doc.conteudo||'').trim();
@@ -2223,12 +2302,35 @@ function kbAulasPaint(){
         '<button class="act" style="font-size:0.75rem;padding:4px 10px" title="Status detalhado de publicação e versão entregue ao aluno" onclick="kbAulaStatus(\'' + escJs(a.nome) + '\')">Status</button>' +
         '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaAbrir(\'' + escJs(a.nome) + '\')">Abrir</button>' +
         '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaRenomear(\'' + a.id + '\')">Renomear</button>' +
+        '<button class="act" style="font-size:0.75rem;padding:4px 10px" title="Definir o módulo (agrupamento) e a ordem do módulo desta aula" onclick="kbAulaModuloEditar(\'' + a.id + '\')">' + (a.modulo ? '📁 ' + esc(a.modulo) : '📁 Módulo') + '</button>' +
         '<button class="act" style="font-size:0.75rem;padding:4px 10px;background:#EEF2FF;border-color:#C7D2FE;color:#3730A3" title="Abre o painel de IA desta aula: gerar, editar, versionar e publicar resumo, questões, flashcards, podcast e mais" onclick="kbIaAbrir(\'' + a.id + '\')">🤖 IA da aula</button>' +
         '<button class="act primary" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaEditar(\'' + a.id + '\')">Editar aula</button>' +
 
         '<button class="act danger" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaExcluir(\'' + a.id + '\')">Excluir</button>' +
       '</div>';
-    }).join('') + '</div>';
+  }
+
+  box.innerHTML =
+    '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 8px">' +
+      '<p class="muted" style="margin:0;flex:1;min-width:200px;font-size:0.75rem">Arraste pelo ⠿ para mudar a ordem — ou clique no número da aula para digitar a posição dela. Use 📁 Módulo para agrupar as aulas em seções.</p>' +
+      '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasPdfLote()">Anexar PDFs em lote</button>' +
+      '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasTodasPdf()">Exibir todas em PDF</button>' +
+      '<button class="act primary" style="font-size:0.75rem;padding:4px 10px" onclick="kbIaLote()">Preparar conteúdo de IA de todas</button>' +
+      '<button class="act danger" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulasExcluirTodas()">Excluir todas as aulas</button>' +
+    '</div>' +
+    '<div class="kb-surface" id="kb-aulas-dnd" style="font-size:0.8125rem">' +
+    (agrupado
+      ? grupos.map(function(g){
+          const cab = '<div style="display:flex;gap:8px;align-items:center;padding:8px 12px;background:#F5F8FE;border-bottom:1px solid #E4EAF4">' +
+            '<b style="font-size:0.78rem;letter-spacing:.03em;text-transform:uppercase;color:#1E3A8A">' +
+              (g.nome ? esc(g.nome) : 'Sem módulo') + '</b>' +
+            (g.nome && g.ordem !== 9999 ? '<span class="kb-tag">ordem ' + g.ordem + '</span>' : '') +
+            '<span class="muted" style="margin-left:auto;font-size:0.74rem">' + g.itens.length + (g.itens.length === 1 ? ' aula' : ' aulas') + '</span>' +
+          '</div>';
+          return cab + g.itens.map(linha).join('');
+        }).join('')
+      : ordenadas.map(linha).join('')) + '</div>';
+
   kbAulasBindDnD();
   kbIaBadges();
   kbHtmlBadges();
@@ -3248,8 +3350,18 @@ async function kbAulaCriar(disc, texto, origem, publicar, arquivo){
   const existente = KB_AULAS.find(a => kbAulaTitulo(a.nome).toLowerCase() === titulo.toLowerCase());
   let nomeTopico = titulo;
   let topicoId = existente ? existente.id : null;
+  /* Módulo opcional informado no formulário de cadastro */
+  const modEl = document.getElementById('kb-aula-modulo');
+  const modOrdEl = document.getElementById('kb-aula-modulo-ordem');
+  const modulo = modEl ? String(modEl.value || '').trim() : '';
+  const moduloOrdem = modulo
+    ? (Number.isFinite(parseInt(modOrdEl && modOrdEl.value, 10)) ? parseInt(modOrdEl.value, 10) : 1)
+    : null;
   if(existente){
     nomeTopico = existente.nome;
+    if(modulo){
+      await PX.sb.from('topics').update({ modulo: modulo, modulo_ordem: moduloOrdem }).eq('id', existente.id);
+    }
   }else{
     /* Se já existe aula com esse número, abre espaço deslocando as seguintes. */
     if(KB_AULAS.some(a => a.ordem === numero)){
@@ -3259,10 +3371,13 @@ async function kbAulaCriar(disc, texto, origem, publicar, arquivo){
         await PX.sb.from('topics').update({ ordem: a.ordem }).eq('id', a.id);
       }
     }
-    const ins = await PX.sb.from('topics').insert({ discipline_id: discId, nome: titulo, ordem: numero, dificuldade: 'media' }).select('id').maybeSingle();
+    const novo = { discipline_id: discId, nome: titulo, ordem: numero, dificuldade: 'media' };
+    if(modulo){ novo.modulo = modulo; novo.modulo_ordem = moduloOrdem; }
+    const ins = await PX.sb.from('topics').insert(novo).select('id').maybeSingle();
     if(ins.error) throw new Error('Erro ao criar a aula: ' + ins.error.message);
     topicoId = ins.data ? ins.data.id : null;
   }
+
   const ordem = existente ? existente.ordem : numero;
 
   /* Se o material enviado for um PDF, ele também fica anexado à aula,

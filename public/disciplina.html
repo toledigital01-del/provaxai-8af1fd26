@@ -23,9 +23,19 @@
   .note-actions { display:flex; justify-content:flex-end; margin-top:8px; }
   .note-save { background:#0B2A5B; color:#fff; border:none; border-radius:8px; padding:7px 14px; font-size:.78rem; font-weight:600; cursor:pointer; font-family:inherit; }
 
+  /* Módulos: agrupam as aulas da disciplina em seções colapsáveis */
+  .mod-sec { margin-top:16px; }
+  .mod-head { display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:transparent; border:none; border-bottom:1px solid var(--line-strong); padding:8px 2px; cursor:pointer; font-family:inherit; color:inherit; }
+  .mod-head .mod-caret { transition:transform .15s; font-size:.7rem; color:var(--muted); }
+  .mod-sec.closed .mod-caret { transform:rotate(-90deg); }
+  .mod-head .mod-name { font-size:.82rem; font-weight:700; letter-spacing:.02em; text-transform:uppercase; }
+  .mod-head .mod-count { font-size:.74rem; color:var(--muted); margin-left:auto; }
+  .mod-sec.closed .mod-body { display:none; }
+
   @media (max-width: 900px) {
     .disc-layout { flex-direction:column; }
   }
+
   @media (max-width: 640px) {
     .topic-row.px-row { grid-template-columns:1fr; gap:8px; }
     .px-row .topic-right { width:100%; }
@@ -140,12 +150,11 @@ document.querySelectorAll('.chip').forEach(c => c.onclick = () => {
   render();
 });
 
-function render() {
-  const list = info.topics.filter(t => filter === 'all' || t.st === filter);
-  document.getElementById('topics').innerHTML = list.length ? list.map(t => {
-    const s = STATUS_META[t.st];
-    const mk = pxStudyGet(t.name);
-    return `<div class="topic-row px-row">
+const modFechados = {};
+function rowHTML(t) {
+  const s = STATUS_META[t.st];
+  const mk = pxStudyGet(t.name);
+  return `<div class="topic-row px-row">
       <span class="topic-left">
         <input type="checkbox" class="px-check" data-t="${encodeURIComponent(t.name)}" ${mk.done ? 'checked' : ''} title="Marcar como estudado">
         <a class="tlink" href="${topicHref(t.name)}">
@@ -164,13 +173,46 @@ function render() {
         <div class="note-actions"><button class="note-save" data-s="${encodeURIComponent(t.name)}">Salvar nota</button></div>
       </div>
     </div>`;
-  }).join('') : '<div class="empty">Nenhuma aula com esse status.</div>';
+}
+
+function render() {
+  const list = info.topics.filter(t => filter === 'all' || t.st === filter);
+  const box = document.getElementById('topics');
+  if (!list.length) { box.innerHTML = '<div class="empty">Nenhuma aula com esse status.</div>'; return; }
+  const grupos = (typeof agruparPorModulo === 'function')
+    ? agruparPorModulo(disc, list, t => t.name)
+    : [{ modulo: '', itens: list }];
+  /* Sem nenhum módulo definido: mantém a lista plana de sempre. */
+  if (grupos.length === 1 && !grupos[0].modulo) { box.innerHTML = list.map(rowHTML).join(''); return; }
+  box.innerHTML = grupos.map(g => {
+    const corpo = g.itens.map(rowHTML).join('');
+    if (!g.modulo) return `<div class="mod-sec"><button class="mod-head" data-mod=""><span class="mod-caret">▾</span><span class="mod-name">Outras aulas</span><span class="mod-count">${g.itens.length}</span></button><div class="mod-body">${corpo}</div></div>`;
+    const fechado = modFechados[g.modulo] ? ' closed' : '';
+    return `<div class="mod-sec${fechado}">
+      <button class="mod-head" data-mod="${encodeURIComponent(g.modulo)}">
+        <span class="mod-caret">▾</span>
+        <span class="mod-name">${g.modulo.replace(/</g,'&lt;')}</span>
+        <span class="mod-count">${g.itens.length} ${g.itens.length === 1 ? 'aula' : 'aulas'}</span>
+      </button>
+      <div class="mod-body">${corpo}</div>
+    </div>`;
+  }).join('');
 }
 render();
 window.pxRerender = function(){ render(); };
 
+
 document.getElementById('topics').addEventListener('click', e => {
+  const mh = e.target.closest('.mod-head');
+  if (mh) {
+    const sec = mh.closest('.mod-sec');
+    sec.classList.toggle('closed');
+    const k = decodeURIComponent(mh.dataset.mod || '');
+    if (k) modFechados[k] = sec.classList.contains('closed');
+    return;
+  }
   const chk = e.target.closest('.px-check');
+
   if (chk) {
     const name = decodeURIComponent(chk.dataset.t);
     pxStudySet(name, { done: chk.checked });
