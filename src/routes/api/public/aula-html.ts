@@ -12,7 +12,7 @@ const Body = z.object({
   disciplina: z.string().min(1).max(200),
   topico: z.string().min(1).max(300),
   html: z.string().min(200).max(2_000_000).optional(),
-  acao: z.enum(['salvar', 'publicar']).optional(),
+  acao: z.enum(['salvar', 'publicar', 'carregar', 'excluir']).optional(),
 })
 
 const eq = (v: string) => `eq.${encodeURIComponent(v)}`
