@@ -1218,6 +1218,23 @@ async function viewConhecimento(){
     </section>
 
     <section data-step="conteudo">
+      <div class="kb-block" style="margin-bottom:18px">
+        <h3>📋 Extrair questões reais de apostila</h3>
+        <p class="kb-sub">Envie o PDF ou cole o texto de uma apostila de questões de provas anteriores. A IA <b>copia somente questões reais completas</b> (nunca inventa), classifica cada uma no tópico certo do edital e grava como questão <b>real</b> — elas têm prioridade sobre as geradas por IA e nunca são apagadas por regenerações.</p>
+        <div class="kb-fields">
+          <div><label class="muted">Matéria de destino</label><select id="kq-disc" onfocus="kbQuestoesDiscs()"></select></div>
+        </div>
+        <div class="kb-drop">
+          <p class="muted" style="margin:0 0 10px">Escolha o arquivo da apostila (PDF ou texto)</p>
+          <input type="file" id="kq-file" accept=".pdf,.txt,.md,application/pdf,text/plain" style="width:auto;max-width:100%">
+        </div>
+        <textarea id="kq-txt" rows="4" placeholder="Ou cole aqui o texto da apostila de questões" style="margin-top:12px"></textarea>
+        <div class="kb-actions" style="margin-top:12px">
+          <button class="act primary" id="kq-btn" onclick="kbQuestoesExtrair()">Extrair questões reais</button>
+          <span class="muted" style="font-size:0.75rem">Questões duplicadas são ignoradas automaticamente.</span>
+        </div>
+        <div id="kq-log" style="margin-top:10px;font-size:0.8rem;max-height:220px;overflow:auto"></div>
+      </div>
       <div class="kb-block">
         <div id="kb-voltar" style="display:none;margin-bottom:12px">
           <button class="act" onclick="kbFecharDisc()">← Todas as matérias</button>
@@ -2687,6 +2704,15 @@ window.kbAulaModalSalvar = async function(auto, recarregar){
   if(publicar && !auto && a && a.nome) kbPrepararAula(kbDisc, a.nome);
   if(msg && !auto) msg.textContent = (publicar ? 'Aula publicada para os alunos' : 'Aula salva como rascunho') +
     (modo === 'pdf' ? ' — o aluno abre esta aula em PDF.' : ' — o aluno vê o conteúdo em texto.');
+  /* Fluxo único de IA: ao carregar/substituir o material com o painel da IA
+     aberto nesta aula, gera/atualiza os 12 módulos automaticamente. */
+  const iaModal = document.getElementById('kb-ia-modal');
+  const iaAberta = iaModal && iaModal.style.display !== 'none' && IA_AULA && IA_AULA.id === a.id;
+  const materialMudou = !doc ? !!(conteudo || pdfUrl) : ((doc.conteudo || '') !== conteudo || String(doc.pdf_url || '') !== pdfUrl);
+  if(iaAberta && materialMudou && !IA_OCUPADO){
+    kbAulaModalFechar();
+    kbIaRecarregar().then(function(){ kbIaFluxoAuto(KB_IA_MODO); });
+  }
 };
 
 
@@ -3344,6 +3370,75 @@ async function kbLerArquivo(f, disciplina){
 function kbEhVideoUrl(u){
   return /(youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com)/i.test(u || '');
 }
+
+/* ---- Extrair questões reais de apostila (PARTE B) ---- */
+window.kbQuestoesDiscs = function(){
+  const sel = document.getElementById('kq-disc');
+  if(!sel) return;
+  const discs = kbDiscList();
+  const atual = sel.value;
+  sel.innerHTML = '<option value="">Escolha a matéria…</option>' + discs.map(function(d){
+    return '<option value="' + esc(d).replace(/"/g, '&quot;') + '"' + (d === atual ? ' selected' : '') + '>' + esc(d) + '</option>';
+  }).join('');
+  if(!atual && kbDisc) sel.value = kbDisc;
+};
+window.kbQuestoesExtrair = async function(){
+  const log = document.getElementById('kq-log');
+  const btn = document.getElementById('kq-btn');
+  const escreve = function(html){
+    if(!log) return;
+    const d = document.createElement('div');
+    d.style.cssText = 'padding:3px 0;border-bottom:1px solid #F1F5F9';
+    d.innerHTML = html;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
+  };
+  kbQuestoesDiscs();
+  const disc = (document.getElementById('kq-disc') || {}).value;
+  if(!disc){ toast('Escolha a matéria de destino primeiro.'); return; }
+  const inp = document.getElementById('kq-file');
+  const f = inp && inp.files && inp.files[0];
+  let texto = ((document.getElementById('kq-txt') || {}).value || '').trim();
+  if(log) log.innerHTML = '';
+  if(btn){ btn.disabled = true; btn.textContent = 'Extraindo…'; }
+  try{
+    if(f){
+      escreve('⏳ Lendo o arquivo <b>' + esc(f.name) + '</b>…');
+      texto = await kbLerArquivo(f, disc);
+    }
+    texto = String(texto || '').trim();
+    if(texto.length < 50){ escreve('✕ Envie o arquivo ou cole o texto da apostila (mínimo 50 caracteres).'); return; }
+    const topicos = kbTopicList(disc);
+    const TAM = 90000;
+    const partes = [];
+    for(let i = 0; i < texto.length; i += TAM) partes.push(texto.slice(i, i + TAM));
+    let totSalvas = 0, totDup = 0, totExtraidas = 0, totSemTopico = 0;
+    const porTopico = {};
+    for(let p = 0; p < partes.length; p++){
+      escreve('⏳ Pedaço ' + (p + 1) + ' de ' + partes.length + ' — extraindo e classificando…');
+      const j = await kbPost('/api/public/kb-questoes-reais', {
+        curso: 'prf-2021', disciplina: disc, topicos: topicos,
+        texto: partes[p], parte: p + 1, total_partes: partes.length,
+      });
+      totExtraidas += j.extraidas || 0; totSalvas += j.salvas || 0;
+      totDup += j.duplicadas || 0; totSemTopico += j.sem_topico || 0;
+      Object.keys(j.porTopico || {}).forEach(function(t){ porTopico[t] = (porTopico[t] || 0) + j.porTopico[t]; });
+      escreve('✓ Pedaço ' + (p + 1) + ': ' + (j.salvas || 0) + ' questões salvas' + (j.duplicadas ? ' (' + j.duplicadas + ' duplicadas ignoradas)' : '') + '.');
+    }
+    escreve('<b>Concluído:</b> ' + totSalvas + ' questões reais salvas em <b>' + esc(disc) + '</b>'
+      + (totDup ? ' · ' + totDup + ' duplicadas ignoradas' : '')
+      + (totSemTopico ? ' · ' + totSemTopico + ' sem tópico (ficam na matéria, sem aula específica)' : ''));
+    Object.keys(porTopico).sort().forEach(function(t){ escreve('&nbsp;&nbsp;• ' + esc(t) + ': ' + porTopico[t]); });
+    if(!totSalvas && !totExtraidas)
+      escreve('<span class="muted">Nenhuma questão completa encontrada — a IA só extrai questões com gabarito indicado no texto.</span>');
+    toast(totSalvas ? totSalvas + ' questões reais salvas.' : 'Nada novo para salvar.');
+  }catch(e){
+    escreve('✕ ' + esc(e.message || 'Falha na extração.'));
+    toast(e.message || 'Falha na extração.');
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = 'Extrair questões reais'; }
+  }
+};
 
 /* ---- Progresso da leitura de arquivos ---- */
 let KB_ING_ATIVO = false;
@@ -4223,6 +4318,7 @@ const IA_MELHORAR_OPS = {
   mapa_mental:['mais organizado','mais objetivo','mais direcionado para prova'],
 };
 let IA_AULA = null, IA_DADOS = null, IA_TAB = 'config', IA_OCUPADO = false;
+let KB_IA_MODO = 'gerar'; /* 'gerar' (só pendentes) ou 'acrescentando' (novo material somado ao existente) */
 
 function kbIaMeta(tipo){ return IA_MODULOS.find(function(m){ return m.tipo === tipo; }) || { tipo:tipo, rotulo:tipo, icon:'📦', formato:'md' }; }
 function kbIaApi(payload){
@@ -4336,7 +4432,7 @@ function kbPdfDaAula(a){
 window.kbIaAbrir = function(aulaId){
   IA_AULA = KB_AULAS.find(function(a){ return a.id === aulaId; });
   if(!IA_AULA) return;
-  IA_TAB = 'config'; IA_DADOS = null;
+  IA_TAB = 'config'; IA_DADOS = null; KB_IA_MODO = 'gerar';
   let m = document.getElementById('kb-ia-modal');
   if(!m){
     m = document.createElement('div');
@@ -4422,6 +4518,15 @@ function kbIaPaint(){
   kbIaEditorialHtml(tmp);
   const edHtml = tmp.innerHTML;
   body.innerHTML = '<div style="max-width:920px;margin:0 auto;display:grid;gap:14px">'
+    + '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px">'
+    +   '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
+    +     '<button class="act primary" id="ia-btn-gerar" style="font-size:0.86rem;padding:10px 18px" onclick="kbIaFluxoAuto(\'gerar\')">⚡ Gerar conteúdos pendentes</button>'
+    +     '<button class="act primary" style="font-size:0.86rem;padding:10px 18px" onclick="kbIaPublicarTudo()">🚀 Publicar tudo</button>'
+    +     '<button class="act" style="font-size:0.82rem" onclick="kbIaMaisMaterial()">📎 Adicionar mais material</button>'
+    +   '</div>'
+    +   '<div class="muted" style="font-size:0.74rem;margin-top:8px">"Gerar conteúdos pendentes" cria só o que ainda não está publicado — o que já existe (inclusive edições manuais) é preservado. "Publicar tudo" libera para o aluno a versão mais recente de cada módulo.</div>'
+    +   '<div id="ia-progresso" style="display:none;margin-top:10px;border-top:1px solid #F1F5F9;padding-top:10px"></div>'
+    + '</div>'
     + '<details style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:2px 18px">'
     +   '<summary style="cursor:pointer;font-weight:800;padding:12px 0;font-size:0.88rem">⚙ Configuração da geração '
     +     '<span class="muted" style="font-weight:400;font-size:0.74rem">— material-fonte, instruções, módulos e questões</span></summary>'
@@ -4430,6 +4535,7 @@ function kbIaPaint(){
     + conHtml
     + edHtml
     + '</div>';
+  kbIaCarregarPrevias();
 }
 
 /* ---------- ABA 1 — CONFIGURAÇÃO ---------- */
@@ -4448,7 +4554,7 @@ function kbIaPaintConfig(body, doc, pdf){
     +   '</div>'
     +   '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'
     +     (pdf ? '<button class="act" style="font-size:0.75rem" onclick="kbIaAbrirPdf()">Abrir PDF</button>' : '')
-    +     '<button class="act" style="font-size:0.75rem" onclick="kbAulaEditar(\''+IA_AULA.id+'\')">Substituir material / editar aula</button>'
+    +     '<button class="act" style="font-size:0.75rem" onclick="KB_IA_MODO=\'gerar\';kbAulaEditar(\''+IA_AULA.id+'\')">Substituir material / editar aula</button>'
     +   '</div>'
     + '</div>'
     + '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px">'
@@ -4481,13 +4587,11 @@ function kbIaPaintConfig(body, doc, pdf){
         }).join('')
     +   '</div>'
     + '</div>'
-    + '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
-    +   '<button class="act" style="font-size:0.8rem" onclick="kbIaSalvarConfig(false)">Salvar configuração</button>'
-    +   '<button class="act primary" id="ia-btn-gerar" style="font-size:0.86rem;padding:10px 18px" onclick="kbIaGerarTudo()">▶ GERAR CONTEÚDOS DA AULA</button>'
-    +   '<span class="muted" style="font-size:0.75rem">O que já tiver versão é gerado como nova versão — o histórico nunca é apagado.</span>'
-    + '</div>'
-    + '<div id="ia-progresso" style="display:none;background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px 16px"></div>'
-    + '</div>';
+     + '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px">'
+     +   '<button class="act" style="font-size:0.8rem" onclick="kbIaSalvarConfig(false)">Salvar configuração</button>'
+     +   '<span class="muted" style="font-size:0.75rem">A geração acontece nos botões do topo da tela. O que já tiver versão é gerado como nova versão — o histórico nunca é apagado.</span>'
+     + '</div>'
+     + '</div>';
 }
 function kbIaLerConfig(){
   const modulos = {};
@@ -4551,6 +4655,77 @@ window.kbIaGerarTudo = async function(){
   toast('Geração concluída. Revise em "Conteúdos gerados" e publique na aba "Publicação".');
 };
 
+/* ---------- fluxo único: gerar pendentes / acrescentar novo material ----------
+   modo 'gerar': cria apenas o que ainda não tem versão publicada (rascunhos e
+   edições manuais são preservados — a ação 'gerar' devolve o que já existe).
+   modo 'acrescentando': soma o material novo ao que já existe (mesma lógica do
+   'regenerar' modo 'acrescentando'); o que não tinha nada é gerado do zero. */
+window.kbIaFluxoAuto = async function(modo){
+  if(IA_OCUPADO || !IA_AULA) return;
+  if(document.getElementById('ia-cfg-inst')) await kbIaSalvarConfig(false);
+  const cfg = (IA_DADOS && IA_DADOS.config) || {};
+  IA_OCUPADO = true;
+  const prog = document.getElementById('ia-progresso');
+  if(prog){
+    prog.style.display = 'block';
+    prog.innerHTML = '<div style="font-weight:800;font-size:0.8rem;margin-bottom:6px">'
+      + (modo === 'acrescentando' ? '📎 Atualizando os conteúdos com o material novo…' : '⚡ Gerando os conteúdos pendentes…')
+      + ' <span class="muted" style="font-weight:400">(pode levar alguns minutos — não feche esta janela)</span></div>'
+      + IA_MODULOS.map(function(mo){
+          return '<div id="ia-prog-'+mo.tipo+'" style="font-size:0.83rem;padding:3px 0">○ '+mo.icon+' '+mo.rotulo+'</div>';
+        }).join('');
+  }
+  let gerados = 0, pulados = 0, falhas = 0;
+  for(const mo of IA_MODULOS){
+    const t = mo.tipo;
+    const linha = document.getElementById('ia-prog-' + t);
+    const m = kbIaMod(t);
+    let acao = 'gerar';
+    const extra = {};
+    if(modo === 'acrescentando' && m.atual){ acao = 'regenerar'; extra.modo = 'acrescentando'; }
+    else if(m.publicado && !(m.atual && m.atual.versao > m.publicado.versao)){
+      if(linha) linha.innerHTML = '— ' + mo.icon + ' ' + mo.rotulo + ' — já publicado (pulado)';
+      pulados++; continue;
+    }
+    if(linha) linha.innerHTML = '⏳ ' + mo.icon + ' ' + mo.rotulo + ' — gerando…';
+    try{
+      const r = await kbIaApi(Object.assign({ acao: acao, tipo: t, config: { instrucoes: cfg.instrucoes || undefined, questoes: cfg.questoes } }, extra));
+      if(linha) linha.innerHTML = '✓ ' + mo.icon + ' ' + mo.rotulo + (r.cache ? ' — já estava pronto' : ' — v' + (r.versao || '?'));
+      gerados++;
+    }catch(e){
+      falhas++;
+      if(linha) linha.innerHTML = '✕ ' + mo.icon + ' ' + mo.rotulo + ' — ' + esc(e.message || 'falhou');
+    }
+  }
+  IA_OCUPADO = false;
+  await kbIaRecarregar();
+  const prog2 = document.getElementById('ia-progresso');
+  if(prog2) prog2.style.display = 'block';
+  toast('Fluxo concluído: ' + gerados + ' conteúdo(s) pronto(s)' + (pulados ? ', ' + pulados + ' já publicados' : '') + (falhas ? ', ' + falhas + ' falharam' : '') + '. Revise abaixo e clique em "Publicar tudo".');
+};
+window.kbIaMaisMaterial = function(){
+  if(!IA_AULA) return;
+  KB_IA_MODO = 'acrescentando';
+  kbAulaEditar(IA_AULA.id);
+};
+/* Prévia formatada de cada módulo direto na tela de revisão. */
+async function kbIaCarregarPrevias(){
+  for(const mo of IA_MODULOS){
+    const alvo = document.getElementById('ia-cont-' + mo.tipo);
+    if(!alvo || alvo.dataset.carregado) continue;
+    alvo.dataset.carregado = '1';
+    try{
+      const v = await kbIaConteudoAtual(mo.tipo);
+      if(!alvo.isConnected) return;
+      if(!v || !v.conteudo){ alvo.innerHTML = ''; continue; }
+      const html = mo.formato === 'json'
+        ? kbIaJsonBonito(mo.tipo, v.conteudo)
+        : '<div class="prose" style="font-size:0.86rem">' + kbMD(v.conteudo) + '</div>';
+      alvo.innerHTML = '<div style="margin-top:10px;border-top:1px solid #F1F5F9;padding-top:8px"><div style="max-height:300px;overflow:auto;font-size:0.84rem">' + html + '</div></div>';
+    }catch(e){ if(alvo.isConnected) alvo.innerHTML = ''; }
+  }
+}
+
 /* ---------- ABA 2 — CONTEÚDOS GERADOS ---------- */
 function kbIaPaintConteudos(body){
   body.innerHTML = '<div style="display:grid;gap:12px;max-width:920px;margin:0 auto">'
@@ -4575,6 +4750,7 @@ function kbIaPaintConteudos(body){
             : '<button class="act primary ia-gerar-um" data-tipo="'+mo.tipo+'" style="font-size:0.72rem" onclick="kbIaGerarUm(\''+mo.tipo+'\',this)">Gerar agora</button>')
         + '</div>'
         + (v ? '<div class="muted" style="font-size:0.74rem;margin-top:6px">'+kbIaInfoLinha(mo.tipo, v)+'</div>' : '')
+        + (v ? '<div id="ia-cont-'+mo.tipo+'"><div class="muted" style="font-size:0.76rem;margin-top:8px">Carregando prévia…</div></div>' : '')
         + '<div id="ia-sub-'+mo.tipo+'"></div>'
         + '</div>';
     }).join('') + '</div>';
@@ -4800,11 +4976,7 @@ function kbIaEditorialHtml(body){
     {valor:'aprovado',rotulo:'Aprovado'},{valor:'publicado',rotulo:'Publicado'},{valor:'desatualizado',rotulo:'Desatualizado'}];
   body.innerHTML = '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 18px">'
     + '<div style="font-weight:800;margin-bottom:4px">🚀 Publicação para os alunos</div>'
-    + '<div class="muted" style="font-size:0.8rem;margin-bottom:10px">Só o que está <b>publicado</b> aparece no painel do aluno e entra no contexto da Athena. Rascunhos ficam visíveis apenas aqui.</div>'
-    + '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
-    +   '<button class="act primary" style="padding:10px 18px;font-size:0.86rem" onclick="kbIaPublicarTudo()">Publicar todos os conteúdos aprovados</button>'
-    +   '<span class="muted" style="font-size:0.75rem">Publica a versão mais recente de cada módulo que ainda está em rascunho.</span>'
-    + '</div>'
+    + '<div class="muted" style="font-size:0.8rem;margin-bottom:10px">Só o que está <b>publicado</b> aparece no painel do aluno e entra no contexto da Athena. Use o botão "Publicar tudo" no topo da tela para liberar a versão mais recente de cada módulo.</div>'
     + '<details style="margin-top:12px;border-top:1px solid #F1F5F9;padding-top:10px">'
     +   '<summary class="muted" style="cursor:pointer;font-size:0.78rem">Controle editorial (status, versão, próxima revisão)</summary>'
     +   '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:10px">'
