@@ -2681,6 +2681,7 @@ window.kbAulaNumeroEditar = async function(id){
     const up = await PX.sb.from('topics').update({ nome: titulo }).eq('id', id);
     if(up.error) return kbAulaMsg('Erro ao renomear: ' + up.error.message);
     await PX.sb.from('knowledge_docs').update({ topico: titulo }).eq('course_slug','prf-2021').eq('disciplina', kbDisc).eq('topico', aula.nome);
+    await kbRenomearVinculos(aula.nome, titulo);
     await logAdmin('renomear_aula','topics', id, { de: aula.nome, para: titulo });
     if(kbTopic === aula.nome) kbTopic = titulo;
     aula.nome = titulo;
@@ -2705,6 +2706,7 @@ window.kbAulaRenomear = async function(id){
   const up = await PX.sb.from('topics').update({ nome: titulo }).eq('id', id);
   if(up.error) return kbAulaMsg('Erro ao renomear: ' + up.error.message);
   await PX.sb.from('knowledge_docs').update({ topico: titulo }).eq('course_slug','prf-2021').eq('disciplina', kbDisc).eq('topico', a.nome);
+  await kbRenomearVinculos(a.nome, titulo);
   await logAdmin('renomear_aula','topics', id, { de: a.nome, para: titulo });
   try{ if(PX.syncCurriculo) await PX.syncCurriculo(); }catch(e){}
   if(kbTopic === a.nome) kbTopic = titulo;
