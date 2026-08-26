@@ -4240,6 +4240,7 @@ const IA_MELHORAR_OPS = {
   mapa_mental:['mais organizado','mais objetivo','mais direcionado para prova'],
 };
 let IA_AULA = null, IA_DADOS = null, IA_TAB = 'config', IA_OCUPADO = false;
+let KB_IA_MODO = 'gerar'; /* 'gerar' (só pendentes) ou 'acrescentando' (novo material somado ao existente) */
 
 function kbIaMeta(tipo){ return IA_MODULOS.find(function(m){ return m.tipo === tipo; }) || { tipo:tipo, rotulo:tipo, icon:'📦', formato:'md' }; }
 function kbIaApi(payload){
@@ -4475,7 +4476,7 @@ function kbIaPaintConfig(body, doc, pdf){
     +   '</div>'
     +   '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'
     +     (pdf ? '<button class="act" style="font-size:0.75rem" onclick="kbIaAbrirPdf()">Abrir PDF</button>' : '')
-    +     '<button class="act" style="font-size:0.75rem" onclick="kbAulaEditar(\''+IA_AULA.id+'\')">Substituir material / editar aula</button>'
+    +     '<button class="act" style="font-size:0.75rem" onclick="KB_IA_MODO=\'gerar\';kbAulaEditar(\''+IA_AULA.id+'\')">Substituir material / editar aula</button>'
     +   '</div>'
     + '</div>'
     + '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px">'
@@ -4600,6 +4601,7 @@ function kbIaPaintConteudos(body){
             : '<button class="act primary ia-gerar-um" data-tipo="'+mo.tipo+'" style="font-size:0.72rem" onclick="kbIaGerarUm(\''+mo.tipo+'\',this)">Gerar agora</button>')
         + '</div>'
         + (v ? '<div class="muted" style="font-size:0.74rem;margin-top:6px">'+kbIaInfoLinha(mo.tipo, v)+'</div>' : '')
+        + (v ? '<div id="ia-cont-'+mo.tipo+'"><div class="muted" style="font-size:0.76rem;margin-top:8px">Carregando prévia…</div></div>' : '')
         + '<div id="ia-sub-'+mo.tipo+'"></div>'
         + '</div>';
     }).join('') + '</div>';
@@ -4825,11 +4827,7 @@ function kbIaEditorialHtml(body){
     {valor:'aprovado',rotulo:'Aprovado'},{valor:'publicado',rotulo:'Publicado'},{valor:'desatualizado',rotulo:'Desatualizado'}];
   body.innerHTML = '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 18px">'
     + '<div style="font-weight:800;margin-bottom:4px">🚀 Publicação para os alunos</div>'
-    + '<div class="muted" style="font-size:0.8rem;margin-bottom:10px">Só o que está <b>publicado</b> aparece no painel do aluno e entra no contexto da Athena. Rascunhos ficam visíveis apenas aqui.</div>'
-    + '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
-    +   '<button class="act primary" style="padding:10px 18px;font-size:0.86rem" onclick="kbIaPublicarTudo()">Publicar todos os conteúdos aprovados</button>'
-    +   '<span class="muted" style="font-size:0.75rem">Publica a versão mais recente de cada módulo que ainda está em rascunho.</span>'
-    + '</div>'
+    + '<div class="muted" style="font-size:0.8rem;margin-bottom:10px">Só o que está <b>publicado</b> aparece no painel do aluno e entra no contexto da Athena. Use o botão "Publicar tudo" no topo da tela para liberar a versão mais recente de cada módulo.</div>'
     + '<details style="margin-top:12px;border-top:1px solid #F1F5F9;padding-top:10px">'
     +   '<summary class="muted" style="cursor:pointer;font-size:0.78rem">Controle editorial (status, versão, próxima revisão)</summary>'
     +   '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:10px">'
