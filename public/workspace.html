@@ -796,16 +796,36 @@ function renderAulaHTML(box, html){
   let documento = String(html || '');
   if (!/<html\b/i.test(documento)) documento = '<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>' + documento + '</body></html>';
   const escuro = document.body.classList.contains('dark');
-  const ajusteLeitura = '<style id="px-ajuste-leitura">body{font-size:16.5px!important}main{max-width:940px!important;padding-left:clamp(16px,3.4vw,44px)!important;padding-right:clamp(16px,3.4vw,44px)!important}p,li{line-height:1.72}h1{font-size:1.75em!important}h2{font-size:1.32em!important}h3{font-size:1.12em!important}@media(max-width:640px){body{font-size:16px!important}main{padding-left:16px!important;padding-right:16px!important}}</style>';
+  const ajusteLeitura = '<style id="px-ajuste-leitura">' +
+    ':root{color-scheme:light}html,body{background:#FFFFFF!important;color:#172033!important}' +
+    'body{font-size:16.5px!important}' +
+    'main{max-width:940px!important;padding-left:clamp(16px,3.4vw,44px)!important;padding-right:clamp(16px,3.4vw,44px)!important}' +
+    'p{line-height:1.76;text-align:justify;text-justify:inter-word;hyphens:auto;overflow-wrap:anywhere}' +
+    'li{line-height:1.72;overflow-wrap:anywhere}' +
+    'p span,p font,li span,li font{color:inherit!important}' +
+    'h1,h2,h3,h4,h5,h6{color:#0A1730!important;text-align:left}' +
+    'strong,b{color:#0A1730!important}' +
+    'a{color:#154C9B!important}' +
+    'mark{background:#FEF08A!important;color:#422006!important}' +
+    'blockquote{color:#475569!important}' +
+    'code,pre{background:#F1F5F9!important;color:#172033!important}' +
+    'h1{font-size:1.75em!important}h2{font-size:1.32em!important}h3{font-size:1.12em!important}' +
+    '@media(max-width:640px){body{font-size:16px!important}main{padding-left:16px!important;padding-right:16px!important}p{line-height:1.7}}' +
+    '</style>';
   /* Modo escuro: a aula é um documento isolado, então o tema precisa ser
      reaplicado dentro do iframe para o material não ficar branco à noite. */
-  const temaEscuro = '<style id="px-tema-escuro">html,body{background:#0B1120!important;color:#E5E7EB!important}' +
+  const temaEscuro = '<style id="px-tema-escuro">:root{color-scheme:dark}html,body{background:#0B1120!important;color:#E5E7EB!important}' +
+    'body,main,article,section{color:#E5E7EB!important}' +
+    'p,li,dd,dt,td{color:#E5E7EB!important}' +
+    'p span,p font,li span,li font,td span,td font{color:inherit!important}' +
     'h1,h2,h3,h4,h5,h6,strong,b{color:#F8FAFC!important}' +
-    'section,article,main,aside,div,header,footer,table,td,th,blockquote,li{border-color:#1F2937!important}' +
+    'section,article,main,aside,div,header,footer,table,td,th,blockquote,li{border-color:#334155!important}' +
     '*{background-color:transparent!important}' +
     'table,thead,tbody,tr{background:transparent!important}' +
-    'a{color:#60A5FA!important}code,pre{background:#111827!important;color:#E5E7EB!important}' +
-    'blockquote{border-left-color:#334155!important;color:#CBD5E1!important}' +
+    'a{color:#93C5FD!important}mark{background:#854D0E!important;color:#FEF3C7!important}' +
+    'code,pre{background:#111827!important;color:#F1F5F9!important}' +
+    'blockquote,blockquote p{border-left-color:#475569!important;color:#CBD5E1!important}' +
+    'th{color:#CBD5E1!important}' +
     'img{filter:brightness(.9)}</style>';
   const extraCss = ajusteLeitura + (escuro ? temaEscuro : '');
   documento = /<\/head>/i.test(documento) ? documento.replace(/<\/head>/i, extraCss + '</head>') : extraCss + documento;
