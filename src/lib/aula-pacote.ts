@@ -485,6 +485,30 @@ export async function gerarModulo(tipo: TipoModulo, ctx0: GerarCtx): Promise<{ c
     const total = Math.min(30, Math.max(5, Number(q.quantidade) || 12))
     const dif = String(q.dificuldade || 'misto')
     const prior = Array.isArray(q.prioridades) ? q.prioridades : []
+
+    /* Questões reais extraídas de apostilas têm prioridade: entram primeiro e
+       a IA só precisa completar o que faltar para a meta configurada. */
+    const reais = await questoesReais(ctx.curso, ctx.disciplina, ctx.topico)
+    const itensReais = reais.map((r) => ({
+      enunciado: r.enunciado,
+      gabarito: r.gabarito,
+      comentario: r.comentario || '',
+      origem: 'real' as const,
+      nivel: r.nivel || 'medio',
+      banca: r.banca || 'Cebraspe',
+      orgao: r.orgao,
+      ano: r.ano,
+      cargo: r.cargo,
+      ja_publicada: true,
+    }))
+    const faltam = total - itensReais.length
+    if (faltam <= 0) {
+      return {
+        conteudo: JSON.stringify(itensReais, null, 2),
+        meta: { modelo: 'banco', itens: itensReais.length, reais: itensReais.length, ineditas: 0, config: q },
+      }
+    }
+
     const difTxt =
       dif === 'facil' ? 'todas de dificuldade fácil (conceito direto)'
       : dif === 'medio' ? 'todas de dificuldade média (exigem atenção a detalhes)'
@@ -495,9 +519,10 @@ export async function gerarModulo(tipo: TipoModulo, ctx0: GerarCtx): Promise<{ c
     if (prior.includes('conceitos')) priTxt.push('priorize conceitos e definições')
     if (prior.includes('pegadinhas')) priTxt.push('priorize pegadinhas e palavras-armadilha da banca')
     if (prior.includes('importantes')) priTxt.push('priorize os pontos mais importantes e mais cobrados da aula')
+    const jaTem = itensReais.map((r) => r.enunciado)
     const system = promptBase(ctx, [
       'Você elabora itens de prova no estilo Cebraspe (julgamento CERTO/ERRADO), em português do Brasil.',
-      `Crie ${total} itens sobre o material abaixo, equilibrando CERTO e ERRADO, ${difTxt}.`,
+      `Crie ${faltam} itens sobre o material abaixo, equilibrando CERTO e ERRADO, ${difTxt}.`,
       'Nos itens errados, use os erros clássicos da banca: troca de prazo, de autoridade competente,',
       'generalização indevida, inversão de exceção, troca de palavra-chave.',
       priTxt.length ? 'Prioridades do professor: ' + priTxt.join('; ') + '.' : '',
@@ -506,16 +531,24 @@ export async function gerarModulo(tipo: TipoModulo, ctx0: GerarCtx): Promise<{ c
         ? 'O comentário deve ser COMPLETO: explique por que está certo/errado e cite o ponto do material.'
         : 'O comentário deve ser uma justificativa curta.',
       'Não invente lei, prazo, número ou julgado que não esteja no material.',
-      'Classifique a ORIGEM de cada item: "real" apenas quando a questão constar do material com banca/órgão/ano',
-      'identificáveis (informe também "banca", "orgao", "ano" e "cargo" quando existirem); caso contrário use "inedita".',
-      'Na dúvida sobre a procedência, use "inedita" — jamais rotule como real algo não confirmado no material.',
+      ...(jaTem.length
+        ? [
+            `Já existem ${jaTem.length} questões reais deste tópico gravadas no banco. NÃO repita nem os enunciados nem os mesmos pontos cobrados; foque em outros aspectos do material.`,
+            'Enunciados já existentes: ' + jaTem.map((e) => e.slice(0, 140)).join(' || '),
+            'Classifique a ORIGEM de cada item criado por você como "inedita" (jamais "real").',
+          ]
+        : [
+            'Classifique a ORIGEM de cada item: "real" apenas quando a questão constar do material com banca/órgão/ano',
+            'identificáveis (informe também "banca", "orgao", "ano" e "cargo" quando existirem); caso contrário use "inedita".',
+            'Na dúvida sobre a procedência, use "inedita" — jamais rotule como real algo não confirmado no material.',
+          ]),
       'Informe o nível de cada item em "nivel": "facil", "medio" ou "dificil".',
       'Responda SOMENTE com JSON válido: [{"enunciado":"...","gabarito":"C","comentario":"...","origem":"inedita","nivel":"medio","banca":"Cebraspe","orgao":null,"ano":null,"cargo":null}]',
     ])
     const saida = await chat({ provider: ctx.provider, model: ctx.model, system, user, keys: ctx.keys, maxTokens: 12000 })
-    const itens = jsonArray<Record<string, unknown>>(saida)
+    const geradas = jsonArray<Record<string, unknown>>(saida)
       .filter((x) => String(x['enunciado'] || '').trim().length > 10)
-      .slice(0, total)
+      .slice(0, faltam)
       .map((x) => {
         const origem = String(x['origem'] || 'inedita').toLowerCase()
         const nivel = String(x['nivel'] || dif || 'medio').toLowerCase()
@@ -527,7 +560,7 @@ export async function gerarModulo(tipo: TipoModulo, ctx0: GerarCtx): Promise<{ c
           enunciado: String(x['enunciado']).trim(),
           gabarito: String(x['gabarito'] || 'C').trim().toUpperCase().startsWith('C') ? 'C' : 'E',
           comentario: String(x['comentario'] || '').trim(),
-          origem: origem === 'real' ? 'real' : origem === 'nao_verificada' ? 'nao_verificada' : 'inedita',
+          origem: jaTem.length ? 'inedita' : origem === 'real' ? 'real' : origem === 'nao_verificada' ? 'nao_verificada' : 'inedita',
           nivel: ['facil', 'medio', 'dificil'].includes(nivel) ? nivel : 'medio',
           banca: txt('banca') || 'Cebraspe',
           orgao: txt('orgao'),
@@ -535,11 +568,11 @@ export async function gerarModulo(tipo: TipoModulo, ctx0: GerarCtx): Promise<{ c
           cargo: txt('cargo'),
         }
       })
+    const itens = [...itensReais, ...geradas]
     if (!itens.length) throw new Error('A IA não devolveu questões válidas.')
-    const reais = itens.filter((i) => i.origem === 'real').length
     return {
       conteudo: JSON.stringify(itens, null, 2),
-      meta: { modelo: ctx.model, itens: itens.length, reais, ineditas: itens.length - reais, config: q },
+      meta: { modelo: ctx.model, itens: itens.length, reais: itensReais.length, ineditas: geradas.length, config: q },
     }
 
   }
