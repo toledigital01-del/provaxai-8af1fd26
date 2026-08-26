@@ -32,6 +32,7 @@ export const Route = createFileRoute('/api/public/kb-classify')({
         }
 
         const salvo = await rotaDoAgente('tarefas_simples')
+        const adminExtra = await rotaDoAgente('assistente_admin')
         const provider: Provider = body.provider || salvo.provider
         const modelo = MODELOS[provider].includes(body.modelo || '')
           ? (body.modelo as string)
