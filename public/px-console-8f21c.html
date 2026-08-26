@@ -2486,6 +2486,9 @@ window.kbAulaHtmlPublicar = async function(topico){
       curso:'prf-2021', disciplina:kbDisc, topico:topico, acao:'publicar'
     });
     const st = await kbAulaStatusBuscar(topico, true);
+    /* Gera os materiais da IA (resumo, pontos, mapa, flashcards…) para a aula
+       não ficar marcada como "IA não preparada" para o aluno. */
+    kbPrepararAula(kbDisc, topico, false, true);
     if(msg) msg.textContent = '✅ Aula publicada, cache atualizado (versão ' + (st.versao || '—') + ').';
     toast('Aula publicada e sincronizada para os alunos.');
     kbAulasPaint();
@@ -2507,7 +2510,8 @@ window.kbAulaHtmlSalvar = async function(){
   msg.textContent = 'Salvando…';
   try{
     await kbPost('/api/public/aula-html', { curso:'prf-2021', disciplina: kbDisc, topico: topico, html: html, acao:'salvar' });
-    msg.textContent = '✅ Aula em HTML publicada.';
+    kbPrepararAula(kbDisc, topico, false, true);
+    msg.textContent = '✅ Aula em HTML publicada (preparando materiais da IA…).';
     document.getElementById('kb-html-txt').value = '';
     document.getElementById('kb-html-topico').value = '';
     kbAulasCarregar(kbDisc).then(kbAulasPaint).catch(function(){ kbAulasPaint(); });
@@ -2637,6 +2641,28 @@ async function kbAulasMover(de, para){
   kbAulaMsg('Ordem das aulas atualizada.');
 }
 
+/* Renomear uma aula precisa arrastar junto tudo que está gravado com o nome
+   antigo. Sem isso a aula em HTML, os recursos da IA e as questões ficam
+   "órfãos" e o aluno vê "sem conteúdo" / "IA não preparada". */
+async function kbRenomearVinculos(de, para){
+  if(!de || !para || de === para) return;
+  const c = { curso:'prf-2021', disc: kbDisc };
+  try{
+    await PX.sb.from('aulas_ia').update({ topico: para, titulo: para })
+      .eq('course_slug', c.curso).eq('disciplina', c.disc).eq('topico', de);
+    await PX.sb.from('aula_recursos').update({ topico: para })
+      .eq('course_slug', c.curso).eq('disciplina', c.disc).eq('topico', de);
+    await PX.sb.from('aula_conteudos').update({ topico: para })
+      .eq('course_slug', c.curso).eq('disciplina', c.disc).eq('topico', de);
+    await PX.sb.from('kb_documentos').update({ topic_nome: para })
+      .eq('course_slug', c.curso).eq('discipline_nome', c.disc).eq('topic_nome', de);
+    await PX.sb.from('questions').update({ topic_nome: para })
+      .eq('course_slug', c.curso).eq('discipline_nome', c.disc).eq('topic_nome', de);
+    await PX.sb.from('flashcards').update({ topic_nome: para })
+      .eq('course_slug', c.curso).eq('discipline_nome', c.disc).eq('topic_nome', de);
+  }catch(e){ /* segue: o nome do tópico já foi alterado */ }
+}
+
 /* Editar o número e o nome da aula: o número vira a posição dela na sequência
    (as demais são renumeradas automaticamente) e o nome atualiza o título. */
 window.kbAulaNumeroEditar = async function(id){
@@ -2659,6 +2685,7 @@ window.kbAulaNumeroEditar = async function(id){
     const up = await PX.sb.from('topics').update({ nome: titulo }).eq('id', id);
     if(up.error) return kbAulaMsg('Erro ao renomear: ' + up.error.message);
     await PX.sb.from('knowledge_docs').update({ topico: titulo }).eq('course_slug','prf-2021').eq('disciplina', kbDisc).eq('topico', aula.nome);
+    await kbRenomearVinculos(aula.nome, titulo);
     await logAdmin('renomear_aula','topics', id, { de: aula.nome, para: titulo });
     if(kbTopic === aula.nome) kbTopic = titulo;
     aula.nome = titulo;
@@ -2683,6 +2710,7 @@ window.kbAulaRenomear = async function(id){
   const up = await PX.sb.from('topics').update({ nome: titulo }).eq('id', id);
   if(up.error) return kbAulaMsg('Erro ao renomear: ' + up.error.message);
   await PX.sb.from('knowledge_docs').update({ topico: titulo }).eq('course_slug','prf-2021').eq('disciplina', kbDisc).eq('topico', a.nome);
+  await kbRenomearVinculos(a.nome, titulo);
   await logAdmin('renomear_aula','topics', id, { de: a.nome, para: titulo });
   try{ if(PX.syncCurriculo) await PX.syncCurriculo(); }catch(e){}
   if(kbTopic === a.nome) kbTopic = titulo;
@@ -2964,11 +2992,13 @@ window.kbAulaHtmlEditarSalvar = async function(id){
       if(up.error) throw new Error(up.error.message);
       await PX.sb.from('knowledge_docs').update({ topico: nome })
         .eq('course_slug','prf-2021').eq('disciplina', kbDisc).eq('topico', a.nome);
+      await kbRenomearVinculos(a.nome, nome);
       await kbPost('/api/public/aula-html', { curso:'prf-2021', disciplina:kbDisc, topico:a.nome, acao:'excluir' });
       a.nome = nome;
       try{ if(PX.syncCurriculo) await PX.syncCurriculo(); }catch(e){}
     }
     await kbPost('/api/public/aula-html', { curso:'prf-2021', disciplina:kbDisc, topico:a.nome, html: html, acao:'salvar' });
+    kbPrepararAula(kbDisc, a.nome, false, true);
     if(msg) msg.textContent = '✅ Aula salva e publicada para o aluno.';
     toast('Aula em HTML atualizada.');
     await kbAulasCarregar(kbDisc);
