@@ -3371,6 +3371,75 @@ function kbEhVideoUrl(u){
   return /(youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com)/i.test(u || '');
 }
 
+/* ---- Extrair questões reais de apostila (PARTE B) ---- */
+window.kbQuestoesDiscs = function(){
+  const sel = document.getElementById('kq-disc');
+  if(!sel) return;
+  const discs = kbDiscList();
+  const atual = sel.value;
+  sel.innerHTML = '<option value="">Escolha a matéria…</option>' + discs.map(function(d){
+    return '<option value="' + esc(d).replace(/"/g, '&quot;') + '"' + (d === atual ? ' selected' : '') + '>' + esc(d) + '</option>';
+  }).join('');
+  if(!atual && kbDisc) sel.value = kbDisc;
+};
+window.kbQuestoesExtrair = async function(){
+  const log = document.getElementById('kq-log');
+  const btn = document.getElementById('kq-btn');
+  const escreve = function(html){
+    if(!log) return;
+    const d = document.createElement('div');
+    d.style.cssText = 'padding:3px 0;border-bottom:1px solid #F1F5F9';
+    d.innerHTML = html;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
+  };
+  kbQuestoesDiscs();
+  const disc = (document.getElementById('kq-disc') || {}).value;
+  if(!disc){ toast('Escolha a matéria de destino primeiro.'); return; }
+  const inp = document.getElementById('kq-file');
+  const f = inp && inp.files && inp.files[0];
+  let texto = ((document.getElementById('kq-txt') || {}).value || '').trim();
+  if(log) log.innerHTML = '';
+  if(btn){ btn.disabled = true; btn.textContent = 'Extraindo…'; }
+  try{
+    if(f){
+      escreve('⏳ Lendo o arquivo <b>' + esc(f.name) + '</b>…');
+      texto = await kbLerArquivo(f, disc);
+    }
+    texto = String(texto || '').trim();
+    if(texto.length < 50){ escreve('✕ Envie o arquivo ou cole o texto da apostila (mínimo 50 caracteres).'); return; }
+    const topicos = kbTopicList(disc);
+    const TAM = 90000;
+    const partes = [];
+    for(let i = 0; i < texto.length; i += TAM) partes.push(texto.slice(i, i + TAM));
+    let totSalvas = 0, totDup = 0, totExtraidas = 0, totSemTopico = 0;
+    const porTopico = {};
+    for(let p = 0; p < partes.length; p++){
+      escreve('⏳ Pedaço ' + (p + 1) + ' de ' + partes.length + ' — extraindo e classificando…');
+      const j = await kbPost('/api/public/kb-questoes-reais', {
+        curso: 'prf-2021', disciplina: disc, topicos: topicos,
+        texto: partes[p], parte: p + 1, total_partes: partes.length,
+      });
+      totExtraidas += j.extraidas || 0; totSalvas += j.salvas || 0;
+      totDup += j.duplicadas || 0; totSemTopico += j.sem_topico || 0;
+      Object.keys(j.porTopico || {}).forEach(function(t){ porTopico[t] = (porTopico[t] || 0) + j.porTopico[t]; });
+      escreve('✓ Pedaço ' + (p + 1) + ': ' + (j.salvas || 0) + ' questões salvas' + (j.duplicadas ? ' (' + j.duplicadas + ' duplicadas ignoradas)' : '') + '.');
+    }
+    escreve('<b>Concluído:</b> ' + totSalvas + ' questões reais salvas em <b>' + esc(disc) + '</b>'
+      + (totDup ? ' · ' + totDup + ' duplicadas ignoradas' : '')
+      + (totSemTopico ? ' · ' + totSemTopico + ' sem tópico (ficam na matéria, sem aula específica)' : ''));
+    Object.keys(porTopico).sort().forEach(function(t){ escreve('&nbsp;&nbsp;• ' + esc(t) + ': ' + porTopico[t]); });
+    if(!totSalvas && !totExtraidas)
+      escreve('<span class="muted">Nenhuma questão completa encontrada — a IA só extrai questões com gabarito indicado no texto.</span>');
+    toast(totSalvas ? totSalvas + ' questões reais salvas.' : 'Nada novo para salvar.');
+  }catch(e){
+    escreve('✕ ' + esc(e.message || 'Falha na extração.'));
+    toast(e.message || 'Falha na extração.');
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = 'Extrair questões reais'; }
+  }
+};
+
 /* ---- Progresso da leitura de arquivos ---- */
 let KB_ING_ATIVO = false;
 function kbIngProg(feito, total, texto){
