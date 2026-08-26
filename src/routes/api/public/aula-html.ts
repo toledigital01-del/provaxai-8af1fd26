@@ -14,6 +14,41 @@ const Body = z.object({
 
 const eq = (v: string) => `eq.${encodeURIComponent(v)}`
 
+/* Garante que o tópico exista na grade do aluno — sem isso a aula fica órfã:
+   salva no banco, mas sem lugar na navegação do curso. */
+async function garantirTopico(curso: string, disciplina: string, topico: string) {
+  const cur = await fetch(
+    `${SUPABASE_URL}/rest/v1/courses?select=id&slug=${eq(curso)}&limit=1`,
+    { headers: serviceHeaders() },
+  )
+  const cursos = cur.ok ? ((await cur.json()) as Array<{ id: string }>) : []
+  if (!cursos.length) return
+  const dis = await fetch(
+    `${SUPABASE_URL}/rest/v1/disciplines?select=id&course_id=${eq(cursos[0]!.id)}&nome=${eq(disciplina)}&limit=1`,
+    { headers: serviceHeaders() },
+  )
+  const discs = dis.ok ? ((await dis.json()) as Array<{ id: string }>) : []
+  if (!discs.length) return
+  const discId = discs[0]!.id
+  const tp = await fetch(
+    `${SUPABASE_URL}/rest/v1/topics?select=id,ordem&discipline_id=${eq(discId)}`,
+    { headers: serviceHeaders() },
+  )
+  const tops = tp.ok ? ((await tp.json()) as Array<{ id: string; ordem: number }>) : []
+  const jaExiste = await fetch(
+    `${SUPABASE_URL}/rest/v1/topics?select=id&discipline_id=${eq(discId)}&nome=${eq(topico)}&limit=1`,
+    { headers: serviceHeaders() },
+  )
+  const achou = jaExiste.ok ? ((await jaExiste.json()) as Array<{ id: string }>) : []
+  if (achou.length) return
+  const ordem = tops.reduce((m, t) => Math.max(m, typeof t.ordem === 'number' ? t.ordem : 0), -1) + 1
+  await fetch(`${SUPABASE_URL}/rest/v1/topics`, {
+    method: 'POST',
+    headers: serviceHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+    body: JSON.stringify({ discipline_id: discId, nome: topico, ordem }),
+  })
+}
+
 export const Route = createFileRoute('/api/public/aula-html')({
   server: {
     handlers: {
