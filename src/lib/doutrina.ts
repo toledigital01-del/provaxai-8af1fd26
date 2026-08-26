@@ -80,16 +80,25 @@ export async function doutrina(): Promise<string> {
 /** Salva (ou restaura) a doutrina editada no painel. */
 export async function salvarDoutrina(texto: string) {
   const valor = texto.trim()
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/platform_settings`, {
-    method: 'POST',
-    headers: serviceHeaders({
-      'Content-Type': 'application/json',
-      Prefer: 'resolution=merge-duplicates,return=minimal',
-    }),
-    body: JSON.stringify({ chave: CHAVE_DOUTRINA, valor: valor || DOUTRINA_PADRAO }),
-  })
-  cache = null
-  return r.ok
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/platform_settings?on_conflict=chave`, {
+      method: 'POST',
+      headers: serviceHeaders({
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates,return=minimal',
+      }),
+      body: JSON.stringify({ chave: CHAVE_DOUTRINA, valor: valor || DOUTRINA_PADRAO, publico: true }),
+    })
+    if (!r.ok) {
+      console.error('[salvarDoutrina] falha ao gravar:', r.status, await r.text().catch(() => ''))
+      return false
+    }
+    cache = null
+    return true
+  } catch (error) {
+    console.error('[salvarDoutrina] erro inesperado:', error)
+    return false
+  }
 }
 
 /* ---------- status editorial da aula ---------- */
