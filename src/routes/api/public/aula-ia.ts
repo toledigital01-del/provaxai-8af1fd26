@@ -79,8 +79,6 @@ export const Route = createFileRoute('/api/public/aula-ia')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const userId = await currentUser(request) // null = convidado (liberado por enquanto)
-
         let body: z.infer<typeof Body>
         try {
           body = Body.parse(await request.json())
@@ -89,7 +87,28 @@ export const Route = createFileRoute('/api/public/aula-ia')({
         }
 
         const curso = body.curso || 'prf-2021'
-        const oficial = await cursoOficial(curso)
+        const filtroOficial =
+          `${SUPABASE_URL}/rest/v1/aulas_ia?select=titulo,conteudo,modelo,formato,updated_at` +
+          `&course_slug=${eq(curso)}&disciplina=${eq(body.disciplina)}&topico=${eq(body.topico)}&user_id=is.null&limit=1`
+
+        // Caminho rápido do aluno: uma única leitura do conteúdo já publicado.
+        if (!body.regerar) {
+          const pronto = await fetch(filtroOficial, { headers: serviceHeaders() })
+            .then((r) => (r.ok ? r.json() : []))
+            .catch(() => [])
+          const hit = (pronto as Array<{ titulo?: string; conteudo?: string; modelo?: string; formato?: string }>)[0]
+          if (hit && (hit.conteudo || '').trim())
+            return Response.json({
+              aula: hit.conteudo,
+              titulo: hit.titulo || body.topico,
+              modelo: hit.modelo || null,
+              formato: hit.formato === 'html' ? 'html' : 'markdown',
+              cache: true,
+              compartilhada: true,
+            })
+        }
+
+        const [userId, oficial] = await Promise.all([currentUser(request), cursoOficial(curso)])
         const dono = oficial ? null : userId
         if (!oficial && !userId)
           return Response.json({ error: 'Entre na sua conta para usar seu próprio material.' }, { status: 401 })
@@ -99,7 +118,7 @@ export const Route = createFileRoute('/api/public/aula-ia')({
           `${SUPABASE_URL}/rest/v1/aulas_ia?select=titulo,conteudo,modelo,formato,updated_at` +
           `&course_slug=${eq(curso)}&disciplina=${eq(body.disciplina)}&topico=${eq(body.topico)}&${filtroDono}&limit=1`
 
-        if (!body.regerar) {
+        if (!body.regerar && !oficial) {
           const cache = await fetch(cacheUrl, { headers: serviceHeaders() })
             .then((r) => (r.ok ? r.json() : []))
             .catch(() => [])
@@ -114,6 +133,9 @@ export const Route = createFileRoute('/api/public/aula-ia')({
               compartilhada: oficial,
             })
         }
+
+        if (!body.regerar && oficial)
+          return Response.json({ error: 'A aula ainda não foi publicada pelo professor.' }, { status: 404 })
 
         const material = await materialDoTopico(curso, body.disciplina, body.topico, userId || '', oficial)
         if (material.length < 200)

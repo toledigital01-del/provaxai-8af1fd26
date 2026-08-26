@@ -41,9 +41,6 @@ export const Route = createFileRoute('/api/public/resumo')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const userId = await currentUser(request) // null = convidado
-        // Acesso liberado sem login por enquanto (fase de testes).
-
         let body: z.infer<typeof Body>
         try {
           body = Body.parse(await request.json())
@@ -64,7 +61,10 @@ export const Route = createFileRoute('/api/public/resumo')({
               cache: true,
               extras: await extrasPublicados(curso, body.disciplina, body.topico),
             })
+          return Response.json({ error: 'O resumo ainda não foi publicado pelo professor.' }, { status: 404 })
         }
+
+        const userId = await currentUser(request)
 
         const rota = await rotaDoAgente('resumos')
         const limite = rota.limiteDiario

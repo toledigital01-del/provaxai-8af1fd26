@@ -42,8 +42,6 @@ export const Route = createFileRoute('/api/public/podcast')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const userId = await currentUser(request) // null = convidado (liberado por enquanto)
-
         let body: z.infer<typeof Body>
         try {
           body = Body.parse(await request.json())
@@ -68,7 +66,10 @@ export const Route = createFileRoute('/api/public/podcast')({
           const roteiro = hit[0]?.roteiro
           if (Array.isArray(roteiro) && roteiro.length)
             return Response.json({ roteiro, modelo: hit[0]?.modelo || null, cache: true })
+          return Response.json({ error: 'O podcast ainda não foi publicado pelo professor.' }, { status: 404 })
         }
+
+        const userId = await currentUser(request)
 
         const rota = await rotaDoAgente('geracao_aulas')
         const limite = rota.limiteDiario

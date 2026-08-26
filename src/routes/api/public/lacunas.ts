@@ -38,9 +38,6 @@ export const Route = createFileRoute('/api/public/lacunas')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const userId = await currentUser(request) // null = convidado
-        // Acesso liberado sem login por enquanto (fase de testes).
-
         let body: z.infer<typeof Body>
         try {
           body = Body.parse(await request.json())
@@ -56,7 +53,10 @@ export const Route = createFileRoute('/api/public/lacunas')({
           const frasesProntas = pronto?.dados?.frases
           if (Array.isArray(frasesProntas) && frasesProntas.length)
             return Response.json({ frases: frasesProntas, fontes: 0, modelo: pronto?.modelo, cache: true })
+          return Response.json({ error: 'O exercício ainda não foi publicado pelo professor.' }, { status: 404 })
         }
+
+        const userId = await currentUser(request)
 
         const rota = await rotaDoAgente('geracao_questoes')
         const limite = rota.limiteDiario
