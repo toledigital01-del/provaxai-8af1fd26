@@ -728,6 +728,30 @@ async function carregarAulaIA(regerar) {
     return;
   }
 
+/* Pontos-chave e pegadinhas publicados pelo professor, embutidos no fim da aula.
+   Reaproveita o mesmo endpoint/cache do resumo usado na aba Revisão. */
+let extrasCache = {};
+async function anexarExtrasAula() {
+  const alvo = document.getElementById('aula-extras');
+  if (!alvo || !disc || !topic) return;
+  const chave = id + '|' + disc + '|' + topic;
+  let ex = extrasCache[chave];
+  if (!ex) {
+    try {
+      const r = await PX.iaPostCache('resumo', { disciplina: disc, topico: topic, curso: id });
+      ex = (r && r.extras) || {};
+    } catch (e) { ex = {}; }
+    extrasCache[chave] = ex;
+  }
+  const box = document.getElementById('aula-extras');
+  if (!box) return;
+  const html = ['pontos', 'pegadinhas'].filter(k => ex[k]).map(k => PX.kbCallout(
+    k, k === 'pontos' ? 'Pontos-chave desta aula' : 'Pegadinhas de prova', ex[k]
+  )).join('');
+  if (html) box.innerHTML = '<div style="margin-top:26px;border-top:1px solid var(--line,#e2e8f0);padding-top:6px">' + html + '</div>';
+}
+
+
   const msg = (r && r.erro) || 'Não consegui montar a aula agora.';
   box.innerHTML = kbAvisoHTML('Aula ainda não disponível', esc(msg),
     '<p style="margin:12px 0 0"><button class="btn-secondary" onclick="carregarAulaIA(true)">Tentar de novo</button></p>');
