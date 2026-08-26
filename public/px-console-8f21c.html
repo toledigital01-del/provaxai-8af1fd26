@@ -5081,44 +5081,6 @@ window.kbIaSalvarConfig = async function(avisar){
     return true;
   }catch(e){ toast(e.message || 'Falha ao salvar configuração.'); return false; }
 };
-window.kbIaAbrirPdf = async function(){
-  const pdf = kbPdfDaAula(IA_AULA);
-  if(!pdf) return;
-  try{
-    const r = await PX.sb.storage.from('aulas-pdf').createSignedUrl(pdf, 600);
-    if(r && r.data && r.data.signedUrl) window.open(r.data.signedUrl, '_blank');
-    else toast('Não consegui abrir o PDF agora.');
-  }catch(e){ toast('Não consegui abrir o PDF agora.'); }
-};
-window.kbIaGerarTudo = async function(){
-  if(IA_OCUPADO) return;
-  if(!(await kbIaSalvarConfig(false))) return;
-  const cfg = kbIaLerConfig();
-  const tipos = IA_MODULOS.filter(function(mo){ return cfg.modulos[mo.tipo] !== false; }).map(function(mo){ return mo.tipo; });
-  if(!tipos.length){ toast('Marque ao menos um módulo para gerar.'); return; }
-  IA_OCUPADO = true;
-  const btn = document.getElementById('ia-btn-gerar');
-  if(btn){ btn.disabled = true; btn.textContent = 'Gerando…'; }
-  const prog = document.getElementById('ia-progresso');
-  if(prog){ prog.style.display = 'block'; prog.innerHTML = tipos.map(function(t){
-    const mo = kbIaMeta(t);
-    return '<div id="ia-prog-'+t+'" style="font-size:0.83rem;padding:4px 0">○ '+mo.icon+' '+mo.rotulo+'</div>';
-  }).join(''); }
-  for(const t of tipos){
-    const linha = document.getElementById('ia-prog-'+t);
-    if(linha) linha.innerHTML = '⏳ ' + linha.textContent.slice(2) + ' — gerando…';
-    try{
-      const tem = !!kbIaMod(t).atual;
-      const r = await kbIaApi({ acao: tem ? 'regenerar' : 'gerar', tipo: t, modo: tem ? 'original' : undefined, config: { instrucoes: cfg.instrucoes || undefined, questoes: cfg.questoes } });
-      if(linha) linha.innerHTML = '✓ ' + linha.textContent.slice(2).split(' — ')[0] + (r.cache ? ' — já estava pronto' : ' — v' + (r.versao||'?') + ' gerada');
-    }catch(e){
-      if(linha) linha.innerHTML = '✕ ' + linha.textContent.slice(2).split(' — ')[0] + ' — ' + esc(e.message || 'falhou');
-    }
-  }
-  IA_OCUPADO = false;
-  await kbIaRecarregar();
-  toast('Geração concluída. Revise em "Conteúdos gerados" e publique na aba "Publicação".');
-};
 
 /* ---------- fluxo único: gerar pendentes / acrescentar novo material ----------
    modo 'gerar': cria apenas o que ainda não tem versão publicada (rascunhos e
