@@ -112,7 +112,8 @@ export async function aiKeys() {
 /** Cabeçalhos com a chave de serviço (uso exclusivo do servidor). */
 export function serviceHeaders(extra: Record<string, string> = {}) {
   const key = process.env['SUPABASE_SERVICE_ROLE_KEY'] || ''
-  return { apikey: key, Authorization: `Bearer ${key}`, ...extra }
+  const authorization = key && !key.startsWith('sb_') ? { Authorization: `Bearer ${key}` } : {}
+  return { apikey: key, ...authorization, ...extra }
 }
 
 /** true quando o usuário tem compra vitalícia do curso ou assinatura ativa (ou é admin). */
