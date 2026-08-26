@@ -200,7 +200,11 @@
     var t0 = (window.performance && performance.now()) || Date.now();
     try {
       var tk = null;
-      try { tk = await PX.token(); } catch (e) { tk = null; }
+      /* A aula oficial é conteúdo público já publicado. Não espere a sessão
+         hidratar para buscá-la: em navegação anônima isso custava até 10 s. */
+      if (rota !== 'aula-ia') {
+        try { tk = await PX.token(); } catch (e) { tk = null; }
+      }
       var cab = { 'Content-Type': 'application/json' };
       if (tk) cab.Authorization = 'Bearer ' + tk;
       var r = await fetch('/api/public/' + rota, {
@@ -257,10 +261,19 @@
      forcar = true refaz a chamada e substitui o que estava guardado. */
   PX.iaPostCache = async function (rota, dados, forcar) {
     var k = chaveIA(rota, dados);
-    /* A publicação de uma aula substitui o HTML imediatamente. Não reutilize
-       uma versão antiga guardada no navegador; o endpoint já responde pelo
-       caminho rápido e devolve sempre a publicação mais recente. */
+    /* A aula já publicada abre primeiro pela cópia persistente do navegador.
+       Uma atualização silenciosa busca a última versão sem bloquear a leitura. */
     if (rota === 'aula-ia') {
+      if (!forcar) {
+        var pronta = iaMem[k] || lerLocal(k);
+        if (pronta && pronta.aula) {
+          iaMem[k] = pronta;
+          PX.iaPost(rota, dados).then(function (atual) {
+            if (atual && !atual.erro) { iaMem[k] = atual; gravarLocal(k, atual); }
+          });
+          return pronta;
+        }
+      }
       var atual = await PX.iaPost(rota, dados);
       if (atual && !atual.erro) { iaMem[k] = atual; gravarLocal(k, atual); }
       return atual;

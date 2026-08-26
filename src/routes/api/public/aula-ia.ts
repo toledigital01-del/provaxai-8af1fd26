@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { currentUser, serviceHeaders, SUPABASE_URL } from '@/lib/px-server'
 import { AIError } from '@/lib/ai-gateway'
 import { agentChat } from '@/lib/ai-router'
-import { cacheChave, cacheGravar, cacheLimpar, jsonPublicado } from '@/lib/px-cache'
+import { cacheChave, cacheGravar, cacheLer, cacheLimpar, jsonPublicado } from '@/lib/px-cache'
 
 
 /* Aula explicada pela Athena, gerada a partir do material carregado.
@@ -100,9 +100,10 @@ export const Route = createFileRoute('/api/public/aula-ia')({
         // Caminho rápido do aluno: memória do servidor e, se faltar, uma única
         // leitura do conteúdo já publicado — sempre cacheável na borda.
         if (!body.regerar) {
-          // Consulte a versão publicada atual antes de usar qualquer cópia local.
-          // Uma aula HTML pode ser substituída no admin e precisa aparecer para
-          // o aluno imediatamente, inclusive quando outro servidor atende a chamada.
+          const emMemoria = cacheLer<Record<string, unknown>>(chave)
+          if (emMemoria) return jsonPublicado(emMemoria, t0, true)
+
+          // Primeira abertura após publicar: lê a cópia persistida no banco.
           const pronto = await fetch(filtroOficial, { headers: serviceHeaders() })
             .then((r) => (r.ok ? r.json() : []))
             .catch(() => [])
