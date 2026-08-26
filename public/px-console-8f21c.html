@@ -1819,8 +1819,37 @@ function kbPaint(){
     kbListHTML(kbTopicItems(), 'kb-topic-list');
   kbEditor();
   if(typeof kbAutoGrow === 'function') kbAutoGrow(document.getElementById('kb-txt'));
+  kbPaintCobResumo();
   kbPaintVisao();
+  kbIaBadges();
   kbPaintFila();
+}
+
+/* Barra de cobertura fixa no topo da aba: resumo geral do edital. */
+function kbPaintCobResumo(){
+  const box = document.getElementById('kb-cob-resumo');
+  if(!box) return;
+  const discs = kbDiscList();
+  let topTot = 0, topPub = 0;
+  discs.forEach(function(d){
+    const tops = kbTopicList(d);
+    topTot += tops.length;
+    tops.forEach(function(t){
+      const doc = kbFind(d, t);
+      if(doc && kbStatusDoc(doc) === 'publicado' && (doc.conteudo||'').trim()) topPub++;
+    });
+  });
+  const docs = KB_DOCS.filter(function(x){ return (x.conteudo||'').trim(); }).length;
+  const pct = topTot ? Math.round(topPub / topTot * 100) : 0;
+  const cor = pct >= 80 ? '#10B981' : pct > 0 ? '#F59E0B' : '#CBD5E1';
+  box.innerHTML = '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+    '<b style="font-size:0.82rem">📊 Cobertura do edital</b>' +
+    '<span style="flex:1;min-width:120px;height:8px;border-radius:99px;background:#EEF1F6;overflow:hidden">' +
+      '<span style="display:block;height:100%;width:' + pct + '%;background:' + cor + ';border-radius:99px"></span></span>' +
+    '<span style="font-size:0.76rem;font-weight:700;color:#475569">' + pct + '%</span>' +
+    '<span class="muted" style="font-size:0.74rem">' + discs.length + ' matérias · ' + topPub + '/' + topTot +
+      ' tópicos publicados · ' + docs + ' conteúdos salvos</span>' +
+  '</div>';
 }
 
 window.kbPane = p => {
