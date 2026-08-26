@@ -817,15 +817,16 @@ function renderAulaHTML(box, html){
   const temaEscuro = '<style id="px-tema-escuro">:root{color-scheme:dark}html,body{background:#0B1120!important;color:#E5E7EB!important}' +
     'body,main,article,section{color:#E5E7EB!important}' +
     'p,li,dd,dt,td{color:#E5E7EB!important}' +
-    'p span,p font,li span,li font,td span,td font{color:inherit!important}' +
+    'p span,p font,p u,li span,li font,li u,td span,td font{color:inherit!important}' +
     'h1,h2,h3,h4,h5,h6,strong,b{color:#F8FAFC!important}' +
     'section,article,main,aside,div,header,footer,table,td,th,blockquote,li{border-color:#334155!important}' +
     '*{background-color:transparent!important}' +
     'table,thead,tbody,tr{background:transparent!important}' +
     'a{color:#93C5FD!important}mark{background:#854D0E!important;color:#FEF3C7!important}' +
-    'code,pre{background:#111827!important;color:#F1F5F9!important}' +
+    'code,pre,pre *{background:#111827!important;color:#F1F5F9!important}' +
     'blockquote,blockquote p{border-left-color:#475569!important;color:#CBD5E1!important}' +
     'th{color:#CBD5E1!important}' +
+    '[class*="callout"]>header,[class*="callout"]>header *,[class*="callout"]>[class*="title"],[class*="callout"]>[class*="title"] *{color:#F5C22C!important}' +
     'img{filter:brightness(.9)}</style>';
   const extraCss = ajusteLeitura + (escuro ? temaEscuro : '');
   documento = /<\/head>/i.test(documento) ? documento.replace(/<\/head>/i, extraCss + '</head>') : extraCss + documento;
