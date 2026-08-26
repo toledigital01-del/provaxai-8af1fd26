@@ -100,9 +100,9 @@ export const Route = createFileRoute('/api/public/aula-ia')({
         // Caminho rápido do aluno: memória do servidor e, se faltar, uma única
         // leitura do conteúdo já publicado — sempre cacheável na borda.
         if (!body.regerar) {
-          const daMemoria = cacheLer<Record<string, unknown>>(chave)
-          if (daMemoria) return jsonPublicado(daMemoria, t0, true)
-
+          // Consulte a versão publicada atual antes de usar qualquer cópia local.
+          // Uma aula HTML pode ser substituída no admin e precisa aparecer para
+          // o aluno imediatamente, inclusive quando outro servidor atende a chamada.
           const pronto = await fetch(filtroOficial, { headers: serviceHeaders() })
             .then((r) => (r.ok ? r.json() : []))
             .catch(() => [])

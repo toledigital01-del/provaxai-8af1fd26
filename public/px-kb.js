@@ -257,6 +257,14 @@
      forcar = true refaz a chamada e substitui o que estava guardado. */
   PX.iaPostCache = async function (rota, dados, forcar) {
     var k = chaveIA(rota, dados);
+    /* A publicação de uma aula substitui o HTML imediatamente. Não reutilize
+       uma versão antiga guardada no navegador; o endpoint já responde pelo
+       caminho rápido e devolve sempre a publicação mais recente. */
+    if (rota === 'aula-ia') {
+      var atual = await PX.iaPost(rota, dados);
+      if (atual && !atual.erro) { iaMem[k] = atual; gravarLocal(k, atual); }
+      return atual;
+    }
     if (!forcar) {
       if (iaMem[k]) return iaMem[k];
       var salvo = lerLocal(k);
