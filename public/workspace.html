@@ -822,10 +822,24 @@ function renderMapa(p) {
 
   const { mapa, oficial } = mapaState.dados;
   const cores = ['#154C9B', '#0B7A5B', '#B45309', '#7C3AED', '#B91C1C', '#0369A1'];
+  /* Árvore real: mantém os níveis de indentação do markdown (sem comprimir) */
+  const mmArvore = (folhas) => {
+    let html = '', pilha = [];
+    folhas.forEach(f => {
+      const n = Math.min(f.nivel, 3);
+      while (pilha.length > n) { html += '</li></ul>'; pilha.pop(); }
+      if (pilha.length === n) { if (html.endsWith('>') && pilha.length) html += '</li>'; }
+      while (pilha.length < n) { html += '<ul>'; pilha.push(1); }
+      html += `<li class="lv${n + 1}"><span class="mm-leaf">${mapaInline(f.txt)}</span>`;
+    });
+    while (pilha.length) { html += '</li></ul>'; pilha.pop(); }
+    return html ? `<ul class="mm-tree">${html}</li></ul>` : '';
+  };
   const ramos = mapa.ramos.map((b, i) => `<div class="mm-branch" style="--mmc:${cores[i % cores.length]}">
       <div class="mm-node">${mapaInline(b.t)}</div>
-      ${b.folhas.length ? `<ul class="mm-leaves">${b.folhas.map(f => `<li class="n${f.nivel}">${mapaInline(f.txt)}</li>`).join('')}</ul>` : ''}
+      ${b.folhas.length ? mmArvore(b.folhas) : ''}
     </div>`).join('');
+
   p.innerHTML = `<div class="pane">
     ${head}
     <div class="mm-root">${mapaInline(mapa.tema)}</div>
