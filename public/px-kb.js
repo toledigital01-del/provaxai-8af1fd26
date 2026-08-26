@@ -241,12 +241,21 @@
     var esc = function (s) {
       return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; });
     };
+    function attr(s) {
+      return String(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
     function inline(t) {
-      return t.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+      /* Glossário {{termo::definição}} vem ANTES de negrito/itálico para não colidir com ** e * */
+      return t.replace(/\{\{([^{}:]+)::([^{}]+)\}\}/g, function (_m, termo, def) {
+        return '<button type="button" class="termo-glossario" data-def="' + attr(String(def).trim()) + '">' +
+          String(termo).trim() + '</button>';
+      })
+        .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
         .replace(/==(.+?)==/g, '<mark>$1</mark>')
         .replace(/`([^`]+)`/g, '<code>$1</code>')
         .replace(/(^|\W)\*(\S.*?\S|\S)\*/g, '$1<i>$2</i>');
     }
+
     var linhas = esc(md || '').split(/\r?\n/);
     var out = [];
     var ul = false, ol = false;
