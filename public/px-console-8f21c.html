@@ -2976,15 +2976,15 @@ window.kbAulaCadastrar = async function(){
       kbPaint(); kbPane('aulas');
       kbAulaFilaPaint();
       if(publicar && KB_AULAS_CRIADAS.length){
-        prepPainel();
-        prepLog('Preparando o conteúdo de IA de ' + KB_AULAS_CRIADAS.length + ' aula(s) publicada(s)…', '#FDE68A');
+        toast('Preparando o conteúdo de IA de ' + KB_AULAS_CRIADAS.length + ' aula(s) publicada(s)…');
         (async function(){
           const lista = KB_AULAS_CRIADAS.slice();
+          let prontas = 0;
           for(let i=0;i<lista.length;i++){
-            prepLog('— ' + (i+1) + '/' + lista.length, '#64748B');
-            await kbPrepararAula(lista[i].disc, lista[i].topico);
+            if(await kbPrepararAula(lista[i].disc, lista[i].topico)) prontas++;
           }
-          prepLog('<b>Tudo pronto — o aluno já encontra aula, resumo, questões, flashcards e podcast salvos.</b>', '#FDE68A');
+          toast('Conteúdo de IA pronto em ' + prontas + '/' + lista.length + ' aula(s) — o aluno já encontra tudo salvo.');
+          kbIaBadges();
         })();
       }
       return kbAulaMsg(feitas + ' aula(s) cadastrada(s)' + (publicar ? ' e publicada(s).' : ' como rascunho.') +
