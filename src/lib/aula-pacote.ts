@@ -155,6 +155,31 @@ async function postRest(tabela: string, linhas: unknown | unknown[]) {
   return r.ok
 }
 
+async function atualizarOuInserirRest(tabela: string, filtro: string, linha: Record<string, unknown>) {
+  const patch = await fetch(`${SUPABASE_URL}/rest/v1/${tabela}?${filtro}`, {
+    method: 'PATCH',
+    headers: serviceHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
+    body: JSON.stringify({ ...linha, updated_at: new Date().toISOString() }),
+  })
+  if (!patch.ok) {
+    console.error(`[publicarVersao] PATCH em ${tabela} falhou:`, patch.status, await patch.text().catch(() => ''))
+    return false
+  }
+  const atualizadas = (await patch.json().catch(() => [])) as unknown[]
+  if (atualizadas.length > 0) return true
+
+  const post = await fetch(`${SUPABASE_URL}/rest/v1/${tabela}`, {
+    method: 'POST',
+    headers: serviceHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+    body: JSON.stringify(linha),
+  })
+  if (!post.ok) {
+    console.error(`[publicarVersao] POST em ${tabela} falhou:`, post.status, await post.text().catch(() => ''))
+    return false
+  }
+  return true
+}
+
 /** Marca a versão como publicada no histórico (só chamada após a cópia dar certo). */
 async function marcarPublicada(v: Versao & { course_slug: string; disciplina: string; topico: string }) {
   const { course_slug: curso, disciplina, topico, tipo } = v
@@ -184,8 +209,7 @@ export async function publicarVersao(v: Versao & { course_slug: string; discipli
 
   if (tipo === 'aula') {
     const filtro = `course_slug=${eq(curso)}&disciplina=${eq(disciplina)}&topico=${eq(topico)}&user_id=is.null`
-    const antes = new Date().toISOString()
-    const ok = await postRest('aulas_ia', {
+    const ok = await atualizarOuInserirRest('aulas_ia', filtro, {
       course_slug: curso,
       disciplina,
       topico,
@@ -195,7 +219,6 @@ export async function publicarVersao(v: Versao & { course_slug: string; discipli
       modelo: (v.meta?.['modelo'] as string) || null,
     })
     if (!ok) return false
-    await delRest(`aulas_ia?${filtro}&created_at=lt.${encodeURIComponent(antes)}`)
     return finalizar(true)
   }
   if (tipo === 'summary')

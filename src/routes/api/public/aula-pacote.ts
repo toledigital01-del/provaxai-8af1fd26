@@ -258,8 +258,11 @@ export const Route = createFileRoute('/api/public/aula-pacote')({
           const ok = await publicarVersao({ ...alvo, course_slug: curso, disciplina, topico })
           if (!ok)
             return Response.json(
-              { error: 'Não consegui gravar este conteúdo na área do aluno — tente publicar de novo.' },
-              { status: 500 },
+              {
+                error: `Falha ao publicar ${MODULOS.find((m) => m.tipo === body.tipo)?.rotulo || 'o conteúdo'} na área do aluno. O rascunho foi preservado; tente novamente.`,
+                codigo: 'PUBLICACAO_PERSISTENCIA_FALHOU',
+              },
+              { status: 502 },
             )
           return Response.json({ ok: true, versao: alvo.versao })
         }

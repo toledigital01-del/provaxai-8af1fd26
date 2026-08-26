@@ -32,7 +32,8 @@ export async function lerRecurso<T = unknown>(
 }
 
 /** Guarda (ou substitui) um recurso preparado da aula.
-    Devolve true só quando o POST responde ok; registra erros no console. */
+    Atualiza a linha existente para respeitar a chave única e só cria uma nova
+    quando o recurso ainda não existe. */
 export async function salvarRecurso(
   curso: string,
   disciplina: string,
@@ -43,12 +44,18 @@ export async function salvarRecurso(
 ): Promise<boolean> {
   const alvo = filtro(curso, disciplina, topico, tipo)
   try {
-    const del = await fetch(`${SUPABASE_URL}/rest/v1/aula_recursos?${alvo}`, {
-      method: 'DELETE',
-      headers: serviceHeaders({ Prefer: 'return=minimal' }),
+    const patch = await fetch(`${SUPABASE_URL}/rest/v1/aula_recursos?${alvo}`, {
+      method: 'PATCH',
+      headers: serviceHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
+      body: JSON.stringify({ dados, modelo: modelo || null, updated_at: new Date().toISOString() }),
     })
-    if (!del.ok)
-      console.error(`[salvarRecurso] DELETE falhou (${tipo}):`, del.status, await del.text().catch(() => ''))
+    if (!patch.ok) {
+      console.error(`[salvarRecurso] PATCH falhou (${tipo}):`, patch.status, await patch.text().catch(() => ''))
+      return false
+    }
+    const atualizadas = (await patch.json().catch(() => [])) as unknown[]
+    if (atualizadas.length > 0) return true
+
     const post = await fetch(`${SUPABASE_URL}/rest/v1/aula_recursos`, {
       method: 'POST',
       headers: serviceHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
