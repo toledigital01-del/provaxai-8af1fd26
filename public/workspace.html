@@ -686,8 +686,10 @@ async function carregarConteudoKB() {
       return;
     }
 
-    box.innerHTML = cabecalho + PX.kbHTML(doc.conteudo);
+    box.innerHTML = cabecalho + PX.kbHTML(doc.conteudo) + '<div id="aula-extras"></div>';
+    anexarExtrasAula();
     return;
+
   }
 
   if (res.status === 401) {
