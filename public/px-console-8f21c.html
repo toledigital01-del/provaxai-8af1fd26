@@ -2924,8 +2924,12 @@ let KB_AULAS_CRIADAS = [];
 /* Cria (ou atualiza) uma aula com o texto recebido. Devolve o número usado. */
 async function kbAulaCriar(disc, texto, origem, publicar, arquivo){
   await kbAulasCarregar(disc);
-  const numero = KB_AULAS.length ? Math.max.apply(null, KB_AULAS.map(a=>a.ordem)) + 1 : 0;
-  const titulo = kbAulaTituloAuto(texto, origem, numero);
+  /* Número e nome iguais ao do PDF original: se o material diz "Aula 03 -
+     Controle", a aula criada é a número 03 com o nome "Controle…". */
+  const original = kbAulaDetectarOriginal(texto, origem);
+  let numero = KB_AULAS.length ? Math.max.apply(null, KB_AULAS.map(a=>a.ordem)) + 1 : 0;
+  if(original && Number.isFinite(original.numero)) numero = original.numero;
+  const titulo = (original && original.titulo) ? original.titulo.slice(0, 90) : kbAulaTituloAuto(texto, origem, numero);
   const discId = await kbDiscId(disc);
   if(!discId) throw new Error('Não encontrei esta matéria no curso.');
 
@@ -2935,6 +2939,14 @@ async function kbAulaCriar(disc, texto, origem, publicar, arquivo){
   if(existente){
     nomeTopico = existente.nome;
   }else{
+    /* Se já existe aula com esse número, abre espaço deslocando as seguintes. */
+    if(KB_AULAS.some(a => a.ordem === numero)){
+      const deslocar = KB_AULAS.filter(a => a.ordem >= numero);
+      for(const a of deslocar){
+        a.ordem += 1;
+        await PX.sb.from('topics').update({ ordem: a.ordem }).eq('id', a.id);
+      }
+    }
     const ins = await PX.sb.from('topics').insert({ discipline_id: discId, nome: titulo, ordem: numero, dificuldade: 'media' }).select('id').maybeSingle();
     if(ins.error) throw new Error('Erro ao criar a aula: ' + ins.error.message);
     topicoId = ins.data ? ins.data.id : null;
