@@ -18,6 +18,7 @@ import { Route as ApiPublicAiKeysRouteImport } from './routes/api/public/ai-keys
 import { Route as ApiPublicAiStatusRouteImport } from './routes/api/public/ai-status'
 import { Route as ApiPublicAiTestRouteImport } from './routes/api/public/ai-test'
 import { Route as ApiPublicAthenaRouteImport } from './routes/api/public/athena'
+import { Route as ApiPublicAulaHtmlRouteImport } from './routes/api/public/aula-html'
 import { Route as ApiPublicAulaIaRouteImport } from './routes/api/public/aula-ia'
 import { Route as ApiPublicAulaPacoteRouteImport } from './routes/api/public/aula-pacote'
 import { Route as ApiPublicGerarExerciciosRouteImport } from './routes/api/public/gerar-exercicios'
@@ -85,6 +86,11 @@ const ApiPublicAiTestRoute = ApiPublicAiTestRouteImport.update({
 const ApiPublicAthenaRoute = ApiPublicAthenaRouteImport.update({
   id: '/api/public/athena',
   path: '/api/public/athena',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAulaHtmlRoute = ApiPublicAulaHtmlRouteImport.update({
+  id: '/api/public/aula-html',
+  path: '/api/public/aula-html',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicAulaIaRoute = ApiPublicAulaIaRouteImport.update({
@@ -210,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/ai-test': typeof ApiPublicAiTestRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
+  '/api/public/aula-html': typeof ApiPublicAulaHtmlRoute
   '/api/public/aula-ia': typeof ApiPublicAulaIaRoute
   '/api/public/aula-pacote': typeof ApiPublicAulaPacoteRoute
   '/api/public/gerar-exercicios': typeof ApiPublicGerarExerciciosRoute
@@ -243,6 +250,7 @@ export interface FileRoutesByTo {
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/ai-test': typeof ApiPublicAiTestRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
+  '/api/public/aula-html': typeof ApiPublicAulaHtmlRoute
   '/api/public/aula-ia': typeof ApiPublicAulaIaRoute
   '/api/public/aula-pacote': typeof ApiPublicAulaPacoteRoute
   '/api/public/gerar-exercicios': typeof ApiPublicGerarExerciciosRoute
@@ -277,6 +285,7 @@ export interface FileRoutesById {
   '/api/public/ai-status': typeof ApiPublicAiStatusRoute
   '/api/public/ai-test': typeof ApiPublicAiTestRoute
   '/api/public/athena': typeof ApiPublicAthenaRoute
+  '/api/public/aula-html': typeof ApiPublicAulaHtmlRoute
   '/api/public/aula-ia': typeof ApiPublicAulaIaRoute
   '/api/public/aula-pacote': typeof ApiPublicAulaPacoteRoute
   '/api/public/gerar-exercicios': typeof ApiPublicGerarExerciciosRoute
@@ -312,6 +321,7 @@ export interface FileRouteTypes {
     | '/api/public/ai-status'
     | '/api/public/ai-test'
     | '/api/public/athena'
+    | '/api/public/aula-html'
     | '/api/public/aula-ia'
     | '/api/public/aula-pacote'
     | '/api/public/gerar-exercicios'
@@ -345,6 +355,7 @@ export interface FileRouteTypes {
     | '/api/public/ai-status'
     | '/api/public/ai-test'
     | '/api/public/athena'
+    | '/api/public/aula-html'
     | '/api/public/aula-ia'
     | '/api/public/aula-pacote'
     | '/api/public/gerar-exercicios'
@@ -378,6 +389,7 @@ export interface FileRouteTypes {
     | '/api/public/ai-status'
     | '/api/public/ai-test'
     | '/api/public/athena'
+    | '/api/public/aula-html'
     | '/api/public/aula-ia'
     | '/api/public/aula-pacote'
     | '/api/public/gerar-exercicios'
@@ -412,6 +424,7 @@ export interface RootRouteChildren {
   ApiPublicAiStatusRoute: typeof ApiPublicAiStatusRoute
   ApiPublicAiTestRoute: typeof ApiPublicAiTestRoute
   ApiPublicAthenaRoute: typeof ApiPublicAthenaRoute
+  ApiPublicAulaHtmlRoute: typeof ApiPublicAulaHtmlRoute
   ApiPublicAulaIaRoute: typeof ApiPublicAulaIaRoute
   ApiPublicAulaPacoteRoute: typeof ApiPublicAulaPacoteRoute
   ApiPublicGerarExerciciosRoute: typeof ApiPublicGerarExerciciosRoute
@@ -499,6 +512,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/athena'
       fullPath: '/api/public/athena'
       preLoaderRoute: typeof ApiPublicAthenaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/aula-html': {
+      id: '/api/public/aula-html'
+      path: '/api/public/aula-html'
+      fullPath: '/api/public/aula-html'
+      preLoaderRoute: typeof ApiPublicAulaHtmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/aula-ia': {
@@ -668,6 +688,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAiStatusRoute: ApiPublicAiStatusRoute,
   ApiPublicAiTestRoute: ApiPublicAiTestRoute,
   ApiPublicAthenaRoute: ApiPublicAthenaRoute,
+  ApiPublicAulaHtmlRoute: ApiPublicAulaHtmlRoute,
   ApiPublicAulaIaRoute: ApiPublicAulaIaRoute,
   ApiPublicAulaPacoteRoute: ApiPublicAulaPacoteRoute,
   ApiPublicGerarExerciciosRoute: ApiPublicGerarExerciciosRoute,

@@ -2172,16 +2172,77 @@ function kbAulasPaint(){
               : '')) +
         '<span class="kb-tag ' + (pub ? 'is-on' : 'is-wait') + '">' + (pub ? 'publicada' : temTexto ? 'rascunho' : 'sem conteúdo') + '</span>' +
         '<span class="kb-tag kb-ia-badge" data-topico="' + esc(a.nome).replace(/"/g,'&quot;') + '" style="display:none"></span>' +
+        '<span class="kb-tag kb-html-badge" data-topico="' + esc(a.nome).replace(/"/g,'&quot;') + '" style="display:none;background:#FDF2F8;color:#9D174D;border-color:#FBCFE8" title="Esta aula é uma página HTML pronta, colada manualmente — não passa pela geração automática de IA.">HTML pronto</span>' +
         '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaAbrir(\'' + escJs(a.nome) + '\')">Abrir</button>' +
         '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaRenomear(\'' + a.id + '\')">Renomear</button>' +
         '<button class="act" style="font-size:0.75rem;padding:4px 10px;background:#EEF2FF;border-color:#C7D2FE;color:#3730A3" title="Abre o painel de IA desta aula: gerar, editar, versionar e publicar resumo, questões, flashcards, podcast e mais" onclick="kbIaAbrir(\'' + a.id + '\')">🤖 IA da aula</button>' +
+        '<button class="act" style="font-size:0.75rem;padding:4px 10px;background:#FDF2F8;border-color:#FBCFE8;color:#9D174D" title="Cole aqui uma aula já pronta em HTML (página completa, com CSS e interatividade próprios)" onclick="kbAulaHtmlAbrir(\'' + escJs(a.nome) + '\')">Colar aula pronta (HTML)</button>' +
         '<button class="act primary" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaEditar(\'' + a.id + '\')">Editar aula</button>' +
+
         '<button class="act danger" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaExcluir(\'' + a.id + '\')">Excluir</button>' +
       '</div>';
     }).join('') + '</div>';
   kbAulasBindDnD();
   kbIaBadges();
+  kbHtmlBadges();
 }
+
+/* Marca as aulas que são páginas HTML prontas (formato='html' em aulas_ia). */
+window.kbHtmlBadges = async function(){
+  const spans = Array.prototype.slice.call(document.querySelectorAll('.kb-html-badge'));
+  if(!spans.length || !kbDisc) return;
+  let rows = [];
+  try{
+    const { data } = await PX.sb.from('aulas_ia')
+      .select('topico,formato')
+      .eq('course_slug','prf-2021').eq('disciplina', kbDisc).eq('formato','html');
+    rows = data || [];
+  }catch(e){ return; }
+  const html = {};
+  rows.forEach(function(r){ html[r.topico] = true; });
+  spans.forEach(function(s){ s.style.display = html[s.dataset.topico] ? '' : 'none'; });
+};
+
+/* Colar uma aula já pronta em HTML e publicar direto para o aluno. */
+window.kbAulaHtmlAbrir = function(topico){
+  const velho = document.getElementById('kb-html-modal');
+  if(velho) velho.remove();
+  const bg = document.createElement('div');
+  bg.id = 'kb-html-modal';
+  bg.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  bg.innerHTML =
+    '<div style="background:#fff;border-radius:14px;width:min(900px,100%);max-height:92vh;display:flex;flex-direction:column;overflow:hidden">' +
+      '<div style="padding:14px 18px;border-bottom:1px solid #E2E8F0;font-weight:800">Colar aula pronta (HTML) — ' + esc(topico) + '</div>' +
+      '<div style="padding:16px 18px;overflow:auto">' +
+        '<p class="muted" style="margin:0 0 10px;font-size:0.8rem">Cole a página HTML completa da aula (com o CSS e os scripts dela). Ela será exibida isolada para o aluno e não passa pela geração automática de IA.</p>' +
+        '<textarea id="kb-html-txt" spellcheck="false" style="width:100%;min-height:46vh;font-family:ui-monospace,monospace;font-size:0.78rem;padding:10px;border:1px solid #CBD5E1;border-radius:10px" placeholder="&lt;!doctype html&gt; …"></textarea>' +
+        '<p id="kb-html-msg" class="muted" style="font-size:0.8rem;margin:10px 0 0"></p>' +
+      '</div>' +
+      '<div style="padding:12px 18px;border-top:1px solid #E2E8F0;display:flex;gap:10px;justify-content:flex-end">' +
+        '<button class="act" onclick="document.getElementById(\'kb-html-modal\').remove()">Cancelar</button>' +
+        '<button class="act primary" id="kb-html-save">Salvar e publicar</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(bg);
+  document.getElementById('kb-html-save').onclick = async function(){
+    const btn = this;
+    const html = String((document.getElementById('kb-html-txt')||{}).value || '').trim();
+    const msg = document.getElementById('kb-html-msg');
+    if(html.length < 200){ msg.textContent = 'Cole o HTML completo da aula (mínimo 200 caracteres).'; return; }
+    if(html.length > 2000000){ msg.textContent = 'O HTML está muito grande (máximo 2 MB).'; return; }
+    btn.disabled = true; msg.textContent = 'Salvando…';
+    try{
+      await kbPost('/api/public/aula-html', { curso:'prf-2021', disciplina: kbDisc, topico: topico, html: html });
+      msg.textContent = '✅ Aula em HTML publicada.';
+      setTimeout(function(){ const m = document.getElementById('kb-html-modal'); if(m) m.remove(); kbAulasPaint(); }, 700);
+    }catch(e){
+      msg.textContent = 'Erro: ' + (e.message || 'não consegui salvar.');
+      btn.disabled = false;
+    }
+  };
+};
+
+
 
 
 /* Excluir todas as aulas da matéria (aulas + conteúdo + PDFs anexados). */

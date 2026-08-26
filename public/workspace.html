@@ -718,6 +718,7 @@ async function carregarAulaIA(regerar) {
     if (regerar && r && r.aula) PX.iaPostCache('aula-ia', req, true);
   } catch (e) { r = { erro: 'Falha de conexão.' }; }
   if (!document.getElementById('kb-conteudo')) return;
+  if (r && r.aula && r.formato === 'html') { renderAulaHTML(box, r.aula); return; }
   if (r && r.aula) {
     box.innerHTML = PX.kbHTML(r.aula) +
       '<div id="aula-extras"></div>' +
@@ -727,6 +728,48 @@ async function carregarAulaIA(regerar) {
     anexarExtrasAula();
     return;
   }
+
+/* Aula escrita como página HTML pronta: renderizada isolada num iframe para o
+   CSS dela não vazar para o resto do app. A altura acompanha o documento. */
+function renderAulaHTML(box, html){
+  box.innerHTML = '';
+  const fr = document.createElement('iframe');
+  fr.setAttribute('sandbox', 'allow-scripts');
+  fr.setAttribute('title', 'Aula');
+  fr.style.cssText = 'width:100%;border:0;display:block;min-height:420px;background:#fff';
+  /* Com sandbox="allow-scripts" o documento fica em origem opaca, então além de
+     tentar ler a altura direto, embutimos um script que avisa o tamanho real. */
+  const medidor = '<script>(function(){function h(){try{var a=document.body,b=document.documentElement;' +
+    'parent.postMessage({pxAulaAltura:Math.max(a?a.scrollHeight:0,b?b.scrollHeight:0)},"*");}catch(e){}}' +
+    'window.addEventListener("load",h);document.addEventListener("DOMContentLoaded",h);' +
+    'setInterval(h,800);if(window.ResizeObserver&&document.body)new ResizeObserver(h).observe(document.body);h();})();<\/script>';
+  fr.srcdoc = /<\/body>/i.test(html) ? html.replace(/<\/body>/i, medidor + '</body>') : html + medidor;
+  const viaMensagem = function(ev){
+    if (ev.source !== fr.contentWindow) return;
+    const h = ev.data && ev.data.pxAulaAltura;
+    if (typeof h === 'number' && h > 0) fr.style.height = (h + 24) + 'px';
+  };
+  window.addEventListener('message', viaMensagem);
+  const ajustar = function(){
+    try {
+      const d = fr.contentWindow && fr.contentWindow.document;
+      if (!d || !d.body) return;
+      const h = Math.max(d.body.scrollHeight, d.documentElement ? d.documentElement.scrollHeight : 0);
+      if (h > 0) fr.style.height = (h + 24) + 'px';
+    } catch (e) {}
+  };
+  fr.addEventListener('load', function(){
+    ajustar();
+    [150, 500, 1200, 2500].forEach(function(t){ setTimeout(ajustar, t); });
+    try {
+      const d = fr.contentWindow.document;
+      if (window.ResizeObserver && d.body) new ResizeObserver(ajustar).observe(d.body);
+    } catch (e) {}
+  });
+  box.appendChild(fr);
+  window.addEventListener('resize', ajustar);
+}
+
 
 /* Pontos-chave e pegadinhas publicados pelo professor, embutidos no fim da aula.
    Reaproveita o mesmo endpoint/cache do resumo usado na aba Revisão. */
