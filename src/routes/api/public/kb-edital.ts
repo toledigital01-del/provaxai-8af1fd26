@@ -63,6 +63,11 @@ export const Route = createFileRoute('/api/public/kb-edital')({
           '- Não crie disciplinas que não estejam no conteúdo programático (ignore cronograma, inscrição, remuneração, anexos administrativos).',
           '- Mantenha a ordem original do edital.',
           '- area: use "basica" para língua portuguesa, raciocínio lógico, informática e afins; "especifica" para as demais.',
+          ...(salvo.promptExtra ? [
+            '',
+            'Orientação adicional do administrador (siga com prioridade, mas sem deixar de responder no formato JSON pedido acima):',
+            salvo.promptExtra,
+          ] : []),
           'Responda SOMENTE com JSON válido:',
           '{"disciplinas":[{"nome":"<disciplina>","area":"basica|especifica","topicos":[{"nome":"<tópico>","subtopicos":["<subtópico>"]}]}]}',
         ].join('\n')

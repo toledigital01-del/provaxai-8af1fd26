@@ -79,6 +79,11 @@ export const Route = createFileRoute('/api/public/kb-autocourse')({
                 `## Treino rápido — 3 a 5 assertivas no estilo ${banca}, cada uma com gabarito comentado`,
               ]
             : []),
+          ...(salvo.promptExtra ? [
+            '',
+            'Orientação adicional do administrador (siga com prioridade, mas sem deixar de responder no formato JSON pedido acima):',
+            salvo.promptExtra,
+          ] : []),
           'Responda SOMENTE com JSON válido no formato:',
           '{"aulas":[{"topico":"<tópico exato>","titulo":"<título da aula>","incidencia":"alta|media|baixa","conteudo":"<markdown>"}]}',
         ].join('\n')
