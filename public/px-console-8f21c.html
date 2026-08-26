@@ -4508,7 +4508,11 @@ function kbIaPaintConfig(body, doc, pdf){
         }).join('')
     +   '</div>'
     + '</div>'
-x
+     + '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px">'
+     +   '<button class="act" style="font-size:0.8rem" onclick="kbIaSalvarConfig(false)">Salvar configuração</button>'
+     +   '<span class="muted" style="font-size:0.75rem">A geração acontece nos botões do topo da tela. O que já tiver versão é gerado como nova versão — o histórico nunca é apagado.</span>'
+     + '</div>'
+     + '</div>';
 }
 function kbIaLerConfig(){
   const modulos = {};
