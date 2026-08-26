@@ -5017,14 +5017,15 @@ function kbIaPaintConfig(body, doc, pdf){
     + '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px">'
     +   '<div style="font-weight:800;margin-bottom:8px">Material-fonte da aula</div>'
     +   '<div class="muted" style="font-size:0.84rem">' + (pdf
-          ? '📄 <b>' + esc(pdf.split('/').pop()) + '</b> — a aula é exibida ao aluno como PDF.'
-          : (doc ? '📝 Aula em texto (' + ((doc.conteudo||'').length/1000).toFixed(1) + ' mil caracteres) — o material completo da matéria também entra na geração.' : '⚠ Esta aula ainda não tem conteúdo próprio; a IA usará o material da matéria.'))
+          ? '📄 <b>' + esc(pdf.split('/').pop()) + '</b> — tudo é gerado a partir deste arquivo da aula.'
+          : (doc ? '📝 Aula carregada (' + ((doc.conteudo||'').length/1000).toFixed(1) + ' mil caracteres) — tudo é gerado a partir dela.' : '⚠ Esta aula ainda não tem conteúdo carregado; carregue o material da aula antes de gerar.'))
     +   '</div>'
     +   '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'
-    +     (pdf ? '<button class="act" style="font-size:0.75rem" onclick="kbIaAbrirPdf()">Abrir PDF</button>' : '')
-    +     '<button class="act" style="font-size:0.75rem" onclick="KB_IA_MODO=\'gerar\';kbAulaEditar(\''+IA_AULA.id+'\')">Substituir material / editar aula</button>'
+    +     '<button class="act" style="font-size:0.75rem" onclick="KB_IA_MODO=\'gerar\';kbAulaEditar(\''+IA_AULA.id+'\')">Editar material da aula</button>'
+    +     '<button class="act" style="font-size:0.75rem" onclick="kbIaMaisMaterial()">📎 Acrescentar material</button>'
     +   '</div>'
     + '</div>'
+
     + '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px">'
     +   '<div style="font-weight:800;margin-bottom:6px">Instruções adicionais para a IA <span class="muted" style="font-weight:400">(opcional)</span></div>'
     +   '<textarea id="ia-cfg-inst" rows="3" style="width:100%;font-size:0.86rem" placeholder="Ex.: priorize jurisprudência recente; foque em prazos e exceções; use linguagem direta.">' + esc(cfg.instrucoes||'') + '</textarea>'
