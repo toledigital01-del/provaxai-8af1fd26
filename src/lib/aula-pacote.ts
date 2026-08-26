@@ -292,9 +292,13 @@ export async function publicarVersao(v: Versao & { course_slug: string; discipli
     if (!Array.isArray(itens) || !itens.length) return false
     const filtro = `course_slug=${eq(curso)}&discipline_nome=${eq(disciplina)}&topic_nome=${eq(topico)}`
     const antes = new Date().toISOString()
-    const ok = await postRest(
+    /* Questões marcadas ja_publicada (reais vindas de apostila) já estão no
+       banco do aluno — não reinserir. E o ciclo delete+insert NUNCA toca em
+       origem='real' (delRest filtra origem=neq.real). */
+    const novas = itens.filter((q) => !q['ja_publicada'])
+    const ok = !novas.length || await postRest(
       'questions',
-      itens
+      novas
         .filter((q) => String(q['enunciado'] || '').trim().length > 10)
         .map((q) => {
           const txt = (k: string) => {
@@ -324,7 +328,7 @@ export async function publicarVersao(v: Versao & { course_slug: string; discipli
         }),
     )
     if (!ok) return false
-    await delRest(`questions?${filtro}&created_at=lt.${encodeURIComponent(antes)}`)
+    await delRest(`questions?${filtro}&origem=neq.real&created_at=lt.${encodeURIComponent(antes)}`)
     return finalizar(true)
   }
   if (tipo === 'flashcards') {
