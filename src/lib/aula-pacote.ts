@@ -155,8 +155,8 @@ async function postRest(tabela: string, linhas: unknown | unknown[]) {
   return r.ok
 }
 
-/** Publica a versão: marca como publicada e copia para onde o aluno lê. */
-export async function publicarVersao(v: Versao & { course_slug: string; disciplina: string; topico: string }) {
+/** Marca a versão como publicada no histórico (só chamada após a cópia dar certo). */
+async function marcarPublicada(v: Versao & { course_slug: string; disciplina: string; topico: string }) {
   const { course_slug: curso, disciplina, topico, tipo } = v
   // só uma versão publicada por módulo
   await fetch(`${SUPABASE_URL}/rest/v1/aula_conteudos?${filtroAula(curso, disciplina, topico, tipo)}`, {
@@ -169,11 +169,23 @@ export async function publicarVersao(v: Versao & { course_slug: string; discipli
     headers: serviceHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
     body: JSON.stringify({ publicado: true }),
   }).catch(() => null)
+}
+
+/** Publica a versão: copia para onde o aluno lê e, só se a cópia der certo,
+    marca como publicada. Insere o novo conteúdo ANTES de apagar o antigo,
+    para nunca ficar sem versão no ar se o POST falhar. */
+export async function publicarVersao(v: Versao & { course_slug: string; disciplina: string; topico: string }) {
+  const { course_slug: curso, disciplina, topico, tipo } = v
+
+  const finalizar = async (ok: boolean) => {
+    if (ok) await marcarPublicada(v)
+    return ok
+  }
 
   if (tipo === 'aula') {
     const filtro = `course_slug=${eq(curso)}&disciplina=${eq(disciplina)}&topico=${eq(topico)}&user_id=is.null`
-    await delRest(`aulas_ia?${filtro}`)
-    await postRest('aulas_ia', {
+    const antes = new Date().toISOString()
+    const ok = await postRest('aulas_ia', {
       course_slug: curso,
       disciplina,
       topico,
@@ -182,36 +194,38 @@ export async function publicarVersao(v: Versao & { course_slug: string; discipli
       conteudo: v.conteudo,
       modelo: (v.meta?.['modelo'] as string) || null,
     })
-    return true
+    if (!ok) return false
+    await delRest(`aulas_ia?${filtro}&created_at=lt.${encodeURIComponent(antes)}`)
+    return finalizar(true)
   }
   if (tipo === 'summary')
-    return (await salvarRecurso(curso, disciplina, topico, 'resumo', { resumo: v.conteudo, fontes: 0 }, (v.meta?.['modelo'] as string) || null), true)
+    return finalizar(await salvarRecurso(curso, disciplina, topico, 'resumo', { resumo: v.conteudo, fontes: 0 }, (v.meta?.['modelo'] as string) || null))
   if (tipo === 'review')
-    return (await salvarRecurso(curso, disciplina, topico, 'revisao', { conteudo: v.conteudo }, (v.meta?.['modelo'] as string) || null), true)
+    return finalizar(await salvarRecurso(curso, disciplina, topico, 'revisao', { conteudo: v.conteudo }, (v.meta?.['modelo'] as string) || null))
   if (tipo === 'key_points')
-    return (await salvarRecurso(curso, disciplina, topico, 'pontos', { conteudo: v.conteudo }, (v.meta?.['modelo'] as string) || null), true)
+    return finalizar(await salvarRecurso(curso, disciplina, topico, 'pontos', { conteudo: v.conteudo }, (v.meta?.['modelo'] as string) || null))
   if (tipo === 'traps')
-    return (await salvarRecurso(curso, disciplina, topico, 'pegadinhas', { conteudo: v.conteudo }, (v.meta?.['modelo'] as string) || null), true)
+    return finalizar(await salvarRecurso(curso, disciplina, topico, 'pegadinhas', { conteudo: v.conteudo }, (v.meta?.['modelo'] as string) || null))
   if (tipo === 'mapa_mental')
-    return (await salvarRecurso(curso, disciplina, topico, 'mapa_mental', { conteudo: v.conteudo }, (v.meta?.['modelo'] as string) || null), true)
+    return finalizar(await salvarRecurso(curso, disciplina, topico, 'mapa_mental', { conteudo: v.conteudo }, (v.meta?.['modelo'] as string) || null))
   if (tipo === 'metadados') {
     const itens = parseJson<unknown[]>(v.conteudo)
     if (!Array.isArray(itens) || !itens.length) return false
-    return (await salvarRecurso(curso, disciplina, topico, 'metadados', { dados: itens[0] }, (v.meta?.['modelo'] as string) || null), true)
+    return finalizar(await salvarRecurso(curso, disciplina, topico, 'metadados', { dados: itens[0] }, (v.meta?.['modelo'] as string) || null))
   }
   if (tipo === 'athena_knowledge')
-    return (await salvarRecurso(curso, disciplina, topico, 'athena', { conteudo: v.conteudo }, (v.meta?.['modelo'] as string) || null), true)
+    return finalizar(await salvarRecurso(curso, disciplina, topico, 'athena', { conteudo: v.conteudo }, (v.meta?.['modelo'] as string) || null))
   if (tipo === 'lacunas') {
     const frases = parseJson<unknown[]>(v.conteudo)
     if (!Array.isArray(frases)) return false
-    return (await salvarRecurso(curso, disciplina, topico, 'lacunas', { frases }, (v.meta?.['modelo'] as string) || null), true)
+    return finalizar(await salvarRecurso(curso, disciplina, topico, 'lacunas', { frases }, (v.meta?.['modelo'] as string) || null))
   }
   if (tipo === 'podcast') {
     const roteiro = parseJson<unknown[]>(v.conteudo)
     if (!Array.isArray(roteiro) || !roteiro.length) return false
     const filtro = `course_slug=${eq(curso)}&disciplina=${eq(disciplina)}&topico=${eq(topico)}&user_id=is.null`
-    await delRest(`podcasts_ia?${filtro}`)
-    return postRest('podcasts_ia', {
+    const antes = new Date().toISOString()
+    const ok = await postRest('podcasts_ia', {
       course_slug: curso,
       disciplina,
       topico,
@@ -219,13 +233,16 @@ export async function publicarVersao(v: Versao & { course_slug: string; discipli
       roteiro,
       modelo: (v.meta?.['modelo'] as string) || null,
     })
+    if (!ok) return false
+    await delRest(`podcasts_ia?${filtro}&created_at=lt.${encodeURIComponent(antes)}`)
+    return finalizar(true)
   }
   if (tipo === 'questions') {
     const itens = parseJson<Array<Record<string, unknown>>>(v.conteudo)
     if (!Array.isArray(itens) || !itens.length) return false
     const filtro = `course_slug=${eq(curso)}&discipline_nome=${eq(disciplina)}&topic_nome=${eq(topico)}`
-    await delRest(`questions?${filtro}`)
-    return postRest(
+    const antes = new Date().toISOString()
+    const ok = await postRest(
       'questions',
       itens
         .filter((q) => String(q['enunciado'] || '').trim().length > 10)
