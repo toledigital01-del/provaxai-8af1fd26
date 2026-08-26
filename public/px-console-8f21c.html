@@ -2231,20 +2231,37 @@ async function kbAulasMover(de, para){
   kbAulaMsg('Ordem das aulas atualizada.');
 }
 
-/* Editar o número da aula: o valor digitado vira a posição dela na sequência
-   e as demais são renumeradas automaticamente (00, 01, 02…). */
+/* Editar o número e o nome da aula: o número vira a posição dela na sequência
+   (as demais são renumeradas automaticamente) e o nome atualiza o título. */
 window.kbAulaNumeroEditar = async function(id){
   const ordenadas = KB_AULAS.slice().sort((a,b)=>a.ordem-b.ordem);
   const de = ordenadas.findIndex(x => x.id === id);
   if(de < 0) return;
+  const aula = ordenadas[de];
   const max = ordenadas.length - 1;
-  const resp = prompt('Número desta aula (0 a ' + max + '):', String(ordenadas[de].ordem));
+  const resp = prompt('Número desta aula (0 a ' + max + '):', String(aula.ordem));
   if(resp == null) return;
   const n = parseInt(String(resp).replace(/\D/g,''), 10);
   if(!Number.isFinite(n)) return kbAulaMsg('Digite apenas números.');
   const para = Math.max(0, Math.min(max, n));
-  if(para === de) return;
-  await kbAulasMover(de, para);
+
+  const respNome = prompt('Nome desta aula (deixe como está para não alterar):', kbAulaTitulo(aula.nome));
+  if(respNome == null && para === de) return;
+  const titulo = respNome == null ? null : kbAulaTitulo(String(respNome).trim());
+
+  if(titulo && titulo !== kbAulaTitulo(aula.nome)){
+    const up = await PX.sb.from('topics').update({ nome: titulo }).eq('id', id);
+    if(up.error) return kbAulaMsg('Erro ao renomear: ' + up.error.message);
+    await PX.sb.from('knowledge_docs').update({ topico: titulo }).eq('course_slug','prf-2021').eq('disciplina', kbDisc).eq('topico', aula.nome);
+    await logAdmin('renomear_aula','topics', id, { de: aula.nome, para: titulo });
+    if(kbTopic === aula.nome) kbTopic = titulo;
+    aula.nome = titulo;
+    await loadKB();
+    kbPaint();
+  }
+  if(para !== de) await kbAulasMover(de, para);
+  else { await kbAulasCarregar(kbDisc); }
+  if(titulo) kbAulaMsg('Aula atualizada para “' + titulo + '”.');
 };
 
 window.kbAulaAbrir = function(nome){ kbSelTopic(nome); kbPane('conteudo'); };
