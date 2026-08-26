@@ -2188,9 +2188,11 @@ function kbAulasPaint(){
 }
 
 /* Marca as aulas que são páginas HTML prontas (formato='html' em aulas_ia). */
+/* Marca as aulas que são páginas HTML prontas (formato='html' em aulas_ia)
+   e avisa quando alguma delas está fora da grade do aluno (aula órfã). */
 window.kbHtmlBadges = async function(){
   const spans = Array.prototype.slice.call(document.querySelectorAll('.kb-html-badge'));
-  if(!spans.length || !kbDisc) return;
+  if(!kbDisc) return;
   let rows = [];
   try{
     const { data } = await PX.sb.from('aulas_ia')
@@ -2201,6 +2203,23 @@ window.kbHtmlBadges = async function(){
   const html = {};
   rows.forEach(function(r){ html[r.topico] = true; });
   spans.forEach(function(s){ s.style.display = html[s.dataset.topico] ? '' : 'none'; });
+
+  /* Sugestões de nome no campo da aba "Aula pronta (HTML)" */
+  const dl = document.getElementById('kb-html-topicos');
+  if(dl) dl.innerHTML = KB_AULAS.map(function(a){ return '<option value="' + esc(a.nome).replace(/"/g,'&quot;') + '">'; }).join('');
+
+  /* Aulas em HTML sem tópico correspondente na grade do aluno */
+  const naGrade = {};
+  KB_AULAS.forEach(function(a){ naGrade[a.nome] = true; });
+  const orfas = Object.keys(html).filter(function(t){ return !naGrade[t]; });
+  const av = document.getElementById('kb-html-orfas');
+  if(av){
+    av.style.display = orfas.length ? '' : 'none';
+    av.innerHTML = orfas.length
+      ? '⚠️ Fora da grade do aluno (aula órfã): ' + orfas.map(esc).join(' · ') +
+        '. Salve novamente usando um nome da lista, ou cadastre esse nome como aula.'
+      : '';
+  }
 };
 
 /* Colar uma aula já pronta em HTML e publicar direto para o aluno. */
