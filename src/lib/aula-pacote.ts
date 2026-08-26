@@ -378,7 +378,7 @@ export async function despublicarModulo(curso: string, disciplina: string, topic
   if (tipo === 'podcast')
     return delRest(`podcasts_ia?course_slug=${eq(curso)}&disciplina=${eq(disciplina)}&topico=${eq(topico)}&user_id=is.null`)
   if (tipo === 'questions')
-    return delRest(`questions?course_slug=${eq(curso)}&discipline_nome=${eq(disciplina)}&topic_nome=${eq(topico)}`)
+    return delRest(`questions?course_slug=${eq(curso)}&discipline_nome=${eq(disciplina)}&topic_nome=${eq(topico)}&origem=neq.real`)
   if (tipo === 'flashcards')
     return delRest(`flashcards?course_slug=${eq(curso)}&discipline_nome=${eq(disciplina)}&topic_nome=${eq(topico)}&is_oficial=is.true`)
 }
