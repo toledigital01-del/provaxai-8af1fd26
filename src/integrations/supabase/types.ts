@@ -1593,6 +1593,8 @@ export type Database = {
           dificuldade: string
           discipline_id: string
           id: string
+          modulo: string | null
+          modulo_ordem: number | null
           nome: string
           ordem: number
         }
@@ -1601,6 +1603,8 @@ export type Database = {
           dificuldade?: string
           discipline_id: string
           id?: string
+          modulo?: string | null
+          modulo_ordem?: number | null
           nome: string
           ordem?: number
         }
@@ -1609,6 +1613,8 @@ export type Database = {
           dificuldade?: string
           discipline_id?: string
           id?: string
+          modulo?: string | null
+          modulo_ordem?: number | null
           nome?: string
           ordem?: number
         }
