@@ -1,6 +1,7 @@
 /* Recursos da aula gerados uma única vez e reaproveitados por todos os alunos
    (resumo inteligente, exercícios de lacunas, etc). */
 import { SUPABASE_URL, serviceHeaders } from './px-server'
+import { cacheChave, cacheGravar, cacheLer, cacheLimpar } from './px-cache'
 
 const eq = (v: string) => `eq.${encodeURIComponent(v)}`
 
@@ -18,6 +19,11 @@ export async function lerRecurso<T = unknown>(
   topico: string | null | undefined,
   tipo: string,
 ): Promise<{ dados: T; modelo: string | null } | null> {
+  /* Conteúdo publicado muda só quando o professor republica: guardamos na
+     memória do servidor para o aluno não esperar o banco a cada aba. */
+  const chave = cacheChave('recurso', [curso, disciplina, topico, tipo])
+  const memo = cacheLer<{ dados: T; modelo: string | null }>(chave)
+  if (memo) return memo
   try {
     const r = await fetch(
       `${SUPABASE_URL}/rest/v1/aula_recursos?select=dados,modelo&${filtro(curso, disciplina, topico, tipo)}&limit=1`,
@@ -25,11 +31,14 @@ export async function lerRecurso<T = unknown>(
     )
     if (!r.ok) return null
     const rows = (await r.json()) as Array<{ dados: T; modelo: string | null }>
-    return rows[0] ?? null
+    const hit = rows[0] ?? null
+    if (hit) cacheGravar(chave, hit)
+    return hit
   } catch {
     return null
   }
 }
+
 
 /** Guarda (ou substitui) um recurso preparado da aula.
     Atualiza a linha existente para respeitar a chave única e só cria uma nova
@@ -42,6 +51,8 @@ export async function salvarRecurso(
   dados: unknown,
   modelo?: string | null,
 ): Promise<boolean> {
+  // Publicação nova invalida o que estava guardado na memória do servidor.
+  cacheLimpar(cacheChave('recurso', [curso, disciplina, topico, tipo]))
   const alvo = filtro(curso, disciplina, topico, tipo)
   try {
     const patch = await fetch(`${SUPABASE_URL}/rest/v1/aula_recursos?${alvo}`, {

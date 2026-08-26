@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { jsonPublicado } from '@/lib/px-cache'
 import { z } from 'zod'
 import { currentUser, usosHoje } from '@/lib/px-server'
 import { fetchKnowledge, baseTexto, fonteInstrucao } from '@/lib/kb-context'
@@ -38,6 +39,7 @@ export const Route = createFileRoute('/api/public/lacunas')({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const t0 = performance.now()
         let body: z.infer<typeof Body>
         try {
           body = Body.parse(await request.json())
@@ -52,7 +54,7 @@ export const Route = createFileRoute('/api/public/lacunas')({
           const pronto = await lerRecurso<{ frases?: Frase[] }>(curso, body.disciplina, body.topico, 'lacunas')
           const frasesProntas = pronto?.dados?.frases
           if (Array.isArray(frasesProntas) && frasesProntas.length)
-            return Response.json({ frases: frasesProntas, fontes: 0, modelo: pronto?.modelo, cache: true })
+            return jsonPublicado({ frases: frasesProntas, fontes: 0, modelo: pronto?.modelo, cache: true }, t0)
           return Response.json({ error: 'O exercício ainda não foi publicado pelo professor.' }, { status: 404 })
         }
 

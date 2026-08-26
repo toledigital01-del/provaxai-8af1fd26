@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { currentUser, serviceHeaders, SUPABASE_URL } from '@/lib/px-server'
 import { AIError } from '@/lib/ai-gateway'
 import { agentChat } from '@/lib/ai-router'
+import { cacheChave, cacheGravar, cacheLer, cacheLimpar, jsonPublicado } from '@/lib/px-cache'
+
 
 /* Aula explicada pela Athena, gerada a partir do material carregado.
    - Cursos oficiais (slug existente em `courses`): a aula é gerada UMA vez e
@@ -79,6 +81,7 @@ export const Route = createFileRoute('/api/public/aula-ia')({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const t0 = performance.now()
         let body: z.infer<typeof Body>
         try {
           body = Body.parse(await request.json())
@@ -91,22 +94,33 @@ export const Route = createFileRoute('/api/public/aula-ia')({
           `${SUPABASE_URL}/rest/v1/aulas_ia?select=titulo,conteudo,modelo,formato,updated_at` +
           `&course_slug=${eq(curso)}&disciplina=${eq(body.disciplina)}&topico=${eq(body.topico)}&user_id=is.null&limit=1`
 
-        // Caminho rápido do aluno: uma única leitura do conteúdo já publicado.
+        const chave = cacheChave('aula-ia', [curso, body.disciplina, body.topico])
+        if (body.regerar) cacheLimpar(chave)
+
+        // Caminho rápido do aluno: memória do servidor e, se faltar, uma única
+        // leitura do conteúdo já publicado — sempre cacheável na borda.
         if (!body.regerar) {
+          const daMemoria = cacheLer<Record<string, unknown>>(chave)
+          if (daMemoria) return jsonPublicado(daMemoria, t0, true)
+
           const pronto = await fetch(filtroOficial, { headers: serviceHeaders() })
             .then((r) => (r.ok ? r.json() : []))
             .catch(() => [])
           const hit = (pronto as Array<{ titulo?: string; conteudo?: string; modelo?: string; formato?: string }>)[0]
-          if (hit && (hit.conteudo || '').trim())
-            return Response.json({
+          if (hit && (hit.conteudo || '').trim()) {
+            const dados = {
               aula: hit.conteudo,
               titulo: hit.titulo || body.topico,
               modelo: hit.modelo || null,
               formato: hit.formato === 'html' ? 'html' : 'markdown',
               cache: true,
               compartilhada: true,
-            })
+            }
+            cacheGravar(chave, dados)
+            return jsonPublicado(dados, t0)
+          }
         }
+
 
         const [userId, oficial] = await Promise.all([currentUser(request), cursoOficial(curso)])
         const dono = oficial ? null : userId
