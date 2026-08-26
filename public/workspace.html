@@ -441,11 +441,12 @@ function renderResumo(p) {
       <button id="rz-new">Gerar novamente</button>
     </div>
     <div class="prose" id="rz-body">${body}</div>
-    ${['revisao', 'pontos', 'pegadinhas'].filter(k => rzExtras[k]).map(k => `
-      <details style="margin-top:14px;border:1px solid var(--line,#e2e8f0);border-radius:12px;padding:10px 14px;background:#fff">
-        <summary style="cursor:pointer;font-weight:700;font-size:0.86rem">${k === 'revisao' ? '🧠 Revisão aprofundada' : k === 'pontos' ? '📌 Pontos-chave' : '⚠️ Pegadinhas de prova'} <span style="font-weight:400;color:var(--muted)">— preparado pelo professor</span></summary>
-        <div class="prose" style="margin-top:10px">${PX.kbHTML(rzExtras[k])}</div>
-      </details>`).join('')}
+    ${['revisao', 'pontos', 'pegadinhas'].filter(k => rzExtras[k]).map(k => PX.kbCallout(
+      k,
+      k === 'revisao' ? 'Revisão aprofundada' : k === 'pontos' ? 'Pontos-chave' : 'Pegadinhas de prova',
+      rzExtras[k]
+    )).join('')}
+
   </div>`;
   mountScopePicker();
   document.getElementById('rz-gap').onclick = () => { rzGap = !rzGap; renderPane(); };
@@ -685,8 +686,10 @@ async function carregarConteudoKB() {
       return;
     }
 
-    box.innerHTML = cabecalho + PX.kbHTML(doc.conteudo);
+    box.innerHTML = cabecalho + PX.kbHTML(doc.conteudo) + '<div id="aula-extras"></div>';
+    anexarExtrasAula();
     return;
+
   }
 
   if (res.status === 401) {
@@ -717,11 +720,38 @@ async function carregarAulaIA(regerar) {
   if (!document.getElementById('kb-conteudo')) return;
   if (r && r.aula) {
     box.innerHTML = PX.kbHTML(r.aula) +
+      '<div id="aula-extras"></div>' +
       '<p style="margin:18px 0 0;font-size:0.8rem;color:var(--muted)">' +
         'Não encontrou o que procurava? <button class="btn-secondary" style="padding:4px 10px;font-size:0.8rem" onclick="carregarAulaIA(true)">Gerar novamente</button>' +
       '</p>';
+    anexarExtrasAula();
     return;
   }
+
+/* Pontos-chave e pegadinhas publicados pelo professor, embutidos no fim da aula.
+   Reaproveita o mesmo endpoint/cache do resumo usado na aba Revisão. */
+let extrasCache = {};
+async function anexarExtrasAula() {
+  const alvo = document.getElementById('aula-extras');
+  if (!alvo || !disc || !topic) return;
+  const chave = id + '|' + disc + '|' + topic;
+  let ex = extrasCache[chave];
+  if (!ex) {
+    try {
+      const r = await PX.iaPostCache('resumo', { disciplina: disc, topico: topic, curso: id });
+      ex = (r && r.extras) || {};
+    } catch (e) { ex = {}; }
+    extrasCache[chave] = ex;
+  }
+  const box = document.getElementById('aula-extras');
+  if (!box) return;
+  const html = ['pontos', 'pegadinhas'].filter(k => ex[k]).map(k => PX.kbCallout(
+    k, k === 'pontos' ? 'Pontos-chave desta aula' : 'Pegadinhas de prova', ex[k]
+  )).join('');
+  if (html) box.innerHTML = '<div style="margin-top:26px;border-top:1px solid var(--line,#e2e8f0);padding-top:6px">' + html + '</div>';
+}
+
+
   const msg = (r && r.erro) || 'Não consegui montar a aula agora.';
   box.innerHTML = kbAvisoHTML('Aula ainda não disponível', esc(msg),
     '<p style="margin:12px 0 0"><button class="btn-secondary" onclick="carregarAulaIA(true)">Tentar de novo</button></p>');
@@ -746,7 +776,7 @@ function mapaParse(md) {
     const li = ln.match(/^(\s*)[-*•]\s+(.*)$/);
     if (li) {
       if (!atual) { atual = { t: tema || rzSubject(), folhas: [] }; ramos.push(atual); }
-      atual.folhas.push({ txt: li[2].trim(), nivel: Math.min(2, Math.floor(li[1].length / 2)) });
+      atual.folhas.push({ txt: li[2].trim(), nivel: Math.max(0, Math.floor(li[1].replace(/\t/g, '  ').length / 2)) });
       return;
     }
     if (!atual) { atual = { t: tema || rzSubject(), folhas: [] }; ramos.push(atual); }
@@ -822,10 +852,30 @@ function renderMapa(p) {
 
   const { mapa, oficial } = mapaState.dados;
   const cores = ['#154C9B', '#0B7A5B', '#B45309', '#7C3AED', '#B91C1C', '#0369A1'];
+  /* Árvore real: mantém os níveis de indentação do markdown (sem comprimir) */
+  const mmArvore = (folhas) => {
+    if (!folhas.length) return '';
+    let html = '', depth = 0, aberto = false;
+    folhas.forEach(f => {
+      const n = Math.min(Math.max(f.nivel, 0), 3);
+      if (n > depth) { while (depth < n) { html += '<ul>'; depth++; } }
+      else {
+        if (aberto) html += '</li>';
+        while (depth > n) { html += '</ul></li>'; depth--; }
+      }
+      html += `<li class="lv${n + 1}"><span class="mm-leaf">${mapaInline(f.txt)}</span>`;
+      aberto = true;
+    });
+    if (aberto) html += '</li>';
+    while (depth > 0) { html += '</ul></li>'; depth--; }
+    return `<ul class="mm-tree">${html}</ul>`;
+  };
+
   const ramos = mapa.ramos.map((b, i) => `<div class="mm-branch" style="--mmc:${cores[i % cores.length]}">
       <div class="mm-node">${mapaInline(b.t)}</div>
-      ${b.folhas.length ? `<ul class="mm-leaves">${b.folhas.map(f => `<li class="n${f.nivel}">${mapaInline(f.txt)}</li>`).join('')}</ul>` : ''}
+      ${b.folhas.length ? mmArvore(b.folhas) : ''}
     </div>`).join('');
+
   p.innerHTML = `<div class="pane">
     ${head}
     <div class="mm-root">${mapaInline(mapa.tema)}</div>

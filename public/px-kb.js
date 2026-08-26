@@ -235,63 +235,93 @@
 
 
 
-  /* Markdown simples -> HTML seguro (títulos, listas, citação, negrito, itálico, grifo, código) */
+  /* Markdown simples -> HTML seguro (títulos, listas, citação, tabelas, negrito, itálico, grifo, código).
+     A tipografia fica no CSS (.kb-md em shell.css), não em estilos inline. */
   PX.kbHTML = function (md) {
     var esc = function (s) {
       return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; });
     };
+    function inline(t) {
+      return t.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+        .replace(/==(.+?)==/g, '<mark>$1</mark>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/(^|\W)\*(\S.*?\S|\S)\*/g, '$1<i>$2</i>');
+    }
+    var linhas = esc(md || '').split(/\r?\n/);
     var out = [];
     var ul = false, ol = false;
     var fechaListas = function () {
       if (ul) { out.push('</ul>'); ul = false; }
       if (ol) { out.push('</ol>'); ol = false; }
     };
-    esc(md || '').split(/\r?\n/).forEach(function (ln) {
-      var l = ln.trim();
+    var celulas = function (l) {
+      return l.replace(/^\s*\|/, '').replace(/\|\s*$/, '').split('|').map(function (c) { return c.trim(); });
+    };
+    var ehSeparador = function (l) { return /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)+\|?\s*$/.test(l); };
+
+    for (var i = 0; i < linhas.length; i++) {
+      var l = linhas[i].trim();
+
+      /* Tabela Markdown */
+      if (l.indexOf('|') > -1 && i + 1 < linhas.length && ehSeparador(linhas[i + 1])) {
+        fechaListas();
+        var head = celulas(l);
+        var linhasTab = [];
+        i += 2;
+        while (i < linhas.length && linhas[i].trim().indexOf('|') > -1) {
+          linhasTab.push(celulas(linhas[i].trim()));
+          i++;
+        }
+        i--;
+        out.push('<div class="kb-tabela"><table>' +
+          '<thead><tr>' + head.map(function (c) { return '<th>' + inline(c) + '</th>'; }).join('') + '</tr></thead>' +
+          '<tbody>' + linhasTab.map(function (r) {
+            return '<tr>' + r.map(function (c) { return '<td>' + inline(c) + '</td>'; }).join('') + '</tr>';
+          }).join('') + '</tbody></table></div>');
+        continue;
+      }
+
       var li = l.match(/^[-*]\s+(.*)$/);
       if (li) {
         if (ol) { out.push('</ol>'); ol = false; }
-        if (!ul) { out.push('<ul style="margin:6px 0 12px;padding-left:22px">'); ul = true; }
-        out.push('<li style="margin:3px 0">' + inline(li[1]) + '</li>');
-        return;
+        if (!ul) { out.push('<ul>'); ul = true; }
+        out.push('<li>' + inline(li[1]) + '</li>');
+        continue;
       }
       var oli = l.match(/^\d+[.)]\s+(.*)$/);
       if (oli) {
         if (ul) { out.push('</ul>'); ul = false; }
-        if (!ol) { out.push('<ol style="margin:6px 0 12px;padding-left:22px">'); ol = true; }
-        out.push('<li style="margin:3px 0">' + inline(oli[1]) + '</li>');
-        return;
+        if (!ol) { out.push('<ol>'); ol = true; }
+        out.push('<li>' + inline(oli[1]) + '</li>');
+        continue;
       }
       fechaListas();
-      if (!l) return;
+      if (!l) continue;
+      if (/^(-{3,}|_{3,}|\*{3,})$/.test(l)) { out.push('<hr>'); continue; }
       var q = l.match(/^>\s?(.*)$/);
-      if (q) {
-        out.push('<blockquote style="margin:10px 0;padding:8px 14px;border-left:3px solid var(--brand,#154C9B);background:var(--surface,#F8FAFC);border-radius:0 8px 8px 0;color:#475569">' + inline(q[1]) + '</blockquote>');
-        return;
-      }
+      if (q) { out.push('<blockquote>' + inline(q[1]) + '</blockquote>'); continue; }
       var h = l.match(/^(#{1,6})\s+(.*)$/);
       if (h) {
         var n = Math.min(h[1].length, 4);
-        var estilo = n === 1
-          ? 'font-size:1.45rem;font-weight:800;margin:6px 0 14px;line-height:1.25'
-          : n === 2
-            ? 'font-size:1.12rem;font-weight:800;margin:26px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--line,#e2e8f0)'
-            : 'font-size:1rem;font-weight:700;margin:20px 0 8px;color:var(--brand,#154C9B)';
-        out.push('<h' + (n + 1) + ' style="' + estilo + '">' + inline(h[2]) + '</h' + (n + 1) + '>');
-        return;
+        out.push('<h' + (n + 1) + '>' + inline(h[2]) + '</h' + (n + 1) + '>');
+        continue;
       }
       out.push('<p>' + inline(l) + '</p>');
-    });
-    fechaListas();
-    function inline(t) {
-      return t.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
-        .replace(/==(.+?)==/g, '<mark style="background:#FEF08A;padding:0 3px;border-radius:3px">$1</mark>')
-        .replace(/`([^`]+)`/g, '<code style="background:var(--surface,#F1F5F9);padding:1px 5px;border-radius:4px;font-size:0.92em">$1</code>')
-        .replace(/(^|\W)\*(\S.*?\S|\S)\*/g, '$1<i>$2</i>');
     }
-    return out.join('');
-
+    fechaListas();
+    return '<div class="kb-md">' + out.join('') + '</div>';
   };
+
+  /* Caixa de destaque (callout) para pontos-chave, pegadinhas e afins */
+  PX.kbCallout = function (tipo, titulo, md) {
+    var icones = { pontos: '📌', pegadinhas: '⚠️', revisao: '🧠', info: '💡' };
+    return '<section class="kb-callout kb-callout--' + tipo + '">' +
+      '<div class="kb-callout__head"><span class="kb-callout__ico">' + (icones[tipo] || '💡') + '</span>' +
+      '<b>' + String(titulo || '') + '</b></div>' +
+      '<div class="kb-callout__body">' + PX.kbHTML(md) + '</div>' +
+      '</section>';
+  };
+
 
   /* Pergunta à Athena usando a base de conhecimento como fonte */
   PX.athenaAsk = async function (disciplina, topico, pergunta, curso) {
