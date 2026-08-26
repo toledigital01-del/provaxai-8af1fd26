@@ -3350,8 +3350,18 @@ async function kbAulaCriar(disc, texto, origem, publicar, arquivo){
   const existente = KB_AULAS.find(a => kbAulaTitulo(a.nome).toLowerCase() === titulo.toLowerCase());
   let nomeTopico = titulo;
   let topicoId = existente ? existente.id : null;
+  /* Módulo opcional informado no formulário de cadastro */
+  const modEl = document.getElementById('kb-aula-modulo');
+  const modOrdEl = document.getElementById('kb-aula-modulo-ordem');
+  const modulo = modEl ? String(modEl.value || '').trim() : '';
+  const moduloOrdem = modulo
+    ? (Number.isFinite(parseInt(modOrdEl && modOrdEl.value, 10)) ? parseInt(modOrdEl.value, 10) : 1)
+    : null;
   if(existente){
     nomeTopico = existente.nome;
+    if(modulo){
+      await PX.sb.from('topics').update({ modulo: modulo, modulo_ordem: moduloOrdem }).eq('id', existente.id);
+    }
   }else{
     /* Se já existe aula com esse número, abre espaço deslocando as seguintes. */
     if(KB_AULAS.some(a => a.ordem === numero)){
@@ -3361,10 +3371,13 @@ async function kbAulaCriar(disc, texto, origem, publicar, arquivo){
         await PX.sb.from('topics').update({ ordem: a.ordem }).eq('id', a.id);
       }
     }
-    const ins = await PX.sb.from('topics').insert({ discipline_id: discId, nome: titulo, ordem: numero, dificuldade: 'media' }).select('id').maybeSingle();
+    const novo = { discipline_id: discId, nome: titulo, ordem: numero, dificuldade: 'media' };
+    if(modulo){ novo.modulo = modulo; novo.modulo_ordem = moduloOrdem; }
+    const ins = await PX.sb.from('topics').insert(novo).select('id').maybeSingle();
     if(ins.error) throw new Error('Erro ao criar a aula: ' + ins.error.message);
     topicoId = ins.data ? ins.data.id : null;
   }
+
   const ordem = existente ? existente.ordem : numero;
 
   /* Se o material enviado for um PDF, ele também fica anexado à aula,
