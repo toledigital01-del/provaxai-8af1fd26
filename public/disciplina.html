@@ -203,7 +203,16 @@ window.pxRerender = function(){ render(); };
 
 
 document.getElementById('topics').addEventListener('click', e => {
+  const mh = e.target.closest('.mod-head');
+  if (mh) {
+    const sec = mh.closest('.mod-sec');
+    sec.classList.toggle('closed');
+    const k = decodeURIComponent(mh.dataset.mod || '');
+    if (k) modFechados[k] = sec.classList.contains('closed');
+    return;
+  }
   const chk = e.target.closest('.px-check');
+
   if (chk) {
     const name = decodeURIComponent(chk.dataset.t);
     pxStudySet(name, { done: chk.checked });
