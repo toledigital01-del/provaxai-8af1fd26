@@ -2637,6 +2637,28 @@ async function kbAulasMover(de, para){
   kbAulaMsg('Ordem das aulas atualizada.');
 }
 
+/* Renomear uma aula precisa arrastar junto tudo que está gravado com o nome
+   antigo. Sem isso a aula em HTML, os recursos da IA e as questões ficam
+   "órfãos" e o aluno vê "sem conteúdo" / "IA não preparada". */
+async function kbRenomearVinculos(de, para){
+  if(!de || !para || de === para) return;
+  const c = { curso:'prf-2021', disc: kbDisc };
+  try{
+    await PX.sb.from('aulas_ia').update({ topico: para, titulo: para })
+      .eq('course_slug', c.curso).eq('disciplina', c.disc).eq('topico', de);
+    await PX.sb.from('aula_recursos').update({ topico: para })
+      .eq('course_slug', c.curso).eq('disciplina', c.disc).eq('topico', de);
+    await PX.sb.from('aula_conteudos').update({ topico: para })
+      .eq('course_slug', c.curso).eq('disciplina', c.disc).eq('topico', de);
+    await PX.sb.from('kb_documentos').update({ topic_nome: para })
+      .eq('course_slug', c.curso).eq('discipline_nome', c.disc).eq('topic_nome', de);
+    await PX.sb.from('questions').update({ topic_nome: para })
+      .eq('course_slug', c.curso).eq('discipline_nome', c.disc).eq('topic_nome', de);
+    await PX.sb.from('flashcards').update({ topic_nome: para })
+      .eq('course_slug', c.curso).eq('discipline_nome', c.disc).eq('topic_nome', de);
+  }catch(e){ /* segue: o nome do tópico já foi alterado */ }
+}
+
 /* Editar o número e o nome da aula: o número vira a posição dela na sequência
    (as demais são renumeradas automaticamente) e o nome atualiza o título. */
 window.kbAulaNumeroEditar = async function(id){
