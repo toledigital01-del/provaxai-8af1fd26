@@ -29,6 +29,7 @@ import { Route as ApiPublicKbEditalRouteImport } from './routes/api/public/kb-ed
 import { Route as ApiPublicKbEmbedRouteImport } from './routes/api/public/kb-embed'
 import { Route as ApiPublicKbIngestRouteImport } from './routes/api/public/kb-ingest'
 import { Route as ApiPublicKbPrepararRouteImport } from './routes/api/public/kb-preparar'
+import { Route as ApiPublicKbQuestoesReaisRouteImport } from './routes/api/public/kb-questoes-reais'
 import { Route as ApiPublicLacunasRouteImport } from './routes/api/public/lacunas'
 import { Route as ApiPublicMapaRouteImport } from './routes/api/public/mapa'
 import { Route as ApiPublicPodcastRouteImport } from './routes/api/public/podcast'
@@ -142,6 +143,12 @@ const ApiPublicKbPrepararRoute = ApiPublicKbPrepararRouteImport.update({
   path: '/api/public/kb-preparar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicKbQuestoesReaisRoute =
+  ApiPublicKbQuestoesReaisRouteImport.update({
+    id: '/api/public/kb-questoes-reais',
+    path: '/api/public/kb-questoes-reais',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicLacunasRoute = ApiPublicLacunasRouteImport.update({
   id: '/api/public/lacunas',
   path: '/api/public/lacunas',
@@ -214,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/api/public/kb-embed': typeof ApiPublicKbEmbedRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
   '/api/public/kb-preparar': typeof ApiPublicKbPrepararRoute
+  '/api/public/kb-questoes-reais': typeof ApiPublicKbQuestoesReaisRoute
   '/api/public/lacunas': typeof ApiPublicLacunasRoute
   '/api/public/mapa': typeof ApiPublicMapaRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
@@ -246,6 +254,7 @@ export interface FileRoutesByTo {
   '/api/public/kb-embed': typeof ApiPublicKbEmbedRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
   '/api/public/kb-preparar': typeof ApiPublicKbPrepararRoute
+  '/api/public/kb-questoes-reais': typeof ApiPublicKbQuestoesReaisRoute
   '/api/public/lacunas': typeof ApiPublicLacunasRoute
   '/api/public/mapa': typeof ApiPublicMapaRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
@@ -279,6 +288,7 @@ export interface FileRoutesById {
   '/api/public/kb-embed': typeof ApiPublicKbEmbedRoute
   '/api/public/kb-ingest': typeof ApiPublicKbIngestRoute
   '/api/public/kb-preparar': typeof ApiPublicKbPrepararRoute
+  '/api/public/kb-questoes-reais': typeof ApiPublicKbQuestoesReaisRoute
   '/api/public/lacunas': typeof ApiPublicLacunasRoute
   '/api/public/mapa': typeof ApiPublicMapaRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
@@ -313,6 +323,7 @@ export interface FileRouteTypes {
     | '/api/public/kb-embed'
     | '/api/public/kb-ingest'
     | '/api/public/kb-preparar'
+    | '/api/public/kb-questoes-reais'
     | '/api/public/lacunas'
     | '/api/public/mapa'
     | '/api/public/podcast'
@@ -345,6 +356,7 @@ export interface FileRouteTypes {
     | '/api/public/kb-embed'
     | '/api/public/kb-ingest'
     | '/api/public/kb-preparar'
+    | '/api/public/kb-questoes-reais'
     | '/api/public/lacunas'
     | '/api/public/mapa'
     | '/api/public/podcast'
@@ -377,6 +389,7 @@ export interface FileRouteTypes {
     | '/api/public/kb-embed'
     | '/api/public/kb-ingest'
     | '/api/public/kb-preparar'
+    | '/api/public/kb-questoes-reais'
     | '/api/public/lacunas'
     | '/api/public/mapa'
     | '/api/public/podcast'
@@ -410,6 +423,7 @@ export interface RootRouteChildren {
   ApiPublicKbEmbedRoute: typeof ApiPublicKbEmbedRoute
   ApiPublicKbIngestRoute: typeof ApiPublicKbIngestRoute
   ApiPublicKbPrepararRoute: typeof ApiPublicKbPrepararRoute
+  ApiPublicKbQuestoesReaisRoute: typeof ApiPublicKbQuestoesReaisRoute
   ApiPublicLacunasRoute: typeof ApiPublicLacunasRoute
   ApiPublicMapaRoute: typeof ApiPublicMapaRoute
   ApiPublicPodcastRoute: typeof ApiPublicPodcastRoute
@@ -564,6 +578,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicKbPrepararRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/kb-questoes-reais': {
+      id: '/api/public/kb-questoes-reais'
+      path: '/api/public/kb-questoes-reais'
+      fullPath: '/api/public/kb-questoes-reais'
+      preLoaderRoute: typeof ApiPublicKbQuestoesReaisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/lacunas': {
       id: '/api/public/lacunas'
       path: '/api/public/lacunas'
@@ -658,6 +679,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicKbEmbedRoute: ApiPublicKbEmbedRoute,
   ApiPublicKbIngestRoute: ApiPublicKbIngestRoute,
   ApiPublicKbPrepararRoute: ApiPublicKbPrepararRoute,
+  ApiPublicKbQuestoesReaisRoute: ApiPublicKbQuestoesReaisRoute,
   ApiPublicLacunasRoute: ApiPublicLacunasRoute,
   ApiPublicMapaRoute: ApiPublicMapaRoute,
   ApiPublicPodcastRoute: ApiPublicPodcastRoute,
