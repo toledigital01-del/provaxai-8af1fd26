@@ -738,6 +738,7 @@ async function carregarConteudoKB() {
 
 /* Aula explicada pela Athena: gerada uma única vez por tópico (curso oficial)
    ou a partir do material do próprio aluno (pastas dele). */
+let aulaHtmlObserver = null;
 async function carregarAulaIA(regerar) {
   const box = document.getElementById('kb-conteudo');
   if (!box) return;
@@ -773,7 +774,6 @@ async function carregarAulaIA(regerar) {
 
 /* Aula escrita como página HTML pronta: renderizada isolada num iframe para o
    CSS dela não vazar para o resto do app. A altura acompanha o documento. */
-let aulaHtmlObserver = null;
 function renderAulaHTML(box, html){
   box.innerHTML = '';
   /* Redesenha a aula quando o aluno alterna claro/escuro. */
