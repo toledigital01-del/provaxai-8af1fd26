@@ -79,6 +79,37 @@ export const Route = createFileRoute('/api/public/aula-html')({
         const filtro =
           `course_slug=${eq(curso)}&disciplina=${eq(body.disciplina)}&topico=${eq(body.topico)}&user_id=is.null`
 
+        // Abrir a aula HTML no editor do painel: devolve o HTML salvo.
+        if (body.acao === 'carregar') {
+          const atual = await fetch(
+            `${SUPABASE_URL}/rest/v1/aulas_ia?select=titulo,conteudo,formato&${filtro}&limit=1`,
+            { headers: serviceHeaders() },
+          )
+          const rows = atual.ok
+            ? ((await atual.json()) as Array<{ titulo?: string; conteudo?: string; formato?: string }>)
+            : []
+          const salvo = rows[0]
+          if (!salvo || salvo.formato !== 'html')
+            return Response.json({ error: 'Esta aula não tem HTML salvo.' }, { status: 404 })
+          return Response.json({
+            ok: true,
+            titulo: salvo.titulo || body.topico,
+            html: salvo.conteudo || '',
+          })
+        }
+
+        // Apagar apenas o HTML da aula (o tópico continua na grade).
+        if (body.acao === 'excluir') {
+          const del = await fetch(`${SUPABASE_URL}/rest/v1/aulas_ia?${filtro}`, {
+            method: 'DELETE',
+            headers: serviceHeaders({ Prefer: 'return=minimal' }),
+          })
+          if (!del.ok)
+            return Response.json({ error: 'Não consegui apagar o HTML desta aula.' }, { status: 502 })
+          limparTudo(curso, body.disciplina, body.topico)
+          return Response.json({ ok: true, excluido: true })
+        }
+
         // O botão Publicar da lista reaproveita o HTML já salvo. Isso também
         // invalida o cache da aula, sem obrigar o professor a reenviar o arquivo.
         if (body.acao === 'publicar' && !body.html) {
