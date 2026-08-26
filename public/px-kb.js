@@ -45,8 +45,7 @@
   };
 
 
-  /* Busca o conteúdo teórico publicado de uma disciplina (todos os tópicos).
-     Devolve { status, docs }: status é o código HTTP (0 = falha de rede, 401 = sem login). */
+  /* Busca pública do conteúdo teórico publicado de uma disciplina. */
   PX.kbFetch = async function (disciplina, curso) {
     var key = (curso || 'prf-2021') + '|' + disciplina;
     if (cache[key]) return cache[key];
@@ -68,11 +67,9 @@
       '&disciplina=eq.' + encodeURIComponent(disciplina) +
       '&publicado=is.true';
     try {
-      var h = { apikey: SB_KEY };
-      var tk = await PX.token();
-      if (!tk) return { status: 401, docs: [] };
-      h.Authorization = 'Bearer ' + tk;
-      var r = await fetch(SB_URL + '/rest/v1/knowledge_docs?' + qs, { headers: h });
+      var r = await fetch(SB_URL + '/rest/v1/knowledge_docs?' + qs, {
+        headers: { apikey: SB_KEY },
+      });
       var docs = r.ok ? await r.json() : [];
       var res = { status: r.status, docs: Array.isArray(docs) ? docs : [] };
       if (r.ok) {
@@ -126,13 +123,11 @@
 
 
 
-  /* Leitura autenticada genérica de uma tabela do banco (mesmo padrão do kbFetch) */
+  /* Leitura pública genérica das tabelas de conteúdo do aluno. */
   async function tabela(path) {
     try {
-      var tk = await PX.token();
-      if (!tk) return { status: 401, rows: [] };
       var r = await fetch(SB_URL + '/rest/v1/' + path, {
-        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tk },
+        headers: { apikey: SB_KEY },
       });
       var rows = r.ok ? await r.json() : [];
       return { status: r.status, rows: Array.isArray(rows) ? rows : [] };

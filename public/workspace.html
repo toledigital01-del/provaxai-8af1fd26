@@ -487,12 +487,8 @@ function kbAvisoHTML(titulo, texto, acao) {
     + (acao || '') + '</div>';
 }
 
-function loginBtnHTML() {
-  return '<p style="margin:12px 0 0"><a class="btn-primary" style="display:inline-block;text-decoration:none;padding:9px 16px;border-radius:10px" href="login.html?next='
-    + encodeURIComponent(location.pathname + location.search) + '">Entrar na minha conta</a></p>';
-}
 function loginAvisoHTML(o) {
-  return kbAvisoHTML('Entre para ' + o, 'Este recurso é liberado para alunos logados.', loginBtnHTML());
+  return kbAvisoHTML('Conteúdo indisponível', 'Não consegui abrir este recurso agora. Tente novamente em instantes.', '');
 }
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -692,11 +688,8 @@ async function carregarConteudoKB() {
     return;
   }
 
-  const btn = (txt, href) => '<p style="margin:12px 0 0"><a class="btn-primary" style="display:inline-block;text-decoration:none;padding:9px 16px;border-radius:10px" href="' + href + '">' + txt + '</a></p>';
-  // Trava de acesso pago desativada por enquanto (fase de testes): qualquer aluno
-  // logado vê o material liberado; só falta login mesmo é que ainda bloqueia.
   if (res.status === 401) {
-    box.innerHTML = kbAvisoHTML('Entre para ver esta aula', 'O conteúdo completo é liberado para alunos logados.', btn('Entrar na minha conta', 'login.html?next=' + encodeURIComponent(location.pathname + location.search)));
+    box.innerHTML = kbAvisoHTML('Não consegui abrir esta aula', 'Tente novamente em instantes.', '<p style="margin:12px 0 0"><button class="btn-secondary" onclick="carregarConteudoKB()">Tentar de novo</button></p>');
   } else if (res.status === 200 || res.status === 403) {
     box.innerHTML = kbAvisoHTML('Aula ainda não publicada para este tópico', 'O conteúdo de <b>' + topic + '</b> está sendo preparado. Enquanto isso, use as questões, os flashcards e o chat da Athena.', '');
   } else {
@@ -731,8 +724,8 @@ async function carregarAulaIA(regerar) {
   }
   const msg = (r && r.erro) || 'Não consegui montar a aula agora.';
   if (r && r.status === 401) {
-    box.innerHTML = kbAvisoHTML('Entre para ver esta aula', 'A aula da Athena é liberada para alunos logados.',
-      '<p style="margin:12px 0 0"><a class="btn-primary" style="display:inline-block;text-decoration:none;padding:9px 16px;border-radius:10px" href="login.html?next=' + encodeURIComponent(location.pathname + location.search) + '">Entrar na minha conta</a></p>');
+    box.innerHTML = kbAvisoHTML('Não consegui abrir esta aula', esc(msg),
+      '<p style="margin:12px 0 0"><button class="btn-secondary" onclick="carregarAulaIA()">Tentar de novo</button></p>');
   } else {
     box.innerHTML = kbAvisoHTML('Aula ainda não disponível', esc(msg),
       '<p style="margin:12px 0 0"><button class="btn-secondary" onclick="carregarAulaIA(true)">Tentar de novo</button> ' +
