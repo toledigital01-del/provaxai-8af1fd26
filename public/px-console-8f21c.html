@@ -2037,7 +2037,9 @@ function kbEditor(){
         <div data-aulapane="html" style="display:none">
           <label class="muted">Aula pronta em HTML</label>
           <p class="muted" style="margin:4px 0 8px;font-size:0.76rem">Cole a página HTML completa da aula (com o CSS e os scripts dela). Ela é exibida isolada para o aluno e não passa pela geração automática de IA.</p>
-          <input id="kb-html-topico" placeholder="Nome da aula (ex.: Aula 00 - Noções de organização administrativa)" style="margin-bottom:8px">
+          <input id="kb-html-topico" list="kb-html-topicos" placeholder="Nome da aula (escolha uma já cadastrada ou digite uma nova)" style="margin-bottom:8px">
+          <datalist id="kb-html-topicos"></datalist>
+          <p class="muted" style="margin:0 0 8px;font-size:0.74rem">Se o nome for novo, a aula é criada automaticamente na grade do aluno.</p>
           <textarea id="kb-html-txt" rows="12" spellcheck="false" placeholder="&lt;!doctype html&gt; …" style="font-family:ui-monospace,monospace;font-size:0.78rem"></textarea>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">
             <span style="flex:1"></span>
