@@ -72,21 +72,30 @@
       const [{ data: cursos }, { data: discs }, { data: tops }] = await Promise.all([
         PX.sb.from('courses').select('id,slug').order('ordem'),
         PX.sb.from('disciplines').select('id,course_id,nome,ordem,peso,incidencia').order('ordem'),
-        PX.sb.from('topics').select('discipline_id,nome,ordem').order('ordem'),
+        PX.sb.from('topics').select('discipline_id,nome,ordem,modulo,modulo_ordem').order('ordem'),
       ]);
       if (!cursos || !discs || !discs.length) return;
       const porDisc = {};
       const ordemDisc = {};
+      const moduloDisc = {};
       (tops || []).forEach(t => {
         (porDisc[t.discipline_id] = porDisc[t.discipline_id] || []).push(t.nome);
         (ordemDisc[t.discipline_id] = ordemDisc[t.discipline_id] || {})[t.nome] =
           typeof t.ordem === 'number' ? t.ordem : null;
+        const mod = String(t.modulo || '').trim();
+        if (mod) {
+          (moduloDisc[t.discipline_id] = moduloDisc[t.discipline_id] || {})[t.nome] = {
+            nome: mod,
+            ordem: typeof t.modulo_ordem === 'number' ? t.modulo_ordem : 999,
+          };
+        }
       });
       const slugDe = {};
       cursos.forEach(c => { slugDe[c.id] = c.slug; });
       const out = {};
       const pesos = {};
       const aulas = {};
+      const modulos = {};
       discs.forEach(d => {
         if (typeof d.peso === 'number') pesos[d.nome] = { peso: d.peso, incidencia: d.incidencia };
         const slug = slugDe[d.course_id];
@@ -94,15 +103,20 @@
         out[slug] = out[slug] || {};
         out[slug][d.nome] = porDisc[d.id] || [];
         aulas[d.nome] = ordemDisc[d.id] || {};
+        modulos[d.nome] = moduloDisc[d.id] || {};
       });
       const curJson = JSON.stringify(out);
       const aulasJson = JSON.stringify(aulas);
+      const modulosJson = JSON.stringify(modulos);
       const mudou = localStorage.getItem('px_curriculo_cursos_v1') !== curJson ||
-                    localStorage.getItem('px_aulas_v1') !== aulasJson;
+                    localStorage.getItem('px_aulas_v1') !== aulasJson ||
+                    localStorage.getItem('px_modulos_v1') !== modulosJson;
       localStorage.setItem('px_curriculo_v1', JSON.stringify({ cursos: out, ts: Date.now() }));
       localStorage.setItem('px_curriculo_cursos_v1', curJson);
       localStorage.setItem('px_pesos_v1', JSON.stringify(pesos));
       localStorage.setItem('px_aulas_v1', aulasJson);
+      localStorage.setItem('px_modulos_v1', modulosJson);
+
       if (mudou && typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('px:curriculo'));
       }
