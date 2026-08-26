@@ -824,17 +824,23 @@ function renderMapa(p) {
   const cores = ['#154C9B', '#0B7A5B', '#B45309', '#7C3AED', '#B91C1C', '#0369A1'];
   /* Árvore real: mantém os níveis de indentação do markdown (sem comprimir) */
   const mmArvore = (folhas) => {
-    let html = '', pilha = [];
+    if (!folhas.length) return '';
+    let html = '', depth = 0, aberto = false;
     folhas.forEach(f => {
-      const n = Math.min(f.nivel, 3);
-      while (pilha.length > n) { html += '</li></ul>'; pilha.pop(); }
-      if (pilha.length === n) { if (html.endsWith('>') && pilha.length) html += '</li>'; }
-      while (pilha.length < n) { html += '<ul>'; pilha.push(1); }
+      const n = Math.min(Math.max(f.nivel, 0), 3);
+      if (n > depth) { while (depth < n) { html += '<ul>'; depth++; } }
+      else {
+        if (aberto) html += '</li>';
+        while (depth > n) { html += '</ul></li>'; depth--; }
+      }
       html += `<li class="lv${n + 1}"><span class="mm-leaf">${mapaInline(f.txt)}</span>`;
+      aberto = true;
     });
-    while (pilha.length) { html += '</li></ul>'; pilha.pop(); }
-    return html ? `<ul class="mm-tree">${html}</li></ul>` : '';
+    if (aberto) html += '</li>';
+    while (depth > 0) { html += '</ul></li>'; depth--; }
+    return `<ul class="mm-tree">${html}</ul>`;
   };
+
   const ramos = mapa.ramos.map((b, i) => `<div class="mm-branch" style="--mmc:${cores[i % cores.length]}">
       <div class="mm-node">${mapaInline(b.t)}</div>
       ${b.folhas.length ? mmArvore(b.folhas) : ''}
