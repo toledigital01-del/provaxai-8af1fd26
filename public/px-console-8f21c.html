@@ -3680,14 +3680,13 @@ window.kbPrepararDisc = async function(disc, regerar){
   if(!aulas.length) return alert('Não há aulas publicadas nesta matéria.');
   if(!confirm('Preparar o conteúdo de IA (aula, resumo, questões, flashcards, lacunas e podcast) de ' +
     aulas.length + ' aula(s) de ' + disc + '?\n\nIsso pode levar alguns minutos e é feito uma única vez.')) return;
-  prepPainel();
-  prepLog('Iniciando ' + aulas.length + ' aula(s) de ' + esc(disc) + '…', '#FDE68A');
+  toast('Preparando ' + aulas.length + ' aula(s) de ' + disc + '…');
   let ok = 0;
   for(let i=0;i<aulas.length;i++){
-    prepLog('— ' + (i+1) + '/' + aulas.length, '#64748B');
     if(await kbPrepararAula(disc, aulas[i].topico, regerar)) ok++;
   }
-  prepLog('<b>Concluído: ' + ok + '/' + aulas.length + ' aula(s) com tudo pronto.</b>', '#FDE68A');
+  toast('Concluído: ' + ok + '/' + aulas.length + ' aula(s) com tudo pronto.');
+  kbIaBadges();
   try{ await logAdmin('preparar_ia','knowledge_docs', null, { disciplina: disc, total: aulas.length }); }catch(e){}
 };
 
@@ -3705,12 +3704,12 @@ window.kbPublicarDisc = async function(d){
   await loadKB(); kbPaint();
   const b2 = document.getElementById('kb-fila-msg');
   if(b2) b2.textContent = pend.length + ' aula(s) de ' + d + ' publicadas. Preparando o conteúdo de IA…';
-  prepPainel();
-  prepLog('Preparando ' + pend.length + ' aula(s) recém-publicadas de ' + esc(d) + '…', '#FDE68A');
   for(let i=0;i<pend.length;i++){
-    if(pend[i].topico){ prepLog('— ' + (i+1) + '/' + pend.length, '#64748B'); await kbPrepararAula(d, pend[i].topico); }
+    if(pend[i].topico){ await kbPrepararAula(d, pend[i].topico); }
   }
-  prepLog('<b>Conteúdo pronto — o aluno já encontra tudo salvo.</b>', '#FDE68A');
+  if(b2) b2.textContent = 'Conteúdo pronto — o aluno já encontra tudo salvo.';
+  toast('Conteúdo pronto — o aluno já encontra tudo salvo.');
+  kbIaBadges();
 };
 window.kbDelete = async function(id){
   if(!confirm('Excluir este conteúdo da base?')) return;
