@@ -2219,6 +2219,8 @@ function kbAulasPaint(){
         '<span class="kb-tag kb-ia-badge" data-topico="' + esc(a.nome).replace(/"/g,'&quot;') + '" style="display:none"></span>' +
         '<span class="kb-tag kb-html-badge" data-topico="' + esc(a.nome).replace(/"/g,'&quot;') + '" style="display:none;background:#FDF2F8;color:#9D174D;border-color:#FBCFE8" title="Esta aula é uma página HTML pronta, colada manualmente — não passa pela geração automática de IA.">HTML pronto</span>' +
         '<button class="act primary kb-html-publish" data-topico="' + esc(a.nome).replace(/"/g,'&quot;') + '" style="display:none;font-size:0.75rem;padding:4px 10px" onclick="kbAulaHtmlPublicar(\'' + escJs(a.nome) + '\')">Publicar</button>' +
+        '<button class="act" style="font-size:0.75rem;padding:4px 10px" title="Ver a aula exatamente como o aluno vê" onclick="kbAulaPrevia(\'' + escJs(a.nome) + '\')">👁 Prévia do aluno</button>' +
+        '<button class="act" style="font-size:0.75rem;padding:4px 10px" title="Status detalhado de publicação e versão entregue ao aluno" onclick="kbAulaStatus(\'' + escJs(a.nome) + '\')">Status</button>' +
         '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaAbrir(\'' + escJs(a.nome) + '\')">Abrir</button>' +
         '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaRenomear(\'' + a.id + '\')">Renomear</button>' +
         '<button class="act" style="font-size:0.75rem;padding:4px 10px;background:#EEF2FF;border-color:#C7D2FE;color:#3730A3" title="Abre o painel de IA desta aula: gerar, editar, versionar e publicar resumo, questões, flashcards, podcast e mais" onclick="kbIaAbrir(\'' + a.id + '\')">🤖 IA da aula</button>' +
@@ -2278,6 +2280,100 @@ window.kbHtmlBadges = async function(){
   }
 };
 
+
+/* ---- Prévia, status detalhado e re-sincronização de uma aula ---- */
+async function kbAulaStatusBuscar(topico, forcar, previa){
+  return await kbPost('/api/public/aula-status', {
+    curso:'prf-2021', disciplina:kbDisc, topico:topico,
+    forcar: !!forcar, previa: !!previa
+  });
+}
+
+function kbAulaOverlay(titulo, corpo){
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px';
+  wrap.innerHTML = '<div style="background:#fff;border-radius:14px;width:min(1040px,100%);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 60px rgba(15,23,42,.35)">' +
+    '<div style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid #EEF1F6">' +
+      '<b style="flex:1;font-size:0.95rem">' + esc(titulo) + '</b>' +
+      '<button class="act" data-fechar="1" style="font-size:0.78rem;padding:4px 12px">Fechar</button>' +
+    '</div><div data-corpo="1" style="overflow:auto;padding:0"></div></div>';
+  wrap.addEventListener('click', function(ev){
+    if(ev.target === wrap || (ev.target.dataset && ev.target.dataset.fechar)) wrap.remove();
+  });
+  document.body.appendChild(wrap);
+  const corpoEl = wrap.querySelector('[data-corpo]');
+  if(typeof corpo === 'string') corpoEl.innerHTML = corpo; else if(corpo) corpoEl.appendChild(corpo);
+  return { wrap: wrap, corpo: corpoEl };
+}
+
+/* Mostra a aula renderizada igual à tela do aluno (mesmo iframe isolado). */
+window.kbAulaPrevia = async function(topico){
+  const modal = kbAulaOverlay('Prévia do aluno — ' + topico, '<p class="muted" style="padding:20px;font-size:0.85rem">Carregando a aula…</p>');
+  let st;
+  try{ st = await kbAulaStatusBuscar(topico, false, true); }
+  catch(e){ modal.corpo.innerHTML = '<p style="padding:20px;color:#B42318;font-size:0.85rem">' + esc(e.message || 'Não consegui carregar a aula.') + '</p>'; return; }
+  if(!st.previa){
+    modal.corpo.innerHTML = '<div style="padding:20px;font-size:0.85rem">' +
+      '<p style="color:#B42318;margin:0 0 8px"><b>O aluno não veria conteúdo nenhum.</b></p>' +
+      '<p class="muted" style="margin:0">Campo faltando: <code>' + esc(st.campoFaltando || '—') + '</code><br>' + esc(st.motivo || '') + '</p></div>';
+    return;
+  }
+  const barra = '<div style="padding:10px 18px;border-bottom:1px solid #EEF1F6;font-size:0.78rem;color:#475569">' +
+    'Formato <b>' + esc(st.formato || '—') + '</b> · ' + (st.caracteresVisiveis||0).toLocaleString('pt-BR') + ' caracteres visíveis · versão <code>' + esc(st.versao || '—') + '</code>' +
+    (st.naGrade ? '' : ' · <span style="color:#B42318">fora da grade do aluno</span>') + '</div>';
+  modal.corpo.innerHTML = barra + '<div id="kb-previa-box" style="padding:0"></div>';
+  const box = modal.corpo.querySelector('#kb-previa-box');
+  if(st.formato === 'html'){
+    const fr = document.createElement('iframe');
+    fr.setAttribute('sandbox','allow-scripts');
+    fr.style.cssText = 'width:100%;height:70vh;border:0;display:block;background:#fff';
+    fr.srcdoc = st.previa;
+    box.appendChild(fr);
+  } else {
+    box.innerHTML = '<div class="prose" style="padding:20px;font-size:0.92rem;line-height:1.7">' +
+      (window.PX && PX.kbHTML ? PX.kbHTML(st.previa) : esc(st.previa)) + '</div>';
+  }
+};
+
+/* Status detalhado: o que está salvo, qual versão e o que falta. */
+window.kbAulaStatus = async function(topico){
+  const modal = kbAulaOverlay('Status de publicação — ' + topico, '<p class="muted" style="padding:20px;font-size:0.85rem">Consultando…</p>');
+  function linha(rot, val){ return '<div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #F1F5F9"><span class="muted" style="min-width:190px">' + rot + '</span><span>' + val + '</span></div>'; }
+  async function pintar(forcar){
+    modal.corpo.innerHTML = '<p class="muted" style="padding:20px;font-size:0.85rem">' + (forcar ? 'Re-sincronizando…' : 'Consultando…') + '</p>';
+    let st;
+    try{ st = await kbAulaStatusBuscar(topico, forcar); }
+    catch(e){ modal.corpo.innerHTML = '<p style="padding:20px;color:#B42318">' + esc(e.message||'Falhou') + '</p>'; return; }
+    modal.corpo.innerHTML = '<div style="padding:18px;font-size:0.83rem">' +
+      '<p style="margin:0 0 12px;font-weight:700;color:' + (st.ok ? '#0F8F5F' : '#B42318') + '">' +
+        (st.ok ? '✅ O aluno está recebendo esta aula.' : '⚠️ O aluno NÃO está recebendo esta aula.') + '</p>' +
+      (st.ok ? '' : '<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:10px 12px;margin-bottom:12px">' +
+        '<b>Campo/registro faltando:</b> <code>' + esc(st.campoFaltando || '—') + '</code><br>' + esc(st.motivo || '') + '</div>') +
+      linha('Registro em aulas_ia', st.formato ? 'encontrado (formato <b>' + esc(st.formato) + '</b>)' : '<span style="color:#B42318">ausente</span>') +
+      linha('Versão do conteúdo', '<code>' + esc(st.versao || '—') + '</code>') +
+      linha('Tamanho', (st.caracteres||0).toLocaleString('pt-BR') + ' caracteres (' + (st.caracteresVisiveis||0).toLocaleString('pt-BR') + ' visíveis)') +
+      linha('Última atualização', st.atualizadoEm ? new Date(st.atualizadoEm).toLocaleString('pt-BR') : '—') +
+      linha('Tópico na grade do aluno', st.naGrade ? 'sim' : '<span style="color:#B42318">não (aula órfã)</span>') +
+      linha('Conteúdos de IA publicados', (st.recursos && st.recursos.length) ? st.recursos.map(esc).join(' · ') : '<span class="muted">nenhum</span>') +
+      linha('Cache do servidor', st.cacheLimpo ? 'limpo agora' : 'em uso') +
+      '<div style="display:flex;gap:8px;margin-top:16px">' +
+        '<button class="act primary" data-sync="1" style="font-size:0.78rem;padding:6px 12px">🔄 Forçar re-sincronização e atualizar cache</button>' +
+        '<button class="act" onclick="kbAulaPrevia(\'' + escJs(topico) + '\')" style="font-size:0.78rem;padding:6px 12px">👁 Prévia do aluno</button>' +
+      '</div></div>';
+    const b = modal.corpo.querySelector('[data-sync]');
+    if(b) b.onclick = function(){ pintar(true); toast('Cache da aula atualizado.'); };
+  }
+  pintar(false);
+};
+
+/* Botão direto na linha: publica e já derruba o cache do aluno. */
+window.kbAulaRessincronizar = async function(topico){
+  try{
+    const st = await kbAulaStatusBuscar(topico, true);
+    toast(st.ok ? 'Conteúdo re-sincronizado (versão ' + st.versao + ').' : 'Cache limpo, mas falta: ' + (st.campoFaltando||'—'));
+  }catch(e){ toast(e.message || 'Não consegui re-sincronizar.'); }
+};
+
 window.kbAulaHtmlPublicar = async function(topico){
   const msg = document.getElementById('kb-html-msg');
   try{
@@ -2285,8 +2381,9 @@ window.kbAulaHtmlPublicar = async function(topico){
     await kbPost('/api/public/aula-html', {
       curso:'prf-2021', disciplina:kbDisc, topico:topico, acao:'publicar'
     });
-    if(msg) msg.textContent = '✅ Aula publicada e disponível para o aluno.';
-    toast('Aula publicada para os alunos.');
+    const st = await kbAulaStatusBuscar(topico, true);
+    if(msg) msg.textContent = '✅ Aula publicada, cache atualizado (versão ' + (st.versao || '—') + ').';
+    toast('Aula publicada e sincronizada para os alunos.');
     kbAulasPaint();
   }catch(e){
     if(msg) msg.textContent = 'Erro: ' + (e.message || 'não consegui publicar.');
