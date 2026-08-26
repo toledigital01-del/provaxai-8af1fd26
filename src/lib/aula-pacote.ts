@@ -52,6 +52,33 @@ export type Versao = {
   updated_at: string
 }
 
+/* Questões REAIS extraídas de apostilas pelo administrador (origem='real').
+   Elas têm prioridade sobre itens inéditos gerados pela IA e nunca são
+   apagadas por gerações/publicações de IA. */
+export type QuestaoReal = {
+  enunciado: string
+  gabarito: string
+  comentario: string | null
+  banca: string | null
+  orgao: string | null
+  cargo: string | null
+  ano: number | null
+  nivel: string | null
+}
+
+export async function questoesReais(curso: string, disciplina: string, topico: string): Promise<QuestaoReal[]> {
+  try {
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/questions?course_slug=${eq(curso)}&discipline_nome=${eq(disciplina)}&topic_nome=${eq(topico)}&origem=eq.real&ativa=is.true&select=enunciado,gabarito,comentario,banca,orgao,cargo,ano,nivel&order=ano.desc.nullslast&limit=60`,
+      { headers: serviceHeaders() },
+    )
+    if (!r.ok) return []
+    return (await r.json()) as QuestaoReal[]
+  } catch {
+    return []
+  }
+}
+
 /* ---------- leitura de versões ---------- */
 
 export async function versoes(curso: string, disciplina: string, topico: string, tipo?: string): Promise<Versao[]> {
