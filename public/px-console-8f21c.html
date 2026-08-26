@@ -1166,6 +1166,14 @@ async function viewConhecimento(){
       <div class="kb-stat"><b>${(totalChars/1000).toFixed(1)} mil</b><span>Caracteres na base da IA</span></div>
     </div>
 
+    <div class="kb-block" style="margin-bottom:14px;padding:12px 18px">
+      <div id="kb-cob-resumo"></div>
+      <details style="margin-top:6px">
+        <summary class="muted" style="cursor:pointer;font-size:0.75rem">Ver cobertura detalhada por matéria</summary>
+        <div id="kb-visao" style="margin-top:8px"></div>
+      </details>
+    </div>
+
     <div style="margin-bottom:18px">
       <div id="kb-steps" class="kb-nav"></div>
       <p class="muted" id="kb-step-help" style="margin:10px 2px 0"></p>
@@ -1234,13 +1242,6 @@ async function viewConhecimento(){
       </div>
     </section>
 
-    <section data-step="cobertura">
-      <div class="kb-block">
-        <h3>Cobertura do edital</h3>
-        <p class="kb-sub">Como está cada matéria. Clique num cartão para editar o conteúdo dela.</p>
-        <div id="kb-visao"></div>
-      </div>
-    </section>
     </div>`;
   if (window.matchMedia('(max-width:820px)').matches)
     document.getElementById('kb-grid').style.gridTemplateColumns = '1fr';
@@ -1255,7 +1256,6 @@ const KB_STEPS = [
   ['edital', '1. Edital', 'Envie o PDF do edital e deixe a IA montar as matérias, tópicos e subtópicos do curso.'],
   ['conteudo', '2. Conteúdo', 'Selecione a matéria e o tópico, envie o material e use a IA para montar as aulas.'],
   ['revisao', '3. Revisar e publicar', 'Confira o que a IA escreveu e publique. Só o que estiver publicado chega ao aluno.'],
-  ['cobertura', 'Cobertura', 'Visão rápida do quanto de cada matéria já está publicado.'],
 ];
 function kbPaintSteps(pendentes){
   const nav = document.getElementById('kb-steps');
@@ -1755,7 +1755,7 @@ function kbTopicItems(){
 window.kbFiltroDisc = v => { kbQd = v; document.getElementById('kb-disc-list').innerHTML = kbDiscItems(); };
 window.kbFiltroTopic = v => { kbQt = v; document.getElementById('kb-topic-list').innerHTML = kbTopicItems(); };
 
-/* ---- Caixas (uma por matéria) na etapa de Conteúdo ---- */
+/* ---- Lista de matérias (modo lista único) na etapa de Conteúdo ---- */
 let KB_OPEN = false;
 function kbCardDisc(d){
   const tops = kbTopicList(d);
@@ -1764,13 +1764,15 @@ function kbCardDisc(d){
   const fontes = KB_LIB.filter(function(x){ return x.discipline_nome === d; }).length;
   const pct = tops.length ? Math.round(comAula / tops.length * 100) : (docs.length ? 100 : 0);
   const cor = pct >= 80 ? '#10B981' : pct > 0 ? '#F59E0B' : '#CBD5E1';
-  return '<button class="act" onclick="kbSelDisc(\'' + escJs(d) + '\')" style="display:block;text-align:left;border:1px solid #E9EDF3;border-radius:14px;padding:16px;background:#fff">' +
-    '<span style="display:block;font-size:0.88rem;font-weight:650;line-height:1.35;margin-bottom:4px">' + esc(d) + '</span>' +
-    '<span class="muted" style="display:block;font-size:0.75rem;font-weight:400;margin-bottom:12px">' + tops.length + ' tópicos · ' + fontes + ' documento(s)</span>' +
-    '<span style="display:flex;align-items:center;gap:8px">' +
-      '<span style="flex:1;height:6px;border-radius:99px;background:#EEF1F6;overflow:hidden"><span style="display:block;height:100%;width:' + pct + '%;background:' + cor + '"></span></span>' +
-      '<span style="font-size:0.75rem;font-weight:700;color:#475569">' + pct + '%</span>' +
+  return '<button class="act" onclick="kbSelDisc(\'' + escJs(d) + '\')" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid #E9EDF3;border-radius:10px;padding:10px 14px;background:#fff">' +
+    '<span style="flex:1;min-width:0">' +
+      '<span style="display:block;font-size:0.85rem;font-weight:650;line-height:1.3">' + esc(d) + '</span>' +
+      '<span class="muted" style="display:block;font-size:0.72rem;font-weight:400">' + tops.length + ' tópicos · ' + fontes + ' documento(s)</span>' +
     '</span>' +
+    '<span style="width:110px;height:6px;border-radius:99px;background:#EEF1F6;overflow:hidden;flex:none">' +
+      '<span style="display:block;height:100%;width:' + pct + '%;background:' + cor + '"></span></span>' +
+    '<span style="font-size:0.74rem;font-weight:700;color:#475569;width:38px;text-align:right;flex:none">' + pct + '%</span>' +
+    '<span class="muted" style="font-size:0.76rem;flex:none">Abrir →</span>' +
   '</button>';
 }
 function kbPaintCards(){
@@ -1778,7 +1780,7 @@ function kbPaintCards(){
   if(!box) return;
   const discs = kbDiscList();
   box.innerHTML = discs.length
-    ? '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:4px">' +
+    ? '<div style="display:grid;gap:8px;margin-top:4px">' +
         discs.map(kbCardDisc).join('') + '</div>'
     : '<p class="muted">Nenhuma matéria cadastrada — carregue o edital na etapa 1.</p>';
 }
@@ -1819,8 +1821,37 @@ function kbPaint(){
     kbListHTML(kbTopicItems(), 'kb-topic-list');
   kbEditor();
   if(typeof kbAutoGrow === 'function') kbAutoGrow(document.getElementById('kb-txt'));
+  kbPaintCobResumo();
   kbPaintVisao();
+  kbIaBadges();
   kbPaintFila();
+}
+
+/* Barra de cobertura fixa no topo da aba: resumo geral do edital. */
+function kbPaintCobResumo(){
+  const box = document.getElementById('kb-cob-resumo');
+  if(!box) return;
+  const discs = kbDiscList();
+  let topTot = 0, topPub = 0;
+  discs.forEach(function(d){
+    const tops = kbTopicList(d);
+    topTot += tops.length;
+    tops.forEach(function(t){
+      const doc = kbFind(d, t);
+      if(doc && kbStatusDoc(doc) === 'publicado' && (doc.conteudo||'').trim()) topPub++;
+    });
+  });
+  const docs = KB_DOCS.filter(function(x){ return (x.conteudo||'').trim(); }).length;
+  const pct = topTot ? Math.round(topPub / topTot * 100) : 0;
+  const cor = pct >= 80 ? '#10B981' : pct > 0 ? '#F59E0B' : '#CBD5E1';
+  box.innerHTML = '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+    '<b style="font-size:0.82rem">📊 Cobertura do edital</b>' +
+    '<span style="flex:1;min-width:120px;height:8px;border-radius:99px;background:#EEF1F6;overflow:hidden">' +
+      '<span style="display:block;height:100%;width:' + pct + '%;background:' + cor + ';border-radius:99px"></span></span>' +
+    '<span style="font-size:0.76rem;font-weight:700;color:#475569">' + pct + '%</span>' +
+    '<span class="muted" style="font-size:0.74rem">' + discs.length + ' matérias · ' + topPub + '/' + topTot +
+      ' tópicos publicados · ' + docs + ' conteúdos salvos</span>' +
+  '</div>';
 }
 
 window.kbPane = p => {
@@ -2945,15 +2976,15 @@ window.kbAulaCadastrar = async function(){
       kbPaint(); kbPane('aulas');
       kbAulaFilaPaint();
       if(publicar && KB_AULAS_CRIADAS.length){
-        prepPainel();
-        prepLog('Preparando o conteúdo de IA de ' + KB_AULAS_CRIADAS.length + ' aula(s) publicada(s)…', '#FDE68A');
+        toast('Preparando o conteúdo de IA de ' + KB_AULAS_CRIADAS.length + ' aula(s) publicada(s)…');
         (async function(){
           const lista = KB_AULAS_CRIADAS.slice();
+          let prontas = 0;
           for(let i=0;i<lista.length;i++){
-            prepLog('— ' + (i+1) + '/' + lista.length, '#64748B');
-            await kbPrepararAula(lista[i].disc, lista[i].topico);
+            if(await kbPrepararAula(lista[i].disc, lista[i].topico)) prontas++;
           }
-          prepLog('<b>Tudo pronto — o aluno já encontra aula, resumo, questões, flashcards e podcast salvos.</b>', '#FDE68A');
+          toast('Conteúdo de IA pronto em ' + prontas + '/' + lista.length + ' aula(s) — o aluno já encontra tudo salvo.');
+          kbIaBadges();
         })();
       }
       return kbAulaMsg(feitas + ' aula(s) cadastrada(s)' + (publicar ? ' e publicada(s).' : ' como rascunho.') +
@@ -3595,36 +3626,31 @@ window.kbPublicarDoc = async function(id, publicar){
 const PREP_ROTULO = { aula:'Aula com Athena IA', resumo:'Resumo inteligente', questoes:'Questões',
   flashcards:'Flashcards', lacunas:'Preencher espaços', podcast:'Podcast' };
 
-function prepPainel(){
-  let box = document.getElementById('kb-prep');
-  if(box) return box;
-  box = document.createElement('div');
-  box.id = 'kb-prep';
-  box.style.cssText = 'position:fixed;right:16px;bottom:16px;width:340px;max-height:60vh;overflow:auto;' +
-    'background:#0F172A;color:#E2E8F0;border-radius:12px;padding:12px 14px;font-size:0.78rem;z-index:9999;' +
-    'box-shadow:0 12px 32px rgba(15,23,42,.35);line-height:1.45';
-  box.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
-    '<b style="flex:1">Preparando conteúdo das aulas</b>' +
-    '<button onclick="this.parentNode.parentNode.remove()" style="background:none;border:0;color:#94A3B8;cursor:pointer;font-size:1rem">×</button>' +
-    '</div><div id="kb-prep-log"></div>';
-  document.body.appendChild(box);
-  return box;
-}
-function prepLog(txt, cor){
-  prepPainel();
-  const log = document.getElementById('kb-prep-log');
-  if(!log) return;
-  const l = document.createElement('div');
-  l.style.cssText = 'padding:2px 0;color:' + (cor || '#CBD5E1');
-  l.innerHTML = txt;
-  log.appendChild(l);
-  log.parentNode.scrollTop = log.parentNode.scrollHeight;
+/* Progresso inline: a geração aparece na própria linha da aula (sem painel flutuante). */
+let KB_PREP_AULA = null;
+function prepLog(txt){
+  const a = KB_PREP_AULA;
+  if(!a) return;
+  let span = null;
+  try{
+    const sel = window.CSS && CSS.escape ? CSS.escape(a) : a.replace(/"/g, '');
+    span = document.querySelector('#kb-aulas span.kb-ia-badge[data-topico="' + sel + '"]');
+  }catch(e){ span = null; }
+  if(!span) return;
+  const limpo = String(txt).replace(/<[^>]+>/g, '');
+  const erro = limpo.charAt(0) === '✕';
+  span.textContent = (erro ? '' : '⏳ ') + limpo;
+  span.style.cssText = erro
+    ? 'font-size:0.68rem;background:#FEF2F2;color:#B91C1C;border-color:#FECACA'
+    : 'font-size:0.68rem;background:#FFFBEB;color:#B45309;border-color:#FDE68A';
+  span.style.display = '';
 }
 
 /* Prepara todos os recursos de UMA aula. Devolve true se deu tudo certo. */
 window.kbPrepararAula = async function(disc, aula, regerar, silencioso){
   if(!disc || !aula) return false;
-  if(!silencioso) prepLog('<b>' + esc(disc) + ' › ' + esc(aula) + '</b>', '#93C5FD');
+  if(!silencioso){ KB_PREP_AULA = aula; prepLog('Preparando aula, resumo, questões, flashcards, lacunas e podcast…'); }
+  let ok = false;
   try{
     const r = await fetch('/api/public/kb-preparar', {
       method:'POST',
@@ -3632,16 +3658,17 @@ window.kbPrepararAula = async function(disc, aula, regerar, silencioso){
       body: JSON.stringify({ curso:'prf-2021', disciplina: disc, topico: aula, regerar: !!regerar })
     });
     const j = await r.json().catch(function(){ return {}; });
-    if(!r.ok){ prepLog('✕ ' + esc(j.error || ('falhou (' + r.status + ')')), '#FCA5A5'); return false; }
-    (j.resultados || []).forEach(function(it){
-      prepLog((it.ok ? '✓ ' : '✕ ') + (PREP_ROTULO[it.item] || it.item) + ' — ' + esc(it.detalhe),
-        it.ok ? '#86EFAC' : '#FCA5A5');
-    });
-    return !!j.ok;
+    if(!r.ok){ prepLog('✕ ' + String(j.error || ('falhou (' + r.status + ')'))); return false; }
+    const falhas = (j.resultados || []).filter(function(it){ return !it.ok; });
+    prepLog(falhas.length ? '✕ ' + (PREP_ROTULO[falhas[0].item] || falhas[0].item) + ' — ' + String(falhas[0].detalhe)
+                          : 'Conteúdo de IA pronto ✓');
+    ok = !!j.ok;
   }catch(e){
-    prepLog('✕ falha de conexão', '#FCA5A5');
-    return false;
+    prepLog('✕ falha de conexão');
   }
+  KB_PREP_AULA = null;
+  if(ok) kbIaBadges();
+  return ok;
 };
 
 /* Prepara, uma a uma, todas as aulas publicadas de uma matéria. */
@@ -3652,14 +3679,13 @@ window.kbPrepararDisc = async function(disc, regerar){
   if(!aulas.length) return alert('Não há aulas publicadas nesta matéria.');
   if(!confirm('Preparar o conteúdo de IA (aula, resumo, questões, flashcards, lacunas e podcast) de ' +
     aulas.length + ' aula(s) de ' + disc + '?\n\nIsso pode levar alguns minutos e é feito uma única vez.')) return;
-  prepPainel();
-  prepLog('Iniciando ' + aulas.length + ' aula(s) de ' + esc(disc) + '…', '#FDE68A');
+  toast('Preparando ' + aulas.length + ' aula(s) de ' + disc + '…');
   let ok = 0;
   for(let i=0;i<aulas.length;i++){
-    prepLog('— ' + (i+1) + '/' + aulas.length, '#64748B');
     if(await kbPrepararAula(disc, aulas[i].topico, regerar)) ok++;
   }
-  prepLog('<b>Concluído: ' + ok + '/' + aulas.length + ' aula(s) com tudo pronto.</b>', '#FDE68A');
+  toast('Concluído: ' + ok + '/' + aulas.length + ' aula(s) com tudo pronto.');
+  kbIaBadges();
   try{ await logAdmin('preparar_ia','knowledge_docs', null, { disciplina: disc, total: aulas.length }); }catch(e){}
 };
 
@@ -3677,12 +3703,12 @@ window.kbPublicarDisc = async function(d){
   await loadKB(); kbPaint();
   const b2 = document.getElementById('kb-fila-msg');
   if(b2) b2.textContent = pend.length + ' aula(s) de ' + d + ' publicadas. Preparando o conteúdo de IA…';
-  prepPainel();
-  prepLog('Preparando ' + pend.length + ' aula(s) recém-publicadas de ' + esc(d) + '…', '#FDE68A');
   for(let i=0;i<pend.length;i++){
-    if(pend[i].topico){ prepLog('— ' + (i+1) + '/' + pend.length, '#64748B'); await kbPrepararAula(d, pend[i].topico); }
+    if(pend[i].topico){ await kbPrepararAula(d, pend[i].topico); }
   }
-  prepLog('<b>Conteúdo pronto — o aluno já encontra tudo salvo.</b>', '#FDE68A');
+  if(b2) b2.textContent = 'Conteúdo pronto — o aluno já encontra tudo salvo.';
+  toast('Conteúdo pronto — o aluno já encontra tudo salvo.');
+  kbIaBadges();
 };
 window.kbDelete = async function(id){
   if(!confirm('Excluir este conteúdo da base?')) return;
@@ -4202,6 +4228,9 @@ function kbIaInfoLinha(tipo, v){
 }
 
 /* ---------- selo de IA na linha de cada aula ---------- */
+/* Badges inline na linha de cada aula: uma bolinha por artefato de IA.
+   Verde = publicado, azul = gerado (rascunho), cinza = pendente. */
+const KB_IA6 = ['aula','summary','questions','flashcards','lacunas','podcast'];
 window.kbIaBadges = async function(){
   const spans = Array.prototype.slice.call(document.querySelectorAll('.kb-ia-badge'));
   if(!spans.length || !kbDisc) return;
@@ -4219,14 +4248,23 @@ window.kbIaBadges = async function(){
     (r.publicado ? t.pub : t.ras)[r.tipo] = true;
   });
   spans.forEach(function(s){
-    const t = porTopico[s.dataset.topico];
-    if(!t){ s.textContent = '⚠ IA não preparada'; s.style.cssText = 'font-size:0.68rem;background:#F1F5F9;color:#64748B;border-color:#E2E8F0'; s.style.display = ''; return; }
-    const pubs = Object.keys(t.pub).length;
-    const soRascunho = Object.keys(t.ras).filter(function(x){ return !t.pub[x]; }).length;
-    if(pubs >= 8){ s.textContent = '🤖 IA pronta'; s.style.cssText = 'font-size:0.68rem;background:#ECFDF5;color:#047857;border-color:#A7F3D0'; }
-    else if(soRascunho > 0){ s.textContent = '📝 IA com rascunhos'; s.style.cssText = 'font-size:0.68rem;background:#FFFBEB;color:#B45309;border-color:#FDE68A'; }
-    else if(pubs > 0){ s.textContent = '🤖 IA ' + pubs + '/10'; s.style.cssText = 'font-size:0.68rem;background:#EEF2FF;color:#3730A3;border-color:#C7D2FE'; }
-    else { s.textContent = '⚠ IA não preparada'; s.style.cssText = 'font-size:0.68rem;background:#F1F5F9;color:#64748B;border-color:#E2E8F0'; }
+    const t = porTopico[s.dataset.topico] || { pub:{}, ras:{} };
+    let pubs = 0, rasc = 0;
+    const dots = KB_IA6.map(function(tp){
+      const mo = kbIaMeta(tp);
+      const pub = !!t.pub[tp], ras = !!t.ras[tp];
+      if(pub) pubs++; else if(ras) rasc++;
+      const cor = pub ? '#10B981' : ras ? '#2563EB' : '#CBD5E1';
+      const st = pub ? 'publicado' : ras ? 'gerado (rascunho)' : 'pendente';
+      return '<span title="' + esc(mo.rotulo) + ': ' + st + '" style="width:9px;height:9px;border-radius:99px;background:' + cor + ';display:inline-block"></span>';
+    }).join('');
+    s.innerHTML = '<span style="display:inline-flex;gap:3px;align-items:center;vertical-align:middle">' + dots + '</span>' +
+      '<span style="margin-left:5px">' + (pubs ? pubs + '/6 no ar' : rasc ? rasc + ' rascunho(s)' : 'IA não preparada') + '</span>';
+    s.style.cssText = pubs === 6
+      ? 'font-size:0.68rem;background:#ECFDF5;color:#047857;border-color:#A7F3D0'
+      : pubs > 0 ? 'font-size:0.68rem;background:#EEF2FF;color:#3730A3;border-color:#C7D2FE'
+      : rasc > 0 ? 'font-size:0.68rem;background:#FFFBEB;color:#B45309;border-color:#FDE68A'
+      : 'font-size:0.68rem;background:#F1F5F9;color:#64748B;border-color:#E2E8F0';
     s.style.display = '';
   });
 };
@@ -4269,12 +4307,6 @@ window.kbIaAbrir = function(aulaId){
     +   '<div style="flex:1;min-width:220px">'
     +     '<div style="font-weight:800;font-size:1rem">🤖 IA DA AULA — Aula ' + String(IA_AULA.ordem).padStart(2,'0') + ' · ' + esc(IA_AULA.nome) + '</div>'
     +     '<div class="muted" style="font-size:0.75rem" id="ia-hdr">' + esc(kbDisc) + ' · pacote de conteúdo inteligente</div>'
-    +   '</div>'
-    +   '<div id="ia-tabs" style="display:flex;gap:6px">'
-    +     ['config|⚙ Configuração','conteudos|📦 Conteúdos gerados','publicacao|🚀 Publicação'].map(function(t){
-          const p = t.split('|');
-          return '<button class="act" data-tab="'+p[0]+'" style="font-size:0.78rem;padding:6px 12px" onclick="kbIaTab(\''+p[0]+'\')">'+p[1]+'</button>';
-        }).join('')
     +   '</div>'
     +   '<button class="act" onclick="kbIaFechar()">Fechar</button>'
     + '</div>'
@@ -4324,12 +4356,6 @@ function kbIaStatusTag(m){
 function kbIaPaint(){
   const body = document.getElementById('ia-body');
   if(!body || !IA_AULA) return;
-  Array.prototype.forEach.call(document.querySelectorAll('#ia-tabs .act'), function(b){
-    const on = b.dataset.tab === IA_TAB;
-    b.style.background = on ? '#1E3A8A' : '#fff';
-    b.style.color = on ? '#fff' : '';
-    b.style.borderColor = on ? '#1E3A8A' : '';
-  });
   const doc = kbFind(IA_AULA.disc || kbDisc, IA_AULA.nome) || null;
   const pdf = kbPdfDaAula(IA_AULA);
   const ultima = (function(){
@@ -4340,9 +4366,25 @@ function kbIaPaint(){
   const hdr = document.getElementById('ia-hdr');
   if(hdr) hdr.textContent = kbDisc + ' · ' + (pdf ? 'PDF: ' + pdf.split('/').pop() : 'material em texto') + ' · última atualização IA: ' + ultima;
 
-  if(IA_TAB === 'config') return kbIaPaintConfig(body, doc, pdf);
-  if(IA_TAB === 'conteudos') return kbIaPaintConteudos(body);
-  return kbIaPaintPublicacao(body);
+  /* Painel único e vertical: configuração (recolhível) → 1 bloco por artefato → publicação. */
+  const tmp = document.createElement('div');
+  kbIaPaintConfig(tmp, doc, pdf);
+  const cfgHtml = tmp.innerHTML;
+  tmp.innerHTML = '';
+  kbIaPaintConteudos(tmp);
+  const conHtml = tmp.innerHTML;
+  tmp.innerHTML = '';
+  kbIaEditorialHtml(tmp);
+  const edHtml = tmp.innerHTML;
+  body.innerHTML = '<div style="max-width:920px;margin:0 auto;display:grid;gap:14px">'
+    + '<details style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:2px 18px">'
+    +   '<summary style="cursor:pointer;font-weight:800;padding:12px 0;font-size:0.88rem">⚙ Configuração da geração '
+    +     '<span class="muted" style="font-weight:400;font-size:0.74rem">— material-fonte, instruções, módulos e questões</span></summary>'
+    +   cfgHtml
+    + '</details>'
+    + conHtml
+    + edHtml
+    + '</div>';
 }
 
 /* ---------- ABA 1 — CONFIGURAÇÃO ---------- */
@@ -4480,7 +4522,11 @@ function kbIaPaintConteudos(body){
               + '<button class="act" style="font-size:0.72rem" onclick="kbIaSub(\''+mo.tipo+'\',\'melhorar\')">Melhorar com IA</button>'
               + '<button class="act" style="font-size:0.72rem" onclick="kbIaSub(\''+mo.tipo+'\',\'acrescentar\')">Acrescentar</button>'
               + '<button class="act" style="font-size:0.72rem" onclick="kbIaSub(\''+mo.tipo+'\',\'regenerar\')">Regenerar</button>'
-              + '<button class="act" style="font-size:0.72rem" onclick="kbIaHistorico(\''+mo.tipo+'\')">Histórico</button>'
+              + (m.atual && (!m.publicado || m.atual.versao > m.publicado.versao)
+                  ? '<button class="act primary" style="font-size:0.72rem" onclick="kbIaPublicar(\''+mo.tipo+'\')">Publicar v'+m.atual.versao+'</button>'
+                  : '')
+              + (m.publicado ? '<button class="act" style="font-size:0.72rem" onclick="kbIaDespublicar(\''+mo.tipo+'\')">Despublicar</button>' : '')
+              + '<button style="background:none;border:0;color:#64748B;font-size:0.72rem;cursor:pointer;text-decoration:underline;padding:3px 2px" onclick="kbIaHistorico(\''+mo.tipo+'\')">ver versões anteriores'+(m.totalVersoes>1?' ('+m.totalVersoes+')':'')+'</button>'
             : '<button class="act primary ia-gerar-um" data-tipo="'+mo.tipo+'" style="font-size:0.72rem" onclick="kbIaGerarUm(\''+mo.tipo+'\',this)">Gerar agora</button>')
         + '</div>'
         + (v ? '<div class="muted" style="font-size:0.74rem;margin-top:6px">'+kbIaInfoLinha(mo.tipo, v)+'</div>' : '')
@@ -4701,50 +4747,40 @@ window.kbIaRestaurar = async function(tipo, versaoId){
 };
 
 /* ---------- ABA 3 — PUBLICAÇÃO ---------- */
-function kbIaPaintPublicacao(body){
-  const linhas = IA_MODULOS.map(function(mo){
-    const m = kbIaMod(mo.tipo);
-    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #F1F5F9;flex-wrap:wrap">'
-      + '<span style="font-weight:700;font-size:0.86rem;min-width:190px">'+mo.icon+' '+mo.rotulo+'</span>'
-      + kbIaStatusTag(m)
-      + '<span style="flex:1"></span>'
-      + (m.atual && (!m.publicado || m.atual.versao > m.publicado.versao)
-          ? '<button class="act primary" style="font-size:0.74rem" onclick="kbIaPublicar(\''+mo.tipo+'\')">Publicar v'+m.atual.versao+'</button>'
-          : '')
-      + (m.publicado ? '<button class="act" style="font-size:0.74rem" onclick="kbIaDespublicar(\''+mo.tipo+'\')">Despublicar</button>' : '')
-      + '</div>';
-  }).join('');
+/* ---------- PUBLICAÇÃO + EDITORIAL (bloco único no fim do painel) ---------- */
+function kbIaEditorialHtml(body){
   const ed = (IA_DADOS && IA_DADOS.editorial) || { status:'rascunho', versao_rotulo:'v1.0' };
   const sts = (IA_DADOS && IA_DADOS.statusEditorial) || [
     {valor:'rascunho',rotulo:'Rascunho'},{valor:'em_revisao',rotulo:'Em revisão'},{valor:'revisado',rotulo:'Revisado'},
     {valor:'aprovado',rotulo:'Aprovado'},{valor:'publicado',rotulo:'Publicado'},{valor:'desatualizado',rotulo:'Desatualizado'}];
-  const editorialHtml = '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 18px;margin-bottom:14px">'
-    + '<div style="font-weight:800;margin-bottom:4px">Controle editorial da aula</div>'
-    + '<div class="muted" style="font-size:0.8rem;margin-bottom:10px">Registro pedagógico da aula: em que etapa da revisão ela está, qual versão está no ar e quando precisa ser reconferida.</div>'
-    + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px">'
-    +   '<div><label class="muted" style="font-size:0.74rem">Status</label><select id="ia-ed-status" style="width:100%">'
-    +     sts.map(function(o){ return '<option value="'+o.valor+'"'+(ed.status===o.valor?' selected':'')+'>'+o.rotulo+'</option>'; }).join('')
-    +   '</select></div>'
-    +   '<div><label class="muted" style="font-size:0.74rem">Versão editorial</label><input id="ia-ed-versao" style="width:100%" value="'+esc(ed.versao_rotulo||'v1.0')+'"></div>'
-    +   '<div><label class="muted" style="font-size:0.74rem">Próxima revisão</label><input id="ia-ed-revisao" type="date" style="width:100%" value="'+esc(ed.proxima_revisao||'')+'"></div>'
-    + '</div>'
-    + '<div style="margin-top:10px"><label class="muted" style="font-size:0.74rem">Observações do revisor</label>'
-    +   '<textarea id="ia-ed-obs" rows="2" style="width:100%;font-size:0.84rem">'+esc(ed.observacoes||'')+'</textarea></div>'
-    + '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
-    +   '<button class="act primary" style="font-size:0.78rem" onclick="kbIaSalvarEditorial(false)">Salvar status</button>'
-    +   '<button class="act" style="font-size:0.78rem" onclick="kbIaSalvarEditorial(true)">✓ Marcar como conferida hoje</button>'
-    +   '<span class="muted" style="font-size:0.74rem">Última conferência: '+(ed.ultima_verificacao ? new Date(ed.ultima_verificacao).toLocaleDateString('pt-BR') : '—')+'</span>'
-    + '</div></div>';
-  body.innerHTML = '<div style="max-width:760px;margin:0 auto">'
-    + editorialHtml
-    + '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 18px">'
-    + '<div style="font-weight:800;margin-bottom:4px">Publicação para os alunos</div>'
+  body.innerHTML = '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 18px">'
+    + '<div style="font-weight:800;margin-bottom:4px">🚀 Publicação para os alunos</div>'
     + '<div class="muted" style="font-size:0.8rem;margin-bottom:10px">Só o que está <b>publicado</b> aparece no painel do aluno e entra no contexto da Athena. Rascunhos ficam visíveis apenas aqui.</div>'
-    + linhas
-    + '<div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
-    +   '<button class="act primary" style="padding:10px 18px;font-size:0.86rem" onclick="kbIaPublicarTudo()">🚀 PUBLICAR TODOS OS CONTEÚDOS APROVADOS</button>'
+    + '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
+    +   '<button class="act primary" style="padding:10px 18px;font-size:0.86rem" onclick="kbIaPublicarTudo()">Publicar todos os conteúdos aprovados</button>'
     +   '<span class="muted" style="font-size:0.75rem">Publica a versão mais recente de cada módulo que ainda está em rascunho.</span>'
-    + '</div></div></div>';
+    + '</div>'
+    + '<details style="margin-top:12px;border-top:1px solid #F1F5F9;padding-top:10px">'
+    +   '<summary class="muted" style="cursor:pointer;font-size:0.78rem">Controle editorial (status, versão, próxima revisão)</summary>'
+    +   '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:10px">'
+    +     '<div><label class="muted" style="font-size:0.74rem">Status</label><select id="ia-ed-status" style="width:100%">'
+    +       sts.map(function(o){ return '<option value="'+o.valor+'"'+(ed.status===o.valor?' selected':'')+'>'+o.rotulo+'</option>'; }).join('')
+    +     '</select></div>'
+    +     '<div><label class="muted" style="font-size:0.74rem">Versão editorial</label><input id="ia-ed-versao" style="width:100%" value="'+esc(ed.versao_rotulo||'v1.0')+'"></div>'
+    +     '<div><label class="muted" style="font-size:0.74rem">Próxima revisão</label><input id="ia-ed-revisao" type="date" style="width:100%" value="'+esc(ed.proxima_revisao||'')+'"></div>'
+    +   '</div>'
+    +   '<div style="margin-top:10px"><label class="muted" style="font-size:0.74rem">Observações do revisor</label>'
+    +     '<textarea id="ia-ed-obs" rows="2" style="width:100%;font-size:0.84rem">'+esc(ed.observacoes||'')+'</textarea></div>'
+    +   '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
+    +     '<button class="act primary" style="font-size:0.78rem" onclick="kbIaSalvarEditorial(false)">Salvar status</button>'
+    +     '<button class="act" style="font-size:0.78rem" onclick="kbIaSalvarEditorial(true)">✓ Marcar como conferida hoje</button>'
+    +     '<span class="muted" style="font-size:0.74rem">Última conferência: '+(ed.ultima_verificacao ? new Date(ed.ultima_verificacao).toLocaleDateString('pt-BR') : '—')+'</span>'
+    +   '</div>'
+    + '</details></div>';
+}
+function kbIaPaintPublicacao(body){
+  body.innerHTML = '<div style="max-width:760px;margin:0 auto"></div>';
+  kbIaEditorialHtml(body.firstChild);
 }
 window.kbIaSalvarEditorial = async function(conferida){
   const v = function(id){ const e = document.getElementById(id); return e ? e.value : ''; };
