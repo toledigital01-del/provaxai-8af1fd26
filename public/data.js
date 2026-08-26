@@ -209,19 +209,55 @@ window.aulaNumero = aulaNumero;
 window.aulaTitulo = aulaTitulo;
 window.aulaLabel = aulaLabel;
 
+/* ---------- Módulos: agrupamento das aulas dentro de uma disciplina ----------
+   O painel administrativo pode marcar cada tópico com um "Módulo" (texto) e
+   uma "Ordem do módulo" (número). Quem não tem módulo cai em um grupo sem
+   cabeçalho, exibido por último — a ordem das aulas dentro do módulo continua
+   sendo a numeração que já existe hoje. */
+let AULA_MODULO = (function(){
+  try { return JSON.parse(localStorage.getItem('px_modulos_v1')) || {}; } catch(e) { return {}; }
+})();
+function aulaModulo(disc, nome) {
+  const m = (AULA_MODULO[disc] || {})[nome];
+  if (!m || !m.nome) return null;
+  return { nome: m.nome, ordem: typeof m.ordem === 'number' ? m.ordem : 999 };
+}
+/* Recebe a lista já ordenada de itens e devolve [{ modulo, ordem, itens }]. */
+function agruparPorModulo(disc, itens, nomeDe) {
+  const chave = nomeDe || function(x){ return typeof x === 'string' ? x : x.name; };
+  const grupos = [];
+  const idx = {};
+  itens.forEach(function(it){
+    const m = aulaModulo(disc, chave(it));
+    const k = m ? m.nome : '';
+    if (!(k in idx)) { idx[k] = grupos.length; grupos.push({ modulo: k, ordem: m ? m.ordem : 9999, itens: [] }); }
+    grupos[idx[k]].itens.push(it);
+  });
+  grupos.sort(function(a,b){
+    if (!a.modulo) return 1;
+    if (!b.modulo) return -1;
+    return (a.ordem - b.ordem) || a.modulo.localeCompare(b.modulo, 'pt-BR');
+  });
+  return grupos;
+}
+window.aulaModulo = aulaModulo;
+window.agruparPorModulo = agruparPorModulo;
+
 /* O painel administrativo pode reordenar/renomear as aulas a qualquer momento:
    quando px-auth.js atualiza o cache, recarregamos currículo + numeração e
    avisamos a tela para redesenhar (window.pxRerender). */
 function pxRecarregarCurriculo(){
   try { AULA_ORDEM = JSON.parse(localStorage.getItem('px_aulas_v1')) || {}; } catch(e) { AULA_ORDEM = {}; }
+  try { AULA_MODULO = JSON.parse(localStorage.getItem('px_modulos_v1')) || {}; } catch(e) { AULA_MODULO = {}; }
   aplicarCurriculoDoBanco();
   if (typeof window.pxRerender === 'function') { try { window.pxRerender(); } catch(e) {} }
 }
 window.pxRecarregarCurriculo = pxRecarregarCurriculo;
 window.addEventListener('px:curriculo', pxRecarregarCurriculo);
 window.addEventListener('storage', function(e){
-  if (e && (e.key === 'px_aulas_v1' || e.key === 'px_curriculo_v1')) pxRecarregarCurriculo();
+  if (e && (e.key === 'px_aulas_v1' || e.key === 'px_modulos_v1' || e.key === 'px_curriculo_v1')) pxRecarregarCurriculo();
 });
+
 
 
 
