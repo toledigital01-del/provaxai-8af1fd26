@@ -31,7 +31,8 @@ export async function lerRecurso<T = unknown>(
   }
 }
 
-/** Guarda (ou substitui) um recurso preparado da aula. Best-effort. */
+/** Guarda (ou substitui) um recurso preparado da aula.
+    Devolve true só quando o POST responde ok; registra erros no console. */
 export async function salvarRecurso(
   curso: string,
   disciplina: string,
@@ -39,13 +40,16 @@ export async function salvarRecurso(
   tipo: string,
   dados: unknown,
   modelo?: string | null,
-) {
+): Promise<boolean> {
+  const alvo = filtro(curso, disciplina, topico, tipo)
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/aula_recursos?${filtro(curso, disciplina, topico, tipo)}`, {
+    const del = await fetch(`${SUPABASE_URL}/rest/v1/aula_recursos?${alvo}`, {
       method: 'DELETE',
       headers: serviceHeaders({ Prefer: 'return=minimal' }),
     })
-    await fetch(`${SUPABASE_URL}/rest/v1/aula_recursos`, {
+    if (!del.ok)
+      console.error(`[salvarRecurso] DELETE falhou (${tipo}):`, del.status, await del.text().catch(() => ''))
+    const post = await fetch(`${SUPABASE_URL}/rest/v1/aula_recursos`, {
       method: 'POST',
       headers: serviceHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
       body: JSON.stringify({
@@ -57,7 +61,13 @@ export async function salvarRecurso(
         modelo: modelo || null,
       }),
     })
-  } catch {
-    /* cache é best-effort */
+    if (!post.ok) {
+      console.error(`[salvarRecurso] POST falhou (${tipo}):`, post.status, await post.text().catch(() => ''))
+      return false
+    }
+    return true
+  } catch (e) {
+    console.error(`[salvarRecurso] erro inesperado (${tipo}):`, e)
+    return false
   }
 }
