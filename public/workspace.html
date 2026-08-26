@@ -441,11 +441,12 @@ function renderResumo(p) {
       <button id="rz-new">Gerar novamente</button>
     </div>
     <div class="prose" id="rz-body">${body}</div>
-    ${['revisao', 'pontos', 'pegadinhas'].filter(k => rzExtras[k]).map(k => `
-      <details style="margin-top:14px;border:1px solid var(--line,#e2e8f0);border-radius:12px;padding:10px 14px;background:#fff">
-        <summary style="cursor:pointer;font-weight:700;font-size:0.86rem">${k === 'revisao' ? '🧠 Revisão aprofundada' : k === 'pontos' ? '📌 Pontos-chave' : '⚠️ Pegadinhas de prova'} <span style="font-weight:400;color:var(--muted)">— preparado pelo professor</span></summary>
-        <div class="prose" style="margin-top:10px">${PX.kbHTML(rzExtras[k])}</div>
-      </details>`).join('')}
+    ${['revisao', 'pontos', 'pegadinhas'].filter(k => rzExtras[k]).map(k => PX.kbCallout(
+      k,
+      k === 'revisao' ? 'Revisão aprofundada' : k === 'pontos' ? 'Pontos-chave' : 'Pegadinhas de prova',
+      rzExtras[k]
+    )).join('')}
+
   </div>`;
   mountScopePicker();
   document.getElementById('rz-gap').onclick = () => { rzGap = !rzGap; renderPane(); };
