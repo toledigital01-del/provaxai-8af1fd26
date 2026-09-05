@@ -1,5 +1,14 @@
 /* Dados compartilhados: materiais, disciplinas, tópicos e helpers do workspace */
 
+/* limpeza única do currículo antigo salvo no navegador */
+try {
+  if (localStorage.getItem('px_curriculo_reset') !== 'v2') {
+    localStorage.removeItem('px_curriculo_v1');
+    localStorage.setItem('px_curriculo_reset', 'v2');
+  }
+} catch (e) {}
+
+
 const TOPICS = {};
 
 
