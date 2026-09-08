@@ -147,6 +147,19 @@ const TABS = [
   ['financeiro','Financeiro'],['planos','Planos e cupons'],['ia','Athena IA'],
   ['suporte','Suporte'],['logs','Logs'],['config','Central de IA']
 ];
+const TAB_LABEL = {}; TABS.forEach(([id,l]) => { TAB_LABEL[id] = l; });
+
+/* Navegação em 2 níveis: grupos no topo, sub-abas dentro do grupo. */
+const GRUPOS = [
+  ['visao','Visão geral',['geral']],
+  ['conteudo_g','Conteúdo',['conhecimento','cursos','conteudo']],
+  ['athena_g','Athena',['rag','ia','config']],
+  ['alunos_g','Alunos',['alunos','suporte']],
+  ['financeiro_g','Financeiro',['financeiro','planos']],
+  ['sistema_g','Sistema',['logs']],
+];
+const grupoDaAba = id => (GRUPOS.find(g => g[2].includes(id)) || GRUPOS[0])[0];
+
 let tab = location.hash.replace('#','') || 'geral';
 const view = document.getElementById('view');
 const money = c => 'R$ ' + ((c || 0) / 100).toFixed(2).replace('.', ',');
@@ -154,10 +167,18 @@ const dt = s => s ? new Date(s).toLocaleDateString('pt-BR') : '—';
 const esc = s => String(s == null ? '' : s).replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
 
 function renderTabs(){
-  document.getElementById('tabs').innerHTML = TABS.map(([id,l]) =>
-    `<button class="${id===tab?'on':''}" onclick="go('${id}')">${l}</button>`).join('');
+  const atual = grupoDaAba(tab);
+  const g = GRUPOS.find(x => x[0] === atual);
+  const topo = GRUPOS.map(([gid,label,itens]) =>
+    `<button class="${gid===atual?'on':''}" onclick="go('${itens[0]}')">${label}</button>`).join('');
+  const sub = (g && g[2].length > 1)
+    ? `<div class="subtabs">${g[2].map(id =>
+        `<button class="${id===tab?'on':''}" onclick="go('${id}')">${TAB_LABEL[id]}</button>`).join('')}</div>`
+    : '';
+  document.getElementById('tabs').innerHTML = `<div class="tabs-main">${topo}</div>${sub}`;
 }
 function go(id){ tab = id; location.hash = id; renderTabs(); render(); }
+
 
 async function logAdmin(acao, alvo_tipo, alvo_id, detalhes){
   await PX.sb.from('admin_logs').insert({ admin_id: PX.user.id, acao, alvo_tipo, alvo_id: alvo_id || null, detalhes: detalhes || {} });
