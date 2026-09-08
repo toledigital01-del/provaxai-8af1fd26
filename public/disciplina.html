@@ -132,7 +132,7 @@ function topicHref(name) {
   const nome = last.topic;
   const t = info.topics.find(x => x.name === nome);
   document.getElementById('cont-panel').style.display = '';
-  document.getElementById('cont-topic').textContent = aulaLabel(disc, nome);
+  document.getElementById('cont-topic').textContent = aulaLabelCompleto(disc, nome);
   document.getElementById('cont-sub').textContent = `Última aula aberta · ${disc}`;
 
   const fill = document.getElementById('cont-fill');
