@@ -197,6 +197,33 @@ function renderTabs(){
 }
 function go(id){ tab = id; location.hash = id; renderTabs(); render(); }
 
+/* Menu "⋯" (mais opções) reutilizável em linhas de lista. */
+window.pxMoreFechar = function(){
+  document.querySelectorAll('.px-more.open').forEach(function(el){
+    el.classList.remove('open');
+    const p = el.querySelector('.px-more-pop');
+    if(p) p.removeAttribute('style');
+  });
+};
+window.pxMore = function(btn, ev){
+  if(ev) ev.stopPropagation();
+  const wrap = btn.closest('.px-more');
+  const aberto = wrap.classList.contains('open');
+  pxMoreFechar();
+  if(aberto) return;
+  wrap.classList.add('open');
+  const pop = wrap.querySelector('.px-more-pop');
+  const r = btn.getBoundingClientRect();
+  /* posição fixa: não é cortada por containers com overflow hidden */
+  pop.style.position = 'fixed';
+  pop.style.top = (r.bottom + 4) + 'px';
+  pop.style.right = Math.max(8, window.innerWidth - r.right) + 'px';
+  pop.style.left = 'auto';
+};
+document.addEventListener('click', function(e){ if(!e.target.closest('.px-more')) pxMoreFechar(); });
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape') pxMoreFechar(); });
+
+
 
 async function logAdmin(acao, alvo_tipo, alvo_id, detalhes){
   await PX.sb.from('admin_logs').insert({ admin_id: PX.user.id, acao, alvo_tipo, alvo_id: alvo_id || null, detalhes: detalhes || {} });
