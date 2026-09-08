@@ -335,7 +335,7 @@ document.getElementById('crumb').innerHTML =
   (allDiscs.length > 1 ? `<a href="disciplinas.html?${base}">${title}</a>` : `<span>${title}</span>`) +
   (scope === 'geral' ? '' :
     `<span class="sep">/</span><a href="${discHref}">${disc}</a>` +
-    (scope === 'topico' ? `<span class="sep">/</span><span>${aulaLabel(disc, topic)}</span>` : ''));
+    (scope === 'topico' ? `<span class="sep">/</span><span>${aulaLabelCompleto(disc, topic)}</span>` : ''));
 
 const stats = topicStats(scope === 'topico' ? topic : disc);
 const sm = STATUS_META[stats.status];

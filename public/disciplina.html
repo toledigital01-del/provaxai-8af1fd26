@@ -159,7 +159,10 @@ function rowHTML(t) {
         <input type="checkbox" class="px-check" data-t="${encodeURIComponent(t.name)}" ${mk.done ? 'checked' : ''} title="Marcar como estudado">
         <a class="tlink" href="${topicHref(t.name)}">
           <span class="dot">${dotHTML(t.st)}</span>
-          <span class="tname">${aulaLabel(disc, t.name)}</span>
+          <span class="tname">
+            <span class="tnum">${(function(){ const n = aulaNumero(disc, t.name); return n === null ? '' : 'Aula ' + n; })()}</span>
+            <span class="ttitle">${aulaTitulo(t.name)}</span>
+          </span>
         </a>
         <span class="tstatus">${mk.done ? 'Estudado' : s.label}</span>
       </span>
