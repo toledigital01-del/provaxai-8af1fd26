@@ -2337,15 +2337,20 @@ function kbAulasPaint(){
         '<span class="kb-tag kb-ia-badge" data-topico="' + esc(a.nome).replace(/"/g,'&quot;') + '" style="display:none"></span>' +
         '<span class="kb-tag kb-html-badge" data-topico="' + esc(a.nome).replace(/"/g,'&quot;') + '" style="display:none;background:#FDF2F8;color:#9D174D;border-color:#FBCFE8" title="Esta aula é uma página HTML pronta, colada manualmente — não passa pela geração automática de IA.">HTML pronto</span>' +
         '<button class="act primary kb-html-publish" data-topico="' + esc(a.nome).replace(/"/g,'&quot;') + '" style="display:none;font-size:0.75rem;padding:4px 10px" onclick="kbAulaHtmlPublicar(\'' + escJs(a.nome) + '\')">Publicar</button>' +
-        '<button class="act" style="font-size:0.75rem;padding:4px 10px" title="Ver a aula exatamente como o aluno vê" onclick="kbAulaPrevia(\'' + escJs(a.nome) + '\')">👁 Prévia do aluno</button>' +
-        '<button class="act" style="font-size:0.75rem;padding:4px 10px" title="Status detalhado de publicação e versão entregue ao aluno" onclick="kbAulaStatus(\'' + escJs(a.nome) + '\')">Status</button>' +
-        '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaAbrir(\'' + escJs(a.nome) + '\')">Abrir</button>' +
-        '<button class="act" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaRenomear(\'' + a.id + '\')">Renomear</button>' +
-        '<button class="act" style="font-size:0.75rem;padding:4px 10px" title="Definir o módulo (agrupamento) e a ordem do módulo desta aula" onclick="kbAulaModuloEditar(\'' + a.id + '\')">' + (a.modulo ? '📁 ' + esc(a.modulo) : '📁 Módulo') + '</button>' +
-        '<button class="act" style="font-size:0.75rem;padding:4px 10px;background:#EEF2FF;border-color:#C7D2FE;color:#3730A3" title="Abre o painel de IA desta aula: gerar, editar, versionar e publicar resumo, questões, flashcards, podcast e mais" onclick="kbIaAbrir(\'' + a.id + '\')">🤖 IA da aula</button>' +
-        '<button class="act primary" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaEditar(\'' + a.id + '\')">Editar aula</button>' +
+        '<button class="act" style="font-size:0.85rem;padding:4px 9px;line-height:1" title="Ver a aula exatamente como o aluno vê" onclick="kbAulaPrevia(\'' + escJs(a.nome) + '\')">👁</button>' +
+        '<button class="act primary" style="font-size:0.75rem;padding:4px 12px" onclick="kbAulaEditar(\'' + a.id + '\')">Editar aula</button>' +
+        '<span class="px-more">' +
+          '<button class="act" title="Mais opções" onclick="pxMore(this,event)">⋯</button>' +
+          '<div class="px-more-pop">' +
+            '<button onclick="pxMoreFechar();kbAulaStatus(\'' + escJs(a.nome) + '\')">Status de publicação</button>' +
+            '<button onclick="pxMoreFechar();kbAulaAbrir(\'' + escJs(a.nome) + '\')">Abrir</button>' +
+            '<button onclick="pxMoreFechar();kbAulaRenomear(\'' + a.id + '\')">Renomear</button>' +
+            '<button onclick="pxMoreFechar();kbAulaModuloEditar(\'' + a.id + '\')">' + (a.modulo ? '📁 Módulo: ' + esc(a.modulo) : '📁 Definir módulo') + '</button>' +
+            '<button onclick="pxMoreFechar();kbIaAbrir(\'' + a.id + '\')">🤖 IA da aula</button>' +
+            '<button class="danger" onclick="pxMoreFechar();kbAulaExcluir(\'' + a.id + '\')">Excluir aula</button>' +
+          '</div>' +
+        '</span>' +
 
-        '<button class="act danger" style="font-size:0.75rem;padding:4px 10px" onclick="kbAulaExcluir(\'' + a.id + '\')">Excluir</button>' +
       '</div>';
   }
 
