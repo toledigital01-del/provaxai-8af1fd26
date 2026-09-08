@@ -68,6 +68,11 @@ export async function materialIntegral(curso: string, disciplina: string, topico
   const eq = (v: string) => `eq.${encodeURIComponent(v)}`
   const partes: string[] = []
 
+  // A aula publicada (HTML pronto incluso) entra primeiro como fonte de verdade.
+  const daAula = (await textoDaAula(curso, disciplina, topico)).trim()
+  if (daAula) partes.push(`### ${topico || disciplina}\n${daAula.slice(0, 40000)}`)
+
+
   const kd = (await fetch(
     `${SUPABASE_URL}/rest/v1/knowledge_docs?select=titulo,sumario,topico,conteudo&course_slug=${eq(curso)}&disciplina=${eq(disciplina)}&limit=40`,
     { headers: serviceHeaders() },
