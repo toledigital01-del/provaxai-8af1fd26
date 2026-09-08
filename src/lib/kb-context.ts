@@ -1,7 +1,30 @@
 /* Contexto do material oficial (knowledge_docs) usado pelos endpoints de IA. */
 import { SUPABASE_URL, serviceHeaders } from './px-server'
+import { textoVisivel } from './aula-html-util'
 
 export type KbDoc = { titulo?: string; topico?: string; conteudo: string }
+
+/* A aula publicada (inclusive a enviada como HTML pronto) é a fonte principal
+   do tópico: sem isso, resumo/questões/flashcards/lacunas/podcast ficavam sem
+   material e nunca eram gerados. */
+export async function textoDaAula(curso: string, disciplina: string, topico?: string | null) {
+  if (!topico) return ''
+  const eq = (v: string) => `eq.${encodeURIComponent(v)}`
+  try {
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/aulas_ia?select=conteudo,formato&course_slug=${eq(curso)}` +
+        `&disciplina=${eq(disciplina)}&topico=${eq(topico)}&user_id=is.null&limit=1`,
+      { headers: serviceHeaders() },
+    )
+    if (!r.ok) return ''
+    const rows = (await r.json()) as Array<{ conteudo?: string; formato?: string }>
+    const row = rows[0]
+    if (!row?.conteudo) return ''
+    return row.formato === 'html' ? textoVisivel(row.conteudo) : row.conteudo
+  } catch {
+    return ''
+  }
+}
 
 export async function fetchKnowledge(curso: string, disciplina: string, topico?: string | null) {
   const params = new URLSearchParams({
@@ -12,13 +35,18 @@ export async function fetchKnowledge(curso: string, disciplina: string, topico?:
     limit: '12',
   })
   const res = await fetch(`${SUPABASE_URL}/rest/v1/knowledge_docs?${params}`, { headers: serviceHeaders() })
-  if (!res.ok) return [] as KbDoc[]
-  const rows = (await res.json()) as KbDoc[]
+  const rows = res.ok ? ((await res.json()) as KbDoc[]) : []
   const exact = topico ? rows.filter((r) => r.topico === topico) : []
   const geral = rows.filter((r) => !r.topico)
   const outros = rows.filter((r) => !exact.includes(r) && !geral.includes(r))
-  return [...exact, ...geral, ...outros].slice(0, 6)
+  const aula = await textoDaAula(curso, disciplina, topico)
+  const daAula: KbDoc[] = aula.trim()
+    ? [{ titulo: topico || disciplina, ...(topico ? { topico } : {}), conteudo: aula }]
+    : []
+
+  return [...daAula, ...exact, ...geral, ...outros].slice(0, 6)
 }
+
 
 /** Junta os documentos num bloco de texto para o prompt. */
 export function baseTexto(docs: KbDoc[], disciplina: string) {
@@ -39,6 +67,11 @@ export function fonteInstrucao(base: string) {
 export async function materialIntegral(curso: string, disciplina: string, topico?: string | null) {
   const eq = (v: string) => `eq.${encodeURIComponent(v)}`
   const partes: string[] = []
+
+  // A aula publicada (HTML pronto incluso) entra primeiro como fonte de verdade.
+  const daAula = (await textoDaAula(curso, disciplina, topico)).trim()
+  if (daAula) partes.push(`### ${topico || disciplina}\n${daAula.slice(0, 40000)}`)
+
 
   const kd = (await fetch(
     `${SUPABASE_URL}/rest/v1/knowledge_docs?select=titulo,sumario,topico,conteudo&course_slug=${eq(curso)}&disciplina=${eq(disciplina)}&limit=40`,

@@ -335,21 +335,30 @@ document.getElementById('crumb').innerHTML =
   (allDiscs.length > 1 ? `<a href="disciplinas.html?${base}">${title}</a>` : `<span>${title}</span>`) +
   (scope === 'geral' ? '' :
     `<span class="sep">/</span><a href="${discHref}">${disc}</a>` +
-    (scope === 'topico' ? `<span class="sep">/</span><span>${aulaLabel(disc, topic)}</span>` : ''));
+    (scope === 'topico' ? `<span class="sep">/</span><span>${aulaLabelCompleto(disc, topic)}</span>` : ''));
 
 const stats = topicStats(scope === 'topico' ? topic : disc);
 const sm = STATUS_META[stats.status];
-document.getElementById('t-title').textContent = scope === 'topico' ? aulaLabel(disc, topic) : (scope === 'disc' ? disc : title);
+/* Título grande = assunto real da aula; "Aula 00" fica como rótulo menor. */
+function tituloGrande(){
+  return scope === 'topico' ? aulaTitulo(topic) : (scope === 'disc' ? disc : title);
+}
+function rotuloAula(){
+  const n = aulaNumero(disc, topic);
+  return n === null ? '' : `Aula ${n}`;
+}
+document.getElementById('t-title').textContent = tituloGrande();
 document.getElementById('t-sub').innerHTML = scope === 'topico'
-  ? `${dotHTML(stats.status)} ${sm.label} · ${disc}`
+  ? `${rotuloAula() ? `<span class="ws-aula-num">${rotuloAula()}</span> · ` : ''}${dotHTML(stats.status)} ${sm.label} · ${disc}`
   : ctxLabel();
 
 window.pxRerender = function(){
   const el = document.getElementById('t-title');
-  if (el) el.textContent = scope === 'topico' ? aulaLabel(disc, topic) : (scope === 'disc' ? disc : title);
+  if (el) el.textContent = tituloGrande();
   const cr = document.querySelector('#crumb span:last-child');
-  if (cr && scope === 'topico') cr.textContent = aulaLabel(disc, topic);
+  if (cr && scope === 'topico') cr.textContent = aulaLabelCompleto(disc, topic);
 };
+
 
 /* ---------- Coluna esquerda ---------- */
 const TABS = WS_TABS;
@@ -1029,10 +1038,17 @@ const CARGA_NOMES = {
 };
 let cargaEstado = {};
 let cargaAntecipado = {};
+let cargaLimite = null;
 function cargaIniciar(itens) {
   cargaEstado = {};
   itens.forEach((i) => { cargaEstado[i] = cargaAntecipado[i] || 'carregando'; });
   cargaRender();
+  /* Nunca deixar a barra parada: o que não responder em 25 s vira "indisponível". */
+  clearTimeout(cargaLimite);
+  cargaLimite = setTimeout(() => {
+    Object.keys(cargaEstado).forEach((k) => { if (cargaEstado[k] === 'carregando') cargaEstado[k] = 'falhou'; });
+    cargaRender();
+  }, 25000);
 }
 function cargaMarcar(item, ok) {
   const st = ok ? 'pronto' : 'falhou';
@@ -1048,16 +1064,22 @@ function cargaRender() {
   const chaves = Object.keys(cargaEstado);
   if (!chaves.length) { cx.hidden = true; return; }
   const prontos = chaves.filter((k) => cargaEstado[k] !== 'carregando').length;
+  const falhas = chaves.filter((k) => cargaEstado[k] === 'falhou').length;
   const pct = Math.round((prontos / chaves.length) * 100);
   cx.hidden = false;
   document.getElementById('ws-carga-fill').style.width = pct + '%';
   document.getElementById('ws-carga-pct').textContent = pct + '%';
   document.getElementById('ws-carga-lbl').textContent =
-    prontos === chaves.length ? 'Tudo pronto — pode estudar.' : 'Preparando os materiais desta aula…';
+    prontos < chaves.length
+      ? 'Preparando os materiais desta aula…'
+      : falhas
+        ? 'Aula pronta. Alguns materiais ainda estão sendo preparados pelo professor.'
+        : 'Tudo pronto — pode estudar.';
   document.getElementById('ws-carga-itens').innerHTML = chaves.map((k) =>
     `<span class="ws-carga-chip ${cargaEstado[k]}"><i class="st"></i>${CARGA_NOMES[k] || k}</span>`).join('');
-  if (prontos === chaves.length) setTimeout(() => { if (cx) cx.hidden = true; }, 1600);
+  if (prontos === chaves.length) { clearTimeout(cargaLimite); setTimeout(() => { if (cx) cx.hidden = true; }, falhas ? 4000 : 1600); }
 }
+
 
 function renderPane() {
 

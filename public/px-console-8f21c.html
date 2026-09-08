@@ -3691,7 +3691,16 @@ window.kbAulaCadastrar = async function(){
     kbPaint();
     kbPane('aulas');
     kbAulaMsg('Aula ' + kbAulaNum(n) + (publicar ? ' publicada — preparando aula da Athena, resumo, questões, flashcards, lacunas e podcast…' : ' salva como rascunho.'));
-    if(publicar && KB_AULAS_CRIADAS.length) kbPrepararAula(KB_AULAS_CRIADAS[0].disc, KB_AULAS_CRIADAS[0].topico);
+    if(publicar && KB_AULAS_CRIADAS.length){
+      /* Prepara TODAS as aulas cadastradas agora (antes só a primeira era preparada). */
+      (async function(){
+        for(let i = 0; i < KB_AULAS_CRIADAS.length; i++){
+          const it = KB_AULAS_CRIADAS[i];
+          if(it && it.topico) await kbPrepararAula(it.disc, it.topico, false, true);
+        }
+        kbIaBadges();
+      })();
+    }
   }catch(e){ KB_ING_ATIVO = false; kbIngProgHide(); kbAulaMsg('Erro: ' + (e.message || e)); }
 };
 
