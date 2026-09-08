@@ -1038,10 +1038,17 @@ const CARGA_NOMES = {
 };
 let cargaEstado = {};
 let cargaAntecipado = {};
+let cargaLimite = null;
 function cargaIniciar(itens) {
   cargaEstado = {};
   itens.forEach((i) => { cargaEstado[i] = cargaAntecipado[i] || 'carregando'; });
   cargaRender();
+  /* Nunca deixar a barra parada: o que não responder em 25 s vira "indisponível". */
+  clearTimeout(cargaLimite);
+  cargaLimite = setTimeout(() => {
+    Object.keys(cargaEstado).forEach((k) => { if (cargaEstado[k] === 'carregando') cargaEstado[k] = 'falhou'; });
+    cargaRender();
+  }, 25000);
 }
 function cargaMarcar(item, ok) {
   const st = ok ? 'pronto' : 'falhou';
@@ -1057,16 +1064,22 @@ function cargaRender() {
   const chaves = Object.keys(cargaEstado);
   if (!chaves.length) { cx.hidden = true; return; }
   const prontos = chaves.filter((k) => cargaEstado[k] !== 'carregando').length;
+  const falhas = chaves.filter((k) => cargaEstado[k] === 'falhou').length;
   const pct = Math.round((prontos / chaves.length) * 100);
   cx.hidden = false;
   document.getElementById('ws-carga-fill').style.width = pct + '%';
   document.getElementById('ws-carga-pct').textContent = pct + '%';
   document.getElementById('ws-carga-lbl').textContent =
-    prontos === chaves.length ? 'Tudo pronto — pode estudar.' : 'Preparando os materiais desta aula…';
+    prontos < chaves.length
+      ? 'Preparando os materiais desta aula…'
+      : falhas
+        ? 'Aula pronta. Alguns materiais ainda estão sendo preparados pelo professor.'
+        : 'Tudo pronto — pode estudar.';
   document.getElementById('ws-carga-itens').innerHTML = chaves.map((k) =>
     `<span class="ws-carga-chip ${cargaEstado[k]}"><i class="st"></i>${CARGA_NOMES[k] || k}</span>`).join('');
-  if (prontos === chaves.length) setTimeout(() => { if (cx) cx.hidden = true; }, 1600);
+  if (prontos === chaves.length) { clearTimeout(cargaLimite); setTimeout(() => { if (cx) cx.hidden = true; }, falhas ? 4000 : 1600); }
 }
+
 
 function renderPane() {
 
