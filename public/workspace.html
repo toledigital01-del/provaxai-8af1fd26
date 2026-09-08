@@ -339,17 +339,26 @@ document.getElementById('crumb').innerHTML =
 
 const stats = topicStats(scope === 'topico' ? topic : disc);
 const sm = STATUS_META[stats.status];
-document.getElementById('t-title').textContent = scope === 'topico' ? aulaLabel(disc, topic) : (scope === 'disc' ? disc : title);
+/* Título grande = assunto real da aula; "Aula 00" fica como rótulo menor. */
+function tituloGrande(){
+  return scope === 'topico' ? aulaTitulo(topic) : (scope === 'disc' ? disc : title);
+}
+function rotuloAula(){
+  const n = aulaNumero(disc, topic);
+  return n === null ? '' : `Aula ${n}`;
+}
+document.getElementById('t-title').textContent = tituloGrande();
 document.getElementById('t-sub').innerHTML = scope === 'topico'
-  ? `${dotHTML(stats.status)} ${sm.label} · ${disc}`
+  ? `${rotuloAula() ? `<span class="ws-aula-num">${rotuloAula()}</span> · ` : ''}${dotHTML(stats.status)} ${sm.label} · ${disc}`
   : ctxLabel();
 
 window.pxRerender = function(){
   const el = document.getElementById('t-title');
-  if (el) el.textContent = scope === 'topico' ? aulaLabel(disc, topic) : (scope === 'disc' ? disc : title);
+  if (el) el.textContent = tituloGrande();
   const cr = document.querySelector('#crumb span:last-child');
-  if (cr && scope === 'topico') cr.textContent = aulaLabel(disc, topic);
+  if (cr && scope === 'topico') cr.textContent = aulaLabelCompleto(disc, topic);
 };
+
 
 /* ---------- Coluna esquerda ---------- */
 const TABS = WS_TABS;
