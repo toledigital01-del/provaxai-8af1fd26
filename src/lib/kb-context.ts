@@ -40,7 +40,10 @@ export async function fetchKnowledge(curso: string, disciplina: string, topico?:
   const geral = rows.filter((r) => !r.topico)
   const outros = rows.filter((r) => !exact.includes(r) && !geral.includes(r))
   const aula = await textoDaAula(curso, disciplina, topico)
-  const daAula: KbDoc[] = aula.trim() ? [{ titulo: topico || disciplina, topico: topico || undefined, conteudo: aula }] : []
+  const daAula: KbDoc[] = aula.trim()
+    ? [{ titulo: topico || disciplina, ...(topico ? { topico } : {}), conteudo: aula }]
+    : []
+
   return [...daAula, ...exact, ...geral, ...outros].slice(0, 6)
 }
 
