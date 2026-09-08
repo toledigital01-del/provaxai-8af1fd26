@@ -189,9 +189,17 @@ function aulaLabel(disc, nome) {
   const n = aulaNumero(disc, nome);
   return n === null ? aulaTitulo(nome) : `Aula ${n}`;
 }
+/* "Aula 03 · Crimes de trânsito" — número + assunto real do tópico. */
+function aulaLabelCompleto(disc, nome) {
+  const n = aulaNumero(disc, nome);
+  const t = aulaTitulo(nome);
+  return n === null ? t : `Aula ${n} · ${t}`;
+}
 window.aulaNumero = aulaNumero;
 window.aulaTitulo = aulaTitulo;
 window.aulaLabel = aulaLabel;
+window.aulaLabelCompleto = aulaLabelCompleto;
+
 
 /* ---------- Módulos: agrupamento das aulas dentro de uma disciplina ----------
    O painel administrativo pode marcar cada tópico com um "Módulo" (texto) e
