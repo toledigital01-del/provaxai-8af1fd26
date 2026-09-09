@@ -52,6 +52,8 @@ export const Route = createFileRoute('/api/public/resumo')({
 
         const curso = body.curso || 'prf-2021'
 
+        const oficial = await cursoOficial(curso)
+
         // Resumo já preparado no painel (gerado uma vez, reaproveitado por todos).
         if (!body.regerar) {
           const pronto = await lerRecurso<{ resumo?: string; fontes?: number }>(curso, body.disciplina, body.topico, 'resumo')
