@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { jsonPublicado } from '@/lib/px-cache'
 import { z } from 'zod'
-import { currentUser, usosHoje } from '@/lib/px-server'
+import { currentUser, usosHoje, cursoOficial } from '@/lib/px-server'
 import { fetchKnowledge, baseTexto, fonteInstrucao } from '@/lib/kb-context'
 import { AIError } from '@/lib/ai-gateway'
 import { agentChat, rotaDoAgente } from '@/lib/ai-router'
@@ -49,13 +49,16 @@ export const Route = createFileRoute('/api/public/lacunas')({
 
         const curso = body.curso || 'prf-2021'
 
+        const oficial = await cursoOficial(curso)
+
         // Exercício já preparado no painel administrativo.
         if (!body.regerar) {
           const pronto = await lerRecurso<{ frases?: Frase[] }>(curso, body.disciplina, body.topico, 'lacunas')
           const frasesProntas = pronto?.dados?.frases
           if (Array.isArray(frasesProntas) && frasesProntas.length)
             return jsonPublicado({ frases: frasesProntas, fontes: 0, modelo: pronto?.modelo, cache: true }, t0)
-          return Response.json({ error: 'O exercício ainda não foi publicado pelo professor.' }, { status: 404 })
+          if (oficial)
+            return Response.json({ error: 'O exercício ainda não foi publicado pelo professor.' }, { status: 404 })
         }
 
         const userId = await currentUser(request)
