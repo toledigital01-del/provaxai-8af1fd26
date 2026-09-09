@@ -97,7 +97,7 @@
       var res = { status: r.status, docs: Array.isArray(docs) ? docs : [] };
       if (r.ok) {
         cache[key] = res;
-        try { localStorage.setItem(lsKey, JSON.stringify({ t: Date.now(), v: res })); } catch (e) { /* cota */ }
+        try { localStorage.setItem(lsKey, JSON.stringify({ t: Date.now(), a: assinatura, v: res })); } catch (e) { /* cota */ }
       }
       return res;
     } catch (e) {
