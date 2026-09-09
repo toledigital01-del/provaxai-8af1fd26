@@ -45,18 +45,41 @@
   };
 
 
+  /* Assinatura leve do conteúdo publicado: quantidade + data da última alteração.
+     Serve para saber, com um pedido mínimo, se a cópia guardada continua válida. */
+  async function kbAssinatura(disciplina, curso) {
+    var qs =
+      'select=updated_at&course_slug=eq.' + encodeURIComponent(curso || 'prf-2021') +
+      '&disciplina=eq.' + encodeURIComponent(disciplina) +
+      '&publicado=is.true&order=updated_at.desc&limit=1';
+    try {
+      var r = await fetch(SB_URL + '/rest/v1/knowledge_docs?' + qs, {
+        headers: { apikey: SB_KEY, Prefer: 'count=exact' },
+      });
+      if (!r.ok) return null;
+      var rows = await r.json();
+      var total = (r.headers.get('content-range') || '').split('/')[1] || '?';
+      var ultima = (Array.isArray(rows) && rows[0] && rows[0].updated_at) || '';
+      return total + '|' + ultima;
+    } catch (e) { return null; }
+  }
+
   /* Busca pública do conteúdo teórico publicado de uma disciplina. */
   PX.kbFetch = async function (disciplina, curso) {
     var key = (curso || 'prf-2021') + '|' + disciplina;
     if (cache[key]) return cache[key];
-    /* Conteúdo publicado já aberto antes: reaproveita do navegador (7 dias) */
+    /* Cópia guardada no navegador só vale se a assinatura no servidor for a mesma:
+       assim, quando o professor corrige, republica ou apaga uma aula, o aluno vê
+       a versão nova na hora. */
     var lsKey = 'px:kbdocs|' + key;
     var salvo = null;
+    var assinatura = await kbAssinatura(disciplina, curso);
     try {
       var raw = localStorage.getItem(lsKey);
       if (raw) {
         var o = JSON.parse(raw);
-        if (o && o.t && Date.now() - o.t < 7 * 24 * 60 * 60 * 1000) salvo = o.v;
+        var recente = o && o.t && Date.now() - o.t < 7 * 24 * 60 * 60 * 1000;
+        if (recente && assinatura && o.a === assinatura) salvo = o.v;
         else localStorage.removeItem(lsKey);
       }
     } catch (e) { salvo = null; }
@@ -74,7 +97,7 @@
       var res = { status: r.status, docs: Array.isArray(docs) ? docs : [] };
       if (r.ok) {
         cache[key] = res;
-        try { localStorage.setItem(lsKey, JSON.stringify({ t: Date.now(), v: res })); } catch (e) { /* cota */ }
+        try { localStorage.setItem(lsKey, JSON.stringify({ t: Date.now(), a: assinatura, v: res })); } catch (e) { /* cota */ }
       }
       return res;
     } catch (e) {

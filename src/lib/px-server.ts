@@ -185,3 +185,18 @@ export async function registrarUsoIA(reg: {
     /* log é best-effort */
   }
 }
+
+/** true quando o curso é oficial (cadastrado pela plataforma); false para material do próprio aluno. */
+export async function cursoOficial(slug: string): Promise<boolean> {
+  try {
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/courses?select=id&slug=eq.${encodeURIComponent(slug)}&limit=1`,
+      { headers: serviceHeaders() },
+    )
+    if (!r.ok) return false
+    const rows = (await r.json()) as unknown[]
+    return Array.isArray(rows) && rows.length > 0
+  } catch {
+    return false
+  }
+}

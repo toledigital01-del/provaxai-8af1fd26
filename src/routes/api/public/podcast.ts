@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { jsonPublicado } from '@/lib/px-cache'
 import { z } from 'zod'
-import { currentUser, usosHoje, serviceHeaders, SUPABASE_URL } from '@/lib/px-server'
+import { currentUser, usosHoje, serviceHeaders, SUPABASE_URL, cursoOficial } from '@/lib/px-server'
 import { materialIntegral } from '@/lib/kb-context'
 import { AIError } from '@/lib/ai-gateway'
 import { agentChat, rotaDoAgente } from '@/lib/ai-router'
@@ -58,6 +58,8 @@ export const Route = createFileRoute('/api/public/podcast')({
           (topico ? `topico=${eq(topico)}` : 'topico=is.null') +
           '&user_id=is.null'
 
+        const oficial = await cursoOficial(curso)
+
         // 1) Cache do roteiro — episódio já pronto sai na hora e sem custo.
         if (!body.regerar) {
           const hit = (await fetch(`${SUPABASE_URL}/rest/v1/podcasts_ia?select=roteiro,modelo&${filtro}&limit=1`, {
@@ -68,7 +70,8 @@ export const Route = createFileRoute('/api/public/podcast')({
           const roteiro = hit[0]?.roteiro
           if (Array.isArray(roteiro) && roteiro.length)
             return jsonPublicado({ roteiro, modelo: hit[0]?.modelo || null, cache: true }, t0)
-          return Response.json({ error: 'O podcast ainda não foi publicado pelo professor.' }, { status: 404 })
+          if (oficial)
+            return Response.json({ error: 'O podcast ainda não foi publicado pelo professor.' }, { status: 404 })
         }
 
         const userId = await currentUser(request)

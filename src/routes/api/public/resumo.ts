@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { currentUser, usosHoje, serviceHeaders, SUPABASE_URL } from '@/lib/px-server'
+import { currentUser, usosHoje, serviceHeaders, SUPABASE_URL, cursoOficial } from '@/lib/px-server'
 import { fetchKnowledge, baseTexto, fonteInstrucao } from '@/lib/kb-context'
 import { AIError } from '@/lib/ai-gateway'
 import { agentChat, rotaDoAgente } from '@/lib/ai-router'
@@ -52,6 +52,8 @@ export const Route = createFileRoute('/api/public/resumo')({
 
         const curso = body.curso || 'prf-2021'
 
+        const oficial = await cursoOficial(curso)
+
         // Resumo já preparado no painel (gerado uma vez, reaproveitado por todos).
         if (!body.regerar) {
           const pronto = await lerRecurso<{ resumo?: string; fontes?: number }>(curso, body.disciplina, body.topico, 'resumo')
@@ -67,7 +69,8 @@ export const Route = createFileRoute('/api/public/resumo')({
               t0,
             )
 
-          return Response.json({ error: 'O resumo ainda não foi publicado pelo professor.' }, { status: 404 })
+          if (oficial)
+            return Response.json({ error: 'O resumo ainda não foi publicado pelo professor.' }, { status: 404 })
         }
 
         const userId = await currentUser(request)
