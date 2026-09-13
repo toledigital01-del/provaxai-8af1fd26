@@ -104,7 +104,8 @@
   .ws-carga-bar i { display:block; height:100%; width:0; border-radius:999px; background:linear-gradient(90deg,var(--brand-2,#154C9B),var(--gold,#F2B705)); transition:width .3s ease; }
   .ws-carga-top { display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:0.76rem; color:var(--muted); margin-bottom:6px; }
   .ws-carga-itens { display:flex; flex-wrap:wrap; gap:6px; margin-top:9px; }
-  .ws-carga-chip { display:inline-flex; align-items:center; gap:6px; font-size:0.74rem; padding:4px 9px; border-radius:999px; border:1px solid var(--line); color:var(--muted); background:var(--bg); }
+  .ws-carga-chip { display:inline-flex; align-items:center; gap:6px; font:inherit; font-size:0.74rem; padding:4px 9px; border-radius:999px; border:1px solid var(--line); color:var(--muted); background:var(--bg); }
+  .ws-carga-chip:hover { border-color:var(--line-strong); }
   .ws-carga-chip .st { width:8px; height:8px; border-radius:50%; background:var(--line-strong); }
   .ws-carga-chip.carregando .st { background:var(--gold,#F2B705); animation:pulsa 1s infinite; }
   .ws-carga-chip.pronto { color:#0F8F5F; border-color:rgba(23,166,115,.35); }
