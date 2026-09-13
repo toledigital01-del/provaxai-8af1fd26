@@ -428,6 +428,8 @@ function rzDistractor(txt) {
   return alt[txt.length % alt.length];
 }
 function renderResumo(p) {
+  /* No tópico o resumo já está publicado: abre direto, sem exigir um clique extra. */
+  if (!rzOn && scope === 'topico') rzOn = true;
   if (!rzOn) {
     p.innerHTML = `<div class="pane">
       <div class="cesp-head"><b>Revisão Inteligente</b><span>${ctxLabel()} — a Athena lê o material oficial deste tópico e gera um resumo com os trechos essenciais grifados.</span></div>
