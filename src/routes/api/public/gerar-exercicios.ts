@@ -121,7 +121,11 @@ export const Route = createFileRoute('/api/public/gerar-exercicios')({
               gabarito: String(q.gabarito || 'C').trim().toUpperCase().startsWith('C') ? 'C' : 'E',
               alternativas: [],
               comentario: String(q.comentario || '').trim() || null,
-              banca: 'Cebraspe',
+              // Questão criada pela IA: nunca rotular como banca real.
+              banca: null,
+              origem: 'inedita',
+              verificada: false,
+              fonte: 'Questão inédita gerada por IA a partir do material da aula',
               ativa: true,
             }))
         } else {
