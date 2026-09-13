@@ -104,7 +104,8 @@
   .ws-carga-bar i { display:block; height:100%; width:0; border-radius:999px; background:linear-gradient(90deg,var(--brand-2,#154C9B),var(--gold,#F2B705)); transition:width .3s ease; }
   .ws-carga-top { display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:0.76rem; color:var(--muted); margin-bottom:6px; }
   .ws-carga-itens { display:flex; flex-wrap:wrap; gap:6px; margin-top:9px; }
-  .ws-carga-chip { display:inline-flex; align-items:center; gap:6px; font-size:0.74rem; padding:4px 9px; border-radius:999px; border:1px solid var(--line); color:var(--muted); background:var(--bg); }
+  .ws-carga-chip { display:inline-flex; align-items:center; gap:6px; font:inherit; font-size:0.74rem; padding:4px 9px; border-radius:999px; border:1px solid var(--line); color:var(--muted); background:var(--bg); }
+  .ws-carga-chip:hover { border-color:var(--line-strong); }
   .ws-carga-chip .st { width:8px; height:8px; border-radius:50%; background:var(--line-strong); }
   .ws-carga-chip.carregando .st { background:var(--gold,#F2B705); animation:pulsa 1s infinite; }
   .ws-carga-chip.pronto { color:#0F8F5F; border-color:rgba(23,166,115,.35); }
@@ -427,6 +428,8 @@ function rzDistractor(txt) {
   return alt[txt.length % alt.length];
 }
 function renderResumo(p) {
+  /* No tópico o resumo já está publicado: abre direto, sem exigir um clique extra. */
+  if (!rzOn && scope === 'topico') rzOn = true;
   if (!rzOn) {
     p.innerHTML = `<div class="pane">
       <div class="cesp-head"><b>Revisão Inteligente</b><span>${ctxLabel()} — a Athena lê o material oficial deste tópico e gera um resumo com os trechos essenciais grifados.</span></div>
@@ -1036,6 +1039,10 @@ const CARGA_NOMES = {
   aula: 'Aula', resumo: 'Resumo', flashcards: 'Flashcards',
   questoes: 'Questões', lacunas: 'Preencher espaços', podcast: 'Podcast',
 };
+const CARGA_TAB = {
+  aula: 'tutor', resumo: 'resumo', flashcards: 'flashcards',
+  questoes: 'questoes', lacunas: 'espacos', podcast: 'podcast',
+};
 let cargaEstado = {};
 let cargaAntecipado = {};
 let cargaLimite = null;
@@ -1075,8 +1082,15 @@ function cargaRender() {
       : falhas
         ? 'Aula pronta. Alguns materiais ainda estão sendo preparados pelo professor.'
         : 'Tudo pronto — pode estudar.';
-  document.getElementById('ws-carga-itens').innerHTML = chaves.map((k) =>
-    `<span class="ws-carga-chip ${cargaEstado[k]}"><i class="st"></i>${CARGA_NOMES[k] || k}</span>`).join('');
+  const itens = document.getElementById('ws-carga-itens');
+  itens.innerHTML = chaves.map((k) =>
+    `<button type="button" class="ws-carga-chip ${cargaEstado[k]}" data-ir="${CARGA_TAB[k] || ''}"><i class="st"></i>${CARGA_NOMES[k] || k}</button>`).join('');
+  itens.querySelectorAll('.ws-carga-chip').forEach((b) => {
+    const destino = b.dataset.ir;
+    if (!destino) return;
+    b.style.cursor = 'pointer';
+    b.onclick = () => goTab(destino);
+  });
   if (prontos === chaves.length) { clearTimeout(cargaLimite); setTimeout(() => { if (cx) cx.hidden = true; }, falhas ? 4000 : 1600); }
 }
 

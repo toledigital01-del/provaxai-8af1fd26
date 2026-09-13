@@ -226,7 +226,14 @@
       /* A aula oficial é conteúdo público já publicado. Não espere a sessão
          hidratar para buscá-la: em navegação anônima isso custava até 10 s. */
       if (rota !== 'aula-ia') {
-        try { tk = await PX.token(); } catch (e) { tk = null; }
+        /* Espera a sessão no máximo 1,5 s: o conteúdo já publicado é público e
+           não pode ficar 10 s parado enquanto o login hidrata (ou não existe). */
+        try {
+          tk = await Promise.race([
+            PX.token().catch(function () { return null; }),
+            new Promise(function (ok) { setTimeout(function () { ok(null); }, 1500); }),
+          ]);
+        } catch (e) { tk = null; }
       }
       var cab = { 'Content-Type': 'application/json' };
       if (tk) cab.Authorization = 'Bearer ' + tk;
