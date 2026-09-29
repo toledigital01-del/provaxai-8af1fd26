@@ -339,9 +339,12 @@
   PX.isAdmin = function () { return PX.roles.indexOf('admin') >= 0; };
 
   /* redireciona para o login quando não há sessão */
+  /* LOGIN DESATIVADO POR ENQUANTO: acesso direto sem sessão. */
+  PX.LOGIN_ON = false;
   PX.requireAuth = async function () {
     await PX.ready;
     if (!PX.user) {
+      if (!PX.LOGIN_ON) return { id: null, email: 'visitante' };
       const next = location.pathname.split('/').pop() + location.search;
       location.href = 'login.html?next=' + encodeURIComponent(next);
       return null;
