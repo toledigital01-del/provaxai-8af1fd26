@@ -68,8 +68,8 @@ export const Route = createFileRoute('/api/public/athena')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const userId = await currentUser(request) // null = convidado
-        // Acesso liberado sem login por enquanto (fase de testes).
+        const userId = await currentUser(request)
+        if (!userId) return Response.json({ error: 'Faça login para falar com a Athena.' }, { status: 401 })
 
         let body: z.infer<typeof Body>
         try {
@@ -79,9 +79,9 @@ export const Route = createFileRoute('/api/public/athena')({
         }
 
         const curso = body.curso || 'prf-2021'
-        // Trava de acesso pago desativada por enquanto (fase de testes): qualquer
-        // aluno logado pode falar com a Athena. Reativar: `if (!(await hasCourseAccess(userId, curso))) return Response.json({ error: 'Seu acesso ao curso não está ativo.' }, { status: 403 })`
-        void hasCourseAccess
+        // hasCourseAccess já libera quem tem papel admin em user_roles.
+        if (!(await hasCourseAccess(userId, curso)))
+          return Response.json({ error: 'Seu acesso ao curso não está ativo.' }, { status: 403 })
 
         const rota = await rotaDoAgente('athena')
         const limite = rota.limiteDiario
