@@ -1,0 +1,1 @@
+- [x] Athena: exigir login (401) e acesso pago (403), mensagens com link no front

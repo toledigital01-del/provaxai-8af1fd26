@@ -493,6 +493,8 @@
         body: JSON.stringify({ disciplina: disciplina, topico: topico || null, pergunta: pergunta, curso: curso || 'prf-2021' }),
       });
       var j = await r.json();
+      if (r.status === 401) return { texto: j.error || 'Faça login para falar com a Athena.', link: { href: 'login.html?next=' + encodeURIComponent(location.pathname.split('/').pop() + location.search), label: 'Entrar' } };
+      if (r.status === 403) return { texto: j.error || 'Seu acesso ao curso não está ativo.', link: { href: 'pricing.html', label: 'Ver planos' } };
       if (!r.ok) return j.error || 'Não consegui responder agora.';
       var resp = j.resposta;
       // Origem dos trechos usados pela Athena (quando a busca inteligente está ativa)

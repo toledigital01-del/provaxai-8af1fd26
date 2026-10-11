@@ -1707,6 +1707,11 @@ function renderChat() {
     const d = document.createElement('div');
     d.className = 'b' + (m.role === 'me' ? ' me' : '');
     d.textContent = m.text;
+    if (m.link && /^(login|pricing)\.html/.test(m.link.href)) {
+      const a = document.createElement('a');
+      a.href = m.link.href; a.textContent = m.link.label;
+      d.appendChild(document.createTextNode(' ')); d.appendChild(a);
+    }
     log.appendChild(d);
   });
   log.scrollTop = log.scrollHeight;
@@ -1731,7 +1736,8 @@ document.getElementById('side-form').onsubmit = e => {
   saveChat(history_); renderChat();
   PX.athenaAsk(disc, scope === 'topico' ? topic : null, v, id).then(resp => {
     const i2 = history_.findIndex(m => m.pending);
-    if (i2 >= 0) history_[i2] = { role: 'ai', ctx, text: resp };
+    const msg = (resp && typeof resp === 'object') ? { text: resp.texto, link: resp.link } : { text: resp };
+    if (i2 >= 0) history_[i2] = { role: 'ai', ctx, ...msg };
     saveChat(history_); renderChat();
     if (window.wsSheetNovaResposta) window.wsSheetNovaResposta();
   });
